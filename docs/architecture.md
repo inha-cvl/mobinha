@@ -2,7 +2,7 @@
 
 mobinha system architecture
 
-
+```mermaid
 graph TD
   mobinha --> common
   mobinha --> selfdrive
@@ -28,3 +28,4 @@ graph TD
   perception --> 3D_object
   perception --> 2D_object
   perception --> traffic_light
+```

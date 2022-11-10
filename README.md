@@ -1,4 +1,6 @@
-# mobinha
+<p align="center">
+  <img width="200" height="200" src="/docs/image/logo.png"/>
+</p>
 
 ## What is mobinha ?
 
@@ -17,4 +19,4 @@ Directory Structure
         ├── car             # Car specific code to read states and control actuators
         ├── planning        
         ├── control 
-        ├── perception
+        └── perception

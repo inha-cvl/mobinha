@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" height="200" src="/docs/image/logo.png"/>
+  <img height="200" src="/docs/image/logo.png"/>
 </p>
 
 ## What is mobinha ?

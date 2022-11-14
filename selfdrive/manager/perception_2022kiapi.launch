@@ -1,0 +1,11 @@
+<launch>
+  <!-- DETECT LAUNCH -->
+<machine name='agx_front' address='192.168.101.5' env-loader='/home/cvlab/Documents/scripts/env_nuvo.sh' user="cvlab">
+</machine>
+
+<!--<2022 />-->
+<node name='yolo' pkg='detection' type='yolov7.sh' machine='agx_front' />
+
+ <node pkg='clustering' type='main_kj_128' name='lidar'/> 
+<!--<node pkg='camera' type='LiDAR_CAM_bboxes.py' name='Camera_dist'/>-->
+</launch>

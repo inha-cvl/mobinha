@@ -1,0 +1,86 @@
+#!/bin/bash
+
+readonly APP_DIR=./
+readonly PROC_NAME="seoul-cits-autonomous-relay-1.0"
+readonly DAEMON="${PROC_NAME}.jar"
+readonly PROC_PID="${PROC_NAME}.pid"
+
+start()
+{
+    echo "Starting ${PROC_NAME}..."
+    local PID=$(app_status)
+    if [ -n "${PID}" ]; then
+        echo "${PROC_NAME} is already running"
+        exit 0
+    fi
+    nohup java -jar -Dconf.home=config -Xms256m "${DAEMON}" --spring.config.location=./conf/application.yml > /dev/null 2>&1 &
+    local PID=${!}
+
+    if [ -n ${PID} ]; then
+        echo " - Starting..."
+        echo " - Created Process ID in ${PROC_PID}"
+        echo ${PID} > ${PROC_PID}
+    else
+        echo " - failed to start."
+    fi
+}
+
+stop()
+{
+    echo "Stopping ${PROC_NAME}..."
+    local DAEMON_PID=`cat "${PROC_PID}"`
+
+    if [ "$DAEMON_PID" -lt 3 ]; then
+        echo "${PROC_NAME} was not running."
+    else
+        kill $DAEMON_PID
+        rm -f $PROC_PID
+        echo " - Shutdown ...."
+    fi
+}
+
+status()
+{
+    local PID=$(app_status)
+    if [ -n "${PID}" ]; then
+        echo "${PROC_NAME} is running"
+    else
+        echo "${PROC_NAME} is stopped"
+        # start daemon
+        #nohup java -jar "${DAEMON}" > /dev/null 2>&1 &
+    fi
+}
+
+app_status()
+{
+    ps ux | grep ${PROC_NAME} | grep -v grep | awk '{print $2}'
+}
+
+port()
+{
+    netstat -anp | grep -w LISTEN | grep -E '9019|9020'
+}
+
+case "$1" in
+    start)
+        start
+        sleep 2
+    ;;
+    stop)
+        stop
+        sleep 2
+    ;;
+    status)
+        status
+        sleep 2
+    ;;
+    port)
+        port
+        sleep 2
+    ;;
+    *)
+    echo "Usage: $0 {start | stop | status | port}"
+
+esac
+exit 0
+

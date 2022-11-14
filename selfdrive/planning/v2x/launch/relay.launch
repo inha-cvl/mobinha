@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="v2x" type="run.sh" name="relay" output="screen"/>	
+</launch>

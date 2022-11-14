@@ -1,0 +1,3 @@
+<launch>
+  <node pkg='control' type='can_transceiver.py' name='CAN' />
+</launch>

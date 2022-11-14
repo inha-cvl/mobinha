@@ -1,0 +1,17 @@
+
+logging:
+  config: classpath:logback.xml
+
+loglevel:
+  j2735: detail #detail , simple , none
+  json: detail #detail , simple , none   
+    
+vin: IDV125HD01400
+
+5G: 
+  port: 9100   
+  reconnect: 0 
+
+wave:
+  port: 9101
+  reconnect: true

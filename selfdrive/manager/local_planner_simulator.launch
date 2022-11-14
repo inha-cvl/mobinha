@@ -1,0 +1,11 @@
+<launch>
+  <!-- PLANNER LAUNCH -->
+  <node pkg='planner' type='planner.py' name='Planner'/>
+  <!-- LOCALIZER LAUNCH -->
+  <node pkg='common' type='localizer_i30.py' name='Localizer' launch-prefix="bash -c 'sleep 10; $0 $@' " />
+  <node pkg='common' type='simulate_ego.py' name='Simulator' launch-prefix="bash -c 'sleep 10; $0 $@' " />
+  <!-- CONTROLLER LAUNCH -->
+  <node pkg='common' type='controller.py' name='Controller' />
+  <!-- RVIZ LAUNCH -->
+  <node pkg='rviz' type='rviz' args='-d /home/aeye/ros_ws/src/niro/common/Master/aeye.rviz' name='RVIZ' />
+</launch>

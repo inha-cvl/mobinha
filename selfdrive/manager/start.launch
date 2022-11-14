@@ -1,0 +1,3 @@
+<launch>
+<node pkg='v2x' type='relay' name='v2x' args="start"/>
+</launch>

@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import math
-import sys
-import os
 
 try:
     if __name__ == '__main__':
@@ -12,7 +10,7 @@ try:
     else:
         from lib.quintic_polynomials_planner import QuinticPolynomial
         from lib import cubic_spline_planner
-    
+
 except ImportError:
     raise
 
@@ -62,13 +60,13 @@ class QuarticPolynomial:
 
     def calc_point(self, t):
         xt = self.a0 + self.a1 * t + self.a2 * t ** 2 + \
-             self.a3 * t ** 3 + self.a4 * t ** 4
+            self.a3 * t ** 3 + self.a4 * t ** 4
 
         return xt
 
     def calc_first_derivative(self, t):
         xt = self.a1 + 2 * self.a2 * t + \
-             3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3
+            3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3
 
         return xt
 

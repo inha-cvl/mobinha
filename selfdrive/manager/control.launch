@@ -1,4 +1,0 @@
-<launch>
-  <!-- CONTROL LAUNCH -->
-<node pkg='control' type='can_up.sh' name='control'/>
-</launch>

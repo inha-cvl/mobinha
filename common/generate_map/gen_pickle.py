@@ -10,20 +10,27 @@ import pymap3d
 
 def get_coord():
     shpfile = gpd.read_file('../weekdays/local/Local_inside.shp')  # read shp
+    # shpfile = gpd.read_file('../weekdays/start_right.shp')  # generate start
+    # shpfile = gpd.read_file('../weekdays/local/Local_outside.shp')  # generate testlink
     path = LineString(shpfile.geometry[0]).coords
 
     X, Y = [], []
     for x, y in path:
-        out = pymap3d.geodetic2enu(y, x, 0, 37.5833501770936, 126.88227370105241, 0)
+        out = pymap3d.geodetic2enu(
+            y, x, 0, 37.5833501770936, 126.88227370105241, 0)
         X.append(out[0])
         Y.append(out[1])
     return X, Y
     return path
 
+
 def save(path):
     import pickle
+    # with open('start_right.pkl', 'wb') as f: #generate start
+    # with open('outside.pkl', 'wb') as f: #generate test_link
     with open('inside.pkl', 'wb') as f:
         pickle.dump(path, f)
+
 
 def generate():
     x, y = get_coord()
@@ -42,6 +49,7 @@ def generate():
         rk.append(csp.calc_curvature(i_s))
 
     save([[rx[i], ry[i]] for i in range(len(rx))])
+
 
 if __name__ == '__main__':
     generate()

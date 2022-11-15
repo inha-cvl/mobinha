@@ -2,8 +2,8 @@ import math
 from math import atan2
 import numpy as np
 from scipy.interpolate import interp1d
-
 from numpy.linalg import norm
+
 
 class QuadraticSplineInterpolate:
     def __init__(self, x, y):
@@ -14,7 +14,8 @@ class QuadraticSplineInterpolate:
     def calc_s(self, x, y):
         dx = np.diff(x)
         dy = np.diff(y)
-        self.ds = [math.sqrt(idx ** 2 + idy ** 2) for (idx, idy) in zip(dx, dy)]
+        self.ds = [math.sqrt(idx ** 2 + idy ** 2)
+                   for (idx, idy) in zip(dx, dy)]
         #self.ds = [norm(idx, idy) for (idx, idy) in zip(dx, dy)]
         s = [0]
         s.extend(np.cumsum(self.ds))
@@ -24,14 +25,14 @@ class QuadraticSplineInterpolate:
         dx = 1.0
         dp = sp(x+dx)
         dm = sp(x-dx)
-        d = (dp - dm) / dx 
+        d = (dp - dm) / dx
         return d
 
     def calc_dd(self, sp, x):
         dx = 2.0
         ddp = self.calc_d(sp, x+dx)
         ddm = self.calc_d(sp, x-dx)
-        dd = (ddp - ddm) / dx 
+        dd = (ddp - ddm) / dx
         return dd
 
     def calc_yaw(self, s):
@@ -61,7 +62,7 @@ def interpolate(points, precision):
 
         for pt in points:
             if pre_pt is None or pt != pre_pt:
-                filtered_points.append(pt)    
+                filtered_points.append(pt)
 
             pre_pt = pt
 
@@ -91,4 +92,3 @@ def interpolate(points, precision):
         k.append(dk)
 
     return itp_points, s, yaw, k
-

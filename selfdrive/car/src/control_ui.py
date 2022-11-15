@@ -3,9 +3,10 @@ import rospy
 from std_msgs.msg import Int16, Bool
 import tkinter as tk
 
+
 class ControlUI():
     def __init__(self):
-        ros = rospy.init_node('control_UI')
+        rospy.init_node('control_UI')
         pub = rospy.Publisher('can_cmd', Int16, queue_size=1)
         self.ot = rospy.Publisher('overtake', Bool, queue_size=1)
 
@@ -15,8 +16,10 @@ class ControlUI():
 
         window = tk.Tk()
         lat_button = tk.Button(text="Latitudinal", command=self.lat_callback)
-        lon1_button = tk.Button(text="Longitudinal", command=self.lon1_callback)
-        lon2_button = tk.Button(text="Longitudinal", command=self.lon2_callback)
+        lon1_button = tk.Button(text="Longitudinal",
+                                command=self.lon1_callback)
+        lon2_button = tk.Button(text="Longitudinal",
+                                command=self.lon2_callback)
         disable_button = tk.Button(text="Disable", command=self.dis_callback)
 
         lat_button.pack()
@@ -28,7 +31,6 @@ class ControlUI():
             window.update()
             pub.publish(self.mode)
             rate.sleep()
-            
 
     def lat_callback(self):
         self.mode = 1 if self.mode == 0 else 0
@@ -43,6 +45,7 @@ class ControlUI():
 
     def dis_callback(self):
         self.ot.publish(True)
+
 
 if __name__ == '__main__':
     ControlUI()

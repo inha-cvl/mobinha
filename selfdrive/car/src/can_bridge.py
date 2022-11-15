@@ -1,11 +1,10 @@
 #!/usr/bin/python3
-from std_msgs.msg import Int8, Bool, Int16
-from std_msgs.msg import Int8MultiArray, Int16MultiArray
+from std_msgs.msg import Int8, Bool, Int16, Int8MultiArray, Int16MultiArray
 import rospy
 import threading
 import signal
 import time
-import cankey
+import dbc.niro.cankey as cankey
 import cantools
 import can
 import sys

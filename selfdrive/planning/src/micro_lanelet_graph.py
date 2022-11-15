@@ -1,10 +1,10 @@
 import copy
+from visualize.viz import *
 
 import rospy
 from visualization_msgs.msg import MarkerArray
 
-from planner_utils import *
-from viz import *
+from libs.planner_utils import *
 
 
 class MicroLaneletGraph:
@@ -15,8 +15,10 @@ class MicroLaneletGraph:
         self.groups = lmap.groups
         self.generate_micro_lanelet_graph()
 
-        self.pub_micro_lanelet_graph = rospy.Publisher('/micro_lanelet_graph', MarkerArray, queue_size=1, latch=True)
-        micro_lanelet_graph_viz = MicroLaneletGraphViz(self.lanelets, self.graph)
+        self.pub_micro_lanelet_graph = rospy.Publisher(
+            '/micro_lanelet_graph', MarkerArray, queue_size=1, latch=True)
+        micro_lanelet_graph_viz = MicroLaneletGraphViz(
+            self.lanelets, self.graph)
         self.pub_micro_lanelet_graph.publish(micro_lanelet_graph_viz)
 
     def generate_micro_lanelet_graph(self):
@@ -47,7 +49,8 @@ class MicroLaneletGraph:
                         else:
                             end_idx = start_idx + cut_idx
 
-                        self.lanelets[id_]['cut_idx'].append([start_idx, end_idx])
+                        self.lanelets[id_]['cut_idx'].append(
+                            [start_idx, end_idx])
 
                 else:
                     for i in range(cut_num):
@@ -58,7 +61,8 @@ class MicroLaneletGraph:
 
                         if i == 0:
                             start_idx = 0
-                            end_idx = find_nearest_idx(self.lanelets[id_]['waypoints'], pt)
+                            end_idx = find_nearest_idx(
+                                self.lanelets[id_]['waypoints'], pt)
 
                         elif i == cut_num - 1:
                             start_idx = self.lanelets[id_]['cut_idx'][i-1][1]
@@ -66,9 +70,11 @@ class MicroLaneletGraph:
 
                         else:
                             start_idx = self.lanelets[id_]['cut_idx'][i-1][1]
-                            end_idx = find_nearest_idx(self.lanelets[id_]['waypoints'], pt)
+                            end_idx = find_nearest_idx(
+                                self.lanelets[id_]['waypoints'], pt)
 
-                        self.lanelets[id_]['cut_idx'].append([start_idx, end_idx])
+                        self.lanelets[id_]['cut_idx'].append(
+                            [start_idx, end_idx])
 
         for id_, data in self.lanelets.items():
             if data['group'] is None:
@@ -84,7 +90,7 @@ class MicroLaneletGraph:
             else:
                 last = len(data['cut_idx']) - 1
                 for n in range(len(data['cut_idx'])):
-                    new_id = '%s_%s'%(id_, n)
+                    new_id = '%s_%s' % (id_, n)
                     if self.graph.get(new_id) is None:
                         self.graph[new_id] = {}
 
@@ -96,19 +102,22 @@ class MicroLaneletGraph:
                                 self.graph[new_id][p_id+'_0'] = self.cut_dist
 
                     else:
-                        self.graph[new_id]['%s_%s'%(id_, n+1)] = self.cut_dist
-                        
+                        self.graph[new_id]['%s_%s' %
+                                           (id_, n+1)] = self.cut_dist
+
                         s_idx, e_idx = self.lanelets[id_]['cut_idx'][n]
 
                         left_id = data['adjacentLeft']
                         if left_id is not None:
                             if sum(self.lanelets[id_]['leftChange'][s_idx:s_idx+(e_idx-s_idx)//2]) == (e_idx - s_idx)//2:
-                                self.graph[new_id]['%s_%s'%(left_id, n+1)] = self.cut_dist + 10.0 + n * 0.1
+                                self.graph[new_id]['%s_%s' % (
+                                    left_id, n+1)] = self.cut_dist + 10.0 + n * 0.1
 
                         right_id = data['adjacentRight']
                         if right_id is not None:
                             if sum(self.lanelets[id_]['rightChange'][s_idx:s_idx+(e_idx-s_idx)//2]) == (e_idx - s_idx)//2:
-                                self.graph[new_id]['%s_%s'%(right_id, n+1)] = self.cut_dist + 10.0 + n * 0.1
+                                self.graph[new_id]['%s_%s' % (
+                                    right_id, n+1)] = self.cut_dist + 10.0 + n * 0.1
 
         self.reversed_graph = {}
         for from_id, data in self.graph.items():

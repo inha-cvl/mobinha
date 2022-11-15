@@ -8,5 +8,5 @@
   <!-- CONTROLLER UI LAUNCH -->
   <node pkg='car' type='control_ui.py' name='ControlUI' />
   <!-- RVIZ LAUNCH -->
-  <node pkg='rviz' type='rviz' args='-d /home/inha/catkin_ws/src/niro/common/Master/aeye.rviz' name='RVIZ' />
+  <node pkg='rviz' type='rviz' args='-d $(find visualize)/main.rviz' name='RVIZ' />
 </launch>

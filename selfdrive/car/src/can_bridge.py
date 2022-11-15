@@ -4,12 +4,12 @@ import rospy
 import threading
 import signal
 import time
-import dbc.niro.cankey as cankey
+from config.config import Config
+import libs.cankey as cankey
 import cantools
 import can
 import sys
 import os
-import json
 
 python_package_path = os.path.expanduser(
     os.path.join('~', '.local/lib/python3.8/site-packages'))
@@ -35,16 +35,12 @@ switch:
 
 class Bridge:
     def __init__(self):
+        self.config = Config()
+        
         #######CAN############
 
-        f = open("src/fingerprint.json")
-        data = json.load(f)
-        dbc_path = data['car_state']['dbc_file_path']
-        wheel_size = float(data['control_param']['wheel_size'])
-        f.close()
-
         self.db = cantools.database.load_file(
-            dbc_path)
+            self.config.dbc_path)
         self.CCAN = can.ThreadSafeBus(
             interface='kvaser', channel=0, bitrate=500000)
         self.SCC = can.ThreadSafeBus(
@@ -52,7 +48,7 @@ class Bridge:
         self.CCAN.set_filters(cankey.CCAN_filters)
         self.SCC.set_filters(cankey.SCC_filters)
 
-        self.WHEELSIZE = wheel_size  # m
+        self.WHEELSIZE = self.config.wheel_size  # m
         self.bsd_array = [0, 0]
         self.rcv_wheel_speed = 0
         self.rpm = 0

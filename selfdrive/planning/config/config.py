@@ -1,10 +1,10 @@
 class Config(object):
-    name = 'KCity'
+    name = 'songdo'
     # name = 'SeoulAutonomousDrivingTestBed'
     # name = 'AlphaCity' 
 
     # map parameters
-    map_path = './map/%s.json'%(name)
+    map_path = '../map/%s.json'%(name)
     tile_size = 5.0
     cut_dist = 15.0
 

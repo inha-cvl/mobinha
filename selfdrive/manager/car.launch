@@ -1,3 +1,3 @@
 <launch>
-<node pkg='car' type='can_up.sh' name='car'/>
+  <node pkg='car' type='can_transceiver.py' name='CAN' />
 </launch>

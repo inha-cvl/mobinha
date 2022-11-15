@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 from ngii.ngiiParser import NGIIParser
-from quadratic_spline_interpolate import QuadraticSplineInterpolate
+from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 
 def convert_2_360(angle):

@@ -1,0 +1,6 @@
+{
+    "car_name":"niro",
+    "control_param":{
+        "wheel_size":0.432
+    }
+}

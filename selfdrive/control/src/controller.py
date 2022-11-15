@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import rospy
@@ -10,8 +9,8 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 
 from config.config import Config
-from pid import PID
-from purepursuit import PurePursuit
+from libs.pid import PID
+from libs.purepursuit import PurePursuit
 from viz import *
 
 class Controller:

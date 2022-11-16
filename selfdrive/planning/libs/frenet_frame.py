@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-from quintic_polynomials_planner import QuinticPolynomial
+from libs.quintic_polynomials_planner import QuinticPolynomial
 
 
 class QuarticPolynomial:
@@ -22,12 +22,12 @@ class QuarticPolynomial:
 
     def calc_point(self, t):
         xt = self.a0 + self.a1 * t + self.a2 * t ** 2 + \
-             self.a3 * t ** 3 + self.a4 * t ** 4
+            self.a3 * t ** 3 + self.a4 * t ** 4
         return xt
 
     def calc_first_derivative(self, t):
         xt = self.a1 + 2 * self.a2 * t + \
-             3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3
+            3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3
         return xt
 
     def calc_second_derivative(self, t):
@@ -88,6 +88,7 @@ def calc_frenet_paths(csp, c_speed, c_d, c_d_d, c_d_dd, s0):
 
     return frenet_paths
 
+
 def calc_global_paths(fplist, csp):
     for fp in fplist:
         # calc global positions
@@ -106,6 +107,7 @@ def calc_global_paths(fplist, csp):
             fp.last_s = s
 
     return fplist
+
 
 def frenet_optimal_planning(csp, s0, c_speed, c_d, c_d_d, c_d_dd):
     fplist = calc_frenet_paths(csp, c_speed, c_d, c_d_d, c_d_dd, s0)

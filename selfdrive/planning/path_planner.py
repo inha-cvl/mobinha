@@ -9,12 +9,16 @@ from visualization_msgs.msg import MarkerArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
 from config.config import Config
-from libs.lanelet_map import LaneletMap
-from libs.tile_map import TileMap
+from libs.map import LaneletMap, TileMap
 from micro_lanelet_graph import MicroLaneletGraph
 from libs.odom import Odom
 from libs.planner_utils import *
-from visualize.viz import *
+
+if __package__ is None:
+    import sys
+    from os import path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from visualize.viz import *
 
 
 class PathPlanner:

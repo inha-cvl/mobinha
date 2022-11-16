@@ -8,10 +8,9 @@ from shapely.geometry import Point as GPoint
 import matplotlib.patches as patches
 import pymap3d as pm
 
-import cubic_spline_planner as cubic_spline_planner
-from quadratic_spline_interpolate import QuadraticSplineInterpolate
-from frenet_frame import frenet_optimal_planning
-from selfdrive.visualize.viz import *
+import libs.cubic_spline_planner as cubic_spline_planner
+from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
+from libs.frenet_frame import frenet_optimal_planning
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6

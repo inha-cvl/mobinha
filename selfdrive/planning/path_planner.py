@@ -8,31 +8,23 @@ from geometry_msgs.msg import PoseStamped
 from visualization_msgs.msg import MarkerArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
-from config.config import Config
 from libs.map import LaneletMap, TileMap
 from micro_lanelet_graph import MicroLaneletGraph
 from libs.odom import Odom
 from libs.planner_utils import *
 
-if __package__ is None:
-    import sys
-    from os import path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from visualize.viz import *
+from visualize.viz import *
 
 
 class PathPlanner:
-    def __init__(self):
+    def __init__(self, CP):
         rospy.init_node('planner', anonymous=False)
-
-        self.config = Config()
 
         self.g_id = None
         self.g_idx = None
-
-        self.lmap = LaneletMap(self.config.map_path)
-        self.tmap = TileMap(self.lmap.lanelets, self.config.tile_size)
-        self.graph = MicroLaneletGraph(self.lmap, self.config.cut_dist).graph
+        self.lmap = LaneletMap(CP.mapParam.path)
+        self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+        self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
 
         self.odom = Odom()
         self.car_v = 0.0

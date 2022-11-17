@@ -1,9 +1,5 @@
 import copy
-if __package__ is None:
-    import sys
-    from os import path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from visualize.viz import *
+from visualize.viz import *
 
 import rospy
 from visualization_msgs.msg import MarkerArray

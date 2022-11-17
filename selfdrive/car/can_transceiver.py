@@ -9,7 +9,7 @@ from std_msgs.msg import Int16, Float32
 
 
 class CanTransceiver():
-    def __init__(self):
+    def __init__(self, CP):
         self.control_state = {
             'manual': 0x0,         # ON:0x1   OFF:0x0
             'mode_a': 0x0,         # ON:0x1   OFF:0x0
@@ -25,7 +25,7 @@ class CanTransceiver():
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitreate=500000)
         self.db = cantools.database.load_file(
-            '/home/inha/catkin_ws/src/niro/control/src/dbc/niro_2021.dbc')
+            CP.dbc)
         self.msg_id = {'w_BRK11': 0x200, 'w_BRK12': 0x500, 'w_BRK21': 0x220,
                        'w_BRK22': 0x230, 'w_BRK23': 0x380, 'w_BRK24': 0x240}
 

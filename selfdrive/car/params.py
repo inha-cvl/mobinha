@@ -1,11 +1,9 @@
-from message.messaging import ParamMaster
+from message.messaging import CP
 # all speeds in m/s
 
 
 class NIRO:
-    param_master = ParamMaster()
-    CP = param_master.CP
-
+    CP = CP
     car_param = CP._asdict()
     car_param["name"] = 'niro'
     car_param["dbc"] = 'dbc/niro/can.dbc'

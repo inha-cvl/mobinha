@@ -39,6 +39,9 @@ class LateralLQRTuning(NamedTuple):
     scale: float = 0.0
     ki: float = 0.0
     dcGain: float = 0.0
+    a:float=0.0
+    b:float=0.0
+    c:float=0.0
     l: float = 0.0
     k: float = 0.0
 

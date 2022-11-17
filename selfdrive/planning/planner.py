@@ -4,9 +4,8 @@ import signal
 from path_planner import PathPlanner
 from longitudinal_planner import LongitudinalPlanner
 
-from car.values import *
-from message.messaging import *
-
+from car.params import *
+from control.states import *
 
 class SignalInterruptHandler:
     def __init__(self):

@@ -27,7 +27,6 @@ class PathPlanner:
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
 
         self.odom = Odom()
-        self.car_v = 0.0
         self.traffic_lights = [0, 36001]
         self.lidar_object = []
         self.lidar_obstacle = []
@@ -55,15 +54,12 @@ class PathPlanner:
             '/final_path', Marker, queue_size=1, latch=True)
         self.pub_target_v = rospy.Publisher(
             '/target_v', Float32, queue_size=1, latch=True)
-        self.pub_arrive_info = rospy.Publisher(
-            '/arrive_info', Int16MultiArray, queue_size=10)
         self.pub_object_marker = rospy.Publisher(
             '/object_marker', MarkerArray, queue_size=2)
         self.pub_blinkiker = rospy.Publisher(
             '/lane_change', Int8, queue_size=2)
 
         rospy.Subscriber('/odom', Float32MultiArray, self.odom_cb)
-        rospy.Subscriber('/car_v', Float32, self.ins_odom_cb)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goal_cb)
         rospy.Subscriber('/lidar/cluster_box', BoundingBoxArray,
                          self.lidar_cluster_box_cb)
@@ -75,9 +71,6 @@ class PathPlanner:
     def goal_cb(self, msg):
         self.goal_pt = [msg.pose.position.x, msg.pose.position.y]
         self.get_goal = True
-
-    def ins_odom_cb(self, msg):
-        self.car_v = msg.data
 
     def v2x_cb(self, msg):
         self.traffic_lights = msg.data

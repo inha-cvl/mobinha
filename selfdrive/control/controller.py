@@ -22,13 +22,12 @@ class Controller:
     KPH_TO_MPS = 1 / 3.6
     MPS_TO_KPH = 3.6
 
-    def __init__(self, stage=1):
+    def __init__(self):
         rospy.init_node('controller', anonymous=False)
 
         self.config = Config()
         self.pid = PID(self.config)
-        # self.stage = rospy.get_param('stage', 1) # params file not exist is default : 1
-        self.purepursuit = PurePursuit(self.config, stage)
+        self.purepursuit = PurePursuit(self.config)
 
         self.target_v = 0.0
         self.get_odom = False
@@ -36,18 +35,10 @@ class Controller:
 
         self.sub_odom = rospy.Subscriber(
             '/odom', Float32MultiArray, self.odom_cb)
-        if stage == 1:
-            self.sub_final_path = rospy.Subscriber(
-                '/local_path', Marker, self.final_path_cb)
-            #self.sub_final_path = rospy.Subscriber('/final_path', Marker, self.final_path_cb)
-
-        elif stage == 2:
-            self.sub_final_path = rospy.Subscriber(
-                '/final_path', Marker, self.final_path_cb)
-
+        self.sub_final_path = rospy.Subscriber(
+            '/local_path', Marker, self.final_path_cb)
         self.sub_target_v = rospy.Subscriber(
             '/target_v', Float32, self.target_v_cb)
-
         self.pub_wheel_angle = rospy.Publisher(
             '/wheel_angle', Float32, queue_size=1)
         self.pub_accel_brake = rospy.Publisher(
@@ -78,7 +69,6 @@ class Controller:
                     lah_viz = LookAheadViz(lah_pt)
                     self.pub_lah.publish(lah_viz)
 
-                print('vvv', self.target_v)
                 accel_brake = self.pid.run(self.target_v, self.v)
                 self.pub_wheel_angle.publish(Float32(wheel_angle))
                 self.pub_accel_brake.publish(Float32(accel_brake))

@@ -13,7 +13,7 @@ class Actuators(NamedTuple):
     steer: float = 0.0
     speed: float = 0.0
     accel: float = 0.0
-    longControlState: LongControlState = (0, 1, 2, 3)
+    longControlState: LongControlState = LongControlState()
 
 
 class CruiseControl(NamedTuple):
@@ -26,5 +26,5 @@ class Control(NamedTuple):
     enabled: bool = False
     latActive: bool = False
     longActive: bool = False
-    actuators: Actuators = (0.0, 0.0, 0.0, 0.0, (0, 1, 2, 3))
-    cruiseControl: CruiseControl = (False, False, False)
+    actuators: Actuators = Actuators()
+    cruiseControl: CruiseControl = CruiseControl()

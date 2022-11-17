@@ -1,59 +1,65 @@
 from typing import NamedTuple
 
+class Positions(NamedTuple):
+    latitude : float = 37.45
+    longitude : float = 126.6535
+    altitude : float = 5.0
 
 class WheelSpeeds(NamedTuple):
-    fl: float
-    fr: float
-    rl: float
-    rr: float
+    fl: float = 0.0
+    fr: float = 0.0
+    rl: float =0.0
+    rr: float =0.0
 
 
 class CruiseState(NamedTuple):
-    enabled: bool
-    speed: float
-    available: bool
+    enabled: bool = False
+    speed: float = 0.0
+    available: bool =  False
 
 
 class GearShifter(NamedTuple):
-    park: 1
-    drive: 2
-    neutral: 3
-    reverse: 4
+    park: int = 1
+    drive: int = 2
+    neutral: int = 3
+    reverse: int = 4
 
 
 class ButtonType(NamedTuple):
-    leftBlinker: 1
-    rightBlinker: 2
-    accelCruise: 3
-    decelCruise: 4
-    cancel: 5
-    setCruise: 6
-    resumeCruise: 7
+    leftBlinker: int = 1
+    rightBlinker: int = 2
+    accelCruise: int = 3
+    decelCruise: int = 4
+    cancel: int = 5
+    setCruise: int = 6
+    resumeCruise: int = 7
 
 
 class ButtonEvent(NamedTuple):
-    pressed: bool
-    buttonType: ButtonType
+    pressed: bool = False
+    buttonType: ButtonType = ButtonType()
 
 
 class State(NamedTuple):
-    vEgo: float
-    aEgo: float
+    vEgo: float = 0.0
+    aEgo: float = 0.0
 
-    yawRate: float
-    wheelSpeeds: WheelSpeeds
+    position: Positions = Positions()
 
-    brake: float
-    brakePressed: bool
+    yawRate: float = 0.0
+    wheelSpeeds: WheelSpeeds = WheelSpeeds()
 
-    steeringAngleDeg: float
-    steeringTorque: float
+    brake: float = 0.0
+    brakePressed: bool = False
 
-    cruiseState: CruiseState
+    steeringAngleDeg: float = 0.0
+    steeringTorque: float = 0.0
 
-    gearShifter: GearShifter
+    cruiseState: CruiseState = CruiseState()
 
-    buttonEvent: ButtonEvent
+    gearShifter: GearShifter = GearShifter()
 
-    leftBlinker: bool
-    rightBlinker: bool
+    buttonEvent: ButtonEvent = ButtonEvent()
+
+    leftBlinker: bool = False
+    rightBlinker: bool = False

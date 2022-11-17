@@ -13,7 +13,7 @@ from interpolate import interpolate
 class PurePursuit:
     KPH_TO_MPS = 1 / 3.6
 
-    def __init__(self, config, stage):
+    def __init__(self, config):
         # niro
         self.L = config.L
         self.temp_lx = None
@@ -26,19 +26,9 @@ class PurePursuit:
         rospy.Subscriber('/lane_change', Int8, self.lane_change_cb)
         rospy.Subscriber('/is_bank', Int8, self.bank_cb)
 
-        self.stage = stage
-        if self.stage == 1:
-            self.k = config.k1
-            self.Lfc = config.Lfc1
-            self.k_curva = config.k_curva1
-
-        elif self.stage == 2:
-            self.k = config.k2
-            self.Lfc = config.Lfc2
-            self.k_curva = config.k_curva2
-
-        else:
-            print('Error: stage==1 or 2')
+        self.k = config.k1
+        self.Lfc = config.Lfc1
+        self.k_curva = config.k_curva1
 
         self.lookahead_monitor = rospy.Publisher(
             'lookahead_monitor', Float32, queue_size=1)

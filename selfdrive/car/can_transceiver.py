@@ -51,6 +51,7 @@ class CanTransceiver():
         self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 3}
 
         rospy.on_shutdown(self.cleanup)
+        
 #######  ROS-Subscriber  #####################################################
 
     def can_cmd(self, msg):
@@ -74,14 +75,6 @@ class CanTransceiver():
                      'mode_a': 0x1, 'mode_b': 0x1, 'mode_c': 0x1, 'acc_en': 0x01}
 
         self.control_state = state
-
-        # self.manual_control = data[0]
-        # self.mode_a = data[1]
-        # self.mode_b = data[2]
-        # self.mode_c = data[3]
-        # self.gear_en = data[4]
-        # self.steer_en = data[5]
-        # self.vel_mode = data[6]
 
     def wheel_angle_cmd(self, msg):
         wheel = self.wheel
@@ -110,9 +103,6 @@ class CanTransceiver():
         else:
             self.accel_value = msg.data
 
-    # def gear_cmd(self, msg):
-        # self.gear_mode = msg.data
-
     def velocity_cmd(self, msg):
         self.reference_velocity = msg.data
 
@@ -140,13 +130,9 @@ class CanTransceiver():
                 self.rcv_accel_value = '%.4f' % res['Gway_Longitudinal_Accel_Speed']
             elif (data.arbitration_id == 0x280):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                # use
                 self.velocity_FR = res['Gway_Wheel_Velocity_FR']
-                # use
                 self.velocity_RL = res['Gway_Wheel_Velocity_RL']
-                # use
                 self.velocity_RR = res['Gway_Wheel_Velocity_RR']
-                # use
                 self.velocity_FL = res['Gway_Wheel_Velocity_FL']
                 # when it is revise tell to all
                 self.rcv_velocity = (self.velocity_RR + self.velocity_RL)/7.2
@@ -155,7 +141,6 @@ class CanTransceiver():
             elif (data.arbitration_id == 0x290):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.rcv_wheel_angle = res['Gway_Steering_Angle']     # use
-                # use
                 self.rcv_steer_status = res['Gway_Steering_Status']
             elif (data.arbitration_id == 0x260):
                 res = self.db.decode_message(data.arbitration_id, data.data)

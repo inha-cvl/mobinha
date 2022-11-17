@@ -1,6 +1,3 @@
-import numpy as np
-# from planner.planner_utils import KPH_TO_MPS
-import pymap3d
 import rospy
 from std_msgs.msg import Float32, Int8
 from numpy.linalg import norm
@@ -13,22 +10,22 @@ from interpolate import interpolate
 class PurePursuit:
     KPH_TO_MPS = 1 / 3.6
 
-    def __init__(self, config):
+    def __init__(self, CP):
         # niro
-        self.L = config.L
+        self.L = CP.wheelbase
         self.temp_lx = None
         self.temp_ly = None
 
-        self.isLaneChange = False  # 0:no, 1:yes
-        self.isBank = False  # 0:no, 1:yes
+        self.isLaneChange = False
+        self.isBank = False
         rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
         rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
         rospy.Subscriber('/lane_change', Int8, self.lane_change_cb)
         rospy.Subscriber('/is_bank', Int8, self.bank_cb)
 
-        self.k = config.k1
-        self.Lfc = config.Lfc1
-        self.k_curva = config.k_curva1
+        self.k = CP.lateralTuning.lqr.k
+        self.Lfc = CP.lateralTuning.lqr.l
+        self.k_curva = 20.0
 
         self.lookahead_monitor = rospy.Publisher(
             'lookahead_monitor', Float32, queue_size=1)

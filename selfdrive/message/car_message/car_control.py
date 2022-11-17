@@ -22,7 +22,7 @@ class CruiseControl(NamedTuple):
     override: bool = False
 
 
-class Control(NamedTuple):
+class CarControl(NamedTuple):
     enabled: bool = False
     latActive: bool = False
     longActive: bool = False

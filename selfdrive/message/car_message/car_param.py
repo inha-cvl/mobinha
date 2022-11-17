@@ -5,6 +5,9 @@ class MapParam(NamedTuple):
     path: str = ''
     tileSize: float = 0.0
     cutDist: float = 0.0
+    baseLatitude: float = 37.39657805498484
+    baseLongitude: float = 126.6321430873685
+    baseAltitude: float = 7.369
 
 
 class LongitudinalTuning(NamedTuple):
@@ -39,9 +42,9 @@ class LateralLQRTuning(NamedTuple):
     scale: float = 0.0
     ki: float = 0.0
     dcGain: float = 0.0
-    a:float=0.0
-    b:float=0.0
-    c:float=0.0
+    a: float = 0.0
+    b: float = 0.0
+    c: float = 0.0
     l: float = 0.0
     k: float = 0.0
 
@@ -72,7 +75,7 @@ class Ecu(NamedTuple):
     engine: int = 4
 
 
-class Param(NamedTuple):
+class CarParam(NamedTuple):
     name: str = ""
     dbc: str = ""
     mapParam: MapParam = MapParam()

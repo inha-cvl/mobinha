@@ -1,9 +1,8 @@
-#!/usr/bin/python
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
 import rospy
-from std_msgs.msg import Float32, Float32MultiArray, Int16MultiArray, Int8
+from std_msgs.msg import Float32, Float32MultiArray, Int8
 from geometry_msgs.msg import PoseStamped
 from visualization_msgs.msg import MarkerArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
@@ -18,8 +17,6 @@ from visualize.viz import *
 
 class PathPlanner:
     def __init__(self, CP):
-        rospy.init_node('planner', anonymous=False)
-
         self.g_id = None
         self.g_idx = None
         self.lmap = LaneletMap(CP.mapParam.path)

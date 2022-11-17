@@ -4,13 +4,7 @@ from visualization_msgs.msg import MarkerArray
 import sys
 from os import path
 
-if __package__ is None:
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from visualize.viz import *
-else:
-    sys.path.append(path.dirname(
-        (path.dirname(path.dirname(path.abspath(__file__))))))
-    from visualize.viz import *
+from visualize.viz import *
 
 
 class LaneletMap:

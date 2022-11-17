@@ -1,21 +1,25 @@
 from typing import NamedTuple
 
+
 class Positions(NamedTuple):
-    latitude : float = 37.45
-    longitude : float = 126.6535
-    altitude : float = 5.0
+    x: float = 0.0
+    y: float = 0.0
+    latitude: float = 37.45
+    longitude: float = 126.6535
+    altitude: float = 5.0
+
 
 class WheelSpeeds(NamedTuple):
     fl: float = 0.0
     fr: float = 0.0
-    rl: float =0.0
-    rr: float =0.0
+    rl: float = 0.0
+    rr: float = 0.0
 
 
 class CruiseState(NamedTuple):
     enabled: bool = False
     speed: float = 0.0
-    available: bool =  False
+    available: bool = False
 
 
 class GearShifter(NamedTuple):
@@ -40,10 +44,9 @@ class ButtonEvent(NamedTuple):
     buttonType: ButtonType = ButtonType()
 
 
-class State(NamedTuple):
+class CarState(NamedTuple):
     vEgo: float = 0.0
     aEgo: float = 0.0
-
     position: Positions = Positions()
 
     yawRate: float = 0.0

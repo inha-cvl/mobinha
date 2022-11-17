@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
 
-class Event(NamedTuple):
+class CarEvent(NamedTuple):
     name: str = ''
     enable: bool = False

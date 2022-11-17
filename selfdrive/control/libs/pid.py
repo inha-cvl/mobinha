@@ -1,10 +1,11 @@
 class PID:
     KPH_TO_MPS = 1 / 3.6
     MPS_TO_KPH = 3.6
-    def __init__(self, config, dt=0.1):
-        self.K_P = config.K_P
-        self.K_I = config.K_I
-        self.K_D = config.K_D
+
+    def __init__(self, CP, dt=0.1):
+        self.K_P = CP.K_P
+        self.K_I = CP.K_I
+        self.K_D = CP.K_D
         self.pre_error = 0.0
         self.error_sum = 0.0
         self.dt = dt

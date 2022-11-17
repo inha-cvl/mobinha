@@ -1,25 +1,17 @@
-# sudo ip link set can0 up type can bitrate 500000
-import can
-import cantools
-import time
-import tf
 import math
 import pymap3d
-import os
 
 import rospy
-
 from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
-from std_msgs.msg import Int16, Float32, Float32MultiArray
-from visualization_msgs.msg import Marker
+from std_msgs.msg import Float32
 
 from message.messaging import CS
 
 
 class StateMaster:
-    def __init__(self):
-        self.bus = can.Th
+    def __init__(self, CP):
         rospy.init_node('state_master', anonymous=False)
+
         self.sub_rtk_gps = rospy.Subscriber(
             '/sbg/ekf_nav', SbgEkfNav, self.rtk_gps_cb)
         self.sub_ins_imu = rospy.Subscriber(
@@ -27,13 +19,19 @@ class StateMaster:
         self.sub_ins_odom = rospy.Subscriber(
             '/car_v', Float32, self.ins_odom_cb)
 
-            
-        self.test = 0
         self.CS = CS
+        self.base_lla = [CP.mapParam.baseLatitude,
+                         CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
-        self.receiver()
-    
+        self.v = 0.0
+        self.yaw = 0.0
+        self.x = 0.0
+        self.y = 0.0
+
     def rtk_gps_cb(self, msg):
+        self.latitude = msg.latitude
+        self.longitude = msg.longitude
+        self.altitude = msg.altitude
         self.x, self.y, _ = pymap3d.geodetic2enu(
             msg.latitude, msg.longitude, msg.altitude, self.base_lla[0], self.base_lla[1], self.base_lla[2])
 
@@ -44,18 +42,18 @@ class StateMaster:
         yaw = math.degrees(msg.angle.z)
         self.yaw = 90 - yaw if (yaw >= -90 and yaw <= 180) else -270 - yaw
 
-    def receiver(self):
-        while True:
-            try:
-                data = self.bus.recv()
-
-            except KeyboardInterrupt:
-                exit(0)
-
-    def test_callback(self, msg):
-        self.test = msg.data
-
     def update(self):
         car_state = self.CS._asdict()
-        car_state["number"] = self.test
+
+        car_state["vEgo"] = self.v
+        car_state_position = car_state["position"]._sedict()
+        car_state_position["x"] = self.x
+        car_state_position["y"] = self.y
+        car_state_position["latitude"] = self.latitude
+        car_state_position["longitude"] = self.longitude
+        car_state_position["altitude"] = self.altitude
+        car_state["position"] = self.CS.position._make(
+            car_state_position.values())
+        car_state["yawRate"] = self.yaw
+
         self.CS = self.CS._make(car_state.values())

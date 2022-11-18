@@ -1,8 +1,0 @@
-{
-    "car_state":{
-        "dbc_file_path":"dbc/niro/hyundai_can.dbc"
-    },
-    "control_param":{
-        "wheel_size":0.432
-    }
-}

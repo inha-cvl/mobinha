@@ -1,11 +1,7 @@
 import rospy
 import math
-import pymap3d
-# import csv
-from sbg_driver.msg import SbgEkfNav
-from sbg_driver.msg import SbgEkfEuler
-from sbg_driver.msg import SbgGpsHdt
-from sbg_driver.msg import SbgGpsPos
+from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
+
 
 class INS():
     def __init__(self, filename):
@@ -14,19 +10,19 @@ class INS():
         self.gps_pos = [0, 0, 0]
         self.thdt = 0
         self.hdt = 0
-        self.acc = 0 
-        self.rtk = 0 
+        self.acc = 0
+        self.rtk = 0
         self.extractor()
 
-    def nav(self,data):
+    def nav(self, data):
         x, y, z = data.latitude, data.longitude, data.altitude
-        self.f_ekf.write('{},{},{},{}\n'.format(x,y,z,self.hdt))
-        
+        self.f_ekf.write('{},{},{},{}\n'.format(x, y, z, self.hdt))
+
     def head(self, data):
         # pass
         yaw = math.degrees(data.angle.z)
         self.hdt = 90 - yaw if (yaw >= -90 and yaw <= 180) else -270 - yaw
-        
+
     def extractor(self):
         rospy.init_node('extractor', anonymous=True)
 
@@ -35,7 +31,7 @@ class INS():
 
         rospy.spin()
 
+
 if __name__ == '__main__':
     filename = input('enter filename : ')
     alpha = INS(filename)
-    

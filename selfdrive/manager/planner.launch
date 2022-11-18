@@ -1,12 +1,12 @@
 <launch>
   <!-- PLANNER LAUNCH -->
-  <node pkg='planner' type='planner.py' name='Planner' />
+  <node pkg='planning' type='planner.py' name='Planner' />
   <!-- LOCALIZER LAUNCH -->
-  <node pkg='common' type='localizer_niro.py' name='Localizer' launch-prefix="bash -c 'sleep 10; $0 $@' "/>
+  <node pkg='control' type='localizer.py' name='Localizer' launch-prefix="bash -c 'sleep 10; $0 $@' "/>
   <!-- CONTROLLER LAUNCH -->
-  <node pkg='common' type='controller.py' name='Controller' launch-prefix="bash -c 'sleep 10; $0 $@' "/>
+  <node pkg='control' type='controller.py' name='Controller' launch-prefix="bash -c 'sleep 10; $0 $@' "/>
   <!-- CONTROLLER UI LAUNCH -->
-  <node pkg='control' type='control_ui.py' name='ControlUI' />
+  <node pkg='car' type='control_ui.py' name='ControlUI' />
   <!-- RVIZ LAUNCH -->
-  <node pkg='rviz' type='rviz' args='-d /home/inha/catkin_ws/src/niro/common/Master/aeye.rviz' name='RVIZ' />
+  <node pkg='rviz' type='rviz' args='-d $(find visualize)/main.rviz' name='RVIZ' />
 </launch>

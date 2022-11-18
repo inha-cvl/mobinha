@@ -5,13 +5,13 @@ import rospy
 from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
 from std_msgs.msg import Float32
 
-from message.messaging import CS
+from selfdrive.message.car_message import car_state
+
+CS = car_state.CarState()
 
 
 class StateMaster:
     def __init__(self, CP):
-        rospy.init_node('state_master', anonymous=False)
-
         self.sub_rtk_gps = rospy.Subscriber(
             '/sbg/ekf_nav', SbgEkfNav, self.rtk_gps_cb)
         self.sub_ins_imu = rospy.Subscriber(
@@ -27,6 +27,9 @@ class StateMaster:
         self.yaw = 0.0
         self.x = 0.0
         self.y = 0.0
+        self.latitude = 0.0
+        self.longitude = 0.0
+        self.altitude = 0.0
 
     def rtk_gps_cb(self, msg):
         self.latitude = msg.latitude
@@ -46,7 +49,7 @@ class StateMaster:
         car_state = self.CS._asdict()
 
         car_state["vEgo"] = self.v
-        car_state_position = car_state["position"]._sedict()
+        car_state_position = car_state["position"]._asdict()
         car_state_position["x"] = self.x
         car_state_position["y"] = self.y
         car_state_position["latitude"] = self.latitude

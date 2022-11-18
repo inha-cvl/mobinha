@@ -24,6 +24,46 @@ def ObjectsViz(objects):
     return array
 
 
+def make_object_marker(cw, x, y, idx):
+    marker = Marker()
+
+    marker.header.frame_id = 'world'
+    marker.header.stamp = rospy.Time.now()
+
+    # set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3\
+    marker.type = 2
+    marker.id = idx
+
+    # Set the scale of the marker
+    marker.scale.x = 1.0
+    marker.scale.y = 1.0
+    marker.scale.z = 1.0
+
+    if cw == 1:
+        # Set the color
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+    else:
+        # Set the color
+        marker.color.r = 1.0
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+        marker.color.a = 1.0
+
+    # Set the pose of the marker
+    marker.pose.position.x = x
+    marker.pose.position.y = y
+    marker.pose.position.z = 0
+    marker.pose.orientation.x = 0.0
+    marker.pose.orientation.y = 0.0
+    marker.pose.orientation.z = 0.0
+    marker.pose.orientation.w = 1.0
+
+    return marker
+
+
 def LookAheadViz(pt):
     marker = Sphere('look_ahead', 0, 2.0, (0.0, 0.0, 1.0, 1.0))
     marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
@@ -403,15 +443,15 @@ def Arrow(ns, id_, scale, color):
 def EgoCarViz():
     marker = Marker()
     marker.header.frame_id = 'ego_car'
-    marker.ns = 'i30'
+    marker.ns = 'car'
     marker.id = 0
     marker.type = Marker.MESH_RESOURCE
     marker.mesh_resource = 'file://{}/obj/car.dae'.format(dir_path)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = 0.25
-    marker.scale.y = 0.25
-    marker.scale.z = 0.25
+    marker.scale.x = 1.5
+    marker.scale.y = 1.5
+    marker.scale.z = 1.5
     marker.color.r = 0.7
     marker.color.g = 0.7
     marker.color.b = 0.7
@@ -420,49 +460,9 @@ def EgoCarViz():
     marker.pose.position.y = -0.03
     marker.pose.position.z = 0.0
     quaternion = tf.transformations.quaternion_from_euler(
-        0, 0, -math.radians(90))
+        0, 0, -math.radians(270))
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]
     marker.pose.orientation.z = quaternion[2]
     marker.pose.orientation.w = quaternion[3]
-    return marker
-
-
-def make_object_marker(cw, x, y, idx):
-    marker = Marker()
-
-    marker.header.frame_id = 'world'
-    marker.header.stamp = rospy.Time.now()
-
-    # set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3\
-    marker.type = 2
-    marker.id = idx
-
-    # Set the scale of the marker
-    marker.scale.x = 1.0
-    marker.scale.y = 1.0
-    marker.scale.z = 1.0
-
-    if cw == 1:
-        # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.color.a = 1.0
-    else:
-        # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 1.0
-        marker.color.b = 1.0
-        marker.color.a = 1.0
-
-    # Set the pose of the marker
-    marker.pose.position.x = x
-    marker.pose.position.y = y
-    marker.pose.position.z = 0
-    marker.pose.orientation.x = 0.0
-    marker.pose.orientation.y = 0.0
-    marker.pose.orientation.z = 0.0
-    marker.pose.orientation.w = 1.0
-
     return marker

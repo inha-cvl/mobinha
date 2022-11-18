@@ -699,66 +699,28 @@ def lane_change_available(lanelet, ego_lanelet, change_dir, objects):
 
 
 # , objects_s=None, rel_v=None):
-def velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl_s, tl_time, tl_state, objects_s):
+def velocity_plan(st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl_objects, objects_s):
     #cur_v : m/s
-    s_min, s_max, t_max = st_param['s_min'], st_param['s_max'], st_param['t_max']
-    dt, dt_exp = st_param['dt'], st_param['dt_exp']
-    ref_v = ref_v * KPH_TO_MPS
-    ds_exp = ref_v * dt_exp
+    ref_v *= KPH_TO_MPS
+    s_min, s_max, t_max = st_param['sMin'], st_param['sMax'], st_param['tMax']
+    dt, dt_exp = st_param['dt'], st_param['dtExp']
+    tl_s, tl_time, tl_state = tl_objects
 
     target_v = 0.0
-    s += 3.0
+    s += 1.0
 
-    if drawn is not None:
-        for d in drawn:
-            d.remove()
-
-    drawn = []
     obstacles = []
 
     last = [(0.0, last_s-2.0), (t_max, last_s-2.0),
             (t_max, last_s+5.0), (0.0, last_s+5.0)]
     obstacles.append(last)
-    d = ax.add_patch(patches.Polygon(
-        [pt for pt in last], closed=True, edgecolor='black', facecolor='gray'))
-    drawn.append(d)
 
     tl_offset = 10
-    # remove tl_state == 'green' or 'yellow' or 'red' ( recog by string )
-    # green = 2, yellow = 1, red = 0
-    # red = 1, green = 2, yellow = 3
-    traffic_light = []
-    # print("state:", tl_state,"time:",tl_time, "s", tl_s)
-    if tl_state == 1:  # red
-        light_time = min(t_max-3.0, tl_time/10)
-        if cur_v > 15 * KPH_TO_MPS:
-            traffic_light = [(0, tl_s), (5.0, tl_s),
-                             (5.0, tl_s+tl_offset), (0, tl_s+tl_offset)]
-        else:
-            traffic_light = [(0, tl_s), (light_time, tl_s),
-                             (light_time, tl_s+tl_offset), (0, tl_s+tl_offset)]
-        obstacles.append(traffic_light)
-        d = ax.add_patch(patches.Polygon(
-            [pt for pt in traffic_light], closed=True, edgecolor='black', facecolor='red'))
-        drawn.append(d)
-    elif tl_state == 2:  # green
-        light_time = tl_time/10
-        if light_time < 2:
-            traffic_light = [(0, tl_s), (4.0, tl_s),
-                             (4.0, tl_s+tl_offset), (0, tl_s+tl_offset)]
-            obstacles.append(traffic_light)
-            d = ax.add_patch(patches.Polygon(
-                [pt for pt in traffic_light], closed=True, edgecolor='black', facecolor='green'))
-            drawn.append(d)
-    elif tl_state == 3:  # yellow
-        traffic_light = [(0, tl_s), (5.0, tl_s),
-                         (5.0, tl_s+tl_offset), (0, tl_s+tl_offset)]
-        obstacles.append(traffic_light)
-        d = ax.add_patch(patches.Polygon(
-            [pt for pt in traffic_light], closed=True, edgecolor='black', facecolor='yellow'))
-        drawn.append(d)
 
-    # [OLD] Object Detection control
+    light_time = min(t_max-3.0, tl_time/10)
+    traffic_light = [(0, tl_s), (light_time, tl_s),
+                     (light_time, tl_s+tl_offset), (0, tl_s+tl_offset)]
+
     obj_offset = 5
     if cur_v < 30 * KPH_TO_MPS:
         obj_time = 2
@@ -771,16 +733,9 @@ def velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl
             obj = [(0.0, objects_s-obj_offset), (obj_time, objects_s-obj_offset),
                    (obj_time, objects_s+obj_offset), (0.0, objects_s+obj_offset)]
             obstacles.append(obj)
-            d = ax.add_patch(patches.Polygon(
-                [pt for pt in obj], closed=True, edgecolor='black', facecolor='blue'))
-            drawn.append(d)
-
-    ax.set_ylim([s+s_min, s+s_max])
-    ax.set_yticks([i for i in range(int(s+s_min), int(s+s_max))])
 
     ############### Planning Start ###############
     start = (0.0, s, cur_v, cur_a)  # t, s, v, a
-    start_time = time.time()
     open_heap = []
     open_dict = {}
     visited_dict = {}
@@ -822,8 +777,6 @@ def velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl
 
             target_v = v_list[1]
 
-            d = ax.plot(t_list, s_list, '-m')
-            drawn.append(d[0])
             break
 
         hq.heappop(open_heap)
@@ -867,10 +820,6 @@ def velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl
             neighbor_v = v_exp
             neighbor_a = a
 
-            d = ax.plot([chosen_c_node[0], neighbor_t], [
-                        chosen_c_node[1], neighbor_s], '-c')
-            drawn.append(d[0])
-
             neighbor_t_d = neighbor_t
             neighbor_s_d = neighbor_s
 
@@ -904,16 +853,13 @@ def velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl
                 open_dict[neighbor[0]] = (
                     total_cost, neighbor[1], (chosen_d_node, chosen_c_node))
 
-    return target_v, drawn
-
+    return target_v
 
 # , objects_s=None, rel_v=None):
-def new_velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl_s, tl_time, tl_state, objects_s):
-    KPH_TO_MPS = 1 / 3.6
-    MPS_TO_KPH = 3.6
-    #print('tl_s', tl_s)
+
+
+def new_velocity_plan(ref_v, last_s, s, tl_s, objects_s):
     ref_v *= KPH_TO_MPS
-    # calculate d : distance from the obstacle
     d_list = []
 
     traffic_d = tl_s
@@ -922,44 +868,23 @@ def new_velocity_plan(ax, drawn, st_param, ref_v, last_s, s, max_v, cur_v, cur_a
 
     d_list.append(last_s-s)
 
-    rospy.loginfo(str(last_s - s))
-
     for object in objects_s:
         for obj in object:
-            #d = euc_distance((0,0), (obj.x, obj.y))
-            d = obj[1] - s  # obj[0]: s in s-d coordinate
+            d = obj[1] - s
             d_list.append(d)
 
     min_d = min(d_list)
 
     if not len(d_list) == 0:
         if min_d > 50:
-            target_v = ref_v  # max speed in map
+            target_v = ref_v
         else:
-            # calculate target_v
-            k = 0.8  # [m/s]
-            target_v = k*log(min_d - margin + 1)
+            k = 0.8
+            target_v = k*(min_d - margin + 1)
     else:
         target_v = ref_v
 
-    # original
-    if drawn is not None:
-        for d in drawn:
-            d.remove()
-
-    drawn = []
-    obstacles = []
-    s_min, s_max, t_max = st_param['s_min'], st_param['s_max'], st_param['t_max']
-    dt, dt_exp = st_param['dt'], st_param['dt_exp']
-    last = [(0.0, last_s-2.0), (t_max, last_s-2.0),
-            (t_max, last_s+5.0), (0.0, last_s+5.0)]
-    obstacles.append(last)
-    d = ax.add_patch(patches.Polygon(
-        [pt for pt in last], closed=True, edgecolor='black', facecolor='gray'))
-    drawn.append(d)
-    ####
-
-    return target_v*MPS_TO_KPH, drawn
+    return target_v*MPS_TO_KPH
 
 
 def local_to_global(local_data, pos):
@@ -1010,14 +935,14 @@ def signal_light_toggle(path, ego_idx, precision, t_map, lmap, stage):
         forward_lanelet_ids = np.array(ids)
         # 0: normal, 1: left, 2: right
         # if forward_lanelet_id == left_lanelet or (stage == 1 and ):
-        print(forward_lanelet_ids)
+        # print(forward_lanelet_ids)
         if np.any(forward_lanelet_ids == left_lanelet):
             change = 1
         elif np.any(forward_lanelet_ids == right_lanelet):
             change = 2
         else:
             change = 0
-        print(change)
+        # print(change)
         return change
     except IndexError:
         pass

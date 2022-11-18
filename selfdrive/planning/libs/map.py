@@ -4,7 +4,7 @@ from visualization_msgs.msg import MarkerArray
 import sys
 from os import path
 
-from visualize.viz import *
+from selfdrive.visualize.viz import *
 
 
 class LaneletMap:

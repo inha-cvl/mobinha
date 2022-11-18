@@ -1,9 +1,12 @@
-from message.messaging import CP
-import json
-# all speeds in m/s
+from selfdrive.message.car_message import car_param
 
-print(__package__)
+import json
+import os
+
 MAP = 'songdo'
+CP = car_param.CarParam()
+
+dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def getBaseLLA(map_path):
@@ -17,19 +20,20 @@ class NIRO:
     CP = CP
     car_param = CP._asdict()
     car_param["name"] = 'niro'
-    car_param["dbc"] = 'selfdrive/car/dbc/%s/can.dbc' % car_param["name"]
+    car_param["dbc"] = dir_path+'/car/dbc/%s/can.dbc' % car_param["name"]
     car_param_map_param = car_param["mapParam"]._asdict()
-    car_param_map_param["path"] = 'map/%s.json' % MAP
+    car_param_map_param["path"] = dir_path+'/planning/map/%s.json' % MAP
     car_param_map_param["tileSize"] = 5.0
     car_param_map_param["cutDist"] = 15.0
+    car_param_map_param["precision"] = 0.5
     base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
     car_param_map_param["baseLatitude"] = base_lat
     car_param_map_param["baseLongitude"] = base_lng
     car_param_map_param["baseAltitude"] = base_alt
     car_param["mapParam"] = CP.mapParam._make(car_param_map_param.values())
 
-    car_param["minEnableSpeed"] = 0.1  # min_v
-    car_param["maxEnableSpeed"] = 8.0  # ref_v
+    car_param["minEnableSpeed"] = 3  # min_v
+    car_param["maxEnableSpeed"] = 50  # ref_v
     car_param["mass"] = 1737.0 + 136.0
     car_param["wheelbase"] = 2.72  # L
     car_param["centerToFront"] = car_param["wheelbase"] * 0.4
@@ -61,19 +65,20 @@ class SIMULATOR:
     CP = CP
     car_param = CP._asdict()
     car_param["name"] = 'simulator'
-    car_param["dbc"] = 'selfdrive/car/dbc/%s/can.dbc' % car_param["name"]
+    car_param["dbc"] = dir_path+'/car/dbc/%s/can.dbc' % car_param["name"]
     car_param_map_param = car_param["mapParam"]._asdict()
-    car_param_map_param["path"] = 'map/%s.json' % MAP
+    car_param_map_param["path"] = dir_path+'/planning/map/%s.json' % MAP
     car_param_map_param["tileSize"] = 5.0
     car_param_map_param["cutDist"] = 15.0
+    car_param_map_param["precision"] = 0.5
     base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
     car_param_map_param["baseLatitude"] = base_lat
     car_param_map_param["baseLongitude"] = base_lng
     car_param_map_param["baseAltitude"] = base_alt
     car_param["mapParam"] = CP.mapParam._make(car_param_map_param.values())
 
-    car_param["minEnableSpeed"] = 0.1  # min_v
-    car_param["maxEnableSpeed"] = 8.0  # ref_v
+    car_param["minEnableSpeed"] = 10  # min_v
+    car_param["maxEnableSpeed"] = 50  # ref_v
     car_param["mass"] = 1737.0 + 136.0
     car_param["wheelbase"] = 2.72  # L
     car_param["centerToFront"] = car_param["wheelbase"] * 0.4

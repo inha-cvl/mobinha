@@ -12,15 +12,13 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 
+KPH_TO_MPS = 1 / 3.6
+MPS_TO_KPH = 3.6
+
 
 class Controller:
 
-    KPH_TO_MPS = 1 / 3.6
-    MPS_TO_KPH = 3.6
-
     def __init__(self, CP):
-        rospy.init_node('controller', anonymous=False)
-
         self.pid = PID(CP.longitudinalTuning)
         self.purepursuit = PurePursuit(CP)
 
@@ -43,9 +41,10 @@ class Controller:
         self.final_path = [(pt.x, pt.y) for pt in msg.points]
 
     def target_v_cb(self, msg):
-        self.target_v = msg.data*self.KPH_TO_MPS
+        self.target_v = msg.data
 
-    def run(self, CS):
+    def run(self, sm):
+        CS = sm.CS
         if CS.yawRate != 0.0:
             if self.final_path is None:
                 wheel_angle = 0.0
@@ -55,7 +54,7 @@ class Controller:
                 lah_viz = LookAheadViz(lah_pt)
                 self.pub_lah.publish(lah_viz)
 
-            accel_brake = self.pid.run(self.target_v, self.v)
+            accel_brake = self.pid.run(self.target_v, CS.vEgo)
 
             self.pub_wheel_angle.publish(Float32(wheel_angle))
             self.pub_accel_brake.publish(Float32(accel_brake))

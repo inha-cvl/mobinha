@@ -13,13 +13,12 @@ os.chdir(dir_path)
 
 class Localizer:
     def __init__(self):
-        rospy.init_node('localizer', anonymous=False)
-
         self.ego_car = EgoCarViz()
         self.br = tf.TransformBroadcaster()
         self.pub_ego_car = rospy.Publisher('/ego_car', Marker, queue_size=1)
 
-    def run(self, CS):
+    def run(self, sm):
+        CS = sm.CS
         quaternion = tf.transformations.quaternion_from_euler(
             0.0, 0.0, math.radians(CS.yawRate))
         self.br.sendTransform(

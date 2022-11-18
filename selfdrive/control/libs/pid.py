@@ -3,9 +3,9 @@ class PID:
     MPS_TO_KPH = 3.6
 
     def __init__(self, CP, dt=0.1):
-        self.K_P = CP.K_P
-        self.K_I = CP.K_I
-        self.K_D = CP.K_D
+        self.K_P = CP.kpV
+        self.K_I = CP.kiV
+        self.K_D = CP.kf
         self.pre_error = 0.0
         self.error_sum = 0.0
         self.dt = dt

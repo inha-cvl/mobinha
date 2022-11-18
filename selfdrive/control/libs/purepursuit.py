@@ -3,8 +3,8 @@ from std_msgs.msg import Float32, Int8
 from numpy.linalg import norm
 from math import sin, cos, atan2, radians, degrees
 from numpy import abs
-from lat_pid import PID
-from interpolate import interpolate
+from libs.lat_pid import PID
+from libs.interpolate import interpolate
 
 
 class PurePursuit:
@@ -102,23 +102,11 @@ class PurePursuit:
         alpha = atan2(ly - rear_y, lx - rear_x) - yaw
         pp_angle = atan2(2.0 * self.L * sin(alpha) / Lf, 1.0)
 
-        if self.stage == 1:
-            curvature_control = 0.1*self.k_curva*self.cur_curvature[0] \
-                + 0.15*self.k_curva*self.cur_curvature[1] \
-                + 0.2*self.k_curva*self.cur_curvature[2] \
-                + 0.35*self.k_curva*self.cur_curvature[3] \
-                + 0.2*self.k_curva*self.cur_curvature[4]
-            print('curvature controller on')
-
-        elif self.stage == 2:
-            curvature_control = 0
-            # if not self.isBank:
-            #     self.k = 5.0
-            #     self.Lfc = 10.0
-
-            # else: #isBank
-            #     self.k = 1.5
-            #     self.Lfc = 2.0
+        curvature_control = 0.1*self.k_curva*self.cur_curvature[0] \
+            + 0.15*self.k_curva*self.cur_curvature[1] \
+            + 0.2*self.k_curva*self.cur_curvature[2] \
+            + 0.35*self.k_curva*self.cur_curvature[3] \
+            + 0.2*self.k_curva*self.cur_curvature[4]
 
         curvature_control = abs(curvature_control)
         if pp_angle >= 0:

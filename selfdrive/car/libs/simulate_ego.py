@@ -41,7 +41,7 @@ class EgoSimulate:
         self.wheel_angle = 0.0
         self.accel_brake = 0.0
 
-        self.ego = Vehicle(0.0, 0.0, math.radians(0.0), 0.0, 2.65)
+        self.ego = Vehicle(0.0, 0.0, math.radians(0.1), 0.0, 2.65)
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
@@ -89,11 +89,7 @@ class EgoSimulate:
         yaw = math.degrees(yaw)
         yaw = -270 - yaw if (yaw >= -180 and yaw <= -90) else -yaw + 90
         yaw = math.radians(yaw)
-        quaternion = tf.transformations.quaternion_from_euler(
-            0.0, 0.0, yaw)
-        msg.angle.x = quaternion[0]
-        msg.angle.y = quaternion[1]
-        msg.angle.z = quaternion[2]
+        msg.angle.z = yaw
         self.pub_ins_imu.publish(msg)
 
         self.pub_ins_odom.publish(Float32(v))

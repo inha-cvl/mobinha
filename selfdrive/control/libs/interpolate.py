@@ -14,6 +14,7 @@ class QuadraticSplineInterpolate:
     def calc_s(self, x, y):
         dx = np.diff(x)
         dy = np.diff(y)
+
         self.ds = [math.sqrt(idx ** 2 + idy ** 2)
                    for (idx, idy) in zip(dx, dy)]
         #self.ds = [norm(idx, idy) for (idx, idy) in zip(dx, dy)]

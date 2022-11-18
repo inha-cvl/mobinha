@@ -1,10 +1,9 @@
 import math
 import numpy as np
 import bisect
-from scipy.spatial import KDTree
 
 
-class Spline: 
+class Spline:
     """
     Cubic Spline class
     """
@@ -156,6 +155,10 @@ class Spline2D:
         ddx = self.sx.calcdd(s)
         dy = self.sy.calcd(s)
         ddy = self.sy.calcdd(s)
+
+        if None in [dx, ddx, dy, ddy]:
+            return None
+
         k = (ddy * dx - ddx * dy) / ((dx ** 2 + dy ** 2)**(3 / 2))
         return k
 
@@ -183,8 +186,10 @@ def calc_spline_course(x, y, ds=0.1):
 
     return rx, ry, ryaw, rk, s
 
+
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
+
 
 def find_nearest_idx(pts, pt):
     min_dist = float('inf')
@@ -200,7 +205,7 @@ def find_nearest_idx(pts, pt):
 
 
 def main():  # pragma: no cover
-    print("Spline 2D test")
+    ("Spline 2D test")
     import matplotlib.pyplot as plt
     x = [-2.5, 0.0, 2.5, 5.0, 7.5, 3.0, -1.0]
     y = [0.7, -6, 5, 6.5, 0.0, 5.0, -2.0]

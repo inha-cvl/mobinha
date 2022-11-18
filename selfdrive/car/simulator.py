@@ -4,8 +4,8 @@ import sys
 import signal
 import time
 
-from car.params import *
-from simulate_ego import EgoSimulate
+from selfdrive.message.messaging import *
+from libs.simulate_ego import EgoSimulate
 
 
 def simulator(CP):
@@ -20,13 +20,13 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-def main():
+def main(car):
     signal.signal(signal.SIGINT, signal_handler)
     try:
         car_class = getattr(sys.modules[__name__], car)
         simulator(car_class.CP)
-    except Exception:
-        print("[ERROR] Could not load Car Params")
+    except Exception as e:
+        print("[ERROR] ", e)
     except KeyboardInterrupt:
         sys.exit(0)
 

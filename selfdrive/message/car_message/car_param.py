@@ -5,9 +5,18 @@ class MapParam(NamedTuple):
     path: str = ''
     tileSize: float = 0.0
     cutDist: float = 0.0
+    precision: float = 0.5
     baseLatitude: float = 37.39657805498484
     baseLongitude: float = 126.6321430873685
     baseAltitude: float = 7.369
+
+
+class StParam(NamedTuple):
+    sMin: float = -20.0
+    sMax: float = 50.0
+    tMax: float = 8.0
+    dt: float = 0.2
+    dtExp: float = 1.0
 
 
 class LongitudinalTuning(NamedTuple):
@@ -79,6 +88,8 @@ class CarParam(NamedTuple):
     name: str = ""
     dbc: str = ""
     mapParam: MapParam = MapParam()
+
+    stParam: StParam = StParam()
 
     minEnableSpeed: float = 0.0
     maxEnableSpeed: float = 0.0

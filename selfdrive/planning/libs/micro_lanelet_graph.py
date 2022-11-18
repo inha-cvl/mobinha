@@ -1,10 +1,10 @@
 import copy
-from visualize.viz import *
 
 import rospy
 from visualization_msgs.msg import MarkerArray
 
 from libs.planner_utils import *
+from selfdrive.visualize.viz import *
 
 
 class MicroLaneletGraph:

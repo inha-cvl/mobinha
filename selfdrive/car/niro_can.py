@@ -8,7 +8,7 @@ import rospy
 from std_msgs.msg import Int16, Float32
 
 
-class CanTransceiver():
+class NiroCAN():
     def __init__(self, CP):
         self.control_state = {
             'manual': 0x0,         # ON:0x1   OFF:0x0

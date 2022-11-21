@@ -23,10 +23,10 @@ class Controller:
         self.purepursuit = PurePursuit(CP)
 
         self.target_v = 0.0
-        self.final_path = None
+        self.local_path = None
 
-        self.sub_final_path = rospy.Subscriber(
-            '/local_path', Marker, self.final_path_cb)
+        self.sub_local_path = rospy.Subscriber(
+            '/local_path', Marker, self.local_path_cb)
         self.sub_target_v = rospy.Subscriber(
             '/target_v', Float32, self.target_v_cb)
 
@@ -37,8 +37,8 @@ class Controller:
         self.pub_lah = rospy.Publisher(
             '/look_ahead', Marker, queue_size=1, latch=True)
 
-    def final_path_cb(self, msg):
-        self.final_path = [(pt.x, pt.y) for pt in msg.points]
+    def local_path_cb(self, msg):
+        self.local_path = [(pt.x, pt.y) for pt in msg.points]
 
     def target_v_cb(self, msg):
         self.target_v = msg.data
@@ -46,11 +46,11 @@ class Controller:
     def run(self, sm):
         CS = sm.CS
         if CS.yawRate != 0.0:
-            if self.final_path is None:
+            if self.local_path is None:
                 wheel_angle = 0.0
             else:
                 wheel_angle, lah_pt = self.purepursuit.run(
-                    CS.position.x, CS.position.y, CS.yawRate, CS.vEgo, self.final_path)
+                    CS.position.x, CS.position.y, CS.yawRate, CS.vEgo, self.local_path)
                 lah_viz = LookAheadViz(lah_pt)
                 self.pub_lah.publish(lah_viz)
 

@@ -3008,7 +3008,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /final_path
+      Marker Topic: /global_path
       Name: GlobalPath
       Namespaces:
         final_path: true

@@ -15,6 +15,7 @@ class Localizer:
     def __init__(self):
         self.ego_car = EgoCarViz()
         self.br = tf.TransformBroadcaster()
+        
         self.pub_ego_car = rospy.Publisher('/ego_car', Marker, queue_size=1)
 
     def run(self, sm):

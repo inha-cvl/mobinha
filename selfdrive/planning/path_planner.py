@@ -1,7 +1,7 @@
 
 
 import rospy
-from std_msgs.msg import Float32, Int8
+from std_msgs.msg import String, Int8
 from geometry_msgs.msg import PoseStamped
 
 from libs.map import LaneletMap, TileMap
@@ -38,10 +38,12 @@ class PathPlanner:
 
         self.pub_goal = rospy.Publisher(
             '/goal', Marker, queue_size=1, latch=True)
+        self.pub_global_path = rospy.Publisher(
+            '/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
             '/local_path', Marker, queue_size=1, latch=True)
-        self.pub_final_path = rospy.Publisher(
-            '/final_path', Marker, queue_size=1, latch=True)
+        self.pub_now_lane_id = rospy.Publisher(
+            '/now_lane_id', String, queue_size = 1)
         self.pub_blinkiker = rospy.Publisher(
             '/lane_change', Int8, queue_size=2)
 
@@ -102,17 +104,16 @@ class PathPlanner:
 
         return non_intp_path, non_intp_id
 
-    def run(self, sm, dm):
+    def run(self, sm):
         CS = sm.CS
-        CD = dm.CD
-        car_driving = CD._asdict()
+        pp = 0
 
         if self.state == 'WAITING':
             rospy.loginfo("WAITING")
             if self.get_goal:
                 self.state = 'READY'
 
-        if self.state == 'READY':
+        elif self.state == 'READY':
             rospy.loginfo("READY")
             non_intp_path = None
             non_intp_id = None
@@ -149,8 +150,9 @@ class PathPlanner:
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
                 self.erase_global_path = global_path
-                final_path_viz = FinalPathViz(self.global_path)
-                self.pub_final_path.publish(final_path_viz)
+                global_path_viz = FinalPathViz(self.global_path)
+                self.pub_global_path.publish(global_path_viz)
+            pp = 0
 
         elif self.state == 'MOVE':
             _, idx = calc_cte_and_idx(
@@ -162,7 +164,9 @@ class PathPlanner:
             s = idx * self.precision
             _, n_id = calc_cte_and_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
-            split_now_id = (self.non_intp_id[n_id]).split('_')[0]
+            
+            # Pub Now Lane ID
+            self.pub_now_lane_id.publish(String(self.non_intp_id[n_id]))
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < 100) and len(self.local_path) > 100):
 
@@ -185,12 +189,6 @@ class PathPlanner:
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
 
-                car_driving["localPath"] = self.local_path
-                car_driving["localLasts"] = len(self.local_path)-1
-                car_driving["nowLaneID"] = split_now_id[0]
-                car_driving["pathPlanningState"] = 1
-                dm.setter(car_driving)
-
             blinker = signal_light_toggle(
                 self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
             self.pub_blinkiker.publish(blinker)
@@ -198,7 +196,9 @@ class PathPlanner:
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'
                 rospy.loginfo('ARRIVED')
+            pp = 1
 
         elif self.state == 'ARRIVED':
-            car_driving["pathPlanningState"] = 2
-            dm.setter(car_driving)
+            pp = 2
+
+        return pp

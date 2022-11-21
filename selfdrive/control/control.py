@@ -4,8 +4,8 @@ import time
 import rospy
 
 from selfdrive.message.messaging import *
-from libs.localizer import Localizer
-from libs.controller import Controller
+from localizer import Localizer
+from controller import Controller
 
 
 def control(CP):
@@ -26,6 +26,7 @@ def signal_handler(sig, frame):
 
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
+    print("[Control Process] Start")
     rospy.init_node('Control', anonymous=False)
 
     try:
@@ -34,6 +35,7 @@ def main(car):
     except Exception as e:
         print("[Control ERROR] ", e)
     except KeyboardInterrupt:
+        print("[Control Process] Force Quit")
         sys.exit(0)
 
 

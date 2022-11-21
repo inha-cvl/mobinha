@@ -31,7 +31,7 @@ class Vehicle:
         return self.x, self.y, self.yaw, self.v
 
 
-class EgoSimulate:
+class SimulatorCAN:
     def __init__(self, CP):
         rospy.init_node('ego_simulate', anonymous=False)
 

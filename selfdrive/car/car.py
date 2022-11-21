@@ -5,16 +5,20 @@ import signal
 import time
 
 from selfdrive.message.messaging import *
-from libs.simulate_ego import EgoSimulate
+from simulator_can import SimulatorCAN
+from niro_can import NiroCAN
 
 
-def simulator(CP):
-    es = EgoSimulate(CP)
+
+def car(car, CP):
+    if car == "SIMULATOR":
+        can = SimulatorCAN(CP)
+    else:
+        can = NiroCAN()
 
     while True:
-        es.run()
+        can.run()
         time.sleep(0.1)
-
 
 def signal_handler(sig, frame):
     sys.exit(0)
@@ -22,12 +26,15 @@ def signal_handler(sig, frame):
 
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
+    print("[Car Process] Start")
+
     try:
         car_class = getattr(sys.modules[__name__], car)
-        simulator(car_class.CP)
+        car(car, car_class.CP)
     except Exception as e:
-        print("[ERROR] ", e)
+        print("[Car ERROR] ", e)
     except KeyboardInterrupt:
+        print("[Car Process] Force Quit")
         sys.exit(0)
 
 

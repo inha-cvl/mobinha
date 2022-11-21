@@ -1,11 +1,8 @@
-import sys
-import time
 import math
 import heapq as hq
 import numpy as np
 from shapely.geometry import Polygon
 from shapely.geometry import Point as GPoint
-import matplotlib.patches as patches
 import pymap3d as pm
 
 import libs.cubic_spline_planner as cubic_spline_planner

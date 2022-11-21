@@ -3,7 +3,7 @@ import signal
 import time
 
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Int16MultiArray
 from path_planner import PathPlanner
 from longitudinal_planner import LongitudinalPlanner
 
@@ -18,6 +18,8 @@ class Planning:
     def __init__(self):
         self.state = 'WAITING'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
+        self.pub_planning_State = rospy.Publisher(
+            '/planning_state', Int16MultiArray, queue_size=1)
 
     def planning(self, CP):
         sm = StateMaster(CP)
@@ -39,12 +41,14 @@ class Planning:
                         path_planner.state = 'WAITING'
                         path_planner.get_goal = False
                         longitudinal_planner.local_path = None
+                array = Int16MultiArray()
+                array.data = [pp, lgp]
+                self.pub_planning_State.publish(array)
             elif self.state == 'FINISH':
                 return 1
             else:
                 time.sleep(0.1)
                 continue
-            # rospy.spin()
 
     def state_cb(self, msg):
         if self.state != str(msg.data):
@@ -56,7 +60,7 @@ class Planning:
 
 
 def main(car):
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, signal_handler)
     print("[Planning Process] Created")
     rospy.init_node('Planning', anonymous=False)
     p = Planning()

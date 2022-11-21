@@ -5,12 +5,8 @@ import rospy
 from std_msgs.msg import String
 
 from selfdrive.message.messaging import *
-from localizer import Localizer
-from controller import Controller
-
-
-def signal_handler(sig, frame):
-    sys.exit(0)
+from selfdrive.control.localizer import Localizer
+from selfdrive.control.controller import Controller
 
 
 class Control:
@@ -44,8 +40,12 @@ class Control:
         self.state = str(msg.data)
 
 
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+
 def main(car):
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Control', anonymous=False)
     print("[Control Process] Created")
     c = Control()

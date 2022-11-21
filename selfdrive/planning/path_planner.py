@@ -7,7 +7,7 @@ from geometry_msgs.msg import PoseStamped
 from libs.map import LaneletMap, TileMap
 from libs.micro_lanelet_graph import MicroLaneletGraph
 from libs.planner_utils import *
-from selfdrive.visualize.viz import *
+from selfdrive.visualize.viz_utils import *
 
 
 class PathPlanner:
@@ -19,8 +19,6 @@ class PathPlanner:
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
         self.precision = CP.mapParam.precision
-
-        self.traffic_lights = [0, 36001]
 
         self.temp_pt = None
         self.global_path = None
@@ -36,18 +34,24 @@ class PathPlanner:
         self.erase_global_path = []
         self.last_s = 99999
 
+        self.pub_lanelet_map = rospy.Publisher(
+            '/lanelet_map', MarkerArray, queue_size=1, latch=True)
         self.pub_goal = rospy.Publisher(
             '/goal', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher(
             '/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
-            '/local_path', Marker, queue_size=1, latch=True)
+            '/local_path', Marker, queue_size=1)
         self.pub_now_lane_id = rospy.Publisher(
-            '/now_lane_id', String, queue_size = 1)
+            '/now_lane_id', String, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
             '/lane_change', Int8, queue_size=2)
 
-        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goal_cb)
+        lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
+        self.pub_lanelet_map.publish(lanelet_map_viz)
+
+        self.sub_goal = rospy.Subscriber(
+            '/move_base_simple/goal', PoseStamped, self.goal_cb)
 
     def goal_cb(self, msg):
         self.goal_pt = [msg.pose.position.x, msg.pose.position.y]
@@ -109,12 +113,13 @@ class PathPlanner:
         pp = 0
 
         if self.state == 'WAITING':
-            rospy.loginfo("WAITING")
+            rospy.loginfo("[Path Planner] Waiting Goal Point")
+            time.sleep(1)
             if self.get_goal:
                 self.state = 'READY'
 
         elif self.state == 'READY':
-            rospy.loginfo("READY")
+            rospy.loginfo("[Path Planner] Making Path")
             non_intp_path = None
             non_intp_id = None
             self.local_path = None
@@ -129,6 +134,7 @@ class PathPlanner:
 
             if non_intp_path is not None:
                 self.state = 'MOVE'
+                rospy.loginfo("[Planner] Move to Goal")
                 global_path, _, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
 
@@ -164,7 +170,7 @@ class PathPlanner:
             s = idx * self.precision
             _, n_id = calc_cte_and_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
-            
+
             # Pub Now Lane ID
             self.pub_now_lane_id.publish(String(self.non_intp_id[n_id]))
 
@@ -193,9 +199,9 @@ class PathPlanner:
                 self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
             self.pub_blinkiker.publish(blinker)
 
-            if self.last_s - s < 5.0:
+            if self.last_s - s < 4.0:
                 self.state = 'ARRIVED'
-                rospy.loginfo('ARRIVED')
+                rospy.loginfo('[Path Planner] Arrived at Goal')
             pp = 1
 
         elif self.state == 'ARRIVED':

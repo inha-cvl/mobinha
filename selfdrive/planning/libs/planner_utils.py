@@ -728,11 +728,12 @@ def velocity_plan(st_param, ref_v, last_s, s, max_v, cur_v, cur_a, tl_objects, o
         obj_time = 3
     elif cur_v < 100 * KPH_TO_MPS:
         obj_time = 3.5
-    for os in objects_s:
-        if os[1] > -2.0 and os[1] < 2.0:
-            obj = [(0.0, objects_s-obj_offset), (obj_time, objects_s-obj_offset),
-                   (obj_time, objects_s+obj_offset), (0.0, objects_s+obj_offset)]
-            obstacles.append(obj)
+    if objects_s is not None:
+        for os in objects_s:
+            if os[1] > -2.0 and os[1] < 2.0:
+                obj = [(0.0, objects_s-obj_offset), (obj_time, objects_s-obj_offset),
+                       (obj_time, objects_s+obj_offset), (0.0, objects_s+obj_offset)]
+                obstacles.append(obj)
 
     ############### Planning Start ###############
     start = (0.0, s, cur_v, cur_a)  # t, s, v, a

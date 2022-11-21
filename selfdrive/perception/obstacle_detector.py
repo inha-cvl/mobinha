@@ -4,7 +4,8 @@ import rospy
 from geometry_msgs.msg import Pose, PoseArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
-from selfdrive.visualize.viz import *
+from selfdrive.visualize.viz_utils import *
+
 
 class ObstacleDetector:
     def __init__(self):
@@ -15,12 +16,16 @@ class ObstacleDetector:
         self.lidar_object = []
         self.lidar_obstacle = PoseArray()
 
-        self.sub_local_path = rospy.Subscriber('/local_path', Marker, self.local_path_cb)
-        self.sub_lidar_cluster_box = rospy.Subscriber('/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
-        self.pub_object_marker = rospy.Publisher('/object_marker', MarkerArray, queue_size=2)
+        self.sub_local_path = rospy.Subscriber(
+            '/local_path', Marker, self.local_path_cb)
+        self.sub_lidar_cluster_box = rospy.Subscriber(
+            '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+        self.pub_object_marker = rospy.Publisher(
+            '/object_marker', MarkerArray, queue_size=2)
 
-        self.pub_lidar_obstacle = rospy.Publisher('/lidar_obstacle', PoseArray, queue_size =1)
-    
+        self.pub_lidar_obstacle = rospy.Publisher(
+            '/lidar_obstacle', PoseArray, queue_size=1)
+
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
 
@@ -29,7 +34,8 @@ class ObstacleDetector:
         for _, obj in enumerate(msg.boxes):
             x, y = obj.pose.position.x, obj.pose.position.y
             if self.CS is not None:
-                nx, ny = self.object2enu((self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
+                nx, ny = self.object2enu(
+                    (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
                 objects.append([nx, ny])
         self.lidar_object = objects
 
@@ -74,7 +80,7 @@ class ObstacleDetector:
             frenet_d *= -1
 
         return int(point/2), frenet_d
-    
+
     def run(self, sm):
         self.CS = sm.CS
 
@@ -93,7 +99,7 @@ class ObstacleDetector:
                         pose.position.z = obj_d
                         self.lidar_obstacle.append(pose)
                         zip_obstacle.append(zip(_, (obj[:1])))
-            
+
             self.pub_lidar_obstacle.publish(self.lidar_obstacle)
             objects_viz = ObjectsViz(zip_obstacle)
             self.pub_object_marker.publish(objects_viz)

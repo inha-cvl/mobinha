@@ -449,9 +449,9 @@ def EgoCarViz():
     marker.mesh_resource = 'file://{}/obj/car.dae'.format(dir_path)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = 1.5
-    marker.scale.y = 1.5
-    marker.scale.z = 1.5
+    marker.scale.x = 1.75
+    marker.scale.y = 1.75
+    marker.scale.z = 1.75
     marker.color.r = 0.7
     marker.color.g = 0.7
     marker.color.b = 0.7

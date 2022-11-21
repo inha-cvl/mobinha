@@ -31,9 +31,8 @@ class Vehicle:
         return self.x, self.y, self.yaw, self.v
 
 
-class SimulatorCAN:
+class SimulatorTransceiver:
     def __init__(self, CP):
-        rospy.init_node('ego_simulate', anonymous=False)
 
         self.base_lla = [CP.mapParam.baseLatitude,
                          CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]

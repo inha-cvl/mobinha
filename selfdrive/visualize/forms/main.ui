@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1520</width>
+    <height>855</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1520</width>
+    <height>1000</height>
+   </size>
+  </property>
+  <property name="baseSize">
+   <size>
+    <width>1520</width>
+    <height>1000</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>mobinha</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(0, 10, 20);</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>1520</width>
+     <height>1000</height>
+    </size>
+   </property>
+   <property name="baseSize">
+    <size>
+     <width>1520</width>
+     <height>1000</height>
+    </size>
+   </property>
+   <widget class="QLabel" name="rviz_background">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>100</y>
+      <width>1501</width>
+      <height>721</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(0, 10, 20);
+border-style: solid;
+border-width:2px;
+border-color:rgb(19, 99, 223);</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QWidget" name="rviz_widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>110</y>
+      <width>1481</width>
+      <height>701</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(0, 10, 20);
+color: rgb(248, 248, 242);</string>
+    </property>
+    <widget class="QWidget" name="gridLayoutWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>1481</width>
+       <height>701</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="rviz_layout"/>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>835</x>
+      <y>5</y>
+      <width>265</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>Target Control Parameters</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_3">
+    <property name="geometry">
+     <rect>
+      <x>1110</x>
+      <y>0</y>
+      <width>400</width>
+      <height>97</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="2">
+      <widget class="QPushButton" name="button_cmd_only_long">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>95</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(223,246,255);
+color: rgb(6,40,61);</string>
+       </property>
+       <property name="text">
+        <string>Only
+Longitudinal</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="button_cmd_only_lat">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>95</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(223,246,255);
+color: rgb(6,40,61);</string>
+       </property>
+       <property name="text">
+        <string>Only
+Lateral</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QPushButton" name="button_cmd_full">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>95</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(223,246,255);
+color: rgb(6,40,61);</string>
+       </property>
+       <property name="text">
+        <string>Full</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="button_cmd_disable">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>95</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(223,246,255);
+color: rgb(6,40,61);</string>
+       </property>
+       <property name="text">
+        <string>Disable</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>835</x>
+      <y>40</y>
+      <width>80</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>velocity</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_target_v">
+    <property name="geometry">
+     <rect>
+      <x>920</x>
+      <y>40</y>
+      <width>180</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>0 km/h</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>835</x>
+      <y>70</y>
+      <width>80</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>heading</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_target_yaw">
+    <property name="geometry">
+     <rect>
+      <x>920</x>
+      <y>70</y>
+      <width>180</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>0.0 deg</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_vehicle_yaw">
+    <property name="geometry">
+     <rect>
+      <x>645</x>
+      <y>70</y>
+      <width>180</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>0.0 deg</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_7">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>40</y>
+      <width>80</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>velocity</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>70</y>
+      <width>80</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>heading</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_vehicle_vel">
+    <property name="geometry">
+     <rect>
+      <x>645</x>
+      <y>40</y>
+      <width>180</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>0 km/h</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>5</y>
+      <width>265</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>Vehicle Parameters</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="car_name_combo_box">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>265</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);</string>
+    </property>
+    <item>
+     <property name="text">
+      <string>SIMULATOR</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>NIRO</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_11">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>5</y>
+      <width>265</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+    </property>
+    <property name="text">
+     <string>Setting</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>287</x>
+      <y>0</y>
+      <width>261</width>
+      <height>97</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="start_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>80</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(19, 99, 223);
+color: rgb(6, 40, 61);</string>
+       </property>
+       <property name="text">
+        <string>Start</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="initialize_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>80</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(19, 99, 223);
+color: rgb(6, 40, 61);</string>
+       </property>
+       <property name="text">
+        <string>Initialize</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="finish_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>80</width>
+         <height>95</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(19, 99, 223);
+color: rgb(6, 40, 61);</string>
+       </property>
+       <property name="text">
+        <string>Finish</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QRadioButton" name="perception_radio_button">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>70</y>
+      <width>127</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QRadioButton{
+color:#dff6ff;
+}
+QRadioButton::indicator:unchecked{
+background-color: #dff6ff;
+border: 1px solid #dff6ff;
+border-radius: 3px}
+
+QRadioButton::indicator:checked {
+color:#06283d;
+ background-color: #47b5ff;
+   border: 1px solid #47b5ff;
+border-radius: 3px
+}</string>
+    </property>
+    <property name="text">
+     <string>Perception</string>
+    </property>
+    <property name="checked">
+     <bool>false</bool>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1520</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(223,246,255);</string>
+   </property>
+   <widget class="QMenu" name="menuMonitoring">
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="title">
+     <string>Setting</string>
+    </property>
+   </widget>
+   <addaction name="menuMonitoring"/>
+  </widget>
+  <action name="actionReady">
+   <property name="text">
+    <string>Ready</string>
+   </property>
+  </action>
+  <action name="actionStart">
+   <property name="text">
+    <string>Start</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionReady_2">
+   <property name="text">
+    <string>Ready</string>
+   </property>
+  </action>
+  <action name="actionStart_2">
+   <property name="text">
+    <string>Start</string>
+   </property>
+  </action>
+  <action name="actionRecord">
+   <property name="text">
+    <string>Record</string>
+   </property>
+  </action>
+  <action name="actionSave_as_Dataset">
+   <property name="text">
+    <string>Save as Dataset</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

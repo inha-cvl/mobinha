@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Float32, Float32MultiArray
-from selfdrive.visualize.viz import *
+from selfdrive.visualize.viz_utils import *
 from libs.purepursuit import PurePursuit
 from libs.pid import PID
 from config.config import Config

@@ -1,10 +1,5 @@
 import json
 import rospy
-from visualization_msgs.msg import MarkerArray
-import sys
-from os import path
-
-from selfdrive.visualize.viz import *
 
 
 class LaneletMap:
@@ -15,17 +10,8 @@ class LaneletMap:
         self.groups = map_data['groups']
         self.precision = map_data['precision']
         self.for_viz = map_data['for_vis']
-
-        # update base lla
         self.basella = map_data['base_lla']
-
-        rospy.set_param('base_lla', map_data['base_lla'])
-
-        self.pub_lanelet_map = rospy.Publisher(
-            '/lanelet_map', MarkerArray, queue_size=1, latch=True)
-
-        lanelet_map_viz = LaneletMapViz(self.lanelets, self.for_viz)
-        self.pub_lanelet_map.publish(lanelet_map_viz)
+        rospy.set_param('base_lla', self.basella)
 
 
 class TileMap:

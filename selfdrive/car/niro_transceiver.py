@@ -8,7 +8,7 @@ import rospy
 from std_msgs.msg import Int16, Float32
 
 
-class NiroCAN():
+class NiroTransceiver():
     def __init__(self, CP):
         self.control_state = {
             'manual': 0x0,         # ON:0x1   OFF:0x0
@@ -51,7 +51,7 @@ class NiroCAN():
         self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 3}
 
         rospy.on_shutdown(self.cleanup)
-        
+
 #######  ROS-Subscriber  #####################################################
 
     def can_cmd(self, msg):

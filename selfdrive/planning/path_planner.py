@@ -2,7 +2,7 @@
 
 import rospy
 import time
-from std_msgs.msg import String, Int8
+from std_msgs.msg import String, Int8, Float32
 from geometry_msgs.msg import PoseStamped
 
 from libs.map import LaneletMap, TileMap
@@ -47,6 +47,8 @@ class PathPlanner:
             '/now_lane_id', String, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
             '/lane_change', Int8, queue_size=2)
+        self.pub_distance_to_goal = rospy.Publisher(
+            '/distance_to_goal', Float32, queue_size=1)
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
@@ -114,13 +116,14 @@ class PathPlanner:
         pp = 0
 
         if self.state == 'WAITING':
-            rospy.loginfo("[Path Planner] Waiting Goal Point")
+            print("[Path Planner] Waiting Goal Point")
             time.sleep(1)
             if self.get_goal:
                 self.state = 'READY'
+            pp = 3
 
         elif self.state == 'READY':
-            rospy.loginfo("[Path Planner] Making Path")
+            print("[Path Planner] Making Path")
             non_intp_path = None
             non_intp_id = None
             self.local_path = None
@@ -135,7 +138,7 @@ class PathPlanner:
 
             if non_intp_path is not None:
                 self.state = 'MOVE'
-                rospy.loginfo("[Planner] Move to Goal")
+                print("[Path Planner] Move to Goal")
                 global_path, _, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
 
@@ -175,7 +178,7 @@ class PathPlanner:
             # Pub Now Lane ID
             self.pub_now_lane_id.publish(String(self.non_intp_id[n_id]))
 
-            if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < 100) and len(self.local_path) > 100):
+            if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < 200) and len(self.local_path) > 200):
 
                 _, eg_idx = calc_cte_and_idx(
                     self.erase_global_path, (CS.position.x, CS.position.y))
@@ -200,9 +203,12 @@ class PathPlanner:
                 self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
             self.pub_blinkiker.publish(blinker)
 
-            if self.last_s - s < 4.0:
+            self.pub_distance_to_goal.publish(
+                Float32((self.last_s - s)*0.5))  # m
+
+            if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'
-                rospy.loginfo('[Path Planner] Arrived at Goal')
+                print('[Path Planner] Arrived at Goal')
             pp = 1
 
         elif self.state == 'ARRIVED':

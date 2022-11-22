@@ -54,7 +54,7 @@ def main(car):
     try:
         car_class = getattr(sys.modules[__name__], car)
         if t.transceiver(car, car_class.CP) == 1:
-            print("[CAR Process] Over")
+            print("[Car Process] Over")
             time.sleep(3)
             sys.exit(0)
 

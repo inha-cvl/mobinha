@@ -37,6 +37,7 @@ class ObstacleDetector:
                 nx, ny = self.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
                 objects.append([nx, ny])
+
         self.lidar_object = objects
 
     def object2enu(self, odom, obj_local_y, obj_local_x):
@@ -81,15 +82,15 @@ class ObstacleDetector:
 
         return int(point/2), frenet_d
 
-    def run(self, sm):
-        self.CS = sm.CS
+    def run(self, CS):
+        self.CS = CS
 
         if self.local_path is not None:
             local_point = KDTree(self.local_path)
 
             zip_obstacle = []
             if len(self.lidar_object) > 0:
-                for _, obj in enumerate(self.lidar_object):
+                for obj in self.lidar_object:
                     obj_s, obj_d = self.object2frenet(
                         local_point, self.local_path, obj[0], obj[1])
                     if obj_s < 30 and obj_d > -1.5 and obj_d < 1.5:
@@ -97,9 +98,11 @@ class ObstacleDetector:
                         pose.position.x = 0
                         pose.position.y = obj_s
                         pose.position.z = obj_d
-                        self.lidar_obstacle.append(pose)
-                        zip_obstacle.append(zip(_, (obj[:1])))
+                        self.lidar_obstacle.poses.append(pose)
+                        zip_obstacle.append((obj[:2]))
 
+            # Object Test
+            zip_obstacle.append((58.52236, -115.60573))
             self.pub_lidar_obstacle.publish(self.lidar_obstacle)
             objects_viz = ObjectsViz(zip_obstacle)
             self.pub_object_marker.publish(objects_viz)

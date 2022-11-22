@@ -41,7 +41,7 @@ class LongitudinalPlanner:
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.x, pose.y, pose.z)
-                               for pose in msg.poses.position]
+                               for pose in msg.poses]
 
     def object2enu(self, odom, obj_local_y, obj_local_x):
         rad = odom["yaw"] * (math.pi / 180.0)

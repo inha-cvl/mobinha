@@ -27,8 +27,8 @@ class Planning:
         longitudinal_planner = LongitudinalPlanner(CP)
 
         while True:
+            sm.update()
             if self.state == 'START':
-                sm.update()
                 pp = path_planner.run(sm)
                 lgp = longitudinal_planner.run(sm, pp)
                 time.sleep(0.1)  # 10Hz

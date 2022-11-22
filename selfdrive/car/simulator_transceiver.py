@@ -40,7 +40,7 @@ class SimulatorTransceiver:
         self.wheel_angle = 0.0
         self.accel_brake = 0.0
 
-        self.ego = Vehicle(0.0, 0.0, math.radians(0.1), 0.0, 2.65)
+        self.ego = Vehicle(0.0, 0.0, math.radians(-60), 0.0, 2.65)
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)

@@ -20,8 +20,8 @@ class Control:
         controller = Controller(CP)
 
         while True:
+            sm.update()
             if self.state == 'START':
-                sm.update()
                 localizer.run(sm)
                 controller.run(sm)
                 time.sleep(0.05)  # 20Hz

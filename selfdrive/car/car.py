@@ -39,17 +39,17 @@ class Transceiver:
     def state_cb(self, msg):
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
-                print("[Car Process] Start")
+                print("[{}] Start".format(self.__class__.__name__))
             elif str(msg.data) == 'INITIALZE':
-                print("[Car Process] Initialize")
+                print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
 
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Car', anonymous=False)
-    print("[Car Process] Created")
     t = Transceiver()
+    print("[{}] Created".format(t.__class__.__name__))
 
     try:
         car_class = getattr(sys.modules[__name__], car)
@@ -59,9 +59,9 @@ def main(car):
             sys.exit(0)
 
     except Exception as e:
-        print("[Car ERROR] ", e)
+        print("[{} Error]".format(t.__class__.__name__), e)
     except KeyboardInterrupt:
-        print("[Car Process] Force Quit")
+        print("[{}] Force Quit".format(t.__class__.__name__))
         sys.exit(0)
 
 

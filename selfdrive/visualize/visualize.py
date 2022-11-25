@@ -5,7 +5,8 @@ import time
 import rospy
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int16, Int16MultiArray
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseArray
+from jsk_recognition_msgs.msg import BoundingBoxArray
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -45,6 +46,8 @@ class MainWindow(QMainWindow, form_class):
             '/move_base_simple/goal', PoseStamped, self.goal_cb)
         self.sub_distance_to_goal = rospy.Subscriber(
             '/distance_to_goal', Float32, self.distance_to_goal_cb)
+        self.sub_nearest_obstacle_distance = rospy.Subscriber(
+            '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
         self.state: str = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -117,6 +120,10 @@ class MainWindow(QMainWindow, form_class):
             1000 >= 1 else str(round(msg.data, 5))+" m"
         self.goal_distance_label.setText(distance)
 
+    def nearest_obstacle_distance_cb(self, msg):
+        self.label_obstacle_distance.setText(
+            str(round(msg.data, 5))+" m")  # nearest obstacle
+
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
             self.status_label.setText("Moving")
@@ -139,6 +146,13 @@ class MainWindow(QMainWindow, form_class):
             self.scenario2_button.setEnabled(True)
             self.scenario3_button.setEnabled(True)
 
+        elif msg.data[0] == 4:
+            self.state == 'TOR'
+            self.status_label.setText("Take Over Request")
+            self.start_button.setDisabled(True)
+            self.initialize_button.setEnabled(True)
+            self.pause_button.setDisabled(True)
+
     def start_button_clicked(self):
         sm = StateMaster(CP)
         self.state = 'START'
@@ -158,12 +172,13 @@ class MainWindow(QMainWindow, form_class):
                 self.pause_button.setDisabled(True)
             elif self.state == 'INITIALIZE':
                 self.status_label.setText("Stand by")
+                self.start_button.setEnabled(True)
                 self.scenario = 0
             elif self.state == 'FINISH':
                 self.status_label.setText("Over")
                 self.finish_cnt += 1
                 if(self.finish_cnt == 20):
-                    print("[Visualize Process] Over")
+                    print("[Visualize] Over")
                     sys.exit(0)
             time.sleep(0.1)
             QApplication.processEvents()
@@ -217,20 +232,21 @@ def signal_handler(sig, frame):
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)
-    print("[Visualize Process] Start")
+    print("[Visualize] Created")
     rospy.init_node('Visualize', anonymous=False)
 
+    app = QApplication(sys.argv)
+
     try:
-        app = QApplication(sys.argv)
         mainWindow = MainWindow()
-        mainWindow.showMaximized()
+        mainWindow.showMinimized()
         sys.exit(app.exec_())
 
     except Exception as e:
         print("[Visualize Error]", e)
 
     except KeyboardInterrupt:
-        print("[Visualize Process] Force Quit")
+        print("[Visualize] Force Quit")
         mainWindow.close()
         app.quit()
         sys.exit(0)

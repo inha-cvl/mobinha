@@ -9,7 +9,7 @@ Panels:
         - /TF1
         - /LidarObstacle1
       Splitter Ratio: 0.4243420958518982
-    Tree Height: 605
+    Tree Height: 371
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -3013,7 +3013,7 @@ Visualization Manager:
       Marker Topic: /global_path
       Name: GlobalPath
       Namespaces:
-        final_path: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -3021,7 +3021,7 @@ Visualization Manager:
       Marker Topic: /local_path
       Name: LocalPath
       Namespaces:
-        final_path: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -3029,7 +3029,7 @@ Visualization Manager:
       Marker Topic: /look_ahead
       Name: LookAhead
       Namespaces:
-        look_ahead: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -3061,7 +3061,7 @@ Visualization Manager:
       Marker Topic: /goal
       Name: Goal
       Namespaces:
-        goal: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -3108,17 +3108,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 30.3098087310791
-        Y: -15.842822074890137
-        Z: -2.047045654762769e-06
+        X: 4.566937446594238
+        Y: 1.2352936267852783
+        Z: -5.277410309645347e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.46039921045303345
+      Pitch: 0.4403991997241974
       Target Frame: ego_car
-      Yaw: 3.0504024028778076
+      Yaw: 3.1254022121429443
     Saved: ~
 Window Geometry:
   Displays:

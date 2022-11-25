@@ -16,7 +16,7 @@ class Perception:
 
     def perception(self, CP):
         sm = StateMaster(CP)
-        obstacle_detector = ObstacleDetector()
+        obstacle_detector = ObstacleDetector(CP)
 
         while True:
             sm.update()
@@ -32,9 +32,9 @@ class Perception:
     def state_cb(self, msg):
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
-                print("[Perception Process] Start")
+                print("[{}] Start".format(self.__class__.__name__))
             elif str(msg.data) == 'INITIALZE':
-                print("[Perception Process] Initialize")
+                print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
 
@@ -45,19 +45,19 @@ def signal_handler(sig, frame):
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Perception', anonymous=False)
-    print("[Perception Process] Start")
     p = Perception()
+    print("[{}] Created".format(p.__class__.__name__))
 
     try:
         car_class = getattr(sys.modules[__name__], car)
         if p.perception(car_class.CP) == 1:
-            print("Perception Process] Over")
+            print("[{}] Over".format(p.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
     except Exception as e:
-        print("[Perception ERROR] ", e)
+        print("[{} Error]".format(p.__class__.__name__), e)
     except KeyboardInterrupt:
-        print("[Perception Process] Force Quit")
+        print("[{}] Force Quit".format(p.__class__.__name__))
         sys.exit(0)
 
 

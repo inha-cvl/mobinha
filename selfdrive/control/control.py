@@ -34,9 +34,9 @@ class Control:
     def state_cb(self, msg):
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
-                print("[Control Process] Start")
+                print("[{}] Start".format(self.__class__.__name__))
             elif str(msg.data) == 'INITIALZE':
-                print("[Control Process] Initialize")
+                print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
 
@@ -47,19 +47,19 @@ def signal_handler(sig, frame):
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Control', anonymous=False)
-    print("[Control Process] Created")
     c = Control()
+    print("[{}] Created".format(c.__class__.__name__))
 
     try:
         car_class = getattr(sys.modules[__name__], car)
         if c.control(car_class.CP) == 1:
-            print("[Control Process] Over")
+            print("[{}] Over".format(c.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
     except Exception as e:
-        print("[Control ERROR] ", e)
+        print("[{} Error]".format(c.__class__.__name__), e)
     except KeyboardInterrupt:
-        print("[Control Process] Force Quit")
+        print("[{}] Force Quit".format(c.__class__.__name__))
         sys.exit(0)
 
 

@@ -17,6 +17,7 @@ def signal_handler(sig, frame):
 class Planning:
     def __init__(self):
         self.state = 'WAITING'
+        self.planning_state = 'GOOD'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
         self.pub_planning_State = rospy.Publisher(
             '/planning_state', Int16MultiArray, queue_size=1)
@@ -26,7 +27,11 @@ class Planning:
         path_planner = PathPlanner(CP)
         longitudinal_planner = LongitudinalPlanner(CP)
 
+        pp = 0
+        lgp = 0
         while True:
+            if self.planning_state != 'GOOD':
+                return 1
             sm.update()
             if self.state == 'START':
                 pp = path_planner.run(sm)
@@ -35,46 +40,57 @@ class Planning:
 
                 if pp == 2 and lgp == 2:
                     time.sleep(1)
-                    print("[Planning Process] For Restart, please initialize")
-                    if self.state == 'INITIALIZE':
-                        # Re-Initialization of Path Planning self.State
-                        path_planner.state = 'WAITING'
-                        path_planner.get_goal = False
-                        longitudinal_planner.local_path = None
-                array = Int16MultiArray()
-                array.data = [pp, lgp]
-                self.pub_planning_State.publish(array)
+                    print("[{}] For Restart, please initialize".format(
+                        self.__class__.__name__))
+
+            elif self.state == 'INITIALIZE':
+                # Re-Initialization of Path Planning self.State
+                path_planner.state = 'WAITING'
+                path_planner.get_goal = False
+                longitudinal_planner.local_path = None
+                pp = 0
+                lgp = 0
+
+            elif self.state == 'TOR':
+                time.sleep(1)
+                print("[{}] Take Over Request, please initialize".format(
+                    self.__class__.__name__))
+
             elif self.state == 'FINISH':
                 return 1
             else:
                 time.sleep(0.1)
-                continue
+
+            array = Int16MultiArray()
+            array.data = [pp, lgp]
+            self.pub_planning_State.publish(array)
 
     def state_cb(self, msg):
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
-                print("[Planning Process] Start")
+                print("[{}] Start".format(self.__class__.__name__))
             elif str(msg.data) == 'INITIALZE':
-                print("[Planning Process] Initialize")
+                print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
 
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
-    print("[Planning Process] Created")
     rospy.init_node('Planning', anonymous=False)
     p = Planning()
+    print("[{}] Created".format(p.__class__.__name__))
 
     try:
         car_class = getattr(sys.modules[__name__], car)
         if p.planning(car_class.CP) == 1:
-            print("[Planning Process] Over")
+            print("[{}] Over".format(p.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
     except Exception as e:
-        print("[Planning ERROR] ", e)
+        p.planning_state = 'BAD'
+        print("[{} Error]".format(p.__class__.__name__), e)
     except KeyboardInterrupt:
-        print("[Planning Process] Force Quit")
+        print("[{}] Force Quit".format(p.__class__.__name__))
         sys.exit(0)
 
 

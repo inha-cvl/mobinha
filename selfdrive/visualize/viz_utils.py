@@ -17,51 +17,11 @@ def ObjectsViz(objects):
     array = MarkerArray()
 
     for n, pt in enumerate(objects):
-        marker = Cube('obstacle', n, 3, (1.0, 1.0, 0.0, 1.0))
+        marker = Cube('obstacle', n, 1, (1.0, 1.0, 0.0, 1.0))
         marker.pose.position = Point(x=pt[0], y=pt[1], z=2.0)
         array.markers.append(marker)
 
     return array
-
-
-def make_object_marker(cw, x, y, idx):
-    marker = Marker()
-
-    marker.header.frame_id = 'world'
-    marker.header.stamp = rospy.Time.now()
-
-    # set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3\
-    marker.type = 2
-    marker.id = idx
-
-    # Set the scale of the marker
-    marker.scale.x = 1.0
-    marker.scale.y = 1.0
-    marker.scale.z = 1.0
-
-    if cw == 1:
-        # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.color.a = 1.0
-    else:
-        # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 1.0
-        marker.color.b = 1.0
-        marker.color.a = 1.0
-
-    # Set the pose of the marker
-    marker.pose.position.x = x
-    marker.pose.position.y = y
-    marker.pose.position.z = 0
-    marker.pose.orientation.x = 0.0
-    marker.pose.orientation.y = 0.0
-    marker.pose.orientation.z = 0.0
-    marker.pose.orientation.w = 1.0
-
-    return marker
 
 
 def LookAheadViz(pt):
@@ -375,8 +335,7 @@ def Cube(ns, id_, scale, color):
     marker.color.g = color[1]
     marker.color.b = color[2]
     marker.color.a = color[3]
-    marker.pose.position.z = 0.5
-    marker.pose.orientation.w = -60.0
+    marker.pose.orientation.w = 1.0
     return marker
 
 

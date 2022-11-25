@@ -8,7 +8,7 @@ import rospy
 from std_msgs.msg import Int16, Float32
 
 
-class CanTransceiver():
+class NiroTransceiver():
     def __init__(self, CP):
         self.control_state = {
             'manual': 0x0,         # ON:0x1   OFF:0x0
@@ -20,7 +20,7 @@ class CanTransceiver():
             'acc_en': 0x0,         # ON:0x1   OFF:0x0
             'acc_init': False      # For slight delay Mode A -> C
         }
-
+        self.CP = CP
         # CAN Init
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitreate=500000)
@@ -51,7 +51,7 @@ class CanTransceiver():
         self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 3}
 
         rospy.on_shutdown(self.cleanup)
-        
+
 #######  ROS-Subscriber  #####################################################
 
     def can_cmd(self, msg):
@@ -154,7 +154,7 @@ class CanTransceiver():
 
     def steer(self, angle):
         msg = self.db.encode_message(
-            'PA', {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': angle * 13.73})  # 13.73
+            'PA', {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': angle * self.CP.steerRatio})  # 13.73
         self.sender(0x210, msg)
 
     def accelerator(self, msg_name):

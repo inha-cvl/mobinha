@@ -4,27 +4,25 @@ import time
 import rospy
 from std_msgs.msg import String
 
+from obstacle_detector import ObstacleDetector
+
 from selfdrive.message.messaging import *
-from selfdrive.control.localizer import Localizer
-from selfdrive.control.controller import Controller
 
 
-class Control:
+class Perception:
     def __init__(self):
         self.state = 'WAITING'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
 
-    def control(self, CP):
+    def perception(self, CP):
         sm = StateMaster(CP)
-        localizer = Localizer()
-        controller = Controller(CP)
+        obstacle_detector = ObstacleDetector(CP)
 
         while True:
             sm.update()
             if self.state == 'START':
-                localizer.run(sm)
-                controller.run(sm)
-                time.sleep(0.05)  # 20Hz
+                obstacle_detector.run(sm.CS)
+                time.sleep(0.1)
             elif self.state == 'FINISH':
                 return 1
             else:
@@ -46,20 +44,20 @@ def signal_handler(sig, frame):
 
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
-    rospy.init_node('Control', anonymous=False)
-    c = Control()
-    print("[{}] Created".format(c.__class__.__name__))
+    rospy.init_node('Perception', anonymous=False)
+    p = Perception()
+    print("[{}] Created".format(p.__class__.__name__))
 
     try:
         car_class = getattr(sys.modules[__name__], car)
-        if c.control(car_class.CP) == 1:
-            print("[{}] Over".format(c.__class__.__name__))
+        if p.perception(car_class.CP) == 1:
+            print("[{}] Over".format(p.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
     except Exception as e:
-        print("[{} Error]".format(c.__class__.__name__), e)
+        print("[{} Error]".format(p.__class__.__name__), e)
     except KeyboardInterrupt:
-        print("[{}] Force Quit".format(c.__class__.__name__))
+        print("[{}] Force Quit".format(p.__class__.__name__))
         sys.exit(0)
 
 

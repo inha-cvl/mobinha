@@ -8,7 +8,7 @@ import rospy
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
 
-from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
+from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,51 +17,11 @@ def ObjectsViz(objects):
     array = MarkerArray()
 
     for n, pt in enumerate(objects):
-        marker = Sphere('object', n, 2.5, (1.0, 0.0, 1.0, 1.0))
-        marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
+        marker = Cube('obstacle', n, 1, (1.0, 1.0, 0.0, 1.0))
+        marker.pose.position = Point(x=pt[0], y=pt[1], z=2.0)
         array.markers.append(marker)
 
     return array
-
-
-def make_object_marker(cw, x, y, idx):
-    marker = Marker()
-
-    marker.header.frame_id = 'world'
-    marker.header.stamp = rospy.Time.now()
-
-    # set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3\
-    marker.type = 2
-    marker.id = idx
-
-    # Set the scale of the marker
-    marker.scale.x = 1.0
-    marker.scale.y = 1.0
-    marker.scale.z = 1.0
-
-    if cw == 1:
-        # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.color.a = 1.0
-    else:
-        # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 1.0
-        marker.color.b = 1.0
-        marker.color.a = 1.0
-
-    # Set the pose of the marker
-    marker.pose.position.x = x
-    marker.pose.position.y = y
-    marker.pose.position.z = 0
-    marker.pose.orientation.x = 0.0
-    marker.pose.orientation.y = 0.0
-    marker.pose.orientation.z = 0.0
-    marker.pose.orientation.w = 1.0
-
-    return marker
 
 
 def LookAheadViz(pt):
@@ -360,6 +320,25 @@ def Sphere(ns, id_, scale, color):
     return marker
 
 
+def Cube(ns, id_, scale, color):
+    marker = Marker()
+    marker.type = Marker.CUBE
+    marker.action = Marker.ADD
+    marker.header.frame_id = 'world'
+    marker.ns = ns
+    marker.id = id_
+    marker.lifetime = rospy.Duration(0)
+    marker.scale.x = scale
+    marker.scale.y = scale
+    marker.scale.z = scale
+    marker.color.r = color[0]
+    marker.color.g = color[1]
+    marker.color.b = color[2]
+    marker.color.a = color[3]
+    marker.pose.orientation.w = 1.0
+    return marker
+
+
 def Points(ns, id_, scale, color):
     marker = Marker()
     marker.type = Marker.POINTS
@@ -449,9 +428,9 @@ def EgoCarViz():
     marker.mesh_resource = 'file://{}/obj/car.dae'.format(dir_path)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = 1.5
-    marker.scale.y = 1.5
-    marker.scale.z = 1.5
+    marker.scale.x = 1.75
+    marker.scale.y = 1.75
+    marker.scale.z = 1.75
     marker.color.r = 0.7
     marker.color.g = 0.7
     marker.color.b = 0.7

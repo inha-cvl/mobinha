@@ -31,9 +31,8 @@ class Vehicle:
         return self.x, self.y, self.yaw, self.v
 
 
-class EgoSimulate:
+class SimulatorTransceiver:
     def __init__(self, CP):
-        rospy.init_node('ego_simulate', anonymous=False)
 
         self.base_lla = [CP.mapParam.baseLatitude,
                          CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
@@ -41,7 +40,7 @@ class EgoSimulate:
         self.wheel_angle = 0.0
         self.accel_brake = 0.0
 
-        self.ego = Vehicle(0.0, 0.0, math.radians(0.1), 0.0, 2.65)
+        self.ego = Vehicle(0.0, 0.0, math.radians(-60), 0.0, 2.65)
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)

@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sys
 import signal
 import time
@@ -5,26 +7,29 @@ import rospy
 from std_msgs.msg import String
 
 from selfdrive.message.messaging import *
-from selfdrive.control.localizer import Localizer
-from selfdrive.control.controller import Controller
+from selfdrive.car.simulator_transceiver import SimulatorTransceiver
+from selfdrive.car.niro_transceiver import NiroTransceiver
 
 
-class Control:
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+
+class Transceiver:
     def __init__(self):
         self.state = 'WAITING'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
 
-    def control(self, CP):
-        sm = StateMaster(CP)
-        localizer = Localizer()
-        controller = Controller(CP)
+    def transceiver(self, car, CP):
+        if car == "SIMULATOR":
+            can = SimulatorTransceiver(CP)
+        else:
+            can = NiroTransceiver
 
         while True:
-            sm.update()
             if self.state == 'START':
-                localizer.run(sm)
-                controller.run(sm)
-                time.sleep(0.05)  # 20Hz
+                can.run()
+                time.sleep(0.1)
             elif self.state == 'FINISH':
                 return 1
             else:
@@ -40,26 +45,23 @@ class Control:
         self.state = str(msg.data)
 
 
-def signal_handler(sig, frame):
-    sys.exit(0)
-
-
 def main(car):
     signal.signal(signal.SIGINT, signal_handler)
-    rospy.init_node('Control', anonymous=False)
-    c = Control()
-    print("[{}] Created".format(c.__class__.__name__))
+    rospy.init_node('Car', anonymous=False)
+    t = Transceiver()
+    print("[{}] Created".format(t.__class__.__name__))
 
     try:
         car_class = getattr(sys.modules[__name__], car)
-        if c.control(car_class.CP) == 1:
-            print("[{}] Over".format(c.__class__.__name__))
+        if t.transceiver(car, car_class.CP) == 1:
+            print("[Car Process] Over")
             time.sleep(3)
             sys.exit(0)
+
     except Exception as e:
-        print("[{} Error]".format(c.__class__.__name__), e)
+        print("[{} Error]".format(t.__class__.__name__), e)
     except KeyboardInterrupt:
-        print("[{}] Force Quit".format(c.__class__.__name__))
+        print("[{}] Force Quit".format(t.__class__.__name__))
         sys.exit(0)
 
 

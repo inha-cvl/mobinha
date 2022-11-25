@@ -15,16 +15,20 @@ def convert_2_360(angle):
     else:
         return math.radians(360) + angle
 
+
 def pi_2_pi(angle):
     return (angle + math.pi) % (2 * math.pi) - math.pi
+
 
 def get_yaw_error(yaw, angle):
     angle1 = convert_2_360(yaw)
     angle2 = convert_2_360(angle)
     return pi_2_pi(angle1 - angle2)
 
+
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
+
 
 def find_nearest_idx(pts, pt):
     min_dist = sys.maxsize
@@ -38,6 +42,7 @@ def find_nearest_idx(pts, pt):
 
     return min_idx
 
+
 def interpolate(points, precision):
     def filter_same_points(points):
         filtered_points = []
@@ -45,7 +50,7 @@ def interpolate(points, precision):
 
         for pt in points:
             if pre_pt is None or pt != pre_pt:
-                filtered_points.append(pt)    
+                filtered_points.append(pt)
 
             pre_pt = pt
 
@@ -78,17 +83,17 @@ def interpolate(points, precision):
 
 
 class NGII2LANELET:
-    def __init__(self, 
-        folder_path,
-        precision,
-        base_lla,
-        is_utm):
+    def __init__(self,
+                 folder_path,
+                 precision,
+                 base_lla,
+                 is_utm):
 
-        a2_path = '%s/A2_LINK.shp'%(folder_path)
-        b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
-        b2_path = '%s/B2_SURFACELINEMARK.shp'%(folder_path)
-        b3_path = '%s/B3_SURFACEMARK.shp'%(folder_path)
-        c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
+        a2_path = '%s/A2_LINK.shp' % (folder_path)
+        b1_path = '%s/B1_SAFETYSIGN.shp' % (folder_path)
+        b2_path = '%s/B2_SURFACELINEMARK.shp' % (folder_path)
+        b3_path = '%s/B3_SURFACEMARK.shp' % (folder_path)
+        c1_path = '%s/C1_TRAFFICLIGHT.shp' % (folder_path)
 
         ngii = NGIIParser(a2_path, b1_path, b2_path, b3_path, c1_path)
         self.generate_lanelet(ngii, precision, base_lla, is_utm)
@@ -127,7 +132,8 @@ class NGII2LANELET:
                 if base_lla is None:
                     base_lla = (lat, lon, alt)
 
-                x, y, z = pymap3d.geodetic2enu(lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
+                x, y, z = pymap3d.geodetic2enu(
+                    lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
                 waypoints.append((x, y))
 
             waypoints, s, yaw, k = interpolate(waypoints, precision)
@@ -136,7 +142,7 @@ class NGII2LANELET:
             lanelets[new_id]['yaw'] = yaw
             lanelets[new_id]['s'] = s
             lanelets[new_id]['k'] = k
-            lanelets[new_id]['length'] = s[-1] # a2_link.Length
+            lanelets[new_id]['length'] = s[-1]  # a2_link.Length
             lanelets[new_id]['laneNo'] = a2_link.LaneNo
             lanelets[new_id]['rightTurn'] = False
             lanelets[new_id]['uTurn'] = False
@@ -171,7 +177,7 @@ class NGII2LANELET:
                 lanelets[new_id]['speedLimit'] = 300
             else:
                 lanelets[new_id]['speedLimit'] = int(a2_link.MaxSpeed)
- 
+
         for a2_link in ngii.a2_link:
             if a2_link.Length == 0:
                 continue
@@ -179,14 +185,18 @@ class NGII2LANELET:
             ori_id = a2_link.ID
             new_id = ori2new[ori_id]
             if not lanelets[new_id]['intersection']:
-                lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinkID)
-                lanelets[new_id]['adjacentRight'] = ori2new.get(a2_link.R_LinkID)
+                lanelets[new_id]['adjacentLeft'] = ori2new.get(
+                    a2_link.L_LinkID)
+                lanelets[new_id]['adjacentRight'] = ori2new.get(
+                    a2_link.R_LinkID)
             else:
                 lanelets[new_id]['adjacentLeft'] = None
                 lanelets[new_id]['adjacentRight'] = None
 
-            lanelets[new_id]['predecessor'] = to_node[a2_link.FromNodeID] if to_node.get(a2_link.FromNodeID) is not None else []
-            lanelets[new_id]['successor'] = from_node[a2_link.ToNodeID] if from_node.get(a2_link.ToNodeID) is not None else []
+            lanelets[new_id]['predecessor'] = to_node[a2_link.FromNodeID] if to_node.get(
+                a2_link.FromNodeID) is not None else []
+            lanelets[new_id]['successor'] = from_node[a2_link.ToNodeID] if from_node.get(
+                a2_link.ToNodeID) is not None else []
 
         # Correct map error
         for id_, data in lanelets.items():
@@ -246,17 +256,22 @@ class NGII2LANELET:
                             else:
                                 lat, lon = tx, ty
 
-                            x, y, z = pymap3d.geodetic2enu(lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
+                            x, y, z = pymap3d.geodetic2enu(
+                                lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
                             leftBound.append((x, y))
 
-                        leftBound, s, yaw, k = interpolate(leftBound, precision)
+                        leftBound, s, yaw, k = interpolate(
+                            leftBound, precision)
 
                         if len(leftBound) > 1:
                             if right_id is not None:
-                                lanelets[right_id]['leftBound'].append(leftBound)
-                                lanelets[right_id]['leftType'].append('solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted')
+                                lanelets[right_id]['leftBound'].append(
+                                    leftBound)
+                                lanelets[right_id]['leftType'].append(
+                                    'solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted')
                             else:
-                                for_vis.append([leftBound, 'solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted'])
+                                for_vis.append(
+                                    [leftBound, 'solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted'])
 
                     ori_id = b2_surfacelinemark.L_linkID
                     left_id = ori2new.get(ori_id)
@@ -269,19 +284,24 @@ class NGII2LANELET:
                             else:
                                 lat, lon = tx, ty
 
-                            x, y, z = pymap3d.geodetic2enu(lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
+                            x, y, z = pymap3d.geodetic2enu(
+                                lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
                             rightBound.append((x, y))
 
-                        rightBound, s, yaw, k = interpolate(rightBound, precision)
+                        rightBound, s, yaw, k = interpolate(
+                            rightBound, precision)
 
                         if len(rightBound) > 1:
                             if left_id is not None:
-                                lanelets[left_id]['rightBound'].append(rightBound)
-                                lanelets[left_id]['rightType'].append('solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted')
+                                lanelets[left_id]['rightBound'].append(
+                                    rightBound)
+                                lanelets[left_id]['rightType'].append(
+                                    'solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted')
                             else:
-                                for_vis.append([rightBound, 'solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted'])
+                                for_vis.append(
+                                    [rightBound, 'solid' if b2_surfacelinemark.Type[2] == '1' else 'dotted'])
 
-                else: # stop line
+                else:  # stop line
                     lines = []
                     for x, y, alt in b2_surfacelinemark.geometry.coords:
                         if is_utm:
@@ -289,7 +309,8 @@ class NGII2LANELET:
                         else:
                             lat, lon = tx, ty
 
-                        x, y, z = pymap3d.geodetic2enu(lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
+                        x, y, z = pymap3d.geodetic2enu(
+                            lat, lon, alt, base_lla[0], base_lla[1], base_lla[2])
                         lines.append((x, y))
 
                     for_vis.append([lines, 'stop_line'])
@@ -302,13 +323,15 @@ class NGII2LANELET:
                 if leftType == 'solid':
                     idx_s = find_nearest_idx(data['waypoints'], leftBound[0])
                     idx_f = find_nearest_idx(data['waypoints'], leftBound[-1])
-                    data['leftChange'][idx_s:idx_f] = [False for _ in range(idx_f-idx_s)]
+                    data['leftChange'][idx_s:idx_f] = [
+                        False for _ in range(idx_f-idx_s)]
 
             for rightBound, rightType in zip(data['rightBound'], data['rightType']):
                 if rightType == 'solid':
                     idx_s = find_nearest_idx(data['waypoints'], rightBound[0])
                     idx_f = find_nearest_idx(data['waypoints'], rightBound[-1])
-                    data['rightChange'][idx_s:idx_f] = [False for _ in range(idx_f-idx_s)]
+                    data['rightChange'][idx_s:idx_f] = [
+                        False for _ in range(idx_f-idx_s)]
 
         for n, c1_trafficlight in tqdm(enumerate(ngii.c1_trafficlight), desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
             ori_id = c1_trafficlight.LinkID
@@ -321,7 +344,8 @@ class NGII2LANELET:
                 right_id = lanelets[new_id]['adjacentRight']
                 while right_id is not None:
                     if ref_n < ref_lane:
-                        lanelets[right_id]['trafficLight'].append(c1_trafficlight.ID)
+                        lanelets[right_id]['trafficLight'].append(
+                            c1_trafficlight.ID)
 
                     right_id = lanelets[right_id]['adjacentRight']
                     ref_n += 1
@@ -367,7 +391,8 @@ class NGII2LANELET:
                             for id_ in lanelets[new_id]['successor']:
                                 if lanelets[id_]['intersection']:
                                     if right_data is None:
-                                        right_data = [id_, lanelets[id_]['laneNo']]
+                                        right_data = [
+                                            id_, lanelets[id_]['laneNo']]
                                     else:
                                         if right_data[1] < lanelets[id_]['laneNo']:
                                             right_data[0] = id_

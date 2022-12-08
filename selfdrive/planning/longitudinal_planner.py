@@ -95,7 +95,7 @@ class LongitudinalPlanner:
 
         light_time = min(t_max-3.0, tl_time/10)
         traffic_light = [(0, tl_s), (light_time, tl_s),
-                        (light_time, tl_s+tl_offset), (0, tl_s+tl_offset)]
+                         (light_time, tl_s+tl_offset), (0, tl_s+tl_offset)]
 
         obj_offset = 5
         if cur_v < 30 * KPH_TO_MPS:
@@ -108,7 +108,7 @@ class LongitudinalPlanner:
             for os in objects_s:
                 if os[2] > -1.5 and os[2] < 1.5:
                     obj = [(0.0, os[1]-obj_offset), (obj_time, os[1]-obj_offset),
-                        (obj_time, os[1]+obj_offset), (0.0, os[1]+obj_offset)]
+                           (obj_time, os[1]+obj_offset), (0.0, os[1]+obj_offset)]
 
                     obstacles.append(obj)
                     obstacle = self.ax.add_patch(patches.Polygon(
@@ -122,7 +122,7 @@ class LongitudinalPlanner:
         self.ax.set_ylim([s+s_min, s+s_max])
         self.ax.set_yticks([i for i in range(int(s+s_min), int(s+s_max))])
 
-        ############### Planning Start ###############
+        ############### Search-Based Optimal Motion Planning ###############
         start = (0.0, s, cur_v, cur_a)  # t, s, v, a
         open_heap = []
         open_dict = {}
@@ -131,9 +131,11 @@ class LongitudinalPlanner:
         def goal_cost(node):
             return last_s - node[1]
 
+        # hq : Min-Heap, parent < child
+        # insert item (remain_goal, (t,s,v,a)) to heap
+        # put a tuple in the heap, it is composed of the first element.
         hq.heappush(open_heap, (0 + goal_cost(start), start))
         open_dict[start] = (0 + goal_cost(start), start, (start, start))
-
         while len(open_heap) > 0:
             chosen_d_node = open_heap[0][1]
             chosen_node_total_cost = open_heap[0][0]
@@ -282,7 +284,7 @@ class LongitudinalPlanner:
             else:
                 lgp = 1
 
-        # self.fig.canvas.draw()
-        # self.fig.canvas.flush_events()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
         return lgp

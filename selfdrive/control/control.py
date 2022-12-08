@@ -14,7 +14,10 @@ class Control:
         self.state = 'WAITING'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
 
-    def control(self, CP):
+    def control(self):
+        car = rospy.get_param('car_name', 'None')
+        CP = getattr(sys.modules[__name__], car).CP
+
         sm = StateMaster(CP)
         localizer = Localizer()
         controller = Controller(CP)
@@ -44,15 +47,14 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-def main(car):
+def main():
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Control', anonymous=False)
     c = Control()
     print("[{}] Created".format(c.__class__.__name__))
 
     try:
-        car_class = getattr(sys.modules[__name__], car)
-        if c.control(car_class.CP) == 1:
+        if c.control() == 1:
             print("[{}] Over".format(c.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
@@ -64,5 +66,4 @@ def main(car):
 
 
 if __name__ == "__main__":
-    car = "SIMULATOR"
-    main(car)
+    main()

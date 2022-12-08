@@ -5,6 +5,7 @@ import signal
 import time
 import rospy
 from std_msgs.msg import String
+from std_srvs.srv import SetBool
 
 from selfdrive.message.messaging import *
 from selfdrive.car.simulator_transceiver import SimulatorTransceiver
@@ -17,24 +18,31 @@ def signal_handler(sig, frame):
 
 class Transceiver:
     def __init__(self):
-        self.state = 'WAITING'
+        self.state = 'None'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
 
-    def transceiver(self, car, CP):
+    def transceiver(self):
+        can = None
+        while True:
+            if self.state == 'WAITING':
+                can = self.init()
+            elif self.state == 'START':
+                can.run()
+            elif self.state == 'INITIALIZE':
+                can = self.init()
+            elif self.state == 'FINISH':
+                return 1
+            time.sleep(0.1)
+
+    def init(self):
+        car = rospy.get_param('car_name', 'None')
+        CP = getattr(sys.modules[__name__], car).CP
         if car == "SIMULATOR":
             can = SimulatorTransceiver(CP)
         else:
             can = NiroTransceiver
 
-        while True:
-            if self.state == 'START':
-                can.run()
-                time.sleep(0.1)
-            elif self.state == 'FINISH':
-                return 1
-            else:
-                time.sleep(0.1)
-                continue
+        return can
 
     def state_cb(self, msg):
         if self.state != str(msg.data):
@@ -45,15 +53,14 @@ class Transceiver:
         self.state = str(msg.data)
 
 
-def main(car):
+def main():
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Car', anonymous=False)
     t = Transceiver()
     print("[{}] Created".format(t.__class__.__name__))
 
     try:
-        car_class = getattr(sys.modules[__name__], car)
-        if t.transceiver(car, car_class.CP) == 1:
+        if t.transceiver() == 1:
             print("[Car Process] Over")
             time.sleep(3)
             sys.exit(0)
@@ -66,5 +73,4 @@ def main(car):
 
 
 if __name__ == "__main__":
-    car = "SIMULATOR"
-    main(car)
+    main()

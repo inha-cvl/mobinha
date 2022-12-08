@@ -14,7 +14,9 @@ class Perception:
         self.state = 'WAITING'
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
 
-    def perception(self, CP):
+    def perception(self):
+        car = rospy.get_param('car_name', 'None')
+        CP = getattr(sys.modules[__name__], car).CP
         sm = StateMaster(CP)
         obstacle_detector = ObstacleDetector(CP)
 
@@ -42,15 +44,14 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-def main(car):
+def main():
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Perception', anonymous=False)
     p = Perception()
     print("[{}] Created".format(p.__class__.__name__))
 
     try:
-        car_class = getattr(sys.modules[__name__], car)
-        if p.perception(car_class.CP) == 1:
+        if p.perception() == 1:
             print("[{}] Over".format(p.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
@@ -62,5 +63,4 @@ def main(car):
 
 
 if __name__ == "__main__":
-    car = "SIMULATOR"
-    main(car)
+    main()

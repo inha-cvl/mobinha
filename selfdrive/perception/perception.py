@@ -5,7 +5,6 @@ import rospy
 from std_msgs.msg import String
 
 from obstacle_detector import ObstacleDetector
-
 from selfdrive.message.messaging import *
 
 

@@ -11,7 +11,7 @@ class MapParam(NamedTuple):
     baseAltitude: float = 7.369
 
 
-class StParam(NamedTuple):
+class STParam(NamedTuple):
     sMin: float = -20.0
     sMax: float = 50.0
     tMax: float = 8.0
@@ -89,7 +89,7 @@ class CarParam(NamedTuple):
     dbc: str = ""
     mapParam: MapParam = MapParam()
 
-    stParam: StParam = StParam()
+    stParam: STParam = STParam()
 
     minEnableSpeed: float = 0.0
     maxEnableSpeed: float = 0.0

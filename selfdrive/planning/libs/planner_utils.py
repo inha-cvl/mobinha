@@ -415,7 +415,6 @@ def signal_light_toggle(path, ego_idx, precision, t_map, lmap, stage):
         forward_lanelet_ids = np.array(ids)
         # 0: normal, 1: left, 2: right
         # if forward_lanelet_id == left_lanelet or (stage == 1 and ):
-        # print(forward_lanelet_ids)
         if np.any(forward_lanelet_ids == left_lanelet):
             change = 1
         elif np.any(forward_lanelet_ids == right_lanelet):

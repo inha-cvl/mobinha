@@ -5,11 +5,6 @@ from selfdrive.visualize.viz_utils import *
 from libs.purepursuit import PurePursuit
 from libs.pid import PID
 import rospy
-import numpy as np
-import os
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-os.chdir(dir_path)
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6

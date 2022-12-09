@@ -2,7 +2,6 @@ import math
 from math import atan2
 import numpy as np
 from scipy.interpolate import interp1d
-from numpy.linalg import norm
 
 
 class QuadraticSplineInterpolate:

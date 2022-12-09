@@ -5,7 +5,6 @@ import signal
 import time
 import rospy
 from std_msgs.msg import String
-from std_srvs.srv import SetBool
 
 from selfdrive.message.messaging import *
 from selfdrive.car.simulator_transceiver import SimulatorTransceiver

@@ -2,8 +2,6 @@
 import tf
 import math
 import pymap3d
-import signal
-import sys
 
 import rospy
 from std_msgs.msg import Float32

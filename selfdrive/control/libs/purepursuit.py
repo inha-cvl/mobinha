@@ -3,7 +3,6 @@ from std_msgs.msg import Float32, Int8
 from numpy.linalg import norm
 from math import sin, cos, atan2, radians, degrees
 from numpy import abs
-from libs.lat_pid import PID
 from libs.interpolate import interpolate
 
 

@@ -22,7 +22,9 @@ class Planning:
         self.pub_planning_State = rospy.Publisher(
             '/planning_state', Int16MultiArray, queue_size=1)
 
-    def planning(self, CP):
+    def planning(self):
+        car = rospy.get_param('car_name', 'None')
+        CP = getattr(sys.modules[__name__], car).CP
         sm = StateMaster(CP)
         path_planner = PathPlanner(CP)
         longitudinal_planner = LongitudinalPlanner(CP)
@@ -74,15 +76,14 @@ class Planning:
         self.state = str(msg.data)
 
 
-def main(car):
+def main():
     signal.signal(signal.SIGINT, signal_handler)
     rospy.init_node('Planning', anonymous=False)
     p = Planning()
     print("[{}] Created".format(p.__class__.__name__))
 
     try:
-        car_class = getattr(sys.modules[__name__], car)
-        if p.planning(car_class.CP) == 1:
+        if p.planning() == 1:
             print("[{}] Over".format(p.__class__.__name__))
             time.sleep(3)
             sys.exit(0)
@@ -95,5 +96,4 @@ def main(car):
 
 
 if __name__ == "__main__":
-    car = "NIRO"
-    main(car)
+    main()

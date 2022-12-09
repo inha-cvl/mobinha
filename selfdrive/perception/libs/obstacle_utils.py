@@ -7,13 +7,13 @@ class ObstacleUtils:
         return np.sqrt((x2-x1)**2+(y2-y1)**2)
 
     def object2enu(odom, obj_local_y, obj_local_x):
-        rad = odom["yaw"] * (math.pi / 180.0)
+        rad = odom[2] * (math.pi / 180.0)
 
         nx = math.cos(-rad) * obj_local_x - math.sin(-rad) * obj_local_y
         ny = math.sin(-rad) * obj_local_x + math.cos(-rad) * obj_local_y
 
-        obj_x = odom["x"] + ny
-        obj_y = odom["y"] + nx
+        obj_x = odom[0] + ny
+        obj_y = odom[1] + nx
 
         return obj_x, obj_y
 
@@ -43,4 +43,4 @@ class ObstacleUtils:
         if(distToPos > distToRef):
             frenet_d *= -1
 
-        return int(point/2), frenet_d
+        return point, frenet_d

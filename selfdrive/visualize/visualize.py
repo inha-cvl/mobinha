@@ -5,8 +5,7 @@ import time
 import rospy
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int16, Int16MultiArray
-from geometry_msgs.msg import PoseStamped, PoseArray
-from jsk_recognition_msgs.msg import BoundingBoxArray
+from geometry_msgs.msg import PoseStamped
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -27,9 +26,11 @@ class MainWindow(QMainWindow, form_class):
         self.setupUi(self)
 
         self.car_name = str(self.car_name_combo_box.currentText())
+
         self.CP = None
         self.CS = None
 
+        self.system_state = False
         self.finish_cnt = 0
         self.can_cmd = 0
         self.scenario = 0
@@ -75,6 +76,9 @@ class MainWindow(QMainWindow, form_class):
         self.rviz_frame.load(config)
         self.manager = self.rviz_frame.getManager()
         self.grid_display = self.manager.getRootDisplayGroup().getDisplayAt(0)
+        for i in range(self.rviz_layout.count()):
+            self.rviz_layout.itemAt(i).widget().close()
+            self.rviz_layout.takeAt(i)
         self.rviz_layout.addWidget(self.rviz_frame)
 
         # setting button
@@ -100,7 +104,37 @@ class MainWindow(QMainWindow, form_class):
         self.scenario2_button.clicked.connect(self.scenario2_button_clicked)
         self.scenario3_button.clicked.connect(self.scenario3_button_clicked)
 
+    def publish_system_state(self):
+        sm = StateMaster(self.CP)
+        while self.system_state:
+            self.pub_state.publish(String(self.state))
+            self.pub_can_cmd.publish(Int16(self.can_cmd))
+            if self.state == 'START':
+                if self.scenario != 0:
+                    self.pub_goal.publish(self.scenario_goal)
+                sm.update()
+                self.CS = sm.CS
+                self.display()
+            elif self.state == 'PAUSE':
+                self.status_label.setText("Pause")
+                self.start_button.setEnabled(True)
+                self.initialize_button.setEnabled(True)
+                self.pause_button.setDisabled(True)
+            elif self.state == 'INITIALIZE':
+                self.status_label.setText("Stand by")
+                self.start_button.setEnabled(True)
+                self.scenario = 0
+            elif self.state == 'FINISH':
+                self.status_label.setText("Over")
+                self.finish_cnt += 1
+                if(self.finish_cnt == 20):
+                    print("[Visualize] Over")
+                    sys.exit(0)
+            time.sleep(0.1)
+            QApplication.processEvents()
+
     def car_name_changed(self, car_name):
+        self.car_name = str(self.car_name_combo_box.currentText())
         self.initialize()
 
     def wheel_angle_cb(self, msg):
@@ -154,34 +188,7 @@ class MainWindow(QMainWindow, form_class):
             self.pause_button.setDisabled(True)
 
     def start_button_clicked(self):
-        sm = StateMaster(CP)
         self.state = 'START'
-        while True:
-            self.pub_state.publish(String(self.state))
-            self.pub_can_cmd.publish(Int16(self.can_cmd))
-            if self.state == 'START':
-                if self.scenario != 0:
-                    self.pub_goal.publish(self.scenario_goal)
-                sm.update()
-                self.CS = sm.CS
-                self.display()
-            elif self.state == 'PAUSE':
-                self.status_label.setText("Pause")
-                self.start_button.setEnabled(True)
-                self.initialize_button.setEnabled(True)
-                self.pause_button.setDisabled(True)
-            elif self.state == 'INITIALIZE':
-                self.status_label.setText("Stand by")
-                self.start_button.setEnabled(True)
-                self.scenario = 0
-            elif self.state == 'FINISH':
-                self.status_label.setText("Over")
-                self.finish_cnt += 1
-                if(self.finish_cnt == 20):
-                    print("[Visualize] Over")
-                    sys.exit(0)
-            time.sleep(0.1)
-            QApplication.processEvents()
 
     def pause_button_clicked(self):
         self.state = 'PAUSE'
@@ -239,7 +246,11 @@ def main():
 
     try:
         mainWindow = MainWindow()
-        mainWindow.showMinimized()
+        mainWindow.showNormal()
+        mainWindow.system_state = True
+        mainWindow.publish_system_state()
+        if app.exec_() == 0:
+            mainWindow.system_state == False
         sys.exit(app.exec_())
 
     except Exception as e:

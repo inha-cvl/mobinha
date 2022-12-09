@@ -2,13 +2,8 @@
 from selfdrive.visualize.viz_utils import *
 import tf
 import math
-import os
-
 import rospy
 from visualization_msgs.msg import Marker
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-os.chdir(dir_path)
 
 
 class Localizer:

@@ -6,9 +6,9 @@ from scipy.spatial import KDTree
 from std_msgs.msg import String, Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray
 
-from libs.map import LaneletMap, TileMap
-from libs.micro_lanelet_graph import MicroLaneletGraph
-from libs.planner_utils import *
+from selfdrive.planning.libs.map import LaneletMap, TileMap
+from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
+from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.viz_utils import *
 
 
@@ -44,9 +44,9 @@ class PathPlanner:
         self.pub_goal = rospy.Publisher(
             '/goal', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher(
-            '/global_path', Marker, queue_size=1, latch=True)
+            '/mobinha/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
-            '/local_path', Marker, queue_size=1)
+            '/mobinha/local_path', Marker, queue_size=1)
         self.pub_now_lane_id = rospy.Publisher(
             '/now_lane_id', String, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
@@ -223,10 +223,9 @@ class PathPlanner:
                     if time.time()-self.obstacle_detect_timer >= 5:
                         print(
                             '[{}] 5sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
-                        pp = 4
-                        return pp
+                        # pp = 4
+                        # return pp
                         # Create Avoidance Trajectory
-                        '''
                         splited_id = now_lane_id.split('_')[0]
                         avoid_path = generate_avoid_path(
                             self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 15)
@@ -234,7 +233,6 @@ class PathPlanner:
                             for i, avoid_pt in enumerate(avoid_path):
                                 self.local_path[self.l_idx+i] = avoid_pt
                             self.obstacle_detect_timer = 0.0
-                        '''
                     else:
                         self.obstacle_detect_timer = 0.0
 

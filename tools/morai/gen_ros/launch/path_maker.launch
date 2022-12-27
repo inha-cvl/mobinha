@@ -1,0 +1,5 @@
+<launch>
+	<!-- args = "(경로가 생성되는 폴더 이름) (생성할 경로의 파일 이름)" -->
+	<node pkg="gen_ros" type="path_maker.py" name="maker" args="path path_name" output="screen" />
+ 
+</launch>

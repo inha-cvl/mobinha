@@ -226,6 +226,11 @@ border-color: rgb(71,181,255);</string>
         </item>
         <item>
          <property name="text">
+          <string>MORAI</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>NIRO</string>
          </property>
         </item>

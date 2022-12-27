@@ -3010,7 +3010,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /global_path
+      Marker Topic: /mobinha/global_path
       Name: GlobalPath
       Namespaces:
         {}
@@ -3018,7 +3018,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /local_path
+      Marker Topic: /mobinha/local_path
       Name: LocalPath
       Namespaces:
         {}

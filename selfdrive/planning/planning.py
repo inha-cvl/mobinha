@@ -24,7 +24,7 @@ class Planning:
 
     def planning(self):
         car = rospy.get_param('car_name', 'None')
-        CP = getattr(sys.modules[__name__], car).CP
+        CP = getattr(sys.modules[__name__], 'SIMULATOR').CP
         sm = StateMaster(CP)
         path_planner = PathPlanner(CP)
         longitudinal_planner = LongitudinalPlanner(CP)

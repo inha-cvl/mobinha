@@ -8,6 +8,7 @@ from std_msgs.msg import String
 
 from selfdrive.message.messaging import *
 from selfdrive.car.simulator_transceiver import SimulatorTransceiver
+from selfdrive.car.morai_transceiver import MoraiTransceiver
 from selfdrive.car.niro_transceiver import NiroTransceiver
 
 
@@ -38,6 +39,8 @@ class Transceiver:
         CP = getattr(sys.modules[__name__], car).CP
         if car == "SIMULATOR":
             can = SimulatorTransceiver(CP)
+        elif car == "MORAI":
+            can = MoraiTransceiver()
         else:
             can = NiroTransceiver
 

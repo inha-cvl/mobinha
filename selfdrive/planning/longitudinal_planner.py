@@ -10,10 +10,12 @@ import rospy
 from std_msgs.msg import Float32, String
 from geometry_msgs.msg import PoseArray
 
-from libs.map import LaneletMap
-from libs.planner_utils import *
+from selfdrive.planning.libs.map import LaneletMap
+from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.viz_utils import *
 
+KPH_TO_MPS = 1 / 3.6
+MPS_TO_KPH = 3.6
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -39,7 +41,7 @@ class LongitudinalPlanner:
         self.drawn = None
 
         self.sub_local_path = rospy.Subscriber(
-            '/local_path', Marker, self.local_path_cb)
+            '/mobinha/local_path', Marker, self.local_path_cb)
         self.sub_now_lane_id = rospy.Subscriber(
             '/now_lane_id', String, self.now_lane_id_cb
         )
@@ -259,7 +261,7 @@ class LongitudinalPlanner:
             else:
                 lgp = 1
 
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
+        # self.fig.canvas.draw()
+        # self.fig.canvas.flush_events()
 
         return lgp

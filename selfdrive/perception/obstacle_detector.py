@@ -24,7 +24,7 @@ class ObstacleDetector:
         self.lidar_object = []
 
         self.sub_local_path = rospy.Subscriber(
-            '/local_path', Marker, self.local_path_cb)
+            '/mobinha/local_path', Marker, self.local_path_cb)
         self.sub_lidar_cluster_box = rospy.Subscriber(
             '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
         self.pub_object_marker = rospy.Publisher(

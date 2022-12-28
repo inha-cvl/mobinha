@@ -72,8 +72,7 @@ class LongitudinalPlanner:
 
         return obj_x, obj_y
 
-    def obstacle_polygon(self, type, obs_time, obs_s):
-        offset = 3
+    def obstacle_polygon(self, type, obs_time, obs_s, offset):
         polygon = [(0.0, obs_s-offset), (obs_time, obs_s-offset),
                    (obs_time, obs_s+offset), (0.0, obs_s+offset)]
         if type == 'last':
@@ -108,21 +107,21 @@ class LongitudinalPlanner:
         obstacles = []
 
         # Maintain Distance to Goal
-        last = self.obstacle_polygon('last', t_max, last_s)
+        last = self.obstacle_polygon('last', t_max, last_s, 3)
         obstacles.append(last)
 
         # Traffic Light
         light_time = min(t_max-3.0, traffic_lights[1]/10)
-        # traffic_light = self.obstacle_polygon('traffic_light', light_time,traffic_lights[0])
+        # traffic_light = self.obstacle_polygon('traffic_light', light_time,traffic_lights[0],10)
         # obstacles.append(traffic_light)
 
         # LiDAR Objects
-        obj_time = 3 + 0.37*cur_v
+        obj_time = 3 + cur_v*MPS_TO_KPH
         if lidar_objects is not None:
             for os in lidar_objects:
-                if os[2] > -1.5 and os[2] < 1.5:
+                if os[2] >= -1.0 and os[2] <= 1.0:
                     lidar_object = self.obstacle_polygon(
-                        'lidar_object', obj_time, os[1])
+                        'lidar_object', obj_time, os[1], 20)
                     obstacles.append(lidar_object)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############

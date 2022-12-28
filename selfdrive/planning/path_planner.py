@@ -146,7 +146,9 @@ class PathPlanner:
             self.temp_global_idx = 0
             self.l_idx = 0
             self.min_v = 0.5
-
+            self.local_path_cut_value = 300
+            self.local_path_nitting_value = 150
+            self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
             non_intp_path, non_intp_id = self.returnAppendedNonIntpPath(
@@ -195,15 +197,25 @@ class PathPlanner:
             now_lane_id = self.non_intp_id[n_id]
             self.pub_now_lane_id.publish(String(now_lane_id))
 
-            if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < 350) and len(self.local_path) > 350):
+            if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
                 _, eg_idx = calc_cte_and_idx(
                     self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
-                if len(self.erase_global_path)-eg_idx > 500:
-                    local_path = self.erase_global_path[eg_idx:eg_idx+500]
+                if len(self.erase_global_path)-eg_idx > self.local_path_cut_value:
+                    if eg_idx-self.local_path_tail_value > 0:
+                        local_path = self.erase_global_path[eg_idx-self.local_path_tail_value:eg_idx +
+                                                            self.local_path_cut_value]
+                    else:
+                        local_path = self.erase_global_path[eg_idx:eg_idx +
+                                                            self.local_path_cut_value]
                 else:
-                    local_path = self.erase_global_path[eg_idx:]
+                    if eg_idx-self.local_path_tail_value > 0:
+                        local_path = self.erase_global_path[eg_idx -
+                                                            self.local_path_tail_value:]
+                    else:
+                        local_path = self.erase_global_path[eg_idx:]
+
                 self.erase_global_path = self.erase_global_path[eg_idx:]
 
                 self.local_path = local_path
@@ -217,24 +229,24 @@ class PathPlanner:
                 # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
                 # print(self.l_idx, point)
 
-                if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 5.0 and len(self.lidar_obstacle) >= 0:
-                    if self.obstacle_detect_timer != 0:
+                if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
+                    if self.obstacle_detect_timer == 0.0:
                         self.obstacle_detect_timer = time.time()
-                    if time.time()-self.obstacle_detect_timer >= 5:
+                    if time.time()-self.obstacle_detect_timer >= 10:
                         print(
-                            '[{}] 5sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
+                            '[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
                         # pp = 4
                         # return pp
                         # Create Avoidance Trajectory
                         splited_id = now_lane_id.split('_')[0]
                         avoid_path = generate_avoid_path(
-                            self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 15)
+                            self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25)
                         if avoid_path is not None:
                             for i, avoid_pt in enumerate(avoid_path):
                                 self.local_path[self.l_idx+i] = avoid_pt
                             self.obstacle_detect_timer = 0.0
-                    else:
-                        self.obstacle_detect_timer = 0.0
+                else:
+                    self.obstacle_detect_timer = 0.0
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)

@@ -8,3 +8,5 @@ tqdm
 scipy
 geopandas
 matplotlib
+python-can
+cantools

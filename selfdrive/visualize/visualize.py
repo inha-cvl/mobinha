@@ -1,7 +1,8 @@
 import sys
 import signal
 import time
-
+import numpy as np
+import cv2
 import rospy
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int16, Int16MultiArray
@@ -13,6 +14,7 @@ from PyQt5.QtCore import *
 from PyQt5 import uic
 
 from selfdrive.message.messaging import *
+from sensor_msgs.msg import Image, CompressedImage
 
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
@@ -50,6 +52,20 @@ class MainWindow(QMainWindow, form_class):
         self.sub_nearest_obstacle_distance = rospy.Subscriber(
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
+        # self.sub_image1 = rospy.Subscriber(
+        #     '/camera1/image_jpeg/compressed', CompressedImage, self.image1_cb)
+        # self.sub_image2 = rospy.Subscriber(
+        #     '/camera2/image_jpeg/compressed', CompressedImage, self.image2_cb)
+        # self.sub_image3 = rospy.Subscriber(
+        #     '/camera3/image_jpeg/compressed', CompressedImage, self.image3_cb)
+
+        self.sub_image1 = rospy.Subscriber(
+            '/usb_cam/image_raw/compressed', CompressedImage, self.image1_cb)
+        self.sub_image2 = rospy.Subscriber(
+            '/usb_cam/image_raw/compressed', CompressedImage, self.image2_cb)
+        self.sub_image3 = rospy.Subscriber(
+            '/usb_cam/image_raw/compressed', CompressedImage, self.image3_cb)
+
         self.state: str = 'WAITING'
         # 0:wait, 1:start, 2:initialize
         self.pub_state = rospy.Publisher('/state', String, queue_size=1)
@@ -61,25 +77,40 @@ class MainWindow(QMainWindow, form_class):
         self.initialize()
         self.connection_setting()
 
+    def rviz_frame(self, type):
+        rviz_frame = rviz.VisualizationFrame()
+        rviz_frame.setSplashPath("")
+        rviz_frame.initialize()
+        reader = rviz.YamlConfigReader()
+        if type == 'map':
+            config = rviz.Config()
+            reader.readFile(config, dir_path+"/forms/main.rviz")
+            rviz_frame.load(config)
+            manager = rviz_frame.getManager()
+            grid_display = manager.getRootDisplayGroup().getDisplayAt(0)
+            for i in range(self.rviz_layout.count()):
+                self.rviz_layout.itemAt(i).widget().close()
+                self.rviz_layout.takeAt(i)
+            self.rviz_layout.addWidget(rviz_frame)
+        else:
+            config = rviz.Config()
+            reader.readFile(config, dir_path+"/forms/lidar.rviz")
+            rviz_frame.load(config)
+            manager = rviz_frame.getManager()
+            grid_display = manager.getRootDisplayGroup().getDisplayAt(0)
+            for i in range(self.lidar_layout.count()):
+                self.lidar_layout.itemAt(i).widget().close()
+                self.lidar_layout.takeAt(i)
+            self.lidar_layout.addWidget(rviz_frame)
+
     def initialize(self):
         car_class = getattr(sys.modules[__name__], self.car_name)
         rospy.set_param('car_name', self.car_name)
         self.CP = car_class.CP
 
         # setting rviz
-        self.rviz_frame = rviz.VisualizationFrame()
-        self.rviz_frame.setSplashPath("")
-        self.rviz_frame.initialize()
-        reader = rviz.YamlConfigReader()
-        config = rviz.Config()
-        reader.readFile(config, dir_path+"/forms/main.rviz")
-        self.rviz_frame.load(config)
-        self.manager = self.rviz_frame.getManager()
-        self.grid_display = self.manager.getRootDisplayGroup().getDisplayAt(0)
-        for i in range(self.rviz_layout.count()):
-            self.rviz_layout.itemAt(i).widget().close()
-            self.rviz_layout.takeAt(i)
-        self.rviz_layout.addWidget(self.rviz_frame)
+        self.rviz_frame('map')
+        self.rviz_frame('lidar')
 
         # setting button
         self.pause_button.setDisabled(True)
@@ -157,6 +188,34 @@ class MainWindow(QMainWindow, form_class):
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(
             str(round(msg.data, 5))+" m")  # nearest obstacle
+
+    def convert_to_qimage(self, data):
+        np_arr = np.fromstring(data, np.uint8)
+        cv2_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        rgbImage = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgbImage.shape
+        bpl = ch * w
+        qtImage = QImage(rgbImage.data, w, h, bpl, QImage.Format_RGB888)
+        return qtImage.scaled(self.camera1_label.width(), self.camera1_label.height(), Qt.KeepAspectRatio)
+
+    def image1_cb(self, data):
+        qImage = self.convert_to_qimage(data.data)
+        self.camera1_label.setPixmap(QPixmap.fromImage(qImage))
+        self.camera1_label.show()
+        QApplication.ProcessEvents()
+
+    def image2_cb(self, data):
+        qImage = self.convert_to_qimage(data.data)
+        self.camera2_label.setPixmap(QPixmap.fromImage(qImage))
+        self.camera2_label.show()
+        QApplication.ProcessEvents()
+
+    def image3_cb(self, data):
+        qImage = self.convert_to_qimage(data.data)
+        self.camera3_label.setPixmap(QPixmap.fromImage(qImage))
+        self.camera3_label.show()
+        QApplication.ProcessEvents()
+
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:

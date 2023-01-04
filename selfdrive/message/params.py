@@ -3,7 +3,7 @@ from selfdrive.message.car_message import car_param
 import json
 import os
 
-MAP = 'KCity'
+MAP = 'KCity'  # 'songdo'
 
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 

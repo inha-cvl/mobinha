@@ -17,8 +17,7 @@ class ObstacleUtils:
 
         return obj_x, obj_y
 
-    def object2frenet(local_point, local_path, obj_x, obj_y):  # Array in Frenet Array Out
-        target = [obj_x, obj_y]
+    def object2frenet(local_point, local_path, target):  # Array in Frenet Array Out
         point = local_point.query(target, 1)[1]
         if(point == 0):
             return 0, 1000
@@ -29,7 +28,10 @@ class ObstacleUtils:
         x_x = target[0] - wp[point-1][0]
         x_y = target[1] - wp[point-1][1]
 
-        proj_norm = (x_x*n_x+x_y*n_y)/(n_x*n_x+n_y*n_y)
+        if (n_x*n_x+n_y*n_y) > 0:
+            proj_norm = (x_x*n_x+x_y*n_y)/(n_x*n_x+n_y*n_y)
+        else:
+            proj_norm = 0
         proj_x = proj_norm*n_x
         proj_y = proj_norm*n_y
 

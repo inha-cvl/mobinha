@@ -1,0 +1,7 @@
+<launch>
+        <include file="$(find velodyne_pointcloud)/launch/32e_points.launch"/>
+	<node pkg="gen_ros" type="lidar.py" name="lidar"/>
+
+        <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gen_ros)/rviz/lidar.rviz" />
+
+</launch>

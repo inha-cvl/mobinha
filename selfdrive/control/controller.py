@@ -2,8 +2,8 @@
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Float32
 from selfdrive.visualize.viz_utils import *
-from libs.purepursuit import PurePursuit
-from libs.pid import PID
+from selfdrive.control.libs.purepursuit import PurePursuit
+from selfdrive.control.libs.pid import PID
 import rospy
 
 KPH_TO_MPS = 1 / 3.6
@@ -20,7 +20,7 @@ class Controller:
         self.local_path = None
 
         self.sub_local_path = rospy.Subscriber(
-            '/local_path', Marker, self.local_path_cb)
+            '/mobinha/local_path', Marker, self.local_path_cb)
         self.sub_target_v = rospy.Subscriber(
             '/target_v', Float32, self.target_v_cb)
 

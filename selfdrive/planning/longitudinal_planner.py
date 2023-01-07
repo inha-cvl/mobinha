@@ -10,10 +10,12 @@ import rospy
 from std_msgs.msg import Float32, String
 from geometry_msgs.msg import PoseArray
 
-from libs.map import LaneletMap
-from libs.planner_utils import *
+from selfdrive.planning.libs.map import LaneletMap
+from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.viz_utils import *
 
+KPH_TO_MPS = 1 / 3.6
+MPS_TO_KPH = 3.6
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -39,7 +41,7 @@ class LongitudinalPlanner:
         self.drawn = None
 
         self.sub_local_path = rospy.Subscriber(
-            '/local_path', Marker, self.local_path_cb)
+            '/mobinha/local_path', Marker, self.local_path_cb)
         self.sub_now_lane_id = rospy.Subscriber(
             '/now_lane_id', String, self.now_lane_id_cb
         )
@@ -70,8 +72,7 @@ class LongitudinalPlanner:
 
         return obj_x, obj_y
 
-    def obstacle_polygon(self, type, obs_time, obs_s):
-        offset = 3
+    def obstacle_polygon(self, type, obs_time, obs_s, offset):
         polygon = [(0.0, obs_s-offset), (obs_time, obs_s-offset),
                    (obs_time, obs_s+offset), (0.0, obs_s+offset)]
         if type == 'last':
@@ -106,21 +107,21 @@ class LongitudinalPlanner:
         obstacles = []
 
         # Maintain Distance to Goal
-        last = self.obstacle_polygon('last', t_max, last_s)
+        last = self.obstacle_polygon('last', t_max, last_s, 3)
         obstacles.append(last)
 
         # Traffic Light
         light_time = min(t_max-3.0, traffic_lights[1]/10)
-        # traffic_light = self.obstacle_polygon('traffic_light', light_time,traffic_lights[0])
+        # traffic_light = self.obstacle_polygon('traffic_light', light_time,traffic_lights[0],10)
         # obstacles.append(traffic_light)
 
         # LiDAR Objects
-        obj_time = 3 + 0.37*cur_v
+        obj_time = 3 + cur_v*MPS_TO_KPH
         if lidar_objects is not None:
             for os in lidar_objects:
-                if os[2] > -1.5 and os[2] < 1.5:
+                if os[2] >= -1.0 and os[2] <= 1.0:
                     lidar_object = self.obstacle_polygon(
-                        'lidar_object', obj_time, os[1])
+                        'lidar_object', obj_time, os[1], 20)
                     obstacles.append(lidar_object)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############
@@ -259,7 +260,7 @@ class LongitudinalPlanner:
             else:
                 lgp = 1
 
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
+        # self.fig.canvas.draw()
+        # self.fig.canvas.flush_events()
 
         return lgp

@@ -27,9 +27,14 @@ class Spline:
 
         # calc spline coefficient b and d
         for i in range(self.nx - 1):
-            self.d.append((self.c[i + 1] - self.c[i]) / (3.0 * h[i]))
-            tb = (self.a[i + 1] - self.a[i]) / h[i] - h[i] * \
-                (self.c[i + 1] + 2.0 * self.c[i]) / 3.0
+            if h[i] > 0:
+                td = (self.c[i + 1] - self.c[i]) / (3.0 * h[i])
+                tb = (self.a[i + 1] - self.a[i]) / h[i] - h[i] * \
+                    (self.c[i + 1] + 2.0 * self.c[i]) / 3.0
+            else:
+                td = 0
+                tb = 0
+            self.d.append(td)
             self.b.append(tb)
 
     def calc(self, t):
@@ -114,8 +119,9 @@ class Spline:
         """
         B = np.zeros(self.nx)
         for i in range(self.nx - 2):
-            B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / \
-                h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
+            if h[i] > 0 and h[i+1] > 0:
+                B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / \
+                    h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
         return B
 
 

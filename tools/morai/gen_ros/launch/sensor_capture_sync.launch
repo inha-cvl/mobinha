@@ -1,0 +1,7 @@
+<launch>
+        <!-- args = "(추종할 경로 이름) (센서캡쳐모드 유무)" -->
+	<node pkg="gen_ros" type="synchronous_planner.py" name="sync_planner" args="kcity True" output="screen" />
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gen_ros)/rviz/sync_planner.rviz" />
+
+</launch>

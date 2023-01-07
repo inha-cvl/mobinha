@@ -1,0 +1,16 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/kana/ros_ws/devel/lib/python3/dist-packages",
+        "/home/kana/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/kana/Documents/openpilot",
+        "/home/kana/Documents/Project/mobinha"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/kana/ros_ws/devel/lib/python3/dist-packages",
+        "/home/kana/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/kana/Documents/openpilot",
+        "/home/kana/Documents/Project/mobinha"
+    ]
+}

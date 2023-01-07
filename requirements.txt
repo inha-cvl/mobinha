@@ -8,3 +8,12 @@ tqdm
 scipy
 geopandas
 matplotlib
+python-can
+cantools
+cv2
+
+#For IMU GL
+PyOpenGL
+PyOpenGL_accelerate
+pygame
+pywavefront

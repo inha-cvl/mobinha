@@ -17,10 +17,11 @@ def ObjectsViz(objects):
     array = MarkerArray()
 
     for n, pt in enumerate(objects):
-        marker = Cube('obstacle', n, 1, (1.0, 1.0, 0.0, 1.0))
-        marker.pose.position = Point(x=pt[0], y=pt[1], z=2.0)
+        quaternion = tf.transformations.quaternion_from_euler(
+            0.0, 0.0, math.radians(pt[2]))
+        marker = Cube('obstacle', n, 1, quaternion, (1.0, 1.0, 0.0, 1.0))
+        marker.pose.position = Point(x=pt[0], y=pt[1], z=0.0)
         array.markers.append(marker)
-
     return array
 
 
@@ -320,7 +321,7 @@ def Sphere(ns, id_, scale, color):
     return marker
 
 
-def Cube(ns, id_, scale, color):
+def Cube(ns, id_, scale, quaternion, color):
     marker = Marker()
     marker.type = Marker.CUBE
     marker.action = Marker.ADD
@@ -328,9 +329,13 @@ def Cube(ns, id_, scale, color):
     marker.ns = ns
     marker.id = id_
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = scale
+    marker.scale.x = scale*3
     marker.scale.y = scale
     marker.scale.z = scale
+    marker.pose.orientation.x = quaternion[0]
+    marker.pose.orientation.y = quaternion[1]
+    marker.pose.orientation.z = quaternion[2]
+    marker.pose.orientation.w = quaternion[3]
     marker.color.r = color[0]
     marker.color.g = color[1]
     marker.color.b = color[2]

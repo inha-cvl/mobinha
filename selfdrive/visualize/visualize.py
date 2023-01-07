@@ -28,12 +28,14 @@ class MainWindow(QMainWindow, form_class):
         self.setupUi(self)
 
         self.car_name = str(self.car_name_combo_box.currentText())
+        self.map_name = str(self.map_name_combo_box.currentText())
 
         self.CP = None
         self.CS = None
+        self.sm = None
 
         self.system_state = False
-        self.finish_cnt = 0
+        self.over_cnt = 0
         self.can_cmd = 0
         self.scenario = 0
         self.scenario_goal = PoseStamped()
@@ -53,11 +55,11 @@ class MainWindow(QMainWindow, form_class):
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
         # self.sub_image1 = rospy.Subscriber(
-        #     '/camera1/image_jpeg/compressed', CompressedImage, self.image1_cb)
+        #     '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
         # self.sub_image2 = rospy.Subscriber(
-        #     '/camera2/image_jpeg/compressed', CompressedImage, self.image2_cb)
+        #     '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
         # self.sub_image3 = rospy.Subscriber(
-        #     '/camera3/image_jpeg/compressed', CompressedImage, self.image3_cb)
+        #     '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
 
         self.sub_image1 = rospy.Subscriber(
             '/usb_cam/image_raw/compressed', CompressedImage, self.image1_cb)
@@ -66,7 +68,7 @@ class MainWindow(QMainWindow, form_class):
         self.sub_image3 = rospy.Subscriber(
             '/usb_cam/image_raw/compressed', CompressedImage, self.image3_cb)
 
-        self.state: str = 'WAITING'
+        self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
         self.pub_state = rospy.Publisher('/state', String, queue_size=1)
         self.pub_can_cmd = rospy.Publisher('/can_cmd', Int16, queue_size=1)
@@ -74,55 +76,34 @@ class MainWindow(QMainWindow, form_class):
         self.pub_goal = rospy.Publisher(
             '/move_base_simple/goal', PoseStamped, queue_size=1)
 
+        self.rviz_frame('map')
+        self.rviz_frame('lidar')
         self.initialize()
         self.connection_setting()
 
-    def rviz_frame(self, type):
-        rviz_frame = rviz.VisualizationFrame()
-        rviz_frame.setSplashPath("")
-        rviz_frame.initialize()
-        reader = rviz.YamlConfigReader()
-        if type == 'map':
-            config = rviz.Config()
-            reader.readFile(config, dir_path+"/forms/main.rviz")
-            rviz_frame.load(config)
-            manager = rviz_frame.getManager()
-            grid_display = manager.getRootDisplayGroup().getDisplayAt(0)
-            for i in range(self.rviz_layout.count()):
-                self.rviz_layout.itemAt(i).widget().close()
-                self.rviz_layout.takeAt(i)
-            self.rviz_layout.addWidget(rviz_frame)
-        else:
-            config = rviz.Config()
-            reader.readFile(config, dir_path+"/forms/lidar.rviz")
-            rviz_frame.load(config)
-            manager = rviz_frame.getManager()
-            grid_display = manager.getRootDisplayGroup().getDisplayAt(0)
-            for i in range(self.lidar_layout.count()):
-                self.lidar_layout.itemAt(i).widget().close()
-                self.lidar_layout.takeAt(i)
-            self.lidar_layout.addWidget(rviz_frame)
-
     def initialize(self):
-        car_class = getattr(sys.modules[__name__], self.car_name)
         rospy.set_param('car_name', self.car_name)
+        rospy.set_param('map_name', self.map_name)
+        car_class = getattr(
+            sys.modules[__name__], self.car_name)(self.map_name)
         self.CP = car_class.CP
-
-        # setting rviz
-        self.rviz_frame('map')
-        self.rviz_frame('lidar')
-
+        self.sm = StateMaster(self.CP)
         # setting button
         self.pause_button.setDisabled(True)
-        self.initialize_button.setDisabled(True)
+
+    def reset_rviz(self):
+        self.lidar_layout.itemAt(0).widget().reset()
+        self.rviz_layout.itemAt(0).widget().reset()
 
     def connection_setting(self):
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)
         self.initialize_button.clicked.connect(self.initialize_button_clicked)
-        self.finish_button.clicked.connect(self.finish_button_clicked)
+        self.over_button.clicked.connect(self.over_button_clicked)
         self.car_name_combo_box.currentIndexChanged.connect(
             self.car_name_changed)
+        self.map_name_combo_box.currentIndexChanged.connect(
+            self.map_name_changed)
         self.cmd_full_button.clicked.connect(self.cmd_full_button_clicked)
         self.cmd_disable_button.clicked.connect(
             self.cmd_disable_button_clicked)
@@ -136,37 +117,53 @@ class MainWindow(QMainWindow, form_class):
         self.scenario3_button.clicked.connect(self.scenario3_button_clicked)
 
     def publish_system_state(self):
-        sm = StateMaster(self.CP)
         while self.system_state:
             self.pub_state.publish(String(self.state))
             self.pub_can_cmd.publish(Int16(self.can_cmd))
             if self.state == 'START':
                 if self.scenario != 0:
                     self.pub_goal.publish(self.scenario_goal)
-                sm.update()
-                self.CS = sm.CS
+                self.sm.update()
+                self.CS = self.sm.CS
                 self.display()
-            elif self.state == 'PAUSE':
-                self.status_label.setText("Pause")
-                self.start_button.setEnabled(True)
-                self.initialize_button.setEnabled(True)
-                self.pause_button.setDisabled(True)
-            elif self.state == 'INITIALIZE':
-                self.status_label.setText("Stand by")
-                self.start_button.setEnabled(True)
-                self.scenario = 0
-            elif self.state == 'FINISH':
-                self.status_label.setText("Over")
-                self.finish_cnt += 1
-                if(self.finish_cnt == 20):
+            elif self.state == 'OVER':
+                self.over_cnt += 1
+                if(self.over_cnt == 15):
                     print("[Visualize] Over")
                     sys.exit(0)
             time.sleep(0.1)
             QApplication.processEvents()
 
-    def car_name_changed(self, car_name):
+    def rviz_frame(self, type):
+        rviz_frame = rviz.VisualizationFrame()
+        rviz_frame.setSplashPath("")
+        rviz_frame.initialize()
+        reader = rviz.YamlConfigReader()
+        if type == 'map':
+            config = rviz.Config()
+            reader.readFile(config, dir_path+"/forms/main.rviz")
+            rviz_frame.load(config)
+            self.clear_layout(self.rviz_layout)
+            self.rviz_layout.addWidget(rviz_frame)
+        else:
+            config = rviz.Config()
+            reader.readFile(config, dir_path+"/forms/lidar.rviz")
+            rviz_frame.load(config)
+            rviz_frame.setMenuBar(None)
+            rviz_frame.setStatusBar(None)
+            self.clear_layout(self.lidar_layout)
+            self.lidar_layout.addWidget(rviz_frame)
+
+    def clear_layout(self, layout):
+        for i in range(layout.count()):
+            layout.itemAt(i).widget().close()
+            layout.takeAt(i)
+
+    def car_name_changed(self, car_idx):
         self.car_name = str(self.car_name_combo_box.currentText())
-        self.initialize()
+
+    def map_name_changed(self, map_idx):
+        self.map_name = str(self.map_name_combo_box.currentText())
 
     def wheel_angle_cb(self, msg):
         self.label_target_yaw.setText(
@@ -190,7 +187,7 @@ class MainWindow(QMainWindow, form_class):
             str(round(msg.data, 5))+" m")  # nearest obstacle
 
     def convert_to_qimage(self, data):
-        np_arr = np.fromstring(data, np.uint8)
+        np_arr = np.frombuffer(data, np.uint8)
         cv2_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         rgbImage = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgbImage.shape
@@ -199,23 +196,22 @@ class MainWindow(QMainWindow, form_class):
         return qtImage.scaled(self.camera1_label.width(), self.camera1_label.height(), Qt.KeepAspectRatio)
 
     def image1_cb(self, data):
-        qImage = self.convert_to_qimage(data.data)
-        self.camera1_label.setPixmap(QPixmap.fromImage(qImage))
-        self.camera1_label.show()
-        QApplication.ProcessEvents()
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
+            qImage = self.convert_to_qimage(data.data)
+            self.camera1_label.setPixmap(QPixmap.fromImage(qImage))
+            QApplication.processEvents()
 
     def image2_cb(self, data):
-        qImage = self.convert_to_qimage(data.data)
-        self.camera2_label.setPixmap(QPixmap.fromImage(qImage))
-        self.camera2_label.show()
-        QApplication.ProcessEvents()
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
+            qImage = self.convert_to_qimage(data.data)
+            self.camera2_label.setPixmap(QPixmap.fromImage(qImage))
+            QApplication.processEvents()
 
     def image3_cb(self, data):
-        qImage = self.convert_to_qimage(data.data)
-        self.camera3_label.setPixmap(QPixmap.fromImage(qImage))
-        self.camera3_label.show()
-        QApplication.ProcessEvents()
-
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
+            qImage = self.convert_to_qimage(data.data)
+            self.camera3_label.setPixmap(QPixmap.fromImage(qImage))
+            QApplication.processEvents()
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
@@ -248,15 +244,31 @@ class MainWindow(QMainWindow, form_class):
 
     def start_button_clicked(self):
         self.state = 'START'
+        self.status_label.setText("Starting ...")
 
     def pause_button_clicked(self):
         self.state = 'PAUSE'
+        self.status_label.setText("Pause")
+        self.start_button.setEnabled(True)
+        self.initialize_button.setEnabled(True)
+        self.pause_button.setDisabled(True)
 
     def initialize_button_clicked(self):
+        self.status_label.setText("Initialize")
+        self.initialize()
+        # self.reset_rviz()
+        self.start_button.setEnabled(True)
+        self.scenario = 0
+        self.scenario1_button.setDisabled(True)
+        self.scenario2_button.setDisabled(True)
+        self.scenario3_button.setDisabled(True)
         self.state = 'INITIALIZE'
 
-    def finish_button_clicked(self):
-        self.state = 'FINISH'
+    def over_button_clicked(self):
+        self.status_label.setText("Over")
+        rospy.set_param('car_name', 'None')
+        rospy.set_param('map_name', 'None')
+        self.state = 'OVER'
 
     def cmd_disable_button_clicked(self):
         self.can_cmd = 0

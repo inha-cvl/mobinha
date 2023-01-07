@@ -14,9 +14,7 @@ from selfdrive.visualize.viz_utils import *
 
 class PathPlanner:
     def __init__(self, CP):
-
         self.state = 'WAITING'
-
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
@@ -88,8 +86,12 @@ class PathPlanner:
             if ego_lanelets is not None:
                 e_id, e_idx = ego_lanelets
             else:
-                rospy.logerr('Failed to match ego to lanelets!')
-                continue
+                rospy.logerr(
+                    'Failed to match ego to lanelets, Insert Goal Again')
+                self.get_goal = False
+                self.state = 'WAITING'
+                return
+
 
             goal_lanelets = lanelet_matching(
                 self.tmap.tiles, self.tmap.tile_size, goal_pt)
@@ -98,8 +100,11 @@ class PathPlanner:
                 goal_viz = GoalViz(goal_pt)
                 self.pub_goal.publish(goal_viz)
             else:
-                rospy.logerr('Failed to match goal to lanelets!')
-                continue
+                rospy.logerr(
+                    'Failed to match ego to lanelets, Insert Goal Again')
+                self.get_goal = False
+                self.state = 'WAITING'
+                return
 
             e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
             g_node = node_matching(
@@ -114,8 +119,11 @@ class PathPlanner:
                 shortest_path = shortest_path[0]
                 break
             else:
-                rospy.logerr('Failed to find shortest path!')
-                continue
+                rospy.logerr(
+                    'Failed to match ego to lanelets, Insert Goal Again')
+                self.get_goal = False
+                self.state = 'WAITING'
+                return
 
         non_intp_path, non_intp_id = node_to_waypoints2(
             self.lmap.lanelets, shortest_path)
@@ -132,14 +140,14 @@ class PathPlanner:
         pp = 0
 
         if self.state == 'WAITING':
-            print("[{}] Waiting Goal Point".format(self.__class__.__name__))
+            #print("[{}] Waiting Goal Point".format(self.__class__.__name__))
             time.sleep(1)
             if self.get_goal:
                 self.state = 'READY'
             pp = 3
 
         elif self.state == 'READY':
-            print("[{}] Making Path".format(self.__class__.__name__))
+            #print("[{}] Making Path".format(self.__class__.__name__))
             non_intp_path = None
             non_intp_id = None
             self.local_path = None
@@ -156,7 +164,7 @@ class PathPlanner:
 
             if non_intp_path is not None:
                 self.state = 'MOVE'
-                print("[{}] Move to Goal".format(self.__class__.__name__))
+                #print("[{}] Move to Goal".format(self.__class__.__name__))
                 global_path, _, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
 
@@ -233,8 +241,7 @@ class PathPlanner:
                     if self.obstacle_detect_timer == 0.0:
                         self.obstacle_detect_timer = time.time()
                     if time.time()-self.obstacle_detect_timer >= 10:
-                        print(
-                            '[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
+                        #print('[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
                         # pp = 4
                         # return pp
                         # Create Avoidance Trajectory
@@ -260,7 +267,7 @@ class PathPlanner:
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'
-                print('[{}] Arrived at Goal'.format(self.__class__.__name__))
+                #print('[{}] Arrived at Goal'.format(self.__class__.__name__))
             pp = 1
 
         elif self.state == 'ARRIVED':

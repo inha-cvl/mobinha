@@ -26,7 +26,7 @@ class PublishBBox:
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
                 print("[{}] Start".format(self.__class__.__name__))
-            elif str(msg.data) == 'INITIALZE':
+            elif str(msg.data) == 'INITIALIZE':
                 print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
@@ -47,7 +47,7 @@ class PublishBBox:
                 bbox.pose.position.y = self.y
                 bbox_arr.boxes.append(bbox)
                 self.pub_bbox_array.publish(bbox_arr)
-            elif self.state == 'FINISH':
+            elif self.state == 'OVER':
                 return 1
             time.sleep(0.1)
 
@@ -66,7 +66,7 @@ def main(car):
         car_class = getattr(sys.modules[__name__], car)
         if pb.publish(car_class.CP) == 1:
             print("[{}] Over".format(pb.__class__.__name__))
-            time.sleep(3)
+            time.sleep(4)
             sys.exit(0)
     except Exception as e:
         print("[{} Error]".format(pb.__class__.__name__), e)

@@ -18,39 +18,41 @@ def signal_handler(sig, frame):
 
 class Transceiver:
     def __init__(self):
-        self.state = 'None'
+        self.state = 'WAITING'
+        self.need_init = True
         sub_state = rospy.Subscriber('/state', String, self.state_cb)
 
     def transceiver(self):
         can = None
         while True:
-            if self.state == 'WAITING':
-                can = self.init()
+            if self.state == 'INITIALIZE':
+                if self.need_init:
+                    can = self.init()
             elif self.state == 'START':
+                self.need_init = True
                 can.run()
-            elif self.state == 'INITIALIZE':
-                can = self.init()
-            elif self.state == 'FINISH':
+            elif self.state == 'OVER':
                 return 1
             time.sleep(0.1)
 
     def init(self):
-        car = rospy.get_param('car_name', 'None')
-        CP = getattr(sys.modules[__name__], car).CP
+        self.need_init = False
+        car = rospy.get_param('car_name', None)
+        map = rospy.get_param('map_name', None)
+        CP = (getattr(sys.modules[__name__], car)(map)).CP
         if car == "SIMULATOR":
             can = SimulatorTransceiver(CP)
         elif car == "MORAI":
             can = MoraiTransceiver()
         else:
             can = NiroTransceiver
-
         return can
 
     def state_cb(self, msg):
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
                 print("[{}] Start".format(self.__class__.__name__))
-            elif str(msg.data) == 'INITIALZE':
+            elif str(msg.data) == 'INITIALIZE':
                 print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
@@ -64,7 +66,7 @@ def main():
     try:
         if t.transceiver() == 1:
             print("[Car Process] Over")
-            time.sleep(3)
+            time.sleep(4)
             sys.exit(0)
 
     except Exception as e:

@@ -14,8 +14,8 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose, PoseArray
 
 
-def signal_handler(sig, frame):
-    sys.exit(0)
+# def signal_handler(sig, frame):
+#     sys.exit(0)
 
 
 class MoraiPlanner():
@@ -63,7 +63,7 @@ class MoraiPlanner():
                 ctrl_msg = self.init_ctrl_cmd(ctrl_msg)
                 self.ctrl_pub.publish(self.init_ctrl_cmd(ctrl_msg))
 
-            elif self.state == 'FINISH':
+            elif self.state == 'OVER':
                 ctrl_msg = self.init_ctrl_cmd(ctrl_msg)
                 self.ctrl_pub.publish(self.init_ctrl_cmd(ctrl_msg))
                 return 1
@@ -128,22 +128,20 @@ class MoraiPlanner():
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
                 print("[{}] Start".format(self.__class__.__name__))
-            elif str(msg.data) == 'INITIALZE':
+            elif str(msg.data) == 'INITIALIZE':
                 print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
 
-if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
-    rospy.init_node('Morai_Planner', anonymous=True)
-
+def run():
+    #signal.signal(signal.SIGINT, signal_handler)
     m = MoraiPlanner()
     print("[{}] Created".format(m.__class__.__name__))
 
     try:
         if m.planning() == 1:
             print("[{}] Over".format(m.__class__.__name__))
-            time.sleep(3)
+            time.sleep(4)
             sys.exit(0)
     except Exception as e:
         print("[{} Error]".format(m.__class__.__name__), e)

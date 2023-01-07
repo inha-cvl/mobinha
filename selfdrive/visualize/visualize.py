@@ -15,6 +15,7 @@ from PyQt5 import uic
 
 from selfdrive.message.messaging import *
 from sensor_msgs.msg import Image, CompressedImage
+import imugl
 
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
@@ -78,6 +79,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
+        self.imu_frame()
         self.initialize()
         self.connection_setting()
 
@@ -153,6 +155,10 @@ class MainWindow(QMainWindow, form_class):
             rviz_frame.setStatusBar(None)
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
+
+    def imu_frame(self):
+        self.imu_widget = imugl.ImuGL()
+        self.imu_layout.addWidget(self.imu_widget)
 
     def clear_layout(self, layout):
         for i in range(layout.count()):

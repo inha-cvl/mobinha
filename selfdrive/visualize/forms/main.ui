@@ -36,7 +36,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../icon/icon7.png</normaloff>../icon/icon7.png</iconset>
+    <normaloff>../../../../../../.designer/icon/icon7.png</normaloff>../../../../../../.designer/icon/icon7.png</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(0, 10, 20);</string>
@@ -1639,7 +1639,7 @@ border-color: rgb(71,181,255);</string>
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -1761,6 +1761,22 @@ border-color: rgb(71,181,255);</string>
          </layout>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <attribute name="title">
+        <string>Ego Pose</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>771</width>
+          <height>481</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="imu_layout"/>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab_4">
        <attribute name="title">

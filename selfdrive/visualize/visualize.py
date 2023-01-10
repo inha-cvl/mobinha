@@ -54,19 +54,12 @@ class MainWindow(QMainWindow, form_class):
         self.sub_nearest_obstacle_distance = rospy.Subscriber(
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
-        # self.sub_image1 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
-        # self.sub_image2 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
-        # self.sub_image3 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
-
         self.sub_image1 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image1_cb)
+            '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
         self.sub_image2 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image2_cb)
+            '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
         self.sub_image3 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image3_cb)
+            '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize

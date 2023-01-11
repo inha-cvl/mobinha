@@ -4,9 +4,11 @@ from typing import NamedTuple
 class Positions(NamedTuple):
     x: float = 0.0
     y: float = 0.0
+    z: float = 0.0
     latitude: float = 37.45
     longitude: float = 126.6535
     altitude: float = 5.0
+    accuracy: float = 99.999
 
 
 class WheelSpeeds(NamedTuple):
@@ -50,10 +52,12 @@ class CarState(NamedTuple):
     position: Positions = Positions()
 
     yawRate: float = 0.0
+    pitchRate: float = 0.0
+    rollRate: float = 0.0
     wheelSpeeds: WheelSpeeds = WheelSpeeds()
 
     brake: float = 0.0
-    brakePressed: bool = False
+    accel: float = 0.0
 
     steeringAngleDeg: float = 0.0
     steeringTorque: float = 0.0

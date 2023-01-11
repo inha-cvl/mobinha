@@ -24,9 +24,12 @@ class StateMaster:
                          CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
         self.v = 0.0
+        self.pitch = 0.0
+        self.roll = 0.0
         self.yaw = 0.0
         self.x = 0.0
         self.y = 0.0
+        self.z = 0.0
         self.latitude = 0.0
         self.longitude = 0.0
         self.altitude = 0.0
@@ -35,7 +38,7 @@ class StateMaster:
         self.latitude = msg.latitude
         self.longitude = msg.longitude
         self.altitude = msg.altitude
-        self.x, self.y, _ = pymap3d.geodetic2enu(
+        self.x, self.y, self.z = pymap3d.geodetic2enu(
             msg.latitude, msg.longitude, msg.altitude, self.base_lla[0], self.base_lla[1], self.base_lla[2])
 
     def ins_odom_cb(self, msg):
@@ -43,6 +46,8 @@ class StateMaster:
 
     def ins_imu_cb(self, msg):
         yaw = math.degrees(msg.angle.z)
+        self.pitch = math.degrees(msg.angle.y)
+        self.roll = math.degrees(msg.angle.x)
         self.yaw = 90 - yaw if (yaw >= -90 and yaw <= 180) else -270 - yaw
 
     def update(self):
@@ -52,11 +57,14 @@ class StateMaster:
         car_state_position = car_state["position"]._asdict()
         car_state_position["x"] = self.x
         car_state_position["y"] = self.y
+        car_state_position["z"] = self.z
         car_state_position["latitude"] = self.latitude
         car_state_position["longitude"] = self.longitude
         car_state_position["altitude"] = self.altitude
         car_state["position"] = self.CS.position._make(
             car_state_position.values())
         car_state["yawRate"] = self.yaw
+        car_state["pitchRate"] = self.pitch
+        car_state["rollRate"] = self.roll
 
         self.CS = self.CS._make(car_state.values())

@@ -3103,7 +3103,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 34.0136604309082
+      Distance: 15
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -3122,7 +3122,61 @@ Visualization Manager:
       Pitch: 0.25539934635162354
       Target Frame: ego_car
       Yaw: 3.152218818664551
-    Saved: ~
+    Saved:
+      - Class: rviz/ThirdPersonFollower
+        Distance: 15
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Field of View: 0.7853981852531433
+        Focal Point:
+          X: 4.566937446594238
+          Y: 1.2352936267852783
+          Z: -5.277410309645347e-06
+        Focal Shape Fixed Size: true
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: false
+        Name: Third View
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 0.25539934635162354
+        Target Frame: ego_car
+        Yaw: 3.152218818664551
+      - Class: rviz/ThirdPersonFollower
+        Distance: 20
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Field of View: 0.7853981852531433
+        Focal Point:
+          X: 0
+          Y: 0
+          Z: 0
+        Focal Shape Fixed Size: false
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: false
+        Name: Top View
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 1.5697963237762451
+        Target Frame: ego_car
+        Yaw: 3.152218818664551
+      - Angle: 0
+        Class: rviz/TopDownOrtho
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Invert Z Axis: false
+        Name: XY Top View
+        Near Clip Distance: 0.009999999776482582
+        Scale: 43.13402557373047
+        Target Frame: ego_car
+        X: 0.6128430366516113
+        Y: 1.4420149326324463
 Window Geometry:
   Displays:
     collapsed: true

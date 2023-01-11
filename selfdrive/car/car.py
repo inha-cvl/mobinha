@@ -9,6 +9,7 @@ from std_msgs.msg import String
 from selfdrive.message.messaging import *
 from selfdrive.car.simulator_transceiver import SimulatorTransceiver
 from selfdrive.car.morai_transceiver import MoraiTransceiver
+from selfdrive.car.ioniq_transceiver import IoniqTransceiver
 from selfdrive.car.niro_transceiver import NiroTransceiver
 
 
@@ -44,8 +45,10 @@ class Transceiver:
             can = SimulatorTransceiver(CP)
         elif car == "MORAI":
             can = MoraiTransceiver()
+        elif car == "IONIQ":
+            can = IoniqTransceiver(CP)
         else:
-            can = NiroTransceiver
+            can = NiroTransceiver(CP)
         return can
 
     def state_cb(self, msg):

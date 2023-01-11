@@ -4,6 +4,7 @@ import pymap3d
 import rospy
 from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
 from std_msgs.msg import Float32
+from geometry_msgs.msg import Pose2D
 
 from selfdrive.message.car_message import car_state
 
@@ -30,6 +31,8 @@ class StateMaster:
         self.latitude = 0.0
         self.longitude = 0.0
         self.altitude = 0.0
+
+        self.pub_egocar_enu_pose = rospy.Publisher('/enu_pose', Pose2D, queue_size=1)
 
     def rtk_gps_cb(self, msg):
         self.latitude = msg.latitude
@@ -58,5 +61,7 @@ class StateMaster:
         car_state["position"] = self.CS.position._make(
             car_state_position.values())
         car_state["yawRate"] = self.yaw
+
+        self.pub_egocar_enu_pose.publish(Pose2D(self.x,self.y,self.yaw))
 
         self.CS = self.CS._make(car_state.values())

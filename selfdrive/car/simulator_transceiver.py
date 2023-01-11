@@ -39,6 +39,8 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
 
         self.ego = Vehicle(0.0, 0.0, math.radians(-60), 0.0, 2.65)
+        self.roll = 0.0
+        self.pitch = 0.0
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
@@ -61,6 +63,8 @@ class SimulatorTransceiver:
                       orientation.z, orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         roll, pitch, yaw = euler
+        self.roll = roll
+        self.pitch = pitch
         self.ego.set(x, y, yaw)
 
     def wheel_angle_cb(self, msg):
@@ -85,6 +89,8 @@ class SimulatorTransceiver:
         msg = SbgEkfEuler()
         yaw = math.degrees(yaw)
         yaw = -270 - yaw if (yaw >= -180 and yaw <= -90) else -yaw + 90
+        msg.angle.x = self.roll
+        msg.angle.y = self.pitch
         yaw = math.radians(yaw)
         msg.angle.z = yaw
         self.pub_ins_imu.publish(msg)

@@ -2,17 +2,45 @@
 pip install PyOpenGL PyOpenGL_accelerate
 https://github.com/pyside/Examples/blob/master/examples/opengl/samplebuffers.py
 """
+import os
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-import sys
+import pywavefront
+import random
 import math
-
-import selfdrive.visualize.obj.objloader as loader
-
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+import time
+
+dir_path = str(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+
+class ObjLoader():
+
+	def __init__(self):
+		self.scene = pywavefront.Wavefront(
+			dir_path+'/obj/Car.obj', create_materials=True, collect_faces=True)
+		#self.mtl = MTL()
+
+	def model(self):
+		glPushMatrix()
+		for mesh in self.scene.mesh_list:
+			glBegin(GL_TRIANGLES)
+			for face in mesh.faces:
+				g = self.random_color()
+				glColor3f(g, g, g)
+				for vertex_i in face:
+					glVertex3f(*self.scene.vertices[vertex_i])
+			glEnd()
+		glPopMatrix()
+
+	def random_color(self):
+		r = (random.randrange(1, 125))/255
+		# g = (random.randrange(1, 256))/255
+		# b = (random.randrange(1, 256))/255
+		return r
 
 
 class ImuGL(QOpenGLWidget):
@@ -24,79 +52,80 @@ class ImuGL(QOpenGLWidget):
 
 	def initializeGL(self):
 		glutInit()
-		glLightfv(GL_LIGHT0, GL_POSITION, (-40, 200, 100, 0.0))
-		glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, (1, 1, 1, 1.0))
-		glEnable(GL_LIGHT0)
+		self.obj_loader = ObjLoader()
+
+		glClearColor(0, 0, 0, 0.0)
+		glShadeModel(GL_SMOOTH)
 		glEnable(GL_LIGHTING)
+		glEnable(GL_LIGHT0)
 		glEnable(GL_DEPTH_TEST)
 		glEnable(GL_COLOR_MATERIAL)
-		glShadeModel(GL_SMOOTH)
-		glClearColor(0, 0, 0, 1.0)
-		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
-		gluPerspective(45, 320/float(210), 1, 100.0)
-		glEnable(GL_DEPTH_TEST)
-		glMatrixMode(GL_MODELVIEW)
+		gluPerspective(120, 1, 6, 100)
 
-		#self.car = loader.ObjLoader()
+		glLightfv(GL_LIGHT0, GL_POSITION, (20, 20, 20, 1.0))
+		glLightfv(GL_LIGHT0, GL_AMBIENT, (0.8, 0.8, 0.8, 1.0))
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
+		glLightfv(GL_LIGHT0, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
 
 	def paintGL(self):
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+		glMatrixMode(GL_MODELVIEW)
 		glLoadIdentity()
+
 		glPushMatrix()
-		glScalef(0.3, 0.4, 0.4)
-		glTranslatef(0.3, -0.3, -5.5)
-		glRotatef(30, 1, 0, 0)
-		glRotatef(-45, 0, 1, 0)
+		glTranslatef(0, -0.9, -6.0)
+		# glRotatef(-30, 0, 1, 0)
+		# glRotatef(3, 1, 0, 0)
+
+		glRotatef(self.roll, 0, 0, 1)
+		glRotatef(self.pitch+3, 1, 0, 0)
+		glRotatef(self.yaw-30, 0, 1, 0)
 
 		self.drawLine()
+		self.obj_loader.model()
 
-		glRotatef(self.roll, 1, 0, 0)
-		glRotatef(self.pitch, 0, 1, 0)
-		#glCallList(self.car.gl_list)
 		glPopMatrix()
-		#self.DrawRect(1.0, 1.0, 1.0)
 
-	@pyqtSlot(float, float, float)
 	def updateRP(self, roll_change, pitch_change, yaw_change):
 		self.roll = roll_change
 		self.pitch = pitch_change
 		self.yaw = yaw_change
 		self.update()
+		#time.sleep(0.1)
 
 	def drawLine(self):
-		xroll = "R_{}".format(round(self.roll, 3))
-		ypitch = "P_{}".format(round(self.pitch, 3))
-		zyaw = "Y_{}".format(round(self.yaw, 3))
+		xroll = "R {}".format(round(self.roll, 3))
+		ypitch = "P {}".format(round(self.pitch, 3))
+		zyaw = "Y {}".format(round(self.yaw, 3))
 
 		glPushMatrix()
-
-		glPushMatrix()
-		glColor3f(1, 0, 0)
-		glBegin(GL_LINES)
-		glVertex3f(5.0, 0.0, 0.0)
-		glVertex3f(-5.0, 0.0, 0.0)
-		glEnd()
-		self.drawBitmapText(xroll, -5.0, 0.0, 0.0)
-		glPopMatrix()
 
 		glPushMatrix()
 		glColor3f(0, 1, 0)
 		glBegin(GL_LINES)
-		glVertex3f(0.0, 5.0, 0.0)
-		glVertex3f(0.0, -5.0, 0.0)
+		glVertex3f(3.0, 0.7, 0.0)
+		glVertex3f(-3.5, 0.7, 0.0)
 		glEnd()
-		self.drawBitmapText(ypitch, 0.0, 2.0, -0.2)
+		self.drawBitmapText(ypitch, 2.8, 0.5, 0.0)
+		glPopMatrix()
+
+		glPushMatrix()
+		glColor3f(1, 0, 0)
+		glBegin(GL_LINES)
+		glVertex3f(0.3, 3.0, 0.3)
+		glVertex3f(0.3, -1.0, 0.3)
+		glEnd()
+		self.drawBitmapText(zyaw, 0.2, 3.0, 0)
 		glPopMatrix()
 
 		glPushMatrix()
 		glColor3f(0, 0, 1)
 		glBegin(GL_LINES)
-		glVertex3f(0.0, 0.0, 5.0)
-		glVertex3f(0.0, 0.0, -5.0)
+		glVertex3f(0.0, 0.7, 3.5)
+		glVertex3f(0.0, 0.7, -15.0)
 		glEnd()
-		self.drawBitmapText(zyaw, 0.0, 0.5, 3)
+		self.drawBitmapText(xroll, 0.0, 0.6, 3.5)
 		glPopMatrix()
 
 		glPopMatrix()
@@ -116,7 +145,6 @@ class ImuGL(QOpenGLWidget):
 		glLoadIdentity()
 		gluPerspective(45, aspect, 1, 100.0)
 		glMatrixMode(GL_MODELVIEW)
-		glLoadIdentity()
 
 	def DrawRect(self, x, y, z):
 		point1 = [x/2.0, y/2.0, z/-2.0]

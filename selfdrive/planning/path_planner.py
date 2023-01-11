@@ -52,7 +52,9 @@ class PathPlanner:
         self.pub_distance_to_goal = rospy.Publisher(
             '/distance_to_goal', Float32, queue_size=1)
 
-        lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
+        #lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
+        #self.pub_lanelet_map.publish(lanelet_map_viz)
+        lanelet_map_viz = VectorMapVis(self.lmap.map_data)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
         self.sub_goal = rospy.Subscriber(

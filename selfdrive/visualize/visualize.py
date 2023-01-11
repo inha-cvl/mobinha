@@ -43,6 +43,9 @@ class MainWindow(QMainWindow, form_class):
         self.scenario_goal = PoseStamped()
         self.scenario_goal.header.frame_id = 'world'
 
+        self.map_view_manager = None
+        self.lidar_view_manager = None
+
         self.sub_wheel_angle = rospy.Subscriber(
             '/wheel_angle', Float32, self.wheel_angle_cb)
         self.sub_target_v = rospy.Subscriber(
@@ -56,19 +59,12 @@ class MainWindow(QMainWindow, form_class):
         self.sub_nearest_obstacle_distance = rospy.Subscriber(
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
-        # self.sub_image1 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
-        # self.sub_image2 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
-        # self.sub_image3 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
-
         self.sub_image1 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image1_cb)
+            '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
         self.sub_image2 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image2_cb)
+            '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
         self.sub_image3 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image3_cb)
+            '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -119,6 +115,13 @@ class MainWindow(QMainWindow, form_class):
         self.scenario2_button.clicked.connect(self.scenario2_button_clicked)
         self.scenario3_button.clicked.connect(self.scenario3_button_clicked)
 
+        self.view_third_button.clicked.connect(
+            lambda state, idx=0: self.view_button_clicked(idx))
+        self.view_top_button.clicked.connect(
+            lambda state, idx=1: self.view_button_clicked(idx))
+        self.view_xy_top_button.clicked.connect(
+            lambda state, idx=2: self.view_button_clicked(idx))
+
     def publish_system_state(self):
         while self.system_state:
             self.pub_state.publish(String(self.state))
@@ -134,7 +137,7 @@ class MainWindow(QMainWindow, form_class):
                 if(self.over_cnt == 15):
                     print("[Visualize] Over")
                     sys.exit(0)
-            time.sleep(0.1)
+            time.sleep(0.05)
             QApplication.processEvents()
 
     def rviz_frame(self, type):
@@ -142,18 +145,24 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.setSplashPath("")
         rviz_frame.initialize()
         reader = rviz.YamlConfigReader()
+
         if type == 'map':
             config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/main.rviz")
             rviz_frame.load(config)
+            manager = rviz_frame.getManager()
+            self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
             self.rviz_layout.addWidget(rviz_frame)
+
         else:
             config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
             rviz_frame.load(config)
             rviz_frame.setMenuBar(None)
             rviz_frame.setStatusBar(None)
+            manager = rviz_frame.getManager()
+            self.lidar_view_manager = manager.getViewManager()
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
 
@@ -206,19 +215,16 @@ class MainWindow(QMainWindow, form_class):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
             qImage = self.convert_to_qimage(data.data)
             self.camera1_label.setPixmap(QPixmap.fromImage(qImage))
-            QApplication.processEvents()
 
     def image2_cb(self, data):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
             qImage = self.convert_to_qimage(data.data)
             self.camera2_label.setPixmap(QPixmap.fromImage(qImage))
-            QApplication.processEvents()
 
     def image3_cb(self, data):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
             qImage = self.convert_to_qimage(data.data)
             self.camera3_label.setPixmap(QPixmap.fromImage(qImage))
-            QApplication.processEvents()
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
@@ -304,6 +310,11 @@ class MainWindow(QMainWindow, form_class):
         self.scenario_goal.pose.position.x = 394.54889
         self.scenario_goal.pose.position.y = -12.554
 
+    def view_button_clicked(self, idx):
+        if self.map_view_manager is not None:
+            self.map_view_manager.setCurrentFrom(
+                self.map_view_manager.getViewAt(idx))
+
     def display(self):
         self.label_vehicle_vel.setText(
             str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
@@ -328,8 +339,12 @@ class MainWindow(QMainWindow, form_class):
             self.gps_error_label.setText(str((error)))
             fixed = "True" if self.CS.position.accuracy > 70 else "False"
             self.gps_fixed_label.setText(fixed)
-            self.imu_angle_label.setText("Y: {}  P: {}  R: {}".format(
-                self.CS.yawRate, self.CS.pitchRate, self.CS.rollRate))
+            self.imu_angle_label.setText("Y: {}".format(
+                self.CS.yawRate))
+            self.imu_angle_label_2.setText("P: {}".format(
+                self.CS.pitchRate))
+            self.imu_angle_label_3.setText("R: {}".format(
+                self.CS.rollRate))
             # self.imu_orientation_label
             # self.imu_angular_velocity_label
             # self.imu_linear_velocity_label

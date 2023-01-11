@@ -16,6 +16,8 @@ from PyQt5 import uic
 from selfdrive.message.messaging import *
 from sensor_msgs.msg import Image, CompressedImage
 
+import selfdrive.visualize.libs.imugl as imugl
+
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
@@ -33,7 +35,7 @@ class MainWindow(QMainWindow, form_class):
         self.CP = None
         self.CS = None
         self.sm = None
-
+        self.imu_widget = None
         self.system_state = False
         self.over_cnt = 0
         self.can_cmd = 0
@@ -71,6 +73,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
+        self.imu_frame()
         self.initialize()
         self.connection_setting()
 
@@ -146,6 +149,10 @@ class MainWindow(QMainWindow, form_class):
             rviz_frame.setStatusBar(None)
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
+
+    def imu_frame(self):
+        self.imu_widget = imugl.ImuGL()
+        self.imu_layout.addWidget(self.imu_widget)
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -294,6 +301,33 @@ class MainWindow(QMainWindow, form_class):
         self.label_vehicle_vel.setText(
             str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
         self.label_vehicle_yaw.setText(str(round(self.CS.yawRate, 5))+" deg")
+
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
+            self.imu_widget.updateRP(
+                self.CS.rollRate, self.CS.pitchRate, self.CS.yawRate)
+            self.gps_latitude_label.setText(
+                str(self.CS.position.latitude))
+            self.gps_longitude_label.setText(
+                str(self.CS.position.longitude))
+            self.gps_altitude_label.setText(
+                str(self.CS.position.altitude))
+            self.gps_x_label.setText(
+                str(self.CS.position.x))
+            self.gps_y_label.setText(
+                str(self.CS.position.y))
+            self.gps_z_label.setText(
+                str(self.CS.position.z))
+            error = 100-self.CS.position.accuracy
+            self.gps_error_label.setText(str((error)))
+            fixed = "True" if self.CS.position.accuracy > 70 else "False"
+            self.gps_fixed_label.setText(fixed)
+            self.imu_angle_label.setText("Y: {}  P: {}  R: {}".format(
+                self.CS.yawRate, self.CS.pitchRate, self.CS.rollRate))
+            # self.imu_orientation_label
+            # self.imu_angular_velocity_label
+            # self.imu_linear_velocity_label
+            self.car_velocity_label.setText(
+                str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
 
 
 def signal_handler(sig, frame):

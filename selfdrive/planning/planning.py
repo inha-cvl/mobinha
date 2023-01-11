@@ -46,7 +46,7 @@ class Planning:
                 sm.update()
                 pp = path_planner.run(sm)
                 lgp = longitudinal_planner.run(sm, pp)
-                time.sleep(0.1)  # 10Hz
+                time.sleep(0.05)  # 10Hz
 
                 if pp == 2 and lgp == 2:
                     time.sleep(1)

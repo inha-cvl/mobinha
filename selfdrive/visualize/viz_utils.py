@@ -118,17 +118,17 @@ def LaneletMapViz(lanelet, for_viz):
                            rightType, (1.0, 1.0, 1.0, 1.0))
             array.markers.append(marker)
 
-        color = (random.randint(0, 255)/255.0, random.randint(0,
-                 255)/255.0, random.randint(0, 255)/255.0, 1.0)
+        # color = (random.randint(0, 255)/255.0, random.randint(0,
+        #          255)/255.0, random.randint(0, 255)/255.0, 1.0)
 
-        marker = Waypoints(id_, data['waypoints'], color)
-        array.markers.append(marker)
+        # marker = Waypoints(id_, data['waypoints'], color)
+        # array.markers.append(marker)
 
-        idx = len(data['waypoints']) // 2
-        mid_pt = data['waypoints'][idx]
+        # idx = len(data['waypoints']) // 2
+        # mid_pt = data['waypoints'][idx]
 
-        marker = ID(id_, mid_pt, color)
-        array.markers.append(marker)
+        # marker = ID(id_, mid_pt, color)
+        # array.markers.append(marker)
 
     for n, (points, type_) in enumerate(for_viz):
         if type_ == 'stop_line':

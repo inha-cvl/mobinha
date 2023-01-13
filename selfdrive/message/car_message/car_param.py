@@ -19,6 +19,12 @@ class STParam(NamedTuple):
     dtExp: float = 1.0
 
 
+class CCParam(NamedTuple):
+    vGain: float = 0.5
+    dGain: float = 1.0
+    tGap: float = 0.8
+
+
 class LongitudinalTuning(NamedTuple):
     kpBP: float = 0.0
     kpV: float = 0.0
@@ -90,6 +96,7 @@ class CarParam(NamedTuple):
     mapParam: MapParam = MapParam()
 
     stParam: STParam = STParam()
+    ccParam: CCParam = CCParam()
 
     minEnableSpeed: float = 0.0
     maxEnableSpeed: float = 0.0

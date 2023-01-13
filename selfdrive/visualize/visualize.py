@@ -6,7 +6,7 @@ import cv2
 import rospy
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int16, Int16MultiArray
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Pose
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -54,8 +54,8 @@ class MainWindow(QMainWindow, form_class):
             '/planning_state', Int16MultiArray, self.planning_state_cb)
         self.sub_goal = rospy.Subscriber(
             '/move_base_simple/goal', PoseStamped, self.goal_cb)
-        self.sub_distance_to_goal = rospy.Subscriber(
-            '/distance_to_goal', Float32, self.distance_to_goal_cb)
+        self.sub_goal_object = rospy.Subscriber(
+            '/goal_object', Pose, self.goal_object_cb)
         self.sub_nearest_obstacle_distance = rospy.Subscriber(
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
@@ -134,7 +134,7 @@ class MainWindow(QMainWindow, form_class):
                 self.display()
             elif self.state == 'OVER':
                 self.over_cnt += 1
-                if(self.over_cnt == 15):
+                if(self.over_cnt == 30):
                     print("[Visualize] Over")
                     sys.exit(0)
             time.sleep(0.05)
@@ -193,9 +193,10 @@ class MainWindow(QMainWindow, form_class):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
-    def distance_to_goal_cb(self, msg):
-        distance = str(round(msg.data / 1000, 5))+" km" if msg.data / \
-            1000 >= 1 else str(round(msg.data, 5))+" m"
+    def goal_object_cb(self, msg):
+        m_distance = msg.position.y*0.5
+        distance = str(round(m_distance / 1000, 5))+" km" if m_distance / \
+            1000 >= 1 else str(round(m_distance, 5))+" m"
         self.goal_distance_label.setText(distance)
 
     def nearest_obstacle_distance_cb(self, msg):

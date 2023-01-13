@@ -188,7 +188,7 @@ class MORAI:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 30  # min_v
-        car_param_dict["maxEnableSpeed"] = 80  # ref_v
+        car_param_dict["maxEnableSpeed"] = 50  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.8  # L, vehicle length
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
@@ -205,7 +205,7 @@ class MORAI:
         car_param_lateral_tuning = car_param_dict["lateralTuning"]._asdict()
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
-        car_param_lateral_tuning_lqr["l"] = 5.0  # Lfc, look-ahead distance
+        car_param_lateral_tuning_lqr["l"] = 6.0  # Lfc, look-ahead distance
         car_param_lateral_tuning_lqr["k"] = 0.65  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())

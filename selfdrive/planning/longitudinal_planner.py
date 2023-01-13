@@ -8,7 +8,7 @@ from shapely.geometry import Point as GPoint
 
 import rospy
 from std_msgs.msg import Float32, String
-from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import PoseArray, Pose
 
 from selfdrive.planning.libs.map import LaneletMap
 from selfdrive.planning.libs.planner_utils import *
@@ -16,6 +16,9 @@ from selfdrive.visualize.viz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
+IDX_TO_M = 0.5
+M_TO_IDX = 2
+
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -23,13 +26,20 @@ class LongitudinalPlanner:
 
         self.local_path = None
         self.lidar_obstacle = None
+        self.goal_object = None
         self.now_lane_id = ''
 
         self.min_v = CP.minEnableSpeed
         self.ref_v = CP.maxEnableSpeed
-        self.target_v = 0.0
+        self.wheel_base = CP.wheelbase
+        self.target_v = CP.maxEnableSpeed
         self.st_param = CP.stParam._asdict()
+        self.cc_param = CP.ccParam._asdict()
         self.precision = CP.mapParam.precision
+
+        self.object_type = None
+        self.object_distance = 0
+        self.object_velocity = 0.0
 
         plt.ion()
         self.fig = plt.figure(figsize=(10, 10))
@@ -47,6 +57,8 @@ class LongitudinalPlanner:
         )
         self.sub_lidar_obstacle = rospy.Subscriber(
             '/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        self.sub_goal_object = rospy.Subscriber(
+            '/goal_object', Pose, self.goal_object_cb)
 
         self.pub_target_v = rospy.Publisher(
             '/target_v', Float32, queue_size=1, latch=True)
@@ -60,6 +72,9 @@ class LongitudinalPlanner:
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
                                for pose in msg.poses]
+
+    def goal_object_cb(self, msg):
+        self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
 
     def object2enu(self, odom, obj_local_y, obj_local_x):
         rad = odom["yaw"] * (math.pi / 180.0)
@@ -186,7 +201,7 @@ class LongitudinalPlanner:
                 skip = False
                 for _ in range(int(dt_exp // dt + 1)):  # range(5), dtExp= 1.0, dt = 0.2
                     if not skip:
-                        t_exp = round((t_exp+dt),1)
+                        t_exp = round((t_exp+dt), 1)
                         s_exp += v_exp * dt
                         v_exp += a * dt
 
@@ -206,7 +221,7 @@ class LongitudinalPlanner:
                 if skip:
                     continue
 
-                neighbor = (t_exp, s_exp, v_exp) 
+                neighbor = (t_exp, s_exp, v_exp)
                 cost_to_neighbor = node_total_cost - goal_cost(d_node)
                 heurestic = goal_cost((t_exp, s_exp, v_exp))
                 total_cost = heurestic + cost_to_neighbor
@@ -228,13 +243,73 @@ class LongitudinalPlanner:
 
         return target_v
 
+    def check_objects(self, l_idx):
+        object_list = []
+
+        self.object_type = None
+        self.object_distance = 0
+        self.object_velocity = 0.0
+
+        if self.goal_object is not None:
+            object_list.append(self.goal_object)
+        if self.lidar_obstacle is not None:
+            for losb in self.lidar_obstacle:
+                if losb[2] >= -2.5 and losb[2] <= 2.5:
+                    object_list.append(losb)
+        # TODO: Traffic Light
+        min_relative_distance = float('inf')
+        for obj in object_list:
+            if obj[0] == 0:
+                distance_threshold = 40*M_TO_IDX
+                left = obj[1]-l_idx
+            elif obj[0] == 1:
+                distance_threshold = 2.5*M_TO_IDX
+                left = obj[1]
+            print(left)
+            if left < distance_threshold:
+                if left < min_relative_distance:
+                    min_relative_distance = left
+                    self.object_type = obj[0]
+                    self.object_distance = left-self.wheel_base*M_TO_IDX
+                    self.object_velocity = 0.0
+
+    def get_target_velocity(self, cur_v, max_v, tar_v):
+        out_v = max_v
+        if self.object_type == 0:
+            default_space = 60*M_TO_IDX
+        elif self.object_type == 1:
+            default_space = 5*M_TO_IDX
+        else:
+            return out_v
+
+        velocity_error = cur_v - self.object_velocity
+        safe_distance = (cur_v*self.cc_param["tGap"])*M_TO_IDX+default_space
+        distance_error = safe_distance - self.object_distance
+
+        acceleration = - \
+            (self.cc_param["vGain"]*velocity_error +
+             self.cc_param["dGain"]*distance_error)
+        out_v = min(cur_v+acceleration, tar_v)
+
+        if self.object_type == 0 and (distance_error > 0):
+            out_v = out_v-5*KPH_TO_MPS
+        if self.object_distance < default_space:
+            out_v = -1
+
+        # print("velocity error", self.cc_param["vGain"]*velocity_error)
+        # print("distance_error",  self.cc_param["dGain"]*distance_error)
+        # print("Accelration", acceleration)
+        # print("out_vel", out_v)
+        # print("\n")
+
+        return out_v
+
     def run(self, sm, pp=0):
         CS = sm.CS
         lgp = 0
 
-        self.pub_target_v.publish(Float32(self.target_v))
-
         if self.local_path is not None:
+            self.pub_target_v.publish(Float32(self.target_v))
 
             _, l_idx = calc_cte_and_idx(
                 self.local_path, (CS.position.x, CS.position.y))
@@ -248,9 +323,11 @@ class LongitudinalPlanner:
 
             tl_objects = [15, 30, 2]  # s, time, state
 
-            self.target_v = self.velocity_plan(self.ref_v, len(
-                self.local_path), l_idx, local_max_v, CS.vEgo, tl_objects, self.lidar_obstacle)
-
+            # self.target_v = self.velocity_plan(self.ref_v, len(
+            #     self.local_path), l_idx, local_max_v, CS.vEgo, tl_objects, self.lidar_obstacle)
+            self.check_objects(l_idx)
+            self.target_v = self.get_target_velocity(
+                CS.vEgo, local_max_v[l_idx], self.target_v)
             if pp == 2:
                 self.target_v = 0.0
                 if CS.vEgo <= 0.0001:

@@ -4,7 +4,7 @@ import rospy
 import time
 from scipy.spatial import KDTree
 from std_msgs.msg import String, Int8, Float32
-from geometry_msgs.msg import PoseStamped, PoseArray
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -49,12 +49,11 @@ class PathPlanner:
             '/now_lane_id', String, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
             '/lane_change', Int8, queue_size=2)
-        self.pub_distance_to_goal = rospy.Publisher(
-            '/distance_to_goal', Float32, queue_size=1)
+        self.pub_goal_object = rospy.Publisher(
+            '/goal_object', Pose, queue_size=1)
 
-        #lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
-        #self.pub_lanelet_map.publish(lanelet_map_viz)
-        lanelet_map_viz = VectorMapVis(self.lmap.map_data)
+        lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
+        # lanelet_map_viz = VectorMapVis(self.lmap.map_data)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
         self.sub_goal = rospy.Subscriber(
@@ -239,23 +238,23 @@ class PathPlanner:
                 # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
                 # print(self.l_idx, point)
 
-                if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
-                    if self.obstacle_detect_timer == 0.0:
-                        self.obstacle_detect_timer = time.time()
-                    if time.time()-self.obstacle_detect_timer >= 10:
-                        #print('[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
-                        # pp = 4
-                        # return pp
-                        # Create Avoidance Trajectory
-                        splited_id = now_lane_id.split('_')[0]
-                        avoid_path = generate_avoid_path(
-                            self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25)
-                        if avoid_path is not None:
-                            for i, avoid_pt in enumerate(avoid_path):
-                                self.local_path[self.l_idx+i] = avoid_pt
-                            self.obstacle_detect_timer = 0.0
-                else:
-                    self.obstacle_detect_timer = 0.0
+                # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
+                #     if self.obstacle_detect_timer == 0.0:
+                #         self.obstacle_detect_timer = time.time()
+                #     if time.time()-self.obstacle_detect_timer >= 10:
+                #         #print('[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
+                #         # pp = 4
+                #         # return pp
+                #         # Create Avoidance Trajectory
+                #         splited_id = now_lane_id.split('_')[0]
+                #         avoid_path = generate_avoid_path(
+                #             self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25)
+                #         if avoid_path is not None:
+                #             for i, avoid_pt in enumerate(avoid_path):
+                #                 self.local_path[self.l_idx+i] = avoid_pt
+                #             self.obstacle_detect_timer = 0.0
+                # else:
+                #     self.obstacle_detect_timer = 0.0
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
@@ -264,8 +263,13 @@ class PathPlanner:
                 self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
             self.pub_blinkiker.publish(blinker)
 
-            self.pub_distance_to_goal.publish(
-                Float32((self.last_s - s)*0.5))  # m
+            pose = Pose()
+            pose.position.x = 1
+            pose.position.y = self.last_s-s
+            pose.position.z = 0
+            self.pub_goal_object.publish(pose)  # m
+            # Float32((self.last_s - s)*0.5)
+
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

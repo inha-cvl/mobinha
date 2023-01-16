@@ -198,7 +198,7 @@ class PathPlanner:
             if abs(idx-self.temp_global_idx) <= 50:
                 self.temp_global_idx = idx
 
-            s = idx * self.precision
+            s = idx  # * self.precision
             _, n_id = calc_cte_and_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
 
@@ -266,7 +266,7 @@ class PathPlanner:
             pose = Pose()
             pose.position.x = 1
             pose.position.y = self.last_s-s
-            pose.position.z = 0
+            pose.position.z = s
             self.pub_goal_object.publish(pose)  # m
             # Float32((self.last_s - s)*0.5)
 
@@ -279,4 +279,4 @@ class PathPlanner:
         elif self.state == 'ARRIVED':
             pp = 2
 
-        return pp
+        return pp, self.local_path

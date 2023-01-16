@@ -36,40 +36,40 @@ class MoraiPlanner():
         rospy.Subscriber('/accel_brake', Float32, self.accel_brake_cb)
         rospy.Subscriber("/Object_topic", ObjectStatusList,
                          self.object_topic_cb)
+        self.ctrl_msg = CtrlCmd()
 
     def planning(self):
         self.wheel_angle = 0
         self.accel_brake = 0
         self.is_status = False  # 차량 상태 점검
 
-        ctrl_msg = CtrlCmd()
-        ctrl_msg = self.init_ctrl_cmd(ctrl_msg)
+        self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
 
         while True:
             if self.state == 'START':
-                ctrl_msg.steering = self.wheel_angle
-                control_input = self.accel_brake
+                # ctrl_msg.steering = self.wheel_angle
+                # control_input = self.accel_brake
 
-                if control_input > 0:
-                    ctrl_msg.accel = control_input
-                    ctrl_msg.brake = 0
-                else:
-                    ctrl_msg.accel = 0
-                    ctrl_msg.brake = -control_input
+                # if control_input > 0:
+                #     ctrl_msg.accel = control_input
+                #     ctrl_msg.brake = 0
+                # else:
+                #     ctrl_msg.accel = 0
+                #     ctrl_msg.brake = -control_input
 
-                self.ctrl_pub.publish(ctrl_msg)
+                self.ctrl_pub.publish(self.ctrl_msg)
 
             elif self.state == 'INITIALIZE':
-                ctrl_msg = self.init_ctrl_cmd(ctrl_msg)
-                self.ctrl_pub.publish(self.init_ctrl_cmd(ctrl_msg))
+                self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
+                self.ctrl_pub.publish(self.init_ctrl_cmd(self.ctrl_msg))
 
             elif self.state == 'OVER':
-                ctrl_msg = self.init_ctrl_cmd(ctrl_msg)
-                self.ctrl_pub.publish(self.init_ctrl_cmd(ctrl_msg))
+                self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
+                self.ctrl_pub.publish(self.init_ctrl_cmd(self.ctrl_msg))
                 return 1
             else:
-                self.ctrl_pub.publish(ctrl_msg)
-            time.sleep(0.03)
+                self.ctrl_pub.publish(self.ctrl_msg)
+            time.sleep(0.02)
 
     def init_ctrl_cmd(self, ctrl_cmd):
         ctrl_cmd.steering = 0
@@ -79,27 +79,28 @@ class MoraiPlanner():
 
     def wheel_angle_cb(self, msg):
         if msg.data != 0:
-            self.wheel_angle = radians(msg.data)
+            self.ctrl_msg.steering = radians(msg.data)
+
 
     def accel_brake_cb(self, msg):
         if msg.data != 0:
-            self.accel_brake = msg.data
+            accel_brake = msg.data
+            if accel_brake > 0:
+                self.ctrl_msg.accel = accel_brake
+                self.ctrl_msg.brake = 0
+            else:
+                self.ctrl_msg.accel = 0
+                self.ctrl_msg.brake = -1 * accel_brake
 
     def statusCB(self, data):  # Vehicle Status Subscriber
         self.status_msg = data
-        br = tf.TransformBroadcaster()
-        br.sendTransform((self.status_msg.position.x, self.status_msg.position.y, self.status_msg.position.z),
-                         tf.transformations.quaternion_from_euler(
-                             0, 0, (self.status_msg.heading)/180*pi),
-                         rospy.Time.now(),
-                         "gps",
-                         "map")
         pose = Pose()
         pose.position.x = data.position.x
         pose.position.y = data.position.y
         pose.position.z = data.position.z
         self.ego_topic_pub.publish(pose)
         self.velocity = data.velocity.x
+        self.heading = data.heading
         self.is_status = True
 
     def object_topic_cb(self, data):

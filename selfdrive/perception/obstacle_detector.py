@@ -38,7 +38,7 @@ class ObstacleDetector:
             '/morai/ego_topic', Pose, self.morai_ego_topic_cb)
 
         self.pub_object_marker = rospy.Publisher(
-            '/object_marker', MarkerArray, queue_size=2)
+            '/object_marker', MarkerArray, queue_size=1)
 
         self.pub_lidar_obstacle = rospy.Publisher(
             '/lidar_obstacle', PoseArray, queue_size=1)

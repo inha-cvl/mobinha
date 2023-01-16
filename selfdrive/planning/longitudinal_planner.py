@@ -24,15 +24,15 @@ class LongitudinalPlanner:
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
 
-        self.local_path = None
+        #self.local_path = None
         self.lidar_obstacle = None
         self.goal_object = None
         self.now_lane_id = ''
 
-        self.min_v = CP.minEnableSpeed
-        self.ref_v = CP.maxEnableSpeed
+        self.min_v = CP.minEnableSpeed*KPH_TO_MPS
+        self.ref_v = CP.maxEnableSpeed*KPH_TO_MPS
         self.wheel_base = CP.wheelbase
-        self.target_v = CP.maxEnableSpeed
+        self.target_v = CP.maxEnableSpeed*KPH_TO_MPS
         self.st_param = CP.stParam._asdict()
         self.cc_param = CP.ccParam._asdict()
         self.precision = CP.mapParam.precision
@@ -50,8 +50,8 @@ class LongitudinalPlanner:
         self.ax.grid(color='#BDBDBD', linestyle='-', linewidth=2, )
         self.drawn = None
 
-        self.sub_local_path = rospy.Subscriber(
-            '/mobinha/local_path', Marker, self.local_path_cb)
+        # self.sub_local_path = rospy.Subscriber(
+        #     '/mobinha/local_path', Marker, self.local_path_cb)
         self.sub_now_lane_id = rospy.Subscriber(
             '/now_lane_id', String, self.now_lane_id_cb
         )
@@ -63,8 +63,8 @@ class LongitudinalPlanner:
         self.pub_target_v = rospy.Publisher(
             '/target_v', Float32, queue_size=1, latch=True)
 
-    def local_path_cb(self, msg):
-        self.local_path = [(pt.x, pt.y) for pt in msg.points]
+    # def local_path_cb(self, msg):
+    #     self.local_path = [(pt.x, pt.y) for pt in msg.points]
 
     def now_lane_id_cb(self, msg):
         self.now_lane_id = msg.data
@@ -101,14 +101,14 @@ class LongitudinalPlanner:
         self.drawn.append(draw)
         return polygon
 
-    def velocity_plan(self, ref_v, last_s, s, max_v, cur_v, traffic_lights, lidar_objects):
+    def velocity_plan(self, ref_v, last_s, s, max_v, cur_v, lidar_objects):
         # cur_v : m/s
         # s = 0.5m
         ref_v *= KPH_TO_MPS
         s_min, s_max, t_max = self.st_param['sMin'], self.st_param['sMax'], self.st_param['tMax']
         dt, dt_exp = self.st_param['dt'], self.st_param['dtExp']
 
-        target_v = 0.0
+        target_v = cur_v
         s += 1.0
 
         if self.drawn is not None:
@@ -122,11 +122,12 @@ class LongitudinalPlanner:
         obstacles = []
 
         # Maintain Distance to Goal
-        last = self.obstacle_polygon('last', t_max, last_s, 3)
-        obstacles.append(last)
+        if last_s <= s+s_max:
+            last = self.obstacle_polygon('last', t_max, last_s, 3)
+            obstacles.append(last)
 
         # Traffic Light
-        light_time = min(t_max-3.0, traffic_lights[1]/10)
+        # light_time = min(t_max-3.0, traffic_lights[1]/10)
         # traffic_light = self.obstacle_polygon('traffic_light', light_time,traffic_lights[0],10)
         # obstacles.append(traffic_light)
 
@@ -134,7 +135,7 @@ class LongitudinalPlanner:
         obj_time = 3 + cur_v*MPS_TO_KPH
         if lidar_objects is not None:
             for os in lidar_objects:
-                if os[2] >= -1.0 and os[2] <= 1.0:
+                if os[2] >= -2.0 and os[2] <= 2.0:
                     lidar_object = self.obstacle_polygon(
                         'lidar_object', obj_time, os[1], 20)
                     obstacles.append(lidar_object)
@@ -193,7 +194,7 @@ class LongitudinalPlanner:
             hq.heappop(open_heap)
 
             # push
-            for a in [-3.0, -1.5, 0.0, 1.0]:
+            for a in [-1.5, 0.0, 1.0]:
                 t_exp = d_node[0]
                 s_exp = d_node[1]
                 v_exp = d_node[2]
@@ -247,8 +248,6 @@ class LongitudinalPlanner:
         object_list = []
 
         self.object_type = None
-        self.object_distance = 0
-        self.object_velocity = 0.0
 
         if self.goal_object is not None:
             object_list.append(self.goal_object)
@@ -260,71 +259,77 @@ class LongitudinalPlanner:
         min_relative_distance = float('inf')
         for obj in object_list:
             if obj[0] == 0:
-                distance_threshold = 40*M_TO_IDX
+                if obj[1] <= 60*M_TO_IDX:
+                    self.object_type = obj[0]
+                else:
+                    pass
+                distance_threshold = 4.5*M_TO_IDX
                 left = obj[1]-l_idx
             elif obj[0] == 1:
-                distance_threshold = 2.5*M_TO_IDX
+                if obj[1] <= 30*M_TO_IDX:
+                    self.object_type = obj[0]
+                else:
+                    pass
+                distance_threshold = 1*M_TO_IDX
                 left = obj[1]
-            print(left)
             if left < distance_threshold:
                 if left < min_relative_distance:
                     min_relative_distance = left
                     self.object_type = obj[0]
-                    self.object_distance = left-self.wheel_base*M_TO_IDX
+                    self.object_distance = left*IDX_TO_M-self.wheel_base
                     self.object_velocity = 0.0
 
     def get_target_velocity(self, cur_v, max_v, tar_v):
-        out_v = max_v
+        out_v = tar_v
         if self.object_type == 0:
-            default_space = 60*M_TO_IDX
+            default_space = 8
         elif self.object_type == 1:
-            default_space = 5*M_TO_IDX
+            default_space = 1.5
         else:
+            # if out_v <= 0:
+            #     out_v = max_v
             return out_v
 
-        velocity_error = cur_v - self.object_velocity
-        safe_distance = (cur_v*self.cc_param["tGap"])*M_TO_IDX+default_space
-        distance_error = safe_distance - self.object_distance
+        velocity_error = cur_v*MPS_TO_KPH - self.object_velocity
+        safe_distance = ((cur_v)*MPS_TO_KPH *
+                         self.cc_param["tGap"])+default_space
+        distance_error = (safe_distance - self.object_distance)
 
         acceleration = - \
             (self.cc_param["vGain"]*velocity_error +
              self.cc_param["dGain"]*distance_error)
-        out_v = min(cur_v+acceleration, tar_v)
+        out_v = min((cur_v)*MPS_TO_KPH+acceleration, max_v*MPS_TO_KPH)
 
-        if self.object_type == 0 and (distance_error > 0):
-            out_v = out_v-5*KPH_TO_MPS
-        if self.object_distance < default_space:
-            out_v = -1
+        # if self.object_type == 0 and (distance_error > 0):
+        #     out_v = out_v-5*KPH_TO_MPS
+        # if self.object_distance < default_space:
+        #     out_v = 0
 
-        # print("velocity error", self.cc_param["vGain"]*velocity_error)
-        # print("distance_error",  self.cc_param["dGain"]*distance_error)
-        # print("Accelration", acceleration)
-        # print("out_vel", out_v)
-        # print("\n")
+        # if out_v <= 0 and cur_v < 2 * KPH_TO_MPS:
+        #     out_v = -1
 
-        return out_v
+        print("velocity error", self.cc_param["vGain"]*velocity_error)
+        print("distance_error",  self.cc_param["dGain"]*distance_error)
+        print("Accelration", acceleration)
+        print("out_vel", out_v)
+        print("\n")
 
-    def run(self, sm, pp=0):
+        return out_v*KPH_TO_MPS
+
+    def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
         lgp = 0
 
-        if self.local_path is not None:
+        if pp == 1 and local_path is not None:
             self.pub_target_v.publish(Float32(self.target_v))
-
             _, l_idx = calc_cte_and_idx(
-                self.local_path, (CS.position.x, CS.position.y))
-
-            split_now_lane_id = self.now_lane_id.split('_')[0]
-            speed_limit = (
-                self.lmap.lanelets[split_now_lane_id]['speedLimit'])
+                local_path, (CS.position.x, CS.position.y))
 
             local_max_v = ref_to_max_v(
-                self.local_path, self.precision, 1, self.min_v, self.ref_v, speed_limit)
+                local_path, self.precision, 1, self.min_v, self.ref_v)
 
-            tl_objects = [15, 30, 2]  # s, time, state
-
-            # self.target_v = self.velocity_plan(self.ref_v, len(
-            #     self.local_path), l_idx, local_max_v, CS.vEgo, tl_objects, self.lidar_obstacle)
+            # self.target_v = self.velocity_plan(
+            #     self.ref_v, len(local_path), l_idx, local_max_v, CS.vEgo, self.lidar_obstacle)
             self.check_objects(l_idx)
             self.target_v = self.get_target_velocity(
                 CS.vEgo, local_max_v[l_idx], self.target_v)

@@ -348,7 +348,7 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v, speed_limit):
+def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v):
     csp = ref_to_csp(ref_path)
     max_v = []
 
@@ -361,7 +361,7 @@ def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v, speed_limit):
         else:
             curvature_v = 300
 
-        v = max(min_v, min(curvature_v, min(ref_v, speed_limit)))
+        v = max(min_v, min(curvature_v, ref_v))
 
         max_v.append(v * KPH_TO_MPS)
 

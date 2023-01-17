@@ -320,7 +320,7 @@ def cross_track_error(pt1, pt2, pt):
         return dis
 
 
-def calc_cte_and_idx(pts, pt):
+def calc_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
 
@@ -337,9 +337,9 @@ def calc_cte_and_idx(pts, pt):
         pt1 = pts[min_idx]
         pt2 = pts[min_idx+1]
 
-    cte = cross_track_error(pt1, pt2, pt)
+    #cte = cross_track_error(pt1, pt2, pt)
 
-    return cte, min_idx
+    return min_idx
 
 
 def ref_to_csp(ref_path):

@@ -19,55 +19,39 @@ MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
 
+VIZ_GRAPH = True
 
 class LongitudinalPlanner:
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
 
-        #self.local_path = None
         self.lidar_obstacle = None
         self.goal_object = None
-        self.now_lane_id = ''
 
-        self.min_v = CP.minEnableSpeed*KPH_TO_MPS
-        self.ref_v = CP.maxEnableSpeed*KPH_TO_MPS
+        self.min_v = CP.minEnableSpeed
+        self.ref_v = CP.maxEnableSpeed
         self.wheel_base = CP.wheelbase
-        self.target_v = CP.maxEnableSpeed*KPH_TO_MPS
+        self.target_v = 0
         self.st_param = CP.stParam._asdict()
         self.cc_param = CP.ccParam._asdict()
         self.precision = CP.mapParam.precision
 
-        self.object_type = None
-        self.object_distance = 0
-        self.object_velocity = 0.0
+        if VIZ_GRAPH:
+            plt.ion()
+            self.fig = plt.figure(figsize=(10, 10))
+            self.ax = self.fig.add_subplot(1, 1, 1)
+            self.ax.set_xlim([0.0, self.st_param["tMax"]])
+            self.ax.set_xticks([i for i in np.arange(
+                0, int(self.st_param["tMax"]), 0.5)])
+            self.ax.grid(color='#BDBDBD', linestyle='-', linewidth=2, )
+            self.drawn = None
 
-        plt.ion()
-        self.fig = plt.figure(figsize=(10, 10))
-        self.ax = self.fig.add_subplot(1, 1, 1)
-        self.ax.set_xlim([0.0, self.st_param["tMax"]])
-        self.ax.set_xticks([i for i in np.arange(
-            0, int(self.st_param["tMax"]), 0.5)])
-        self.ax.grid(color='#BDBDBD', linestyle='-', linewidth=2, )
-        self.drawn = None
-
-        # self.sub_local_path = rospy.Subscriber(
-        #     '/mobinha/local_path', Marker, self.local_path_cb)
-        self.sub_now_lane_id = rospy.Subscriber(
-            '/now_lane_id', String, self.now_lane_id_cb
-        )
         self.sub_lidar_obstacle = rospy.Subscriber(
             '/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         self.sub_goal_object = rospy.Subscriber(
             '/goal_object', Pose, self.goal_object_cb)
-
         self.pub_target_v = rospy.Publisher(
             '/target_v', Float32, queue_size=1, latch=True)
-
-    # def local_path_cb(self, msg):
-    #     self.local_path = [(pt.x, pt.y) for pt in msg.points]
-
-    def now_lane_id_cb(self, msg):
-        self.now_lane_id = msg.data
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
@@ -76,72 +60,47 @@ class LongitudinalPlanner:
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
 
-    def object2enu(self, odom, obj_local_y, obj_local_x):
-        rad = odom["yaw"] * (math.pi / 180.0)
+    def obstacle_polygon(self, obj, s, cur_v):
+        # [0] Dynamic [1] Static [2] Traffic Light
+        i = int(obj[0])
+        color = ['yellow', 'gray', 'red']
+        obs_time = [3 - cur_v*MPS_TO_KPH, self.st_param['tMax'], 10]
+        offset = [20, 5, 10]
+        pos = obj[1] + s if obj[0] == 1 else obj[1]
+        polygon = [(0.0, pos-offset[i]), (obs_time[i], pos-offset[i]),
+                   (obs_time[i], pos+offset[i]), (0.0, pos+offset[i])]
 
-        nx = math.cos(-rad) * obj_local_x - math.sin(-rad) * obj_local_y
-        ny = math.sin(-rad) * obj_local_x + math.cos(-rad) * obj_local_y
-
-        obj_x = odom["x"] + ny
-        obj_y = odom["y"] + nx
-
-        return obj_x, obj_y
-
-    def obstacle_polygon(self, type, obs_time, obs_s, offset):
-        polygon = [(0.0, obs_s-offset), (obs_time, obs_s-offset),
-                   (obs_time, obs_s+offset), (0.0, obs_s+offset)]
-        if type == 'last':
-            color = 'gray'
-        elif type == 'traffic_light':
-            color = 'red'
-        elif type == 'lidar_object':
-            color = 'yellow'
-        draw = self.ax.add_patch(patches.Polygon(
-            [pt for pt in polygon], closed=True, edgecolor='black', facecolor=color))
-        self.drawn.append(draw)
+        if VIZ_GRAPH:
+            draw = self.ax.add_patch(patches.Polygon(
+                [pt for pt in polygon], closed=True, edgecolor='black', facecolor=color[i]))
+            self.drawn.append(draw)
         return polygon
 
-    def velocity_plan(self, ref_v, last_s, s, max_v, cur_v, lidar_objects):
+    def velocity_plan(self, cur_v, ref_v, max_v, last_s, s, object_list):
         # cur_v : m/s
         # s = 0.5m
         ref_v *= KPH_TO_MPS
         s_min, s_max, t_max = self.st_param['sMin'], self.st_param['sMax'], self.st_param['tMax']
         dt, dt_exp = self.st_param['dt'], self.st_param['dtExp']
 
-        target_v = cur_v
-        s += 1.0
+        target_v = ref_v
+        s += 3.0  # loof a little bit forward
 
-        if self.drawn is not None:
-            for d in self.drawn:
-                d.remove()
-        self.drawn = []
-        self.ax.set_ylim([s+s_min, s+s_max])
-        self.ax.set_yticks([i for i in range(int(s+s_min), int(s+s_max))])
+        if VIZ_GRAPH:
+            if self.drawn is not None:
+                for d in self.drawn:
+                    d.remove()
+            self.drawn = []
+            self.ax.set_ylim([s+s_min, s+s_max])
+            self.ax.set_yticks([i for i in range(int(s+s_min), int(s+s_max))])
 
         ############## Consider Obstacles ###########################
         obstacles = []
-
-        # Maintain Distance to Goal
-        if last_s <= s+s_max:
-            last = self.obstacle_polygon('last', t_max, last_s, 3)
-            obstacles.append(last)
-
-        # Traffic Light
-        # light_time = min(t_max-3.0, traffic_lights[1]/10)
-        # traffic_light = self.obstacle_polygon('traffic_light', light_time,traffic_lights[0],10)
-        # obstacles.append(traffic_light)
-
-        # LiDAR Objects
-        obj_time = 3 + cur_v*MPS_TO_KPH
-        if lidar_objects is not None:
-            for os in lidar_objects:
-                if os[2] >= -2.0 and os[2] <= 2.0:
-                    lidar_object = self.obstacle_polygon(
-                        'lidar_object', obj_time, os[1], 20)
-                    obstacles.append(lidar_object)
+        for obj in object_list:
+            obs = self.obstacle_polygon(obj, s, cur_v)
+            obstacles.append(obs)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############
-        # https://arxiv.org/pdf/1803.04868.pdf
         start = (0.0, s, cur_v)  # t, s, v
         open_heap = []
         open_dict = {}
@@ -176,17 +135,16 @@ class LongitudinalPlanner:
                 # to make large cost -> small cost
                 final_path.reverse()
 
-                t_list = []
-                s_list = []
-                v_list = []
-                for pt in final_path:
-                    t_list.append(pt[0])
-                    s_list.append(pt[1])
-                    v_list.append(pt[2])
+                target_v = final_path[1][2]  # for safety
+                if VIZ_GRAPH:
+                    t_list = []
+                    s_list = []
+                    for pt in final_path:
+                        t_list.append(pt[0])
+                        s_list.append(pt[1])
 
-                target_v = v_list[1]  # for safety
-                d = self.ax.plot(t_list, s_list, '-m')
-                self.drawn.append(d[0])
+                    d = self.ax.plot(t_list, s_list, '-m')
+                    self.drawn.append(d[0])
 
                 break
 
@@ -194,31 +152,29 @@ class LongitudinalPlanner:
             hq.heappop(open_heap)
 
             # push
-            for a in [-1.5, 0.0, 1.0]:
-                t_exp = d_node[0]
-                s_exp = d_node[1]
-                v_exp = d_node[2]
+            for a in [-3.0, -1.5, 0.0, 1.0]:
+                t_exp, s_exp, v_exp = d_node
 
                 skip = False
                 for _ in range(int(dt_exp // dt + 1)):  # range(5), dtExp= 1.0, dt = 0.2
-                    if not skip:
-                        t_exp = round((t_exp+dt), 1)
-                        s_exp += v_exp * dt
-                        v_exp += a * dt
+                    if skip:
+                        break
+                    t_exp = round((t_exp+dt), 1)
+                    s_exp += (v_exp * dt) * M_TO_IDX
+                    v_exp += a * dt
 
-                        idx = int((s_exp - (s_exp % 0.5)) / 0.5)
-                        v_max = max_v[idx] if idx < len(
-                            max_v) else ref_v*KPH_TO_MPS
+                    v_max = max_v[int(s_exp)] if int(
+                        s_exp) < len(max_v) else ref_v
 
-                        if v_exp < 0.0 or v_exp > v_max:
+                    if v_exp < 0.0 or v_exp > v_max:
+                        skip = True
+                        break
+
+                    point = GPoint(t_exp, s_exp)
+                    for obstacle in obstacles:
+                        if point.within(Polygon(obstacle)):
                             skip = True
                             break
-
-                        point = GPoint(t_exp, s_exp)
-                        for obstacle in obstacles:
-                            if point.within(Polygon(obstacle)):
-                                skip = True
-                                break
                 if skip:
                     continue
 
@@ -244,105 +200,52 @@ class LongitudinalPlanner:
 
         return target_v
 
-    def check_objects(self, l_idx):
+    def check_objects(self, local_len):
         object_list = []
 
-        self.object_type = None
-
-        if self.goal_object is not None:
-            object_list.append(self.goal_object)
+        # [0] = Dynamic Object
         if self.lidar_obstacle is not None:
             for losb in self.lidar_obstacle:
-                if losb[2] >= -2.5 and losb[2] <= 2.5:
+                if losb[2] >= -2.0 and losb[2] <= 2.0:  # object in my lane
                     object_list.append(losb)
-        # TODO: Traffic Light
-        min_relative_distance = float('inf')
-        for obj in object_list:
-            if obj[0] == 0:
-                if obj[1] <= 60*M_TO_IDX:
-                    self.object_type = obj[0]
-                else:
-                    pass
-                distance_threshold = 4.5*M_TO_IDX
-                left = obj[1]-l_idx
-            elif obj[0] == 1:
-                if obj[1] <= 30*M_TO_IDX:
-                    self.object_type = obj[0]
-                else:
-                    pass
-                distance_threshold = 1*M_TO_IDX
-                left = obj[1]
-            if left < distance_threshold:
-                if left < min_relative_distance:
-                    min_relative_distance = left
-                    self.object_type = obj[0]
-                    self.object_distance = left*IDX_TO_M-self.wheel_base
-                    self.object_velocity = 0.0
 
-    def get_target_velocity(self, cur_v, max_v, tar_v):
-        out_v = tar_v
-        if self.object_type == 0:
-            default_space = 8
-        elif self.object_type == 1:
-            default_space = 1.5
-        else:
-            # if out_v <= 0:
-            #     out_v = max_v
-            return out_v
+        # [1] = Goal Object
+        if self.goal_object is not None:
+            left = (self.goal_object[1]-self.goal_object[2]) * M_TO_IDX
+            if left <= local_len:
+                object_list.append(
+                    [self.goal_object[0], left, 0])
 
-        velocity_error = cur_v*MPS_TO_KPH - self.object_velocity
-        safe_distance = ((cur_v)*MPS_TO_KPH *
-                         self.cc_param["tGap"])+default_space
-        distance_error = (safe_distance - self.object_distance)
+        # TODO: Add Traffic Light
 
-        acceleration = - \
-            (self.cc_param["vGain"]*velocity_error +
-             self.cc_param["dGain"]*distance_error)
-        out_v = min((cur_v)*MPS_TO_KPH+acceleration, max_v*MPS_TO_KPH)
-
-        # if self.object_type == 0 and (distance_error > 0):
-        #     out_v = out_v-5*KPH_TO_MPS
-        # if self.object_distance < default_space:
-        #     out_v = 0
-
-        # if out_v <= 0 and cur_v < 2 * KPH_TO_MPS:
-        #     out_v = -1
-
-        print("velocity error", self.cc_param["vGain"]*velocity_error)
-        print("distance_error",  self.cc_param["dGain"]*distance_error)
-        print("Accelration", acceleration)
-        print("out_vel", out_v)
-        print("\n")
-
-        return out_v*KPH_TO_MPS
+        return object_list
 
     def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
         lgp = 0
+        self.pub_target_v.publish(Float32(self.target_v))
 
-        if pp == 1 and local_path is not None:
-            self.pub_target_v.publish(Float32(self.target_v))
-            _, l_idx = calc_cte_and_idx(
+        if local_path is not None:
+            l_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
 
             local_max_v = ref_to_max_v(
                 local_path, self.precision, 1, self.min_v, self.ref_v)
 
-            # self.target_v = self.velocity_plan(
-            #     self.ref_v, len(local_path), l_idx, local_max_v, CS.vEgo, self.lidar_obstacle)
-            self.check_objects(l_idx)
-            self.target_v = self.get_target_velocity(
-                CS.vEgo, local_max_v[l_idx], self.target_v)
+            object_list = self.check_objects(len(local_path))
+            self.target_v = self.velocity_plan(
+                CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)
+
             if pp == 2:
-                self.target_v = 0.0
+                #self.target_v = 0.0
                 if CS.vEgo <= 0.0001:
                     lgp = 2
             elif pp == 4:
                 self.target_v = 0.0
             else:
                 lgp = 1
-
-        # self.fig.canvas.draw()
-        # self.fig.canvas.flush_events()
+        if VIZ_GRAPH:
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
 
         return lgp

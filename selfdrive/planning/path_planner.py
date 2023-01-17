@@ -53,7 +53,6 @@ class PathPlanner:
             '/goal_object', Pose, queue_size=1)
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
-        # lanelet_map_viz = VectorMapVis(self.lmap.map_data)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
         self.sub_goal = rospy.Subscriber(
@@ -93,7 +92,6 @@ class PathPlanner:
                 self.state = 'WAITING'
                 return
 
-
             goal_lanelets = lanelet_matching(
                 self.tmap.tiles, self.tmap.tile_size, goal_pt)
             if goal_lanelets is not None:
@@ -128,8 +126,8 @@ class PathPlanner:
 
         non_intp_path, non_intp_id = node_to_waypoints2(
             self.lmap.lanelets, shortest_path)
-        _, intp_start_idx = calc_cte_and_idx(non_intp_path, self.temp_pt)
-        _, intp_last_idx = calc_cte_and_idx(non_intp_path, goal_pt)
+        intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
+        intp_last_idx = calc_idx(non_intp_path, goal_pt)
 
         non_intp_path = non_intp_path[intp_start_idx:intp_last_idx+1]
         non_intp_id = non_intp_id[intp_start_idx:intp_last_idx+1]
@@ -154,7 +152,6 @@ class PathPlanner:
             self.local_path = None
             self.temp_global_idx = 0
             self.l_idx = 0
-            self.min_v = 0.5
             self.local_path_cut_value = 300
             self.local_path_nitting_value = 150
             self.local_path_tail_value = 50
@@ -168,7 +165,7 @@ class PathPlanner:
                 #print("[{}] Move to Goal".format(self.__class__.__name__))
                 global_path, _, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
-
+   
                 # For Normal Arrive
                 last_idx_of_global = len(global_path)-1
                 x_increment = (
@@ -192,14 +189,14 @@ class PathPlanner:
             pp = 0
 
         elif self.state == 'MOVE':
-            _, idx = calc_cte_and_idx(
+            idx = calc_idx(
                 self.global_path, (CS.position.x, CS.position.y))
 
             if abs(idx-self.temp_global_idx) <= 50:
                 self.temp_global_idx = idx
 
-            s = idx  # * self.precision
-            _, n_id = calc_cte_and_idx(
+            s = idx * self.precision  # m
+            n_id = calc_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
 
             # Pub Now Lane ID
@@ -208,7 +205,7 @@ class PathPlanner:
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
-                _, eg_idx = calc_cte_and_idx(
+                eg_idx = calc_idx(
                     self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 if len(self.erase_global_path)-eg_idx > self.local_path_cut_value:
@@ -231,7 +228,7 @@ class PathPlanner:
 
             if self.local_path is not None:
 
-                _, self.l_idx = calc_cte_and_idx(
+                self.l_idx = calc_idx(
                     self.local_path, (CS.position.x, CS.position.y))
 
                 # local_point = KDTree(self.local_path)
@@ -265,11 +262,10 @@ class PathPlanner:
 
             pose = Pose()
             pose.position.x = 1
-            pose.position.y = self.last_s-s
+            pose.position.y = self.last_s  # m
             pose.position.z = s
             self.pub_goal_object.publish(pose)  # m
             # Float32((self.last_s - s)*0.5)
-
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

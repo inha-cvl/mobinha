@@ -194,7 +194,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
     def goal_object_cb(self, msg):
-        m_distance = msg.position.y*0.5
+        m_distance = msg.position.y-msg.position.z
         distance = str(round(m_distance / 1000, 5))+" km" if m_distance / \
             1000 >= 1 else str(round(m_distance, 5))+" m"
         self.goal_distance_label.setText(distance)

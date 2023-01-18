@@ -86,103 +86,1240 @@ border-radius: 3px
 }</string>
    </property>
    <layout class="QGridLayout" name="gridLayout_6">
-    <item row="0" column="0" rowspan="3">
-     <spacer name="horizontalSpacer_7">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Preferred</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>10</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="0" column="5" colspan="3">
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QLabel" name="status_label">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);
-background-color: rgb(19, 99, 223);</string>
-        </property>
-        <property name="text">
-         <string>Stand by</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="5" column="8">
-     <spacer name="horizontalSpacer_6">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Preferred</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>10</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="2" column="2">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Preferred</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>40</width>
-        <height>10</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="5" column="4">
-     <widget class="Line" name="line_4">
+    <item row="4" column="2" rowspan="2" colspan="2">
+     <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(223, 246, 255);</string>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::West</enum>
+      </property>
+      <property name="currentIndex">
+       <number>4</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Map</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_9">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="rviz_layout"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>LiDAR</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_8">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="lidar_layout"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Camera</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="1">
+           <widget class="QLabel" name="camera2_label">
+            <property name="minimumSize">
+             <size>
+              <width>272</width>
+              <height>153</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>512</width>
+              <height>288</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="camera1_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>272</width>
+              <height>153</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>512</width>
+              <height>288</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="camera3_label">
+            <property name="minimumSize">
+             <size>
+              <width>272</width>
+              <height>153</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>512</width>
+              <height>288</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <attribute name="title">
+        <string>Ego Pose</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_12">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="imu_layout"/>
+        </item>
+        <item row="0" column="1" rowspan="2">
+         <layout class="QGridLayout" name="gridLayout_7">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_27">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Altitude</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0">
+           <widget class="QLabel" name="label_50">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Angular Velocity          </string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="0">
+           <widget class="QLabel" name="label_53">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Offset</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0">
+           <widget class="QLabel" name="label_48">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_22">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Latitude</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="0">
+           <widget class="QLabel" name="label_49">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Orientation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="1">
+           <widget class="QLabel" name="imu_angular_velocity_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>x : -5.77744</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="0">
+           <widget class="QLabel" name="label_52">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Error</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_28">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_24">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Longitude</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_35">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Error</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_44">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  RTK</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="2">
+           <widget class="QLabel" name="imu_angle_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>P: -0.223</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="1">
+           <widget class="QLabel" name="imu_angle_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>Y: 92.028</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="1">
+           <widget class="QLabel" name="imu_linear_velocity_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>x: 0.03814</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_34">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Z</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="0">
+           <widget class="QLabel" name="label_36">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Angle</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="0">
+           <widget class="QLabel" name="label_38">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Linear Velocity</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="1">
+           <widget class="QLabel" name="imu_orientation_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>x : 0.00447</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_30">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <spacer name="verticalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>10</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="11" column="3">
+           <widget class="QLabel" name="imu_angle_label_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>R: 0.507</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="2">
+           <widget class="QLabel" name="imu_orientation_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>y: 0.00183</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="3">
+           <widget class="QLabel" name="imu_orientation_label_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>z : 0.71950</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="2">
+           <widget class="QLabel" name="imu_angular_velocity_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>y: -8.59384</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="3">
+           <widget class="QLabel" name="imu_angular_velocity_label_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>z: 4.18370</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="2">
+           <widget class="QLabel" name="imu_linear_velocity_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>y:0.08681</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="3">
+           <widget class="QLabel" name="imu_linear_velocity_label_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>z: 9.80944</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="0" colspan="4">
+           <widget class="QLabel" name="label_45">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  IMU</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="1" colspan="3">
+           <widget class="QLabel" name="imu_error_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0001%</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="1" colspan="3">
+           <widget class="QLabel" name="imu_offset_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="4">
+           <widget class="QLabel" name="label_20">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  GPS</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="3">
+           <widget class="QLabel" name="gps_latitude_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>37.2422623</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1" colspan="3">
+           <widget class="QLabel" name="gps_fixed_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>Fixed</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1" colspan="3">
+           <widget class="QLabel" name="gps_error_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0001%</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1" colspan="3">
+           <widget class="QLabel" name="gps_z_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>-0.49</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1" colspan="3">
+           <widget class="QLabel" name="gps_y_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>1418.34</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1" colspan="3">
+           <widget class="QLabel" name="gps_x_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>134.38</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" colspan="3">
+           <widget class="QLabel" name="gps_altitude_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>15.778</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" colspan="3">
+           <widget class="QLabel" name="gps_longitude_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>126.774419</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0">
+         <layout class="QGridLayout" name="gridLayout_11">
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_58">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Gear</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="car_velocity_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0 km/h</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_56">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Velocity</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLabel" name="car_brake_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QLabel" name="car_light_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>D</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_60">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Steer Angle          </string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLabel" name="car_accel_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLabel" name="car_steer_angle_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_59">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Brake</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QLabel" name="car_fuel_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>57%</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_66">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Button</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_54">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Car</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_57">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Accel</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Information</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_13">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_14"/>
+        </item>
+        <item row="1" column="2">
+         <layout class="QGridLayout" name="gridLayout_16">
+          <item row="1" column="1" rowspan="3">
+           <widget class="QLabel" name="label_31">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Limit Picture</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_29">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Gear</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>2</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>km / h</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="info_velocity_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>2</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>50</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0">
+         <layout class="QGridLayout" name="gridLayout_15">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_25">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Direction Information ( forward 100m )</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_32">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Blinker Picture</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="2">
+         <layout class="QGridLayout" name="gridLayout_17"/>
+        </item>
+        <item row="0" column="1">
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_23">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>object</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_19">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>distance picture</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="1">
+         <layout class="QVBoxLayout" name="trajectory_layout"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item row="6" column="6">
+     <spacer name="verticalSpacer_10">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-     </widget>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>10</height>
+       </size>
+      </property>
+     </spacer>
     </item>
     <item row="0" column="2">
      <layout class="QGridLayout" name="gridLayout_3">
@@ -379,1130 +1516,103 @@ border-color: rgb(71,181,255);</string>
       </item>
      </layout>
     </item>
-    <item row="4" column="2" rowspan="2" colspan="2">
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(223, 246, 255);</string>
-      </property>
-      <property name="tabPosition">
-       <enum>QTabWidget::West</enum>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Map</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_9">
-        <item row="0" column="0">
-         <layout class="QGridLayout" name="rviz_layout"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>LiDAR</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_8">
-        <item row="0" column="0">
-         <layout class="QGridLayout" name="lidar_layout"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_3">
-       <attribute name="title">
-        <string>Camera</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_10">
-          <item row="0" column="1">
-           <widget class="QLabel" name="camera2_label">
-            <property name="minimumSize">
-             <size>
-              <width>272</width>
-              <height>153</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="baseSize">
-             <size>
-              <width>512</width>
-              <height>288</height>
-             </size>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="camera1_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>272</width>
-              <height>153</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="baseSize">
-             <size>
-              <width>512</width>
-              <height>288</height>
-             </size>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" colspan="2">
-           <widget class="QLabel" name="camera3_label">
-            <property name="minimumSize">
-             <size>
-              <width>272</width>
-              <height>153</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="baseSize">
-             <size>
-              <width>512</width>
-              <height>288</height>
-             </size>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_5">
-       <attribute name="title">
-        <string>Ego Pose</string>
-       </attribute>
-       <widget class="QWidget" name="gridLayoutWidget">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>761</width>
-          <height>471</height>
-         </rect>
+    <item row="0" column="5" colspan="3">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="status_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-        <layout class="QGridLayout" name="imu_layout"/>
-       </widget>
-       <widget class="QWidget" name="gridLayoutWidget_2">
-        <property name="geometry">
-         <rect>
-          <x>780</x>
-          <y>10</y>
-          <width>741</width>
-          <height>791</height>
-         </rect>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
         </property>
-        <layout class="QGridLayout" name="gridLayout_7">
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_27">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Altitude</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="0">
-          <widget class="QLabel" name="label_50">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Angular Velocity          </string>
-           </property>
-          </widget>
-         </item>
-         <item row="16" column="0">
-          <widget class="QLabel" name="label_53">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Offset</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="0">
-          <widget class="QLabel" name="label_48">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>TextLabel</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_22">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Latitude</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="0">
-          <widget class="QLabel" name="label_49">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Orientation</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="1">
-          <widget class="QLabel" name="imu_angular_velocity_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>x : -5.77744</string>
-           </property>
-          </widget>
-         </item>
-         <item row="15" column="0">
-          <widget class="QLabel" name="label_52">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Error</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_28">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  X</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_24">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Longitude</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0">
-          <widget class="QLabel" name="label_35">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Error</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLabel" name="label_44">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  RTK</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="2">
-          <widget class="QLabel" name="imu_angle_label_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>P: -0.223</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="1">
-          <widget class="QLabel" name="imu_angle_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>Y: 92.028</string>
-           </property>
-          </widget>
-         </item>
-         <item row="14" column="1">
-          <widget class="QLabel" name="imu_linear_velocity_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>x: 0.03814</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label_34">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Z</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="0">
-          <widget class="QLabel" name="label_36">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Angle</string>
-           </property>
-          </widget>
-         </item>
-         <item row="14" column="0">
-          <widget class="QLabel" name="label_38">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Linear Velocity</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="1">
-          <widget class="QLabel" name="imu_orientation_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>x : 0.00447</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="label_30">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Y</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="0">
-          <spacer name="verticalSpacer_8">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>10</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="11" column="3">
-          <widget class="QLabel" name="imu_angle_label_3">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>R: 0.507</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="2">
-          <widget class="QLabel" name="imu_orientation_label_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>y: 0.00183</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="3">
-          <widget class="QLabel" name="imu_orientation_label_3">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>z : 0.71950</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="2">
-          <widget class="QLabel" name="imu_angular_velocity_label_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>y: -8.59384</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="3">
-          <widget class="QLabel" name="imu_angular_velocity_label_3">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>z: 4.18370</string>
-           </property>
-          </widget>
-         </item>
-         <item row="14" column="2">
-          <widget class="QLabel" name="imu_linear_velocity_label_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>y:0.08681</string>
-           </property>
-          </widget>
-         </item>
-         <item row="14" column="3">
-          <widget class="QLabel" name="imu_linear_velocity_label_3">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>z: 9.80944</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="0" colspan="4">
-          <widget class="QLabel" name="label_45">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  IMU</string>
-           </property>
-          </widget>
-         </item>
-         <item row="15" column="1" colspan="3">
-          <widget class="QLabel" name="imu_error_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0.0001%</string>
-           </property>
-          </widget>
-         </item>
-         <item row="16" column="1" colspan="3">
-          <widget class="QLabel" name="imu_offset_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0" colspan="4">
-          <widget class="QLabel" name="label_20">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  GPS</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1" colspan="3">
-          <widget class="QLabel" name="gps_latitude_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>37.2422623</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="1" colspan="3">
-          <widget class="QLabel" name="gps_fixed_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>Fixed</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1" colspan="3">
-          <widget class="QLabel" name="gps_error_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0.0001%</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1" colspan="3">
-          <widget class="QLabel" name="gps_z_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>-0.49</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1" colspan="3">
-          <widget class="QLabel" name="gps_y_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>1418.34</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1" colspan="3">
-          <widget class="QLabel" name="gps_x_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>134.38</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1" colspan="3">
-          <widget class="QLabel" name="gps_altitude_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>15.778</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1" colspan="3">
-          <widget class="QLabel" name="gps_longitude_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>126.774419</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QLabel" name="label_46">
-        <property name="geometry">
-         <rect>
-          <x>1603</x>
-          <y>530</y>
-          <width>386</width>
-          <height>426</height>
-         </rect>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
         </property>
         <property name="styleSheet">
          <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
+background-color: rgb(19, 99, 223);</string>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>Stand by</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
-       <widget class="QWidget" name="gridLayoutWidget_3">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>490</y>
-          <width>761</width>
-          <height>311</height>
-         </rect>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_11">
-         <item row="7" column="0">
-          <widget class="QLabel" name="label_58">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Gear</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="car_velocity_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0 km/h</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_56">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Velocity</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QLabel" name="car_brake_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0.0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1">
-          <widget class="QLabel" name="car_light_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>D</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label_60">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Steer Angle          </string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QLabel" name="car_accel_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0.0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QLabel" name="car_steer_angle_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>0.0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="label_59">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Brake</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="1">
-          <widget class="QLabel" name="car_fuel_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>57%</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLabel" name="label_66">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Button</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0" colspan="2">
-          <widget class="QLabel" name="label_54">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Car</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_57">
-           <property name="styleSheet">
-            <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-           </property>
-           <property name="text">
-            <string>  Accel</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string>Information</string>
-       </attribute>
-      </widget>
-     </widget>
+      </item>
+     </layout>
     </item>
-    <item row="3" column="2" colspan="6">
-     <widget class="Line" name="line">
-      <property name="styleSheet">
-       <string notr="true">border-width: 2px;
-border-style: solid;
-border-color: rgb(19, 99, 223);</string>
-      </property>
+    <item row="5" column="8">
+     <spacer name="horizontalSpacer_6">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-     </widget>
+      <property name="sizeType">
+       <enum>QSizePolicy::Preferred</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>10</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
-    <item row="6" column="6">
-     <spacer name="verticalSpacer_10">
+    <item row="0" column="0" rowspan="3">
+     <spacer name="horizontalSpacer_7">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Preferred</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>10</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="2" column="2">
+     <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
       <property name="sizeType">
-       <enum>QSizePolicy::Fixed</enum>
+       <enum>QSizePolicy::Preferred</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
-        <width>20</width>
+        <width>40</width>
         <height>10</height>
        </size>
       </property>
      </spacer>
+    </item>
+    <item row="5" column="4">
+     <widget class="Line" name="line_4">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
     </item>
     <item row="5" column="5" colspan="3">
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -2421,6 +2531,18 @@ border-color: rgb(71,181,255);</string>
        </layout>
       </item>
      </layout>
+    </item>
+    <item row="3" column="2" colspan="6">
+     <widget class="Line" name="line">
+      <property name="styleSheet">
+       <string notr="true">border-width: 2px;
+border-style: solid;
+border-color: rgb(19, 99, 223);</string>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
     </item>
     <item row="0" column="3">
      <layout class="QGridLayout" name="gridLayout_4">

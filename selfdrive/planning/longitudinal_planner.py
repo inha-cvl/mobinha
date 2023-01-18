@@ -19,7 +19,8 @@ MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
 
-VIZ_GRAPH = True
+VIZ_GRAPH = False
+
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -52,6 +53,8 @@ class LongitudinalPlanner:
             '/goal_object', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
             '/target_v', Float32, queue_size=1, latch=True)
+        self.pub_trajectory = rospy.Publisher(
+            '/trajectory', PoseArray, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
@@ -64,9 +67,11 @@ class LongitudinalPlanner:
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
-        obs_time = [3 - cur_v*MPS_TO_KPH, self.st_param['tMax'], 10]
-        offset = [20, 5, 10]
+        obs_time = [5, self.st_param['tMax'], 5]  # sec
+        offset = [6+(cur_v*obs_time[i]), 1, 2]  # m
+        offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
+
         polygon = [(0.0, pos-offset[i]), (obs_time[i], pos-offset[i]),
                    (obs_time[i], pos+offset[i]), (0.0, pos+offset[i])]
 
@@ -94,7 +99,6 @@ class LongitudinalPlanner:
             self.ax.set_ylim([s+s_min, s+s_max])
             self.ax.set_yticks([i for i in range(int(s+s_min), int(s+s_max))])
 
-        ############## Consider Obstacles ###########################
         obstacles = []
         for obj in object_list:
             obs = self.obstacle_polygon(obj, s, cur_v)
@@ -134,7 +138,6 @@ class LongitudinalPlanner:
 
                 # to make large cost -> small cost
                 final_path.reverse()
-
                 target_v = final_path[1][2]  # for safety
                 if VIZ_GRAPH:
                     t_list = []
@@ -152,7 +155,7 @@ class LongitudinalPlanner:
             hq.heappop(open_heap)
 
             # push
-            for a in [-3.0, -1.5, 0.0, 1.0]:
+            for a in [-1.5, 0.0, 1.5]:
                 t_exp, s_exp, v_exp = d_node
 
                 skip = False
@@ -163,10 +166,7 @@ class LongitudinalPlanner:
                     s_exp += (v_exp * dt) * M_TO_IDX
                     v_exp += a * dt
 
-                    v_max = max_v[int(s_exp)] if int(
-                        s_exp) < len(max_v) else ref_v
-
-                    if v_exp < 0.0 or v_exp > v_max:
+                    if v_exp < 0.0 or v_exp > max_v:
                         skip = True
                         break
 
@@ -228,22 +228,28 @@ class LongitudinalPlanner:
         if local_path is not None:
             l_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
-
-            local_max_v = ref_to_max_v(
-                local_path, self.precision, 1, self.min_v, self.ref_v)
-
+            local_max_v, tx, ty = max_v_by_curvature(
+                local_path, l_idx, self.ref_v)
             object_list = self.check_objects(len(local_path))
             self.target_v = self.velocity_plan(
                 CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)
 
             if pp == 2:
-                #self.target_v = 0.0
+                self.target_v = 0.0
                 if CS.vEgo <= 0.0001:
                     lgp = 2
             elif pp == 4:
                 self.target_v = 0.0
             else:
                 lgp = 1
+                trajectory = PoseArray()
+                for i, x in enumerate(tx):
+                    pose = Pose()
+                    pose.position.x = x
+                    pose.position.y = ty[i]
+                    trajectory.poses.append(pose)
+                self.pub_trajectory.publish(trajectory)
+
         if VIZ_GRAPH:
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()

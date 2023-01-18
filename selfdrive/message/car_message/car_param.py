@@ -3,8 +3,8 @@ from typing import NamedTuple
 
 class MapParam(NamedTuple):
     path: str = ''
-    tileSize: float = 0.0
-    cutDist: float = 0.0
+    tileSize: float = 5.0
+    cutDist: float = 15.0
     precision: float = 0.5
     baseLatitude: float = 37.39657805498484
     baseLongitude: float = 126.6321430873685

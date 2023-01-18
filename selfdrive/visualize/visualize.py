@@ -6,12 +6,13 @@ import cv2
 import rospy
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int16, Int16MultiArray
-from geometry_msgs.msg import PoseStamped, Pose
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
+import pyqtgraph as pg
 
 from selfdrive.message.messaging import *
 from sensor_msgs.msg import Image, CompressedImage
@@ -58,6 +59,8 @@ class MainWindow(QMainWindow, form_class):
             '/goal_object', Pose, self.goal_object_cb)
         self.sub_nearest_obstacle_distance = rospy.Subscriber(
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
+        self.sub_trajectory = rospy.Subscriber(
+            '/trajectory', PoseArray, self.trajectory_cb)
 
         self.sub_image1 = rospy.Subscriber(
             '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
@@ -77,6 +80,7 @@ class MainWindow(QMainWindow, form_class):
         self.rviz_frame('map')
         self.rviz_frame('lidar')
         self.imu_frame()
+        self.information_frame()
         self.initialize()
         self.connection_setting()
 
@@ -170,6 +174,19 @@ class MainWindow(QMainWindow, form_class):
         self.imu_widget = imugl.ImuGL()
         self.imu_layout.addWidget(self.imu_widget)
 
+    def information_frame(self):
+        self.trajectory_widget = pg.PlotWidget()
+        self.trajectory_widget.setBackground('#000A14')
+        self.trajectory_widget.setXRange(-10, 10)
+        self.trajectory_widget.setYRange(0, 10)
+        self.trajectory_widget.getPlotItem().hideAxis('bottom')
+        self.trajectory_widget.getPlotItem().hideAxis('left')
+
+        self.trajectory_layout.addWidget(self.trajectory_widget)
+        pen = pg.mkPen(color='#1363DF', width=80)
+        self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
+
+
     def clear_layout(self, layout):
         for i in range(layout.count()):
             layout.itemAt(i).widget().close()
@@ -202,6 +219,15 @@ class MainWindow(QMainWindow, form_class):
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(
             str(round(msg.data, 5))+" m")  # nearest obstacle
+
+    def trajectory_cb(self, msg):
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            x = [v.position.x for v in msg.poses]
+            y = [v.position.y for v in msg.poses]
+
+            self.trajectory_plot.clear()
+            self.trajectory_plot.setData(x=x, y=y)
+
 
     def convert_to_qimage(self, data):
         np_arr = np.frombuffer(data, np.uint8)
@@ -352,6 +378,9 @@ class MainWindow(QMainWindow, form_class):
             self.car_velocity_label.setText(
                 str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
 
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            self.info_velocity_label.setText(
+                str(int(round(self.CS.vEgo*MPH_TO_KPH))))
 
 def signal_handler(sig, frame):
     QApplication.quit()

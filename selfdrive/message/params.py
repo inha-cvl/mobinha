@@ -22,9 +22,6 @@ class IONIQ:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-        car_param_map_param["tileSize"] = 5.0
-        car_param_map_param["cutDist"] = 15.0
-        car_param_map_param["precision"] = 0.5
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng
@@ -73,9 +70,6 @@ class NIRO:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-        car_param_map_param["tileSize"] = 5.0
-        car_param_map_param["cutDist"] = 15.0
-        car_param_map_param["precision"] = 0.5
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng
@@ -124,9 +118,6 @@ class SIMULATOR:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-        car_param_map_param["tileSize"] = 5.0
-        car_param_map_param["cutDist"] = 15.0
-        car_param_map_param["precision"] = 0.5
 
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
@@ -176,9 +167,6 @@ class MORAI:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-        car_param_map_param["tileSize"] = 5.0
-        car_param_map_param["cutDist"] = 15.0
-        car_param_map_param["precision"] = 0.5
 
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat

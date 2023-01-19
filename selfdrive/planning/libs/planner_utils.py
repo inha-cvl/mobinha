@@ -318,7 +318,7 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
+def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
     i += 5
     return_v = ref_v
     x = []
@@ -346,11 +346,11 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
             if cr[0] != 0:
                 curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
             else:
-                curvated = maxv_threshold
+                curvated = curv_threshold
         else:
-            curvated = maxv_threshold+1
-        if curvated < maxv_threshold:
-            return_v = ref_v - (abs(maxv_threshold-curvated)*0.13)
+            curvated = curv_threshold+1
+        if curvated < curv_threshold:
+            return_v = ref_v - (abs(curv_threshold-curvated)*0.13)
             return_v = return_v if return_v > 0 else 5
     
     return return_v*KPH_TO_MPS, x, y

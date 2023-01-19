@@ -11,7 +11,6 @@ KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
-DEG2RAD = math.pi / 180
 
 
 def euc_distance(pt1, pt2):
@@ -332,41 +331,28 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
             x = [v[0] for v in path[i:]]
             y = [v[1] for v in path[i:]]
 
-        x = np.array([-(v-x[0]) for v in x])
-        y = np.array([abs(v-y[0]) for v in y])
-        '''
-       
-        rotation_mat = np.array([[cos(yawRate) -sin(yawRate)]   
-                                 [sin(yawRate) cos(yawRate)]])
-        origin_plot = np.array([[x1 x2 ... xn]
-                  [y1 y2 ... yn]])
-        ==> np.array([[x'1 x'2 ... x'n]
-                      [y'1 y'2 ... y'n]])
-        '''
-        origin_plot = np.array([])
-        origin_plot = np.append(origin_plot, x)
-        origin_plot = np.append(origin_plot, y)
+        x = np.array([(v-x[0]) for v in x])
+        y = np.array([(v-y[0]) for v in y])
 
-        rotation_mat = np.array([[math.cos(yawRate*DEG2RAD), -math.sin(yawRate*DEG2RAD)],   
-                                 [math.sin(yawRate*DEG2RAD), math.cos(yawRate*DEG2RAD)]])
+        origin_plot = np.vstack((x,y))
+        rotation_radians = math.radians(-yawRate) + math.pi/2
+        rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],   
+                                 [math.sin(rotation_radians), math.cos(rotation_radians)]])
         rotation_plot = rotation_mat@origin_plot
-
-        x = rotation_plot[0]
-        y = rotation_plot[1]
+        x, y = rotation_plot
 
         if len(x) > 2:
             cr = np.polyfit(x, y, 2)
             if cr[0] != 0:
                 curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
             else:
-                curvated = 0
+                curvated = maxv_threshold
         else:
             curvated = maxv_threshold+1
-
         if curvated < maxv_threshold:
-            return_v = ref_v - (abs(maxv_threshold-curvated)*0.15)
-            return_v = return_v if return_v > 0 else 0.1
-
+            return_v = ref_v - (abs(maxv_threshold-curvated)*0.13)
+            return_v = return_v if return_v > 0 else 5
+    
     return return_v*KPH_TO_MPS, x, y
 
 

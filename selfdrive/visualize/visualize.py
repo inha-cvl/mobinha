@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 import rospy
 from rviz import bindings as rviz
-from std_msgs.msg import String, Float32, Int16, Int16MultiArray
+from std_msgs.msg import String, Float32, Int8, Int16, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
@@ -61,6 +61,8 @@ class MainWindow(QMainWindow, form_class):
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
         self.sub_trajectory = rospy.Subscriber(
             '/trajectory', PoseArray, self.trajectory_cb)
+        self.sub_forward_direction = rospy.Subscriber(
+            '/forward_direction', Int8, self.forward_direction_cb)
 
         self.sub_image1 = rospy.Subscriber(
             '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
@@ -228,7 +230,9 @@ class MainWindow(QMainWindow, form_class):
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
 
-
+    def forward_direction_cb(self, msg):
+        self.direction_label.setText(str(msg.data))
+            
     def convert_to_qimage(self, data):
         np_arr = np.frombuffer(data, np.uint8)
         cv2_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)

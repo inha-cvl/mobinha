@@ -11,6 +11,7 @@ KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
+DEG2RAD = math.pi / 180
 
 
 def euc_distance(pt1, pt2):
@@ -318,7 +319,7 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, ws=30, maxv_threshold=300):
+def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
     i += 5
     return_v = ref_v
     x = []
@@ -333,6 +334,25 @@ def max_v_by_curvature(path, i, ref_v, ws=30, maxv_threshold=300):
 
         x = np.array([-(v-x[0]) for v in x])
         y = np.array([abs(v-y[0]) for v in y])
+        '''
+       
+        rotation_mat = np.array([[cos(yawRate) -sin(yawRate)]   
+                                 [sin(yawRate) cos(yawRate)]])
+        origin_plot = np.array([[x1 x2 ... xn]
+                  [y1 y2 ... yn]])
+        ==> np.array([[x'1 x'2 ... x'n]
+                      [y'1 y'2 ... y'n]])
+        '''
+        origin_plot = np.array([])
+        origin_plot = np.append(origin_plot, x)
+        origin_plot = np.append(origin_plot, y)
+
+        rotation_mat = np.array([[math.cos(yawRate*DEG2RAD), -math.sin(yawRate*DEG2RAD)],   
+                                 [math.sin(yawRate*DEG2RAD), math.cos(yawRate*DEG2RAD)]])
+        rotation_plot = rotation_mat@origin_plot
+
+        x = rotation_plot[0]
+        y = rotation_plot[1]
 
         if len(x) > 2:
             cr = np.polyfit(x, y, 2)

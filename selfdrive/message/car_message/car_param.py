@@ -3,8 +3,8 @@ from typing import NamedTuple
 
 class MapParam(NamedTuple):
     path: str = ''
-    tileSize: float = 0.0
-    cutDist: float = 0.0
+    tileSize: float = 5.0
+    cutDist: float = 15.0
     precision: float = 0.5
     baseLatitude: float = 37.39657805498484
     baseLongitude: float = 126.6321430873685
@@ -17,6 +17,12 @@ class STParam(NamedTuple):
     tMax: float = 8.0
     dt: float = 0.2
     dtExp: float = 1.0
+
+
+class CCParam(NamedTuple):
+    vGain: float = 0.5
+    dGain: float = 1.0
+    tGap: float = 0.8
 
 
 class LongitudinalTuning(NamedTuple):
@@ -90,6 +96,7 @@ class CarParam(NamedTuple):
     mapParam: MapParam = MapParam()
 
     stParam: STParam = STParam()
+    ccParam: CCParam = CCParam()
 
     minEnableSpeed: float = 0.0
     maxEnableSpeed: float = 0.0

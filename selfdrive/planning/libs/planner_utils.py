@@ -9,6 +9,8 @@ from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
+IDX_TO_M = 0.5
+M_TO_IDX = 2
 
 
 def euc_distance(pt1, pt2):
@@ -44,10 +46,6 @@ def lanelet_matching(tile, tile_size, t_pt):
         return (l_id, l_idx)
     else:
         return None
-
-
-IDX_TO_M = 0.5
-M_TO_IDX = 2
 
 
 def exchange_waypoint(target, now):
@@ -294,33 +292,7 @@ def find_nearest_idx(pts, pt):
     return min_idx
 
 
-def cross_track_error(pt1, pt2, pt):
-    x1, y1 = pt1
-    x2, y2 = pt2
-    x3, y3 = pt
-
-    x, y, c = 0.0, 0.0, 0.0
-    if x2 - x1 != 0.0:
-        m = (y2-y1) / (x2-x1)
-        x = ((m**2)*x1 - m*y1 + x3 + m*y3) / (m**2 + 1)
-        y = m*(x - x1) + y1
-        v1 = (x2-x1, y2-y1)
-        v2 = (x3-x, y3-y)
-        c = np.cross(v1, v2)
-    else:
-        x = x1
-        y = y3
-        v1 = (0, y2-y1)
-        v2 = (x3-x, y3-y)
-        c = np.cross(v1, v2)
-    dis = euc_distance((x3, y3), (x, y))
-    if c < 0:
-        return (-1)*dis
-    else:
-        return dis
-
-
-def calc_cte_and_idx(pts, pt):
+def calc_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
 
@@ -337,9 +309,7 @@ def calc_cte_and_idx(pts, pt):
         pt1 = pts[min_idx]
         pt2 = pts[min_idx+1]
 
-    cte = cross_track_error(pt1, pt2, pt)
-
-    return cte, min_idx
+    return min_idx
 
 
 def ref_to_csp(ref_path):
@@ -348,7 +318,45 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v, speed_limit):
+def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
+    i += 5
+    return_v = ref_v
+    x = []
+    y = []
+    if i < len(path)-1:
+        if i+ws < len(path):
+            x = [v[0] for v in path[i:i+ws]]
+            y = [v[1] for v in path[i:i+ws]]
+        else:
+            x = [v[0] for v in path[i:]]
+            y = [v[1] for v in path[i:]]
+
+        x = np.array([(v-x[0]) for v in x])
+        y = np.array([(v-y[0]) for v in y])
+
+        origin_plot = np.vstack((x,y))
+        rotation_radians = math.radians(-yawRate) + math.pi/2
+        rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],   
+                                 [math.sin(rotation_radians), math.cos(rotation_radians)]])
+        rotation_plot = rotation_mat@origin_plot
+        x, y = rotation_plot
+
+        if len(x) > 2:
+            cr = np.polyfit(x, y, 2)
+            if cr[0] != 0:
+                curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
+            else:
+                curvated = curv_threshold
+        else:
+            curvated = curv_threshold+1
+        if curvated < curv_threshold:
+            return_v = ref_v - (abs(curv_threshold-curvated)*0.13)
+            return_v = return_v if return_v > 0 else 5
+    
+    return return_v*KPH_TO_MPS, x, y
+
+
+def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v):
     csp = ref_to_csp(ref_path)
     max_v = []
 
@@ -361,40 +369,65 @@ def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v, speed_limit):
         else:
             curvature_v = 300
 
-        v = max(min_v, min(curvature_v, min(ref_v, speed_limit)))
+        v = max(min_v, min(curvature_v, ref_v))
 
         max_v.append(v * KPH_TO_MPS)
 
     return max_v
 
 
-def new_velocity_plan(ref_v, last_s, s, tl_s, objects_s):
-    ref_v *= KPH_TO_MPS
-    d_list = []
+def local_velocity(path, max_v, ws=25, road_friction=0.15):
+    max_v *= KPH_TO_MPS
+    velocity_profile = []
+    for i in range(0, ws):
+        velocity_profile.append(max_v)
 
-    traffic_d = tl_s
-    margin = 5
-    d_list.append(traffic_d)
+    tar_v = max_v
 
-    d_list.append(last_s-s)
+    for i in range(ws, len(path)-ws):
+        x_list = []
+        y_list = []
+        for w in range(-ws, ws):
+            x = path[i+w][0]
+            y = path[i+w][1]
+            x_list.append(x)
+            y_list.append(y)
 
-    for object in objects_s:
-        for obj in object:
-            d = obj[1] - s
-            d_list.append(d)
+        x_start = x_list[0]
+        x_end = x_list[-1]
+        x_mid = x_list[int(len(x_list)/2)]
 
-    min_d = min(d_list)
+        y_start = y_list[0]
+        y_end = y_list[-1]
+        y_mid = y_list[int(len(y_list)/2)]
 
-    if not len(d_list) == 0:
-        if min_d > 50:
-            target_v = ref_v
-        else:
-            k = 0.8
-            target_v = k*(min_d - margin + 1)
-    else:
-        target_v = ref_v
+        dSt = np.array([x_start - x_mid, y_start - y_mid])
+        dEd = np.array([x_end - x_mid, y_end - y_mid])
 
-    return target_v
+        Dcom = 2 * (dSt[0]*dEd[1] - dSt[1]*dEd[0])
+
+        dSt2 = np.dot(dSt, dSt)
+        dEd2 = np.dot(dEd, dEd)
+
+        U1 = (dEd[1] * dSt2 - dSt[1] * dEd2)/Dcom
+        U2 = (dSt[0] * dEd2 - dEd[0] * dSt2)/Dcom
+
+        tmp_r = math.sqrt(pow(U1, 2) + pow(U2, 2))
+
+        if np.isnan(tmp_r):
+            tmp_r = float('inf')
+
+        tar_v = math.sqrt(tmp_r*9.8*road_friction) if tar_v < max_v else max_v
+
+        velocity_profile.append(tar_v)
+
+    for i in range(len(path)-ws, len(path)-10):
+        velocity_profile.append(max_v)
+
+    for i in range(len(path)-10, len(path)):
+        velocity_profile.append(0)
+
+    return velocity_profile
 
 
 def signal_light_toggle(path, ego_idx, precision, t_map, lmap, stage):

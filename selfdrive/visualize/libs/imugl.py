@@ -38,7 +38,7 @@ class ObjLoader():
         glPopMatrix()
 
     def random_color(self):
-        r = (random.randrange(40, 60))/255
+        r = (random.randrange(120, 200))/255
         # g = (random.randrange(1, 256))/255
         # b = (random.randrange(1, 256))/255
         return r
@@ -63,7 +63,7 @@ class ImuGL(QOpenGLWidget):
         glLoadIdentity()
         gluPerspective(120, 1, 6, 100)
 
-        glLightfv(GL_LIGHT0, GL_POSITION, (20, 20, 20, 1.0))
+        glLightfv(GL_LIGHT0, GL_POSITION, (100, 100, 100, 1.0))
         glLightfv(GL_LIGHT0, GL_AMBIENT, (0.8, 0.8, 0.8, 1.0))
         glLightfv(GL_LIGHT0, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
         glLightfv(GL_LIGHT0, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
@@ -92,7 +92,6 @@ class ImuGL(QOpenGLWidget):
         self.pitch = pitch_change
         self.yaw = yaw_change
         self.update()
-        # time.sleep(0.1)
 
     def drawLine(self):
         xroll = "R {}".format(round(self.roll, 3))

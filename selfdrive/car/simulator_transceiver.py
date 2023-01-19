@@ -80,7 +80,7 @@ class SimulatorTransceiver:
 
         msg = SbgEkfNav()
         lat, lon, alt = pymap3d.enu2geodetic(
-            x, y, self.base_lla[2], self.base_lla[0], self.base_lla[1], self.base_lla[2])
+            x, y, 0, self.base_lla[0], self.base_lla[1], self.base_lla[2])
         msg.latitude = lat
         msg.longitude = lon
         msg.altitude = alt

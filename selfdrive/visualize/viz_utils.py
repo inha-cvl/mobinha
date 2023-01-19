@@ -118,17 +118,17 @@ def LaneletMapViz(lanelet, for_viz):
                            rightType, (1.0, 1.0, 1.0, 1.0))
             array.markers.append(marker)
 
-        color = (random.randint(0, 255)/255.0, random.randint(0,
-                 255)/255.0, random.randint(0, 255)/255.0, 1.0)
+        # color = (random.randint(0, 255)/255.0, random.randint(0,
+        #          255)/255.0, random.randint(0, 255)/255.0, 1.0)
 
-        marker = Waypoints(id_, data['waypoints'], color)
-        array.markers.append(marker)
+        # marker = Waypoints(id_, data['waypoints'], color)
+        # array.markers.append(marker)
 
-        idx = len(data['waypoints']) // 2
-        mid_pt = data['waypoints'][idx]
+        # idx = len(data['waypoints']) // 2
+        # mid_pt = data['waypoints'][idx]
 
-        marker = ID(id_, mid_pt, color)
-        array.markers.append(marker)
+        # marker = ID(id_, mid_pt, color)
+        # array.markers.append(marker)
 
     for n, (points, type_) in enumerate(for_viz):
         if type_ == 'stop_line':
@@ -521,9 +521,9 @@ def EgoCarViz():
     marker.mesh_resource = 'file://{}/obj/car.dae'.format(dir_path)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = 1.75
-    marker.scale.y = 1.75
-    marker.scale.z = 1.75
+    marker.scale.x = 2.0
+    marker.scale.y = 2.0
+    marker.scale.z = 2.0
     marker.color.r = 0.7
     marker.color.g = 0.7
     marker.color.b = 0.7

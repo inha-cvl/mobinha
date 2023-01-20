@@ -5,11 +5,7 @@ import numpy as np
 import cv2
 import rospy
 from rviz import bindings as rviz
-<<<<<<< HEAD
 from std_msgs.msg import String, Float32, Int16, Int8, Int16MultiArray
-=======
-from std_msgs.msg import String, Float32, Int8, Int16, Int16MultiArray
->>>>>>> 18-direction-information
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
@@ -67,7 +63,6 @@ class MainWindow(QMainWindow, form_class):
             '/trajectory', PoseArray, self.trajectory_cb)
         self.sub_forward_direction = rospy.Subscriber(
             '/forward_direction', Int8, self.forward_direction_cb)
-
         self.sub_image1 = rospy.Subscriber(
             '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
         self.sub_image2 = rospy.Subscriber(
@@ -147,7 +142,7 @@ class MainWindow(QMainWindow, form_class):
                 if(self.over_cnt == 30):
                     print("[Visualize] Over")
                     sys.exit(0)
-            time.sleep(0.05)
+            time.sleep(0.1)
             QApplication.processEvents()
 
     def rviz_frame(self, type):
@@ -195,18 +190,31 @@ class MainWindow(QMainWindow, form_class):
         direction_image_list = [dir_path+"/icon/straight_b.png",
                        dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
                        dir_path+"/icon/uturn_b.png"]
-        self.direction_pixmap = []
+        self.direction_pixmap_list = []
         for i in range(4):
-            self.direction_pixmap.append(QPixmap(direction_image_list[i]))
-        gear_pre = dir_path+"/icon/gear_"
-        gear_image_list = [gear_pre+"p.png", gear_pre +"p_b.png", 
-                           gear_pre+"r.png", gear_pre+"r_b.png", 
-                           gear_pre+"n.png", gear_pre+"n_b.png", 
-                           gear_pre+"d.png", gear_pre+"d_b.png"]
-        self.gear_pixmap = []
-        for i in range(8):
-            self.gear_pixmap.append(QPixmap(gear_image_list[i]))
-        
+            self.direction_pixmap_list.append(
+                QPixmap(direction_image_list[i]))
+        self.direction_message_list = [
+            'Go Straight', 'Turn Left', 'Turn Right', 'U-Turn']
+
+        l_blinker = QPixmap(dir_path+"/icon/l_blinker.png")
+        r_blinker = QPixmap(dir_path+"/icon/r_blinker.png")
+
+        self.blinker_l_label.setPixmap(l_blinker)
+        self.blinker_r_label.setPixmap(r_blinker)
+        blinker_space = QPixmap(l_blinker.size())
+        blinker_space.fill(Qt.transparent)
+        self.blinker_space_label.setPixmap(blinker_space)
+
+        self.blinker_l_label.setHidden(True)
+        self.blinker_r_label.setHidden(True)
+
+        self.gear_label_list = [
+            self.gear_p_label, self.gear_r_label, self.gear_n_label, self.gear_d_label]
+
+        self.obstacle_pixmap_list = [QPixmap(
+            dir_path+"/icon/object_car_b.png"), QPixmap(dir_path+"/icon/object_pedestrian_b.png")]
+        self.distance_pixmap = QPixmap(dir_path+"/icon/distance.png")
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -241,6 +249,31 @@ class MainWindow(QMainWindow, form_class):
         self.label_obstacle_distance.setText(
             str(round(msg.data, 5))+" m")  # nearest obstacle
 
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            if msg.data > 0 and msg.data <= 7:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setHidden(True)
+                self.distance_2_label.setHidden(True)
+                self.distance_1_label.setPixmap(self.obstacle_pixmap_list[0])
+            elif msg.data > 7 and msg.data <= 15:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setHidden(True)
+                self.distance_2_label.setPixmap(self.obstacle_pixmap_list[0])
+                self.distance_2_label.setHidden(False)
+            elif msg.data > 15 and msg.data <= 30:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setPixmap(self.obstacle_pixmap_list[0])
+                self.distance_3_label.setHidden(False)
+            elif msg.data > 30:
+                self.distance_4_label.setPixmap(self.obstacle_pixmap_list[0])
+                self.distance_4_label.setHidden(False)
+            elif msg.data < 0:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setPixmap(self.distance_pixmap)
+                self.distance_3_label.setHidden(False)
+                self.distance_2_label.setPixmap(self.distance_pixmap)
+                self.distance_2_label.setHiddent(False)
+
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             x = [v.position.x for v in msg.poses]
@@ -249,8 +282,12 @@ class MainWindow(QMainWindow, form_class):
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
 
-    def forward_drection_cb(self, msg):
-        return
+    def forward_direction_cb(self, msg):
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            self.direction_text_label.setText(
+                self.direction_message_list[msg.data])
+            self.direction_image_label.setPixmap(
+                self.direction_pixmap_list[msg.data])
 
     def convert_to_qimage(self, data):
         np_arr = np.frombuffer(data, np.uint8)
@@ -404,6 +441,31 @@ class MainWindow(QMainWindow, form_class):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             self.info_velocity_label.setText(
                 str(int(round(self.CS.vEgo*MPH_TO_KPH))))
+
+            for i in range(4):
+                if self.CS.gearShifter == i:
+                    (self.gear_label_list[i]).setStyleSheet(
+                        "QLabel{color:rgb(19, 99, 223);}")
+                else:
+                    (self.gear_label_list[i]).setStyleSheet(
+                        "QLabel{color: rgb(223, 246, 255);}")
+
+            if self.CS.buttonEvent.leftBlinker == 1:
+                self.blinker_l_label.setHidden(
+                    not self.blinker_l_label.isHidden())
+                self.blinker_r_label.setHidden(True)
+            elif self.CS.buttonEvent.rightBlinker == 1:
+                self.blinker_l_label.setHidden(True)
+                self.blinker_r_label.setHidden(
+                    not self.blinker_r_label.isHidden())
+            elif self.CS.buttonEvent.leftBlinker == 1 and self.CS.buttonEvent.rightBlinker == 1:
+                self.blinker_l_label.setHidden(
+                    not self.blinker_l_label.isHidden())
+                self.blinker_r_label.setHidden(
+                    not self.blinker_r_label.isHidden())
+            else:
+                self.blinker_l_label.setHidden(True)
+                self.blinker_r_label.setHidden(True)
 
 def signal_handler(sig, frame):
     QApplication.quit()

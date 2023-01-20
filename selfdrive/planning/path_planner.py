@@ -167,7 +167,7 @@ class PathPlanner:
             if non_intp_path is not None:
                 self.state = 'MOVE'
                 #print("[{}] Move to Goal".format(self.__class__.__name__))
-                global_path, _, self.last_s = ref_interpolate(
+                global_path, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
    
                 # For Normal Arrive
@@ -232,8 +232,8 @@ class PathPlanner:
 
             forward_direction, forward_path = get_forward_direction(self.global_path, idx, CS.yawRate)
             self.pub_forward_direction.publish(forward_direction)
-            forward_path_viz = ForwardPathViz(forward_path)
-            self.pub_forward_path.publish(forward_path_viz)
+            # forward_path_viz = ForwardPathViz(forward_path)
+            # self.pub_forward_path.publish(forward_path_viz)
             
             if self.local_path is not None:
 
@@ -242,7 +242,6 @@ class PathPlanner:
 
                 # local_point = KDTree(self.local_path)
                 # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
-                # print(self.l_idx, point)
 
                 # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
                 #     if self.obstacle_detect_timer == 0.0:
@@ -273,8 +272,7 @@ class PathPlanner:
             pose.position.x = 1
             pose.position.y = self.last_s  # m
             pose.position.z = s
-            self.pub_goal_object.publish(pose)  # m
-            # Float32((self.last_s - s)*0.5)
+            self.pub_goal_object.publish(pose)
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

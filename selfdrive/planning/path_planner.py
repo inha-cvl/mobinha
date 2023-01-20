@@ -51,6 +51,10 @@ class PathPlanner:
             '/lane_change', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher(
             '/goal_object', Pose, queue_size=1)
+        self.pub_forward_direction = rospy.Publisher(
+            '/forward_direction', Int8, queue_size=1)
+        self.pub_forward_path = rospy.Publisher(
+            '/forward_path', Marker, queue_size=1)
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
@@ -226,6 +230,11 @@ class PathPlanner:
 
                 self.local_path = local_path
 
+            forward_direction, forward_path = get_forward_direction(self.global_path, idx, CS.yawRate)
+            self.pub_forward_direction.publish(forward_direction)
+            forward_path_viz = ForwardPathViz(forward_path)
+            self.pub_forward_path.publish(forward_path_viz)
+            
             if self.local_path is not None:
 
                 self.l_idx = calc_idx(

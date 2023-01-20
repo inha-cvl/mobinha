@@ -1312,8 +1312,8 @@ border-color: rgb(71,181,255);</string>
         </item>
         <item row="1" column="0">
          <layout class="QGridLayout" name="gridLayout_15">
-          <item row="2" column="0" colspan="2">
-           <widget class="QLabel" name="label_32">
+          <item row="0" column="0">
+           <widget class="QLabel" name="direction_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>

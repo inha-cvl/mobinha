@@ -231,6 +231,7 @@ def PostPoint(ns, id_, data, radius, height, color):
     marker.pose.orientation.w = 1.0
     return marker
 
+
 def MicroLaneletGraphViz(lanelet, graph):
     array = MarkerArray()
 

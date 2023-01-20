@@ -5,7 +5,11 @@ import numpy as np
 import cv2
 import rospy
 from rviz import bindings as rviz
+<<<<<<< HEAD
 from std_msgs.msg import String, Float32, Int16, Int8, Int16MultiArray
+=======
+from std_msgs.msg import String, Float32, Int8, Int16, Int16MultiArray
+>>>>>>> 18-direction-information
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
@@ -188,8 +192,21 @@ class MainWindow(QMainWindow, form_class):
         pen = pg.mkPen(color='#1363DF', width=80)
         self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
 
-        pixmap_list = [dir_path+""]
-
+        direction_image_list = [dir_path+"/icon/straight_b.png",
+                       dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
+                       dir_path+"/icon/uturn_b.png"]
+        self.direction_pixmap = []
+        for i in range(4):
+            self.direction_pixmap.append(QPixmap(direction_image_list[i]))
+        gear_pre = dir_path+"/icon/gear_"
+        gear_image_list = [gear_pre+"p.png", gear_pre +"p_b.png", 
+                           gear_pre+"r.png", gear_pre+"r_b.png", 
+                           gear_pre+"n.png", gear_pre+"n_b.png", 
+                           gear_pre+"d.png", gear_pre+"d_b.png"]
+        self.gear_pixmap = []
+        for i in range(8):
+            self.gear_pixmap.append(QPixmap(gear_image_list[i]))
+        
 
     def clear_layout(self, layout):
         for i in range(layout.count()):

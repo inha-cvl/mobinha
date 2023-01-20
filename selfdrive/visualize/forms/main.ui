@@ -1145,64 +1145,33 @@ border-color: rgb(71,181,255);</string>
         </item>
         <item row="1" column="2">
          <layout class="QGridLayout" name="gridLayout_16">
-          <item row="1" column="1" rowspan="3">
-           <widget class="QLabel" name="label_31">
+          <item row="0" column="3" rowspan="2">
+           <widget class="QLabel" name="label_43">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>1</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Limit Picture</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="label_29">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
               <verstretch>2</verstretch>
              </sizepolicy>
             </property>
-            <property name="text">
-             <string>Gear</string>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>120</height>
+             </size>
             </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_26">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>2</horstretch>
-              <verstretch>1</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>20</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>km / h</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
+          <item row="2" column="0" colspan="2">
            <widget class="QLabel" name="info_velocity_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>2</horstretch>
+              <horstretch>1</horstretch>
               <verstretch>2</verstretch>
              </sizepolicy>
             </property>
@@ -1221,12 +1190,130 @@ border-color: rgb(71,181,255);</string>
             </property>
            </widget>
           </item>
+          <item row="0" column="0" rowspan="2">
+           <widget class="QLabel" name="label_29">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2" rowspan="2">
+           <widget class="QLabel" name="label_42">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1" rowspan="2">
+           <widget class="QLabel" name="label_41">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QLabel" name="label_26">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>km / h</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2" rowspan="2" colspan="2">
+           <widget class="QLabel" name="label_31">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>170</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="acceptDrops">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item row="1" column="0">
          <layout class="QGridLayout" name="gridLayout_15">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_25">
+          <item row="2" column="0" colspan="2">
+           <widget class="QLabel" name="label_32">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -1234,23 +1321,78 @@ border-color: rgb(71,181,255);</string>
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Direction Information ( forward 100m )</string>
+             <string>Blinker Picture</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_32">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_33">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>2</horstretch>
+              <verstretch>3</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Go Straight</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="label_37">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>1</verstretch>
              </sizepolicy>
             </property>
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
             <property name="text">
-             <string>Blinker Picture</string>
+             <string>Forward 100m</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_25">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>3</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>164</width>
+              <height>164</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1263,8 +1405,58 @@ border-color: rgb(71,181,255);</string>
          <layout class="QGridLayout" name="gridLayout_17"/>
         </item>
         <item row="0" column="1">
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <item>
+         <layout class="QGridLayout" name="gridLayout_18">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_19">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>98</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_39">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>98</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
            <widget class="QLabel" name="label_23">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1272,24 +1464,42 @@ border-color: rgb(71,181,255);</string>
               <verstretch>1</verstretch>
              </sizepolicy>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>98</height>
+             </size>
+            </property>
             <property name="text">
-             <string>object</string>
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_19">
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_40">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
-              <verstretch>2</verstretch>
+              <verstretch>1</verstretch>
              </sizepolicy>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>98</height>
+             </size>
+            </property>
             <property name="text">
-             <string>distance picture</string>
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>

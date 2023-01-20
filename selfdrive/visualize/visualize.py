@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 import rospy
 from rviz import bindings as rviz
-from std_msgs.msg import String, Float32, Int16, Int16MultiArray
+from std_msgs.msg import String, Float32, Int16, Int8, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
@@ -61,6 +61,8 @@ class MainWindow(QMainWindow, form_class):
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
         self.sub_trajectory = rospy.Subscriber(
             '/trajectory', PoseArray, self.trajectory_cb)
+        self.sub_forward_direction = rospy.Subscriber(
+            '/forward_direction', Int8, self.forward_direction_cb)
 
         self.sub_image1 = rospy.Subscriber(
             '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
@@ -186,6 +188,8 @@ class MainWindow(QMainWindow, form_class):
         pen = pg.mkPen(color='#1363DF', width=80)
         self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
 
+        pixmap_list = [dir_path+""]
+
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -228,6 +232,8 @@ class MainWindow(QMainWindow, form_class):
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
 
+    def forward_drection_cb(self, msg):
+        return
 
     def convert_to_qimage(self, data):
         np_arr = np.frombuffer(data, np.uint8)

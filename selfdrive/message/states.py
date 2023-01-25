@@ -3,7 +3,7 @@ import pymap3d
 
 import rospy
 from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int8
 
 from selfdrive.message.car_message import car_state
 
@@ -18,6 +18,8 @@ class StateMaster:
             '/sbg/ekf_euler', SbgEkfEuler, self.ins_imu_cb)
         self.sub_ins_odom = rospy.Subscriber(
             '/car_v', Float32, self.ins_odom_cb)
+        self.sub_gear = rospy.Subscriber('/gear', Int8, self.gear_cb)
+        self.sub_blinker = rospy.Subscriber('/blinker', Int8, self.blinker_cb)
 
         self.CS = CS
         self.base_lla = [CP.mapParam.baseLatitude,
@@ -33,6 +35,8 @@ class StateMaster:
         self.latitude = 0.0
         self.longitude = 0.0
         self.altitude = 0.0
+        self.gear = 0
+        self.blinker = 0
 
     def rtk_gps_cb(self, msg):
         self.latitude = msg.latitude
@@ -43,6 +47,12 @@ class StateMaster:
 
     def ins_odom_cb(self, msg):
         self.v = msg.data
+
+    def gear_cb(self, msg):
+        self.gear = msg.data
+
+    def blinker_cb(self, msg):
+        self.blinker = msg.data  # 0:stay 1:left 2:right
 
     def ins_imu_cb(self, msg):
         yaw = math.degrees(msg.angle.z)
@@ -66,5 +76,11 @@ class StateMaster:
         car_state["yawRate"] = self.yaw
         car_state["pitchRate"] = self.pitch
         car_state["rollRate"] = self.roll
+        car_state["gearShifter"] = self.gear
+        car_state_button_event = car_state["buttonEvent"]._asdict()
+        car_state_button_event["leftBlinker"] = 1 if self.blinker == 1 else 0
+        car_state_button_event["rightBlinker"] = 1 if self.blinker == 2 else 0
+        car_state["buttonEvent"] = self.CS.buttonEvent._make(
+            car_state_button_event.values())
 
         self.CS = self.CS._make(car_state.values())

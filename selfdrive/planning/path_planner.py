@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import String, Int8, Float32
+from std_msgs.msg import Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
@@ -45,12 +45,14 @@ class PathPlanner:
             '/mobinha/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
             '/mobinha/local_path', Marker, queue_size=1)
-        self.pub_now_lane_id = rospy.Publisher(
-            '/now_lane_id', String, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
-            '/lane_change', Int8, queue_size=2)
+            '/blinker', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher(
             '/goal_object', Pose, queue_size=1)
+        self.pub_forward_direction = rospy.Publisher(
+            '/forward_direction', Int8, queue_size=1)
+        self.pub_forward_path = rospy.Publisher(
+            '/forward_path', Marker, queue_size=1)
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
@@ -163,7 +165,7 @@ class PathPlanner:
             if non_intp_path is not None:
                 self.state = 'MOVE'
                 #print("[{}] Move to Goal".format(self.__class__.__name__))
-                global_path, _, self.last_s = ref_interpolate(
+                global_path, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
    
                 # For Normal Arrive
@@ -198,10 +200,8 @@ class PathPlanner:
             s = idx * self.precision  # m
             n_id = calc_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
-
             # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
-            self.pub_now_lane_id.publish(String(now_lane_id))
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
@@ -226,6 +226,11 @@ class PathPlanner:
 
                 self.local_path = local_path
 
+            forward_direction, forward_path = get_forward_direction(self.global_path, idx)
+            self.pub_forward_direction.publish(forward_direction)
+            forward_path_viz = ForwardPathViz(forward_path)
+            self.pub_forward_path.publish(forward_path_viz)
+            
             if self.local_path is not None:
 
                 self.l_idx = calc_idx(
@@ -233,7 +238,6 @@ class PathPlanner:
 
                 # local_point = KDTree(self.local_path)
                 # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
-                # print(self.l_idx, point)
 
                 # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
                 #     if self.obstacle_detect_timer == 0.0:
@@ -256,16 +260,14 @@ class PathPlanner:
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
 
-            blinker = signal_light_toggle(
-                self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
+            blinker = get_blinker(self.lmap.lanelets, self.non_intp_id, n_id)
             self.pub_blinkiker.publish(blinker)
 
             pose = Pose()
             pose.position.x = 1
             pose.position.y = self.last_s  # m
             pose.position.z = s
-            self.pub_goal_object.publish(pose)  # m
-            # Float32((self.last_s - s)*0.5)
+            self.pub_goal_object.publish(pose)
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

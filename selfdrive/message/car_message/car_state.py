@@ -24,26 +24,14 @@ class CruiseState(NamedTuple):
     available: bool = False
 
 
-class GearShifter(NamedTuple):
-    park: int = 1
-    drive: int = 2
-    neutral: int = 3
-    reverse: int = 4
-
-
-class ButtonType(NamedTuple):
-    leftBlinker: int = 1
-    rightBlinker: int = 2
-    accelCruise: int = 3
-    decelCruise: int = 4
-    cancel: int = 5
-    setCruise: int = 6
-    resumeCruise: int = 7
-
-
 class ButtonEvent(NamedTuple):
-    pressed: bool = False
-    buttonType: ButtonType = ButtonType()
+    leftBlinker: int = 0
+    rightBlinker: int = 0
+    accelCruise: int = 0
+    decelCruise: int = 0
+    cancel: int = 0
+    setCruise: int = 0
+    resumeCruise: int = 0
 
 
 class CarState(NamedTuple):
@@ -64,9 +52,6 @@ class CarState(NamedTuple):
 
     cruiseState: CruiseState = CruiseState()
 
-    gearShifter: GearShifter = GearShifter()
+    gearShifter: int = 0
 
     buttonEvent: ButtonEvent = ButtonEvent()
-
-    leftBlinker: bool = False
-    rightBlinker: bool = False

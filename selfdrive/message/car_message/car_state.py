@@ -4,9 +4,11 @@ from typing import NamedTuple
 class Positions(NamedTuple):
     x: float = 0.0
     y: float = 0.0
+    z: float = 0.0
     latitude: float = 37.45
     longitude: float = 126.6535
     altitude: float = 5.0
+    accuracy: float = 99.999
 
 
 class WheelSpeeds(NamedTuple):
@@ -22,26 +24,14 @@ class CruiseState(NamedTuple):
     available: bool = False
 
 
-class GearShifter(NamedTuple):
-    park: int = 1
-    drive: int = 2
-    neutral: int = 3
-    reverse: int = 4
-
-
-class ButtonType(NamedTuple):
-    leftBlinker: int = 1
-    rightBlinker: int = 2
-    accelCruise: int = 3
-    decelCruise: int = 4
-    cancel: int = 5
-    setCruise: int = 6
-    resumeCruise: int = 7
-
-
 class ButtonEvent(NamedTuple):
-    pressed: bool = False
-    buttonType: ButtonType = ButtonType()
+    leftBlinker: int = 0
+    rightBlinker: int = 0
+    accelCruise: int = 0
+    decelCruise: int = 0
+    cancel: int = 0
+    setCruise: int = 0
+    resumeCruise: int = 0
 
 
 class CarState(NamedTuple):
@@ -50,19 +40,18 @@ class CarState(NamedTuple):
     position: Positions = Positions()
 
     yawRate: float = 0.0
+    pitchRate: float = 0.0
+    rollRate: float = 0.0
     wheelSpeeds: WheelSpeeds = WheelSpeeds()
 
     brake: float = 0.0
-    brakePressed: bool = False
+    accel: float = 0.0
 
     steeringAngleDeg: float = 0.0
     steeringTorque: float = 0.0
 
     cruiseState: CruiseState = CruiseState()
 
-    gearShifter: GearShifter = GearShifter()
+    gearShifter: int = 0
 
     buttonEvent: ButtonEvent = ButtonEvent()
-
-    leftBlinker: bool = False
-    rightBlinker: bool = False

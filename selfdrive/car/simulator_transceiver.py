@@ -4,7 +4,7 @@ import math
 import pymap3d
 
 import rospy
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int8
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
 
@@ -37,14 +37,18 @@ class SimulatorTransceiver:
 
         self.wheel_angle = 0.0
         self.accel_brake = 0.0
+        self.gear = 0
 
         self.ego = Vehicle(0.0, 0.0, math.radians(-60), 0.0, 2.65)
+        self.roll = 0.0
+        self.pitch = 0.0
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
         self.pub_ins_imu = rospy.Publisher(
             '/sbg/ekf_euler', SbgEkfEuler, queue_size=1)
         self.pub_ins_odom = rospy.Publisher('/car_v', Float32, queue_size=1)
+        self.pub_gear = rospy.Publisher('/gear', Int8, queue_size=1)
 
         self.sub_initpose = rospy.Subscriber(
             '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
@@ -61,6 +65,8 @@ class SimulatorTransceiver:
                       orientation.z, orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         roll, pitch, yaw = euler
+        self.roll = roll
+        self.pitch = pitch
         self.ego.set(x, y, yaw)
 
     def wheel_angle_cb(self, msg):
@@ -70,13 +76,21 @@ class SimulatorTransceiver:
         self.accel_brake = msg.data
 
     def run(self):
+        self.pub_gear.publish(self.gear)
+        
+
         dt = 0.1
         x, y, yaw, v = self.ego.next_state(
             dt, self.wheel_angle, self.accel_brake)
 
+        if v > 0:
+            self.gear = 3
+        else:
+            self.gear = 0
+            
         msg = SbgEkfNav()
         lat, lon, alt = pymap3d.enu2geodetic(
-            x, y, self.base_lla[2], self.base_lla[0], self.base_lla[1], self.base_lla[2])
+            x, y, 0, self.base_lla[0], self.base_lla[1], self.base_lla[2])
         msg.latitude = lat
         msg.longitude = lon
         msg.altitude = alt
@@ -85,6 +99,8 @@ class SimulatorTransceiver:
         msg = SbgEkfEuler()
         yaw = math.degrees(yaw)
         yaw = -270 - yaw if (yaw >= -180 and yaw <= -90) else -yaw + 90
+        msg.angle.x = self.roll
+        msg.angle.y = self.pitch
         yaw = math.radians(yaw)
         msg.angle.z = yaw
         self.pub_ins_imu.publish(msg)

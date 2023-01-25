@@ -16,9 +16,9 @@ class Localizer:
     def run(self, sm):
         CS = sm.CS
         quaternion = tf.transformations.quaternion_from_euler(
-            0.0, 0.0, math.radians(CS.yawRate))
+            math.radians(CS.rollRate), math.radians(CS.pitchRate), math.radians(CS.yawRate))  # RPY
         self.br.sendTransform(
-            (CS.position.x, CS.position.y, 0.0),
+            (CS.position.x, CS.position.y, CS.position.z),
             (quaternion[0], quaternion[1],
                 quaternion[2], quaternion[3]),
             rospy.Time.now(),

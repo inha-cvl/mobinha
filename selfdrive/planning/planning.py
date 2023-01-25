@@ -44,9 +44,9 @@ class Planning:
             elif self.state == 'START':
                 self.need_init = True
                 sm.update()
-                pp = path_planner.run(sm)
-                lgp = longitudinal_planner.run(sm, pp)
-                time.sleep(0.1)  # 10Hz
+                pp, local_path = path_planner.run(sm)
+                lgp = longitudinal_planner.run(sm, pp, local_path)
+                time.sleep(0.05)  # 20Hz
 
                 if pp == 2 and lgp == 2:
                     time.sleep(1)

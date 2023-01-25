@@ -5,16 +5,19 @@ import numpy as np
 import cv2
 import rospy
 from rviz import bindings as rviz
-from std_msgs.msg import String, Float32, Int16, Int16MultiArray
-from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import String, Float32, Int16, Int8, Int16MultiArray
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
+import pyqtgraph as pg
 
 from selfdrive.message.messaging import *
 from sensor_msgs.msg import Image, CompressedImage
+
+import selfdrive.visualize.libs.imugl as imugl
 
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
@@ -33,13 +36,16 @@ class MainWindow(QMainWindow, form_class):
         self.CP = None
         self.CS = None
         self.sm = None
-
+        self.imu_widget = None
         self.system_state = False
         self.over_cnt = 0
         self.can_cmd = 0
         self.scenario = 0
         self.scenario_goal = PoseStamped()
         self.scenario_goal.header.frame_id = 'world'
+
+        self.map_view_manager = None
+        self.lidar_view_manager = None
 
         self.sub_wheel_angle = rospy.Subscriber(
             '/wheel_angle', Float32, self.wheel_angle_cb)
@@ -49,24 +55,20 @@ class MainWindow(QMainWindow, form_class):
             '/planning_state', Int16MultiArray, self.planning_state_cb)
         self.sub_goal = rospy.Subscriber(
             '/move_base_simple/goal', PoseStamped, self.goal_cb)
-        self.sub_distance_to_goal = rospy.Subscriber(
-            '/distance_to_goal', Float32, self.distance_to_goal_cb)
+        self.sub_goal_object = rospy.Subscriber(
+            '/goal_object', Pose, self.goal_object_cb)
         self.sub_nearest_obstacle_distance = rospy.Subscriber(
             '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
-
-        # self.sub_image1 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
-        # self.sub_image2 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
-        # self.sub_image3 = rospy.Subscriber(
-        #     '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
-
+        self.sub_trajectory = rospy.Subscriber(
+            '/trajectory', PoseArray, self.trajectory_cb)
+        self.sub_forward_direction = rospy.Subscriber(
+            '/forward_direction', Int8, self.forward_direction_cb)
         self.sub_image1 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image1_cb)
+            '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
         self.sub_image2 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image2_cb)
+            '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
         self.sub_image3 = rospy.Subscriber(
-            '/usb_cam/image_raw/compressed', CompressedImage, self.image3_cb)
+            '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -78,6 +80,8 @@ class MainWindow(QMainWindow, form_class):
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
+        self.imu_frame()
+        self.information_frame()
         self.initialize()
         self.connection_setting()
 
@@ -116,6 +120,13 @@ class MainWindow(QMainWindow, form_class):
         self.scenario2_button.clicked.connect(self.scenario2_button_clicked)
         self.scenario3_button.clicked.connect(self.scenario3_button_clicked)
 
+        self.view_third_button.clicked.connect(
+            lambda state, idx=0: self.view_button_clicked(idx))
+        self.view_top_button.clicked.connect(
+            lambda state, idx=1: self.view_button_clicked(idx))
+        self.view_xy_top_button.clicked.connect(
+            lambda state, idx=2: self.view_button_clicked(idx))
+
     def publish_system_state(self):
         while self.system_state:
             self.pub_state.publish(String(self.state))
@@ -128,7 +139,7 @@ class MainWindow(QMainWindow, form_class):
                 self.display()
             elif self.state == 'OVER':
                 self.over_cnt += 1
-                if(self.over_cnt == 15):
+                if(self.over_cnt == 30):
                     print("[Visualize] Over")
                     sys.exit(0)
             time.sleep(0.1)
@@ -139,20 +150,71 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.setSplashPath("")
         rviz_frame.initialize()
         reader = rviz.YamlConfigReader()
+
         if type == 'map':
             config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/main.rviz")
             rviz_frame.load(config)
+            manager = rviz_frame.getManager()
+            self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
             self.rviz_layout.addWidget(rviz_frame)
+
         else:
             config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
             rviz_frame.load(config)
             rviz_frame.setMenuBar(None)
             rviz_frame.setStatusBar(None)
+            manager = rviz_frame.getManager()
+            self.lidar_view_manager = manager.getViewManager()
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
+
+    def imu_frame(self):
+        self.imu_widget = imugl.ImuGL()
+        self.imu_layout.addWidget(self.imu_widget)
+
+    def information_frame(self):
+        self.trajectory_widget = pg.PlotWidget()
+        self.trajectory_widget.setBackground('#000A14')
+        self.trajectory_widget.setXRange(-10, 10)
+        self.trajectory_widget.setYRange(0, 10)
+        self.trajectory_widget.getPlotItem().hideAxis('bottom')
+        self.trajectory_widget.getPlotItem().hideAxis('left')
+
+        self.trajectory_layout.addWidget(self.trajectory_widget)
+        pen = pg.mkPen(color='#1363DF', width=80)
+        self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
+
+        direction_image_list = [dir_path+"/icon/straight_b.png",
+                       dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
+                       dir_path+"/icon/uturn_b.png"]
+        self.direction_pixmap_list = []
+        for i in range(4):
+            self.direction_pixmap_list.append(
+                QPixmap(direction_image_list[i]))
+        self.direction_message_list = [
+            'Go Straight', 'Turn Left', 'Turn Right', 'U-Turn']
+
+        l_blinker = QPixmap(dir_path+"/icon/l_blinker.png")
+        r_blinker = QPixmap(dir_path+"/icon/r_blinker.png")
+
+        self.blinker_l_label.setPixmap(l_blinker)
+        self.blinker_r_label.setPixmap(r_blinker)
+        blinker_space = QPixmap(l_blinker.size())
+        blinker_space.fill(Qt.transparent)
+        self.blinker_space_label.setPixmap(blinker_space)
+
+        self.blinker_l_label.setHidden(True)
+        self.blinker_r_label.setHidden(True)
+
+        self.gear_label_list = [
+            self.gear_p_label, self.gear_r_label, self.gear_n_label, self.gear_d_label]
+
+        self.obstacle_pixmap_list = [QPixmap(
+            dir_path+"/icon/object_car_b.png"), QPixmap(dir_path+"/icon/object_pedestrian_b.png")]
+        self.distance_pixmap = QPixmap(dir_path+"/icon/distance.png")
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -177,14 +239,56 @@ class MainWindow(QMainWindow, form_class):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
-    def distance_to_goal_cb(self, msg):
-        distance = str(round(msg.data / 1000, 5))+" km" if msg.data / \
-            1000 >= 1 else str(round(msg.data, 5))+" m"
+    def goal_object_cb(self, msg):
+        m_distance = msg.position.y-msg.position.z
+        distance = str(round(m_distance / 1000, 5))+" km" if m_distance / \
+            1000 >= 1 else str(round(m_distance, 5))+" m"
         self.goal_distance_label.setText(distance)
 
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(
             str(round(msg.data, 5))+" m")  # nearest obstacle
+
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            if msg.data > 0 and msg.data <= 7:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setHidden(True)
+                self.distance_2_label.setHidden(True)
+                self.distance_1_label.setPixmap(self.obstacle_pixmap_list[0])
+            elif msg.data > 7 and msg.data <= 15:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setHidden(True)
+                self.distance_2_label.setPixmap(self.obstacle_pixmap_list[0])
+                self.distance_2_label.setHidden(False)
+            elif msg.data > 15 and msg.data <= 30:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setPixmap(self.obstacle_pixmap_list[0])
+                self.distance_3_label.setHidden(False)
+            elif msg.data > 30:
+                self.distance_4_label.setPixmap(self.obstacle_pixmap_list[0])
+                self.distance_4_label.setHidden(False)
+            elif msg.data < 0:
+                self.distance_4_label.setHidden(True)
+                self.distance_3_label.setPixmap(self.distance_pixmap)
+                self.distance_3_label.setHidden(False)
+                self.distance_2_label.setPixmap(self.distance_pixmap)
+                self.distance_2_label.setHidden(False)
+
+    def trajectory_cb(self, msg):
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            x = [v.position.x for v in msg.poses]
+            y = [v.position.y for v in msg.poses]
+
+            self.trajectory_plot.clear()
+            self.trajectory_plot.setData(x=x, y=y)
+
+    def forward_direction_cb(self, msg):
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            idx = int(msg.data)
+            self.direction_text_label.setText(
+                self.direction_message_list[idx])
+            self.direction_image_label.setPixmap(
+                self.direction_pixmap_list[idx])
 
     def convert_to_qimage(self, data):
         np_arr = np.frombuffer(data, np.uint8)
@@ -199,19 +303,16 @@ class MainWindow(QMainWindow, form_class):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
             qImage = self.convert_to_qimage(data.data)
             self.camera1_label.setPixmap(QPixmap.fromImage(qImage))
-            QApplication.processEvents()
 
     def image2_cb(self, data):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
             qImage = self.convert_to_qimage(data.data)
             self.camera2_label.setPixmap(QPixmap.fromImage(qImage))
-            QApplication.processEvents()
 
     def image3_cb(self, data):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
             qImage = self.convert_to_qimage(data.data)
             self.camera3_label.setPixmap(QPixmap.fromImage(qImage))
-            QApplication.processEvents()
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
@@ -297,11 +398,75 @@ class MainWindow(QMainWindow, form_class):
         self.scenario_goal.pose.position.x = 394.54889
         self.scenario_goal.pose.position.y = -12.554
 
+    def view_button_clicked(self, idx):
+        if self.map_view_manager is not None:
+            self.map_view_manager.setCurrentFrom(
+                self.map_view_manager.getViewAt(idx))
+
     def display(self):
         self.label_vehicle_vel.setText(
             str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
         self.label_vehicle_yaw.setText(str(round(self.CS.yawRate, 5))+" deg")
 
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
+            self.imu_widget.updateRP(
+                self.CS.rollRate, self.CS.pitchRate, self.CS.yawRate)
+            self.gps_latitude_label.setText(
+                str(self.CS.position.latitude))
+            self.gps_longitude_label.setText(
+                str(self.CS.position.longitude))
+            self.gps_altitude_label.setText(
+                str(self.CS.position.altitude))
+            self.gps_x_label.setText(
+                str(self.CS.position.x))
+            self.gps_y_label.setText(
+                str(self.CS.position.y))
+            self.gps_z_label.setText(
+                str(self.CS.position.z))
+            error = 100-self.CS.position.accuracy
+            self.gps_error_label.setText(str((error)))
+            fixed = "True" if self.CS.position.accuracy > 70 else "False"
+            self.gps_fixed_label.setText(fixed)
+            self.imu_angle_label.setText("Y: {}".format(
+                self.CS.yawRate))
+            self.imu_angle_label_2.setText("P: {}".format(
+                self.CS.pitchRate))
+            self.imu_angle_label_3.setText("R: {}".format(
+                self.CS.rollRate))
+            # self.imu_orientation_label
+            # self.imu_angular_velocity_label
+            # self.imu_linear_velocity_label
+            self.car_velocity_label.setText(
+                str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
+
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            self.info_velocity_label.setText(
+                str(int(round(self.CS.vEgo*MPH_TO_KPH))))
+
+            for i in range(4):
+                if self.CS.gearShifter == i:
+                    (self.gear_label_list[i]).setStyleSheet(
+                        "QLabel{color:rgb(19, 99, 223);}")
+                else:
+                    (self.gear_label_list[i]).setStyleSheet(
+                        "QLabel{color: rgb(223, 246, 255);}")
+
+            if self.CS.buttonEvent.leftBlinker == 1:
+                self.blinker_l_label.setHidden(
+                    not self.blinker_l_label.isHidden())
+                self.blinker_r_label.setHidden(True)
+            elif self.CS.buttonEvent.rightBlinker == 1:
+                self.blinker_l_label.setHidden(True)
+                self.blinker_r_label.setHidden(
+                    not self.blinker_r_label.isHidden())
+            elif self.CS.buttonEvent.leftBlinker == 1 and self.CS.buttonEvent.rightBlinker == 1:
+                self.blinker_l_label.setHidden(
+                    not self.blinker_l_label.isHidden())
+                self.blinker_r_label.setHidden(
+                    not self.blinker_r_label.isHidden())
+            else:
+                self.blinker_l_label.setHidden(True)
+                self.blinker_r_label.setHidden(True)
 
 def signal_handler(sig, frame):
     QApplication.quit()

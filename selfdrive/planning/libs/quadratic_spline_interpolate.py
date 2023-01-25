@@ -12,11 +12,11 @@ class QuadraticSplineInterpolate:
     def calc_s(self, x, y):
         dx = np.diff(x)
         dy = np.diff(y)
-
         self.ds = [math.sqrt(idx ** 2 + idy ** 2)
                    for (idx, idy) in zip(dx, dy)]
         s = [0]
         s.extend(np.cumsum(self.ds))
+
         return s
 
     def calc_d(self, sp, x):

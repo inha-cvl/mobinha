@@ -104,7 +104,7 @@ border-radius: 3px
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>3</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -1401,7 +1401,7 @@ border-color: rgb(71,181,255);</string>
              <bool>false</bool>
             </property>
             <property name="margin">
-             <number>11</number>
+             <number>15</number>
             </property>
            </widget>
           </item>

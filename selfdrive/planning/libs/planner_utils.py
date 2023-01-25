@@ -372,31 +372,24 @@ def get_forward_direction(global_path, i, yawRate, ws=200):
         return 0, forward_path
 
 
-def signal_light_toggle(path, ego_idx, precision, t_map, lmap, stage):
-    ids = []
+def get_blinker(lanelets, ids, ego_idx, look_forward=40):
+    look_forward *= M_TO_IDX
+    blinker = 0
+
+    now_id = ids[ego_idx].split('_')[0]
+
+    left_id = lanelets[now_id]['adjacentLeft']
+    right_id = lanelets[now_id]['adjacentRight']
+
     try:
-        forward_range = 40  # meter
-        ego_pt = path[ego_idx]
-        ego_lanelet_id, _ = lanelet_matching(
-            t_map.tiles, t_map.tile_size, ego_pt)
-        left_lanelet = lmap.lanelets[ego_lanelet_id]['adjacentLeft']
-        right_lanelet = lmap.lanelets[ego_lanelet_id]['adjacentRight']
-
-        for distance in range(forward_range+1):
-            forward_pt = path[ego_idx+int(distance/precision)]
-            id, _ = lanelet_matching(t_map.tiles, t_map.tile_size, forward_pt)
-            ids.append(id)
-
-        forward_lanelet_ids = np.array(ids)
-        # 0: normal, 1: left, 2: right
-        # if forward_lanelet_id == left_lanelet or (stage == 1 and ):
-        if np.any(forward_lanelet_ids == left_lanelet):
-            change = 1
-        elif np.any(forward_lanelet_ids == right_lanelet):
-            change = 2
+        forward_ids = np.array([fid.split('_')[0]
+                               for fid in ids[ego_idx:ego_idx+look_forward]])
+        if np.any(forward_ids == left_id):
+            blinker = 1
+        elif np.any(forward_ids == right_id):
+            blinker = 2
         else:
-            change = 0
-        # print(change)
-        return change
+            blinker = 0
+        return blinker
     except IndexError:
-        pass
+        return blinker

@@ -272,7 +272,7 @@ class MainWindow(QMainWindow, form_class):
                 self.distance_3_label.setPixmap(self.distance_pixmap)
                 self.distance_3_label.setHidden(False)
                 self.distance_2_label.setPixmap(self.distance_pixmap)
-                self.distance_2_label.setHiddent(False)
+                self.distance_2_label.setHidden(False)
 
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
@@ -284,10 +284,11 @@ class MainWindow(QMainWindow, form_class):
 
     def forward_direction_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            idx = int(msg.data)
             self.direction_text_label.setText(
-                self.direction_message_list[msg.data])
+                self.direction_message_list[idx])
             self.direction_image_label.setPixmap(
-                self.direction_pixmap_list[msg.data])
+                self.direction_pixmap_list[idx])
 
     def convert_to_qimage(self, data):
         np_arr = np.frombuffer(data, np.uint8)

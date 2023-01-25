@@ -52,7 +52,7 @@ class StateMaster:
         self.gear = msg.data
 
     def blinker_cb(self, msg):
-        self.blinker = msg.data
+        self.blinker = msg.data  # 0:stay 1:left 2:right
 
     def ins_imu_cb(self, msg):
         yaw = math.degrees(msg.angle.z)
@@ -78,7 +78,9 @@ class StateMaster:
         car_state["rollRate"] = self.roll
         car_state["gearShifter"] = self.gear
         car_state_button_event = car_state["buttonEvent"]._asdict()
-        car_state_button_event["leftBlinker"] = 1 if self.blinker != 1 else 0
-        car_state_button_event["rightBlinker"] = 1 if self.blinker != 0 else 0
+        car_state_button_event["leftBlinker"] = 1 if self.blinker == 1 else 0
+        car_state_button_event["rightBlinker"] = 1 if self.blinker == 2 else 0
+        car_state["buttonEvent"] = self.CS.buttonEvent._make(
+            car_state_button_event.values())
 
         self.CS = self.CS._make(car_state.values())

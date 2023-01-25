@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import String, Int8, Float32
+from std_msgs.msg import Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
@@ -45,10 +45,8 @@ class PathPlanner:
             '/mobinha/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
             '/mobinha/local_path', Marker, queue_size=1)
-        self.pub_now_lane_id = rospy.Publisher(
-            '/now_lane_id', String, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
-            '/lane_change', Int8, queue_size=2)
+            '/blinker', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher(
             '/goal_object', Pose, queue_size=1)
         self.pub_forward_direction = rospy.Publisher(
@@ -202,10 +200,8 @@ class PathPlanner:
             s = idx * self.precision  # m
             n_id = calc_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
-
             # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
-            self.pub_now_lane_id.publish(String(now_lane_id))
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
@@ -264,8 +260,7 @@ class PathPlanner:
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
 
-            blinker = signal_light_toggle(
-                self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
+            blinker = get_blinker(self.lmap.lanelets, self.non_intp_id, n_id)
             self.pub_blinkiker.publish(blinker)
 
             pose = Pose()

@@ -226,10 +226,10 @@ class PathPlanner:
 
                 self.local_path = local_path
 
-            forward_direction, forward_path = get_forward_direction(self.global_path, idx, CS.yawRate)
+            forward_direction, forward_path = get_forward_direction(self.global_path, idx)
             self.pub_forward_direction.publish(forward_direction)
-            # forward_path_viz = ForwardPathViz(forward_path)
-            # self.pub_forward_path.publish(forward_path_viz)
+            forward_path_viz = ForwardPathViz(forward_path)
+            self.pub_forward_path.publish(forward_path_viz)
             
             if self.local_path is not None:
 

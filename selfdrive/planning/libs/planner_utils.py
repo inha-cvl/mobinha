@@ -319,15 +319,15 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
     return return_v*KPH_TO_MPS, x, y
 
 
-def get_forward_direction(global_path, i, yawRate, ws=200):
-    # return direction - 0:straight, 1:left, 2:right, 3:U-turn
+def get_forward_direction(global_path, i, ws=200):
+    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
     x = []
     y = []
     # if i < len(global_path)-1:
-    if i+ws+200 < len(global_path[i:])-1:
-        x = [v[0] for v in global_path[i+ws:i+ws+200]]
-        y = [v[1] for v in global_path[i+ws:i+ws+200]]
-    elif i+ws < len(global_path[i:])-1:
+    if ws+100 < len(global_path[i:])-1:
+        x = [v[0] for v in global_path[i+ws:i+ws+100]]
+        y = [v[1] for v in global_path[i+ws:i+ws+100]]
+    elif ws < len(global_path[i:])-1:
         x = [v[0] for v in global_path[i+ws:]]
         y = [v[1] for v in global_path[i+ws:]]
     else:
@@ -337,15 +337,20 @@ def get_forward_direction(global_path, i, yawRate, ws=200):
     tmp_x = np.array([(v) for v in x])
     tmp_y = np.array([(v) for v in y])
 
-    x = np.array([(v-x[0]) for v in x])
-    y = np.array([(v-y[0]) for v in y])
-
     forward_path = []
     for i in range(len(tmp_x)):
         forward_path.append([tmp_x[i], tmp_y[i]])
 
+    x = np.array([(v-x[0]) for v in x])
+    y = np.array([(v-y[0]) for v in y])
+
     origin_plot = np.vstack((x, y))
-    rotation_radians = math.radians(-yawRate) + math.pi/2
+    theta = math.atan((y[1] - y[0]) / (x[1] - x[0]))
+    if (x[1] - x[0]) < 0 :
+        rotation_radians = -theta + math.pi/2 + math.pi
+    else:
+        rotation_radians = -theta + math.pi/2
+
     rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
                              [math.sin(rotation_radians), math.cos(rotation_radians)]])
     rotation_plot = rotation_mat@origin_plot
@@ -359,13 +364,14 @@ def get_forward_direction(global_path, i, yawRate, ws=200):
             curvated = 10000
     else:
         curvated = 10000
-    if len(x) > 10 and curvated < 1000:
-        if x[10] < 0:
+    print(x[-1], y[-1], "curvated:",curvated)
+    if curvated < 1000:
+        if x[-1] < -8 and curvated < 500:
+            return 5, forward_path
+        elif x[-1] < -15 :
             return 1, forward_path
-        elif x[10] >= 0:
+        elif x[-1] >= 15:
             return 2, forward_path
-        elif curvated < 300:
-            return 3, forward_path
         else:
             return 0, forward_path
     else:

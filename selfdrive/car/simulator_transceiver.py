@@ -47,15 +47,17 @@ class SimulatorTransceiver:
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
         self.pub_ins_imu = rospy.Publisher(
             '/sbg/ekf_euler', SbgEkfEuler, queue_size=1)
-        self.pub_ins_odom = rospy.Publisher('/car_v', Float32, queue_size=1)
-        self.pub_gear = rospy.Publisher('/gear', Int8, queue_size=1)
+        self.pub_ins_odom = rospy.Publisher(
+            '/mobinha/car/car_v', Float32, queue_size=1)
+        self.pub_gear = rospy.Publisher(
+            '/mobinha/car/gear', Int8, queue_size=1)
 
-        self.sub_initpose = rospy.Subscriber(
+        rospy.Subscriber(
             '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
-        self.sub_wheel_angle = rospy.Subscriber(
-            '/wheel_angle', Float32, self.wheel_angle_cb)
-        self.sub_accel_brake = rospy.Subscriber(
-            '/accel_brake', Float32, self.accel_brake_cb)
+        rospy.Subscriber(
+            '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cb)
+        rospy.Subscriber(
+            '/mobinha/control/accel_brake', Float32, self.accel_brake_cb)
 
     def init_pose_cb(self, msg):
         x = msg.pose.pose.position.x

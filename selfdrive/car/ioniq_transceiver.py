@@ -32,15 +32,13 @@ class IoniqTransceiver():
 
         # ROS Init
 
-        # self.pub_velocity = rospy.Publisher('/car_v', Float32, queue_size=1)
-        # self.sub_can_cmd = rospy.Subscriber('/can_cmd', Int16, self.can_cmd)
+        # self.pub_velocity = rospy.Publisher('/mobinha/car/car_v', Float32, queue_size=1)
+        # self.sub_can_cmd = rospy.Subscriber('/mobinha/visualize/can_cmd', Int16, self.can_cmd)
         # self.sub_wheel_angle = rospy.Subscriber(
-        #     '/wheel_angle', Float32, self.wheel_angle_cmd)
+        #     '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cmd)
         # self.sub_accel_brake = rospy.Subscriber(
-        #     '/accel_brake', Float32, self.accel_brake_cmd)
-        # # self.sub_gear = rospy.Subscriber('/gear', String, self.gear_cmd)
-        # self.sub_velocity = rospy.Subscriber(
-        #     '/velocity', Float32, self.velocity_cmd)
+        #     '/mobinha/control/accel_brake', Float32, self.accel_brake_cmd)
+        # # self.sub_gear = rospy.Subscriber('/mobinha/car/gear', String, self.gear_cmd)
 
         # self.accel_value = 0
         # self.wheel_angle = 0
@@ -103,10 +101,6 @@ class IoniqTransceiver():
             self.accel_value = -10.0
         else:
             self.accel_value = msg.data
-
-    def velocity_cmd(self, msg):
-        self.reference_velocity = msg.data
-
 ##############################################################################
     def transmitter(self):
         if self.timer(0.01):

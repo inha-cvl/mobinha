@@ -47,33 +47,34 @@ class MainWindow(QMainWindow, form_class):
         self.map_view_manager = None
         self.lidar_view_manager = None
 
-        self.sub_wheel_angle = rospy.Subscriber(
-            '/wheel_angle', Float32, self.wheel_angle_cb)
-        self.sub_target_v = rospy.Subscriber(
-            '/target_v', Float32, self.target_v_cb)
-        self.sub_planning_state = rospy.Subscriber(
-            '/planning_state', Int16MultiArray, self.planning_state_cb)
-        self.sub_goal = rospy.Subscriber(
-            '/move_base_simple/goal', PoseStamped, self.goal_cb)
-        self.sub_goal_object = rospy.Subscriber(
-            '/goal_object', Pose, self.goal_object_cb)
-        self.sub_nearest_obstacle_distance = rospy.Subscriber(
-            '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
-        self.sub_trajectory = rospy.Subscriber(
-            '/trajectory', PoseArray, self.trajectory_cb)
-        self.sub_forward_direction = rospy.Subscriber(
-            '/forward_direction', Int8, self.forward_direction_cb)
-        self.sub_image1 = rospy.Subscriber(
-            '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
-        self.sub_image2 = rospy.Subscriber(
-            '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
-        self.sub_image3 = rospy.Subscriber(
-            '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
+        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goal_cb)
+        rospy.Subscriber('/mobinha/control/wheel_angle',
+                         Float32, self.wheel_angle_cb)
+        rospy.Subscriber('/mobinha/planning/target_v',
+                         Float32, self.target_v_cb)
+        rospy.Subscriber('/mobinha/planning_state',
+                         Int16MultiArray, self.planning_state_cb)
+        rospy.Subscriber('/mobinha/planning/goal_information',
+                         Pose, self.goal_information_cb)
+        rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance',
+                         Float32, self.nearest_obstacle_distance_cb)
+        rospy.Subscriber('/mobinha/planning/trajectory',
+                         PoseArray, self.trajectory_cb)
+        rospy.Subscriber('/mobinha/planning/forward_direction',
+                         Int8, self.forward_direction_cb)
+        rospy.Subscriber('/gmsl_camera/dev/video0/compressed',
+                         CompressedImage, self.image1_cb)
+        rospy.Subscriber('/gmsl_camera/dev/video1/compressed',
+                         CompressedImage, self.image2_cb)
+        rospy.Subscriber('/gmsl_camera/dev/video2/compressed',
+                         CompressedImage, self.image3_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
-        self.pub_state = rospy.Publisher('/state', String, queue_size=1)
-        self.pub_can_cmd = rospy.Publisher('/can_cmd', Int16, queue_size=1)
+        self.pub_state = rospy.Publisher(
+            '/mobinha/visualize/system_state', String, queue_size=1)
+        self.pub_can_cmd = rospy.Publisher(
+            '/mobinha/visualize/can_cmd', Int16, queue_size=1)
 
         self.pub_goal = rospy.Publisher(
             '/move_base_simple/goal', PoseStamped, queue_size=1)
@@ -239,7 +240,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
-    def goal_object_cb(self, msg):
+    def goal_information_cb(self, msg):
         m_distance = msg.position.y-msg.position.z
         distance = str(round(m_distance / 1000, 5))+" km" if m_distance / \
             1000 >= 1 else str(round(m_distance, 5))+" m"

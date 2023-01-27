@@ -12,14 +12,16 @@ CS = car_state.CarState()
 
 class StateMaster:
     def __init__(self, CP):
-        self.sub_rtk_gps = rospy.Subscriber(
+        rospy.Subscriber(
             '/sbg/ekf_nav', SbgEkfNav, self.rtk_gps_cb)
-        self.sub_ins_imu = rospy.Subscriber(
+        rospy.Subscriber(
             '/sbg/ekf_euler', SbgEkfEuler, self.ins_imu_cb)
-        self.sub_ins_odom = rospy.Subscriber(
-            '/car_v', Float32, self.ins_odom_cb)
-        self.sub_gear = rospy.Subscriber('/gear', Int8, self.gear_cb)
-        self.sub_blinker = rospy.Subscriber('/blinker', Int8, self.blinker_cb)
+        rospy.Subscriber(
+            '/mobinha/car/car_v', Float32, self.ins_odom_cb)
+        rospy.Subscriber(
+            '/mobinha/car/gear', Int8, self.gear_cb)
+        rospy.Subscriber(
+            '/mobinha/planning/blinker', Int8, self.blinker_cb)
 
         self.CS = CS
         self.base_lla = [CP.mapParam.baseLatitude,

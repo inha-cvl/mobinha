@@ -39,7 +39,7 @@ Visualization Manager:
   Displays:
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /lanelet_map
+      Marker Topic: /mobinha/planning/lanelet_map
       Name: LaneletMap
       Namespaces:
         {}
@@ -55,7 +55,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /ego_car
+      Marker Topic: /mobinha/control/ego_car
       Name: EgoCar
       Namespaces:
         {}
@@ -71,7 +71,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /mobinha/local_path
+      Marker Topic: /mobinha/planning/local_path
       Name: LocalPath
       Namespaces:
         {}
@@ -79,7 +79,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /look_ahead
+      Marker Topic: /mobinha/control/look_ahead
       Name: LookAhead
       Namespaces:
         {}
@@ -111,7 +111,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /goal
+      Marker Topic: /mobinha/planning/goal_viz
       Name: Goal
       Namespaces:
         {}
@@ -119,7 +119,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /object_marker
+      Marker Topic: /mobinha/perception/object_marker
       Name: LidarObstacle
       Namespaces:
         {}
@@ -155,7 +155,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /forward_path
+      Marker Topic: /mobinha/planning/forward_path
       Name: Marker
       Namespaces:
         {}

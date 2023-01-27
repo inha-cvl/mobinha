@@ -38,32 +38,32 @@ class PathPlanner:
         self.nearest_obstacle_distance = -1
 
         self.pub_lanelet_map = rospy.Publisher(
-            '/lanelet_map', MarkerArray, queue_size=1, latch=True)
-        self.pub_goal = rospy.Publisher(
-            '/goal', Marker, queue_size=1, latch=True)
+            '/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
+        self.pub_goal_viz = rospy.Publisher(
+            '/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher(
             '/mobinha/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
-            '/mobinha/local_path', Marker, queue_size=1)
+            '/mobinha/planning/local_path', Marker, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
-            '/blinker', Int8, queue_size=2)
+            '/mobinha/planning/blinker', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher(
-            '/goal_object', Pose, queue_size=1)
+            '/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_direction = rospy.Publisher(
-            '/forward_direction', Int8, queue_size=1)
+            '/mobinha/planning/forward_direction', Int8, queue_size=1)
         self.pub_forward_path = rospy.Publisher(
-            '/forward_path', Marker, queue_size=1)
+            '/mobinha/planning/forward_path', Marker, queue_size=1)
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
-        self.sub_goal = rospy.Subscriber(
+        rospy.Subscriber(
             '/move_base_simple/goal', PoseStamped, self.goal_cb)
-        self.sub_lidar_obstacle = rospy.Subscriber(
-            '/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
 
-        self.sub_nearest_obstacle_distance = rospy.Subscriber(
-            '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
     def goal_cb(self, msg):
         self.goal_pt = [msg.pose.position.x, msg.pose.position.y]
@@ -99,7 +99,7 @@ class PathPlanner:
             if goal_lanelets is not None:
                 g_id, g_idx = goal_lanelets
                 goal_viz = GoalViz(goal_pt)
-                self.pub_goal.publish(goal_viz)
+                self.pub_goal_viz.publish(goal_viz)
             else:
                 rospy.logerr(
                     'Failed to match ego to lanelets, Insert Goal Again')

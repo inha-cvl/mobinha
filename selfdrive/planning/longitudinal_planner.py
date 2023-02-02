@@ -47,14 +47,14 @@ class LongitudinalPlanner:
             self.ax.grid(color='#BDBDBD', linestyle='-', linewidth=2, )
             self.drawn = None
 
-        self.sub_lidar_obstacle = rospy.Subscriber(
-            '/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
-        self.sub_goal_object = rospy.Subscriber(
-            '/goal_object', Pose, self.goal_object_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber(
+            '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
-            '/target_v', Float32, queue_size=1, latch=True)
+            '/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_trajectory = rospy.Publisher(
-            '/trajectory', PoseArray, queue_size=1)
+            '/mobinha/planning/trajectory', PoseArray, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)

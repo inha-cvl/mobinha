@@ -39,7 +39,12 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
         self.gear = 0
 
+<<<<<<< HEAD
         self.ego = Vehicle(957.4133396023974, -851.312333902648, math.radians(-60), 0.0, 2.65) # 957.4133396023974, -851.312333902648
+=======
+        self.ego = Vehicle(957.41073774482, -851.3138579149752,
+                           math.radians(-60), 0.0, 2.65)
+>>>>>>> 11-code-upgrade
         self.roll = 0.0
         self.pitch = 0.0
 
@@ -47,15 +52,17 @@ class SimulatorTransceiver:
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
         self.pub_ins_imu = rospy.Publisher(
             '/sbg/ekf_euler', SbgEkfEuler, queue_size=1)
-        self.pub_ins_odom = rospy.Publisher('/car_v', Float32, queue_size=1)
-        self.pub_gear = rospy.Publisher('/gear', Int8, queue_size=1)
+        self.pub_ins_odom = rospy.Publisher(
+            '/mobinha/car/car_v', Float32, queue_size=1)
+        self.pub_gear = rospy.Publisher(
+            '/mobinha/car/gear', Int8, queue_size=1)
 
-        self.sub_initpose = rospy.Subscriber(
+        rospy.Subscriber(
             '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
-        self.sub_wheel_angle = rospy.Subscriber(
-            '/wheel_angle', Float32, self.wheel_angle_cb)
-        self.sub_accel_brake = rospy.Subscriber(
-            '/accel_brake', Float32, self.accel_brake_cb)
+        rospy.Subscriber(
+            '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cb)
+        rospy.Subscriber(
+            '/mobinha/control/accel_brake', Float32, self.accel_brake_cb)
 
     def init_pose_cb(self, msg):
         x = msg.pose.pose.position.x

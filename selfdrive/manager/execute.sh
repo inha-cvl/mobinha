@@ -4,5 +4,4 @@ sleep 3
 python ../car/car.py &
 python ../control/control.py &
 python ../planning/planning.py &
-# python ../perception/object_test.py &
 python ../perception/perception.py 

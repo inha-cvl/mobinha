@@ -17,6 +17,7 @@ class PathPlanner:
         self.state = 'WAITING'
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+        # self.crosswalk = CrossWalk(self.lmap.lanelets)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
         self.precision = CP.mapParam.precision
 
@@ -53,6 +54,10 @@ class PathPlanner:
             '/forward_direction', Int8, queue_size=1)
         self.pub_forward_path = rospy.Publisher(
             '/forward_path', Marker, queue_size=1)
+
+        self.pub_crosswalk = rospy.Publisher(
+            '/crosswalk', Marker, queue_size=1)
+
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
@@ -202,7 +207,9 @@ class PathPlanner:
                 self.non_intp_path, (CS.position.x, CS.position.y))
             # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
-
+            now_lane_id = now_lane_id.split('_')[0]
+            print("ID : ", now_lane_id)
+            
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
                 eg_idx = calc_idx(
@@ -236,6 +243,32 @@ class PathPlanner:
                 self.l_idx = calc_idx(
                     self.local_path, (CS.position.x, CS.position.y))
 
+
+                ## Crosswalk Viz
+                # print("1")
+                crosswalk = []
+                for id_, data in self.lmap.lanelets.items():
+                    # print("2")
+                    if id_ == now_lane_id:
+                        # print("3")
+                        # print(data)
+                        if len(data['crosswalk']) > 0:
+                            crosswalks = data['crosswalk']
+                            # print("FFF",crosswalks)
+                            
+                            for arr in crosswalks:
+                                crosswalk.extend(arr)
+                # print("WWWW",crosswalk)
+                crosswalk_viz = CrosswalkViz(crosswalk)
+                self.pub_crosswalk.publish(crosswalk_viz)
+                # print("?")
+                # print(now_lane_id)
+                # print(type(now_lane_id))
+                # if self.lmap.stoplines.get(now_lane_id) is not None:
+                #     [trafficlight_x, trafficlight_y] = self.lmap.stoplines[now_lane_id][(len(self.lmap.stoplines[now_lane_id])+1)//2]
+                #     stopline_idx = calc_idx(
+                #     self.local_path, (trafficlight_x, trafficlight_y))
+                #     print(idx, stopline_idx)
                 # local_point = KDTree(self.local_path)
                 # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
 

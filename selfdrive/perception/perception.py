@@ -50,10 +50,8 @@ class Perception:
                 print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
-
 def signal_handler(sig, frame):
     sys.exit(0)
-
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)

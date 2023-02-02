@@ -39,7 +39,7 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
         self.gear = 0
 
-        self.ego = Vehicle(0.0, 0.0, math.radians(-60), 0.0, 2.65)
+        self.ego = Vehicle(957.4133396023974, -851.312333902648, math.radians(-60), 0.0, 2.65) # 957.4133396023974, -851.312333902648
         self.roll = 0.0
         self.pitch = 0.0
 

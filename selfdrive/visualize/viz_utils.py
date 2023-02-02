@@ -34,12 +34,23 @@ def LookAheadViz(pt):
 def FinalPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.1, 0.2, (0.0, 1.0, 0.0, 1.0))
 
-
 def LocalPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 0.0, 1.0))
 
 def ForwardPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 1.0, 1.0))
+
+def FinalPath(waypoints, id_, z, scale, color):
+    marker = Line('final_path', int(id_), scale, color)
+    for pt in waypoints:
+        marker.points.append(Point(x=pt[0], y=pt[1], z=z))
+    return marker
+
+def CrosswalkViz(waypoints):
+    marker = Line('crosswalk', 999, 0.4, (1.0, 0.2, 0.6, 1.0))
+    for _, pt in enumerate(waypoints):
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
+    return marker
 
 def LocalPathSelectedViz(path):
     waypoints = zip(path.x, path.y)

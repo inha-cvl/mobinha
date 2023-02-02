@@ -58,15 +58,23 @@ class PathPlanner:
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
         rospy.Subscriber(
-            '/move_base_simple/goal', PoseStamped, self.goal_cb)
+            '/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
+        rospy.Subscriber('/mobinha/visualize/scenario_goal',
+                         PoseArray, self.scenario_goal_cb)
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
-
         rospy.Subscriber(
             '/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
-    def goal_cb(self, msg):
-        self.goal_pt = [msg.pose.position.x, msg.pose.position.y]
+    def single_goal_cb(self, msg):
+        self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
+        self.get_goal = True
+
+    def scenario_goal_cb(self, msg):
+        scenario_goal = []
+        for pose in msg.poses:
+            scenario_goal.append((pose.position.x, pose.position.y))
+        self.goal_pts = scenario_goal
         self.get_goal = True
 
     def lidar_obstacle_cb(self, msg):
@@ -76,65 +84,78 @@ class PathPlanner:
     def nearest_obstacle_distance_cb(self, msg):
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
 
-    def returnAppendedNonIntpPath(self, goal_pt):
-        shortest_path = []
+    def returnAppendedNonIntpPath(self):
+        appended_non_intp_path = []
+        appended_non_intp_id = []
+        goal_pt = None
 
-        g_id = None
-        g_idx = None
+        for pt in self.goal_pts:
+            goal_pt = pt
+            shortest_path = []
 
-        while True:
-            ego_lanelets = lanelet_matching(
-                self.tmap.tiles, self.tmap.tile_size, self.temp_pt)
-            if ego_lanelets is not None:
-                e_id, e_idx = ego_lanelets
-            else:
-                rospy.logerr(
-                    'Failed to match ego to lanelets, Insert Goal Again')
-                self.get_goal = False
-                self.state = 'WAITING'
-                return
+            g_id = None
+            g_idx = None
 
-            goal_lanelets = lanelet_matching(
-                self.tmap.tiles, self.tmap.tile_size, goal_pt)
-            if goal_lanelets is not None:
-                g_id, g_idx = goal_lanelets
-                goal_viz = GoalViz(goal_pt)
-                self.pub_goal_viz.publish(goal_viz)
-            else:
-                rospy.logerr(
-                    'Failed to match ego to lanelets, Insert Goal Again')
-                self.get_goal = False
-                self.state = 'WAITING'
-                return
+            while True:
+                ego_lanelets = lanelet_matching(
+                    self.tmap.tiles, self.tmap.tile_size, self.temp_pt)
+                if ego_lanelets is not None:
+                    e_id, e_idx = ego_lanelets
+                else:
+                    rospy.logerr(
+                        'Failed to match ego to lanelets, Insert Goal Again')
+                    self.get_goal = 0
+                    self.state = 'WAITING'
+                    return None, None
 
-            e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
-            g_node = node_matching(
-                self.lmap.lanelets, g_id, g_idx)
+                goal_lanelets = lanelet_matching(
+                    self.tmap.tiles, self.tmap.tile_size, goal_pt)
+                if goal_lanelets is not None:
+                    g_id, g_idx = goal_lanelets
 
-            if e_node == g_node:
-                shortest_path = ([e_node], 0)
-            else:
-                shortest_path = dijkstra(self.graph, e_node, g_node)
+                else:
+                    rospy.logerr(
+                        'Failed to match ego to lanelets, Insert Goal Again')
+                    self.get_goal = 0
+                    self.state = 'WAITING'
+                    return None, None
 
-            if shortest_path is not None:
-                shortest_path = shortest_path[0]
-                break
-            else:
-                rospy.logerr(
-                    'Failed to match ego to lanelets, Insert Goal Again')
-                self.get_goal = False
-                self.state = 'WAITING'
-                return
+                e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
+                g_node = node_matching(
+                    self.lmap.lanelets, g_id, g_idx)
 
-        non_intp_path, non_intp_id = node_to_waypoints2(
-            self.lmap.lanelets, shortest_path)
-        intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
-        intp_last_idx = calc_idx(non_intp_path, goal_pt)
+                if e_node == g_node:
+                    shortest_path = ([e_node], 0)
+                else:
+                    shortest_path = dijkstra(self.graph, e_node, g_node)
 
-        non_intp_path = non_intp_path[intp_start_idx:intp_last_idx+1]
-        non_intp_id = non_intp_id[intp_start_idx:intp_last_idx+1]
+                if shortest_path is not None:
+                    shortest_path = shortest_path[0]
+                    break
+                else:
+                    rospy.logerr(
+                        'Failed to match ego to lanelets, Insert Goal Again')
+                    self.get_goal = 0
+                    self.state = 'WAITING'
+                    return None, None
 
-        return non_intp_path, non_intp_id
+            non_intp_path, non_intp_id = node_to_waypoints2(
+                self.lmap.lanelets, shortest_path)
+            intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
+            intp_last_idx = calc_idx(non_intp_path, goal_pt)
+
+            non_intp_path = non_intp_path[intp_start_idx:intp_last_idx+1]
+            non_intp_id = non_intp_id[intp_start_idx:intp_last_idx+1]
+
+            appended_non_intp_path.extend(non_intp_path)
+            appended_non_intp_id.extend(non_intp_id)
+
+            self.temp_pt = goal_pt
+
+        goal_viz = GoalViz(goal_pt)
+        self.pub_goal_viz.publish(goal_viz)
+
+        return appended_non_intp_path, appended_non_intp_id
 
     def run(self, sm):
         CS = sm.CS
@@ -143,7 +164,7 @@ class PathPlanner:
         if self.state == 'WAITING':
             #print("[{}] Waiting Goal Point".format(self.__class__.__name__))
             time.sleep(1)
-            if self.get_goal:
+            if self.get_goal != 0:
                 self.state = 'READY'
             pp = 3
 
@@ -159,8 +180,9 @@ class PathPlanner:
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
-            non_intp_path, non_intp_id = self.returnAppendedNonIntpPath(
-                self.goal_pt)
+            non_intp_path, non_intp_id = self.returnAppendedNonIntpPath()
+            if non_intp_path == None and non_intp_id == None:
+                pass
 
             if non_intp_path is not None:
                 self.state = 'MOVE'

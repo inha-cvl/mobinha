@@ -106,7 +106,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /move_base_simple/goal
+      Topic: /move_base_simple/single_goal
       Unreliable: false
       Value: true
     - Class: rviz/Marker
@@ -181,7 +181,7 @@ Visualization Manager:
       X std deviation: 0.5
       Y std deviation: 0.5
     - Class: rviz/SetGoal
-      Topic: /move_base_simple/goal
+      Topic: /move_base_simple/single_goal
     - Class: rviz/PublishPoint
       Single click: true
       Topic: /clicked_point

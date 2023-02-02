@@ -21,7 +21,8 @@ class Transceiver:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
-        sub_state = rospy.Subscriber('/state', String, self.state_cb)
+        rospy.Subscriber('/mobinha/visualize/system_state',
+                         String, self.state_cb)
 
     def transceiver(self):
         can = None

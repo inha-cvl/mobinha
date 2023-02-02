@@ -6,6 +6,7 @@ import pymap3d as pm
 
 import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
+from selfdrive.visualize.viz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -90,28 +91,6 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     return avoid_path
 
 
-def lanelet_matching_adj(tile, tile_size, t_pt):
-    row = int(t_pt[0] // tile_size)
-    col = int(t_pt[1] // tile_size)
-
-    min_dist = float('inf')
-    left_id, right_id = None, None
-
-    for i in range(-1, 2):
-        for j in range(-1, 2):
-            selected_tile = tile.get((row+i, col+j))
-            if selected_tile is not None:
-                for id_, data in selected_tile.items():
-                    for idx, pt in enumerate(data['waypoints']):
-                        dist = euc_distance(t_pt, pt)
-                        if dist < min_dist:
-                            min_dist = dist
-                            left_id = data['adjacentLeft']
-                            right_id = data['adjacentRight']
-
-    return (left_id, right_id)
-
-
 def interpolate(points, precision):
     def filter_same_points(points):
         filtered_points = []
@@ -152,30 +131,14 @@ def interpolate(points, precision):
 
 
 def ref_interpolate(points, precision, min_v, ref_v):
-    # points = filter_same_points(points)
-
     wx, wy = zip(*points)
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
-
     itp_points = []
-    max_v = []
-
     for n, ds in enumerate(np.arange(0.0, itp.s[-1], precision)):
         x, y = itp.calc_position(ds)
         itp_points.append((float(x), float(y)))
-        dk = itp.calc_curvature(ds)
 
-        if dk != 0.0 and dk is not None:
-            R = abs(1.0 / dk)
-            curvature_v = math.sqrt(127 * 0.25 * R)
-        else:
-            curvature_v = 300
-
-        v = max(min_v, min(curvature_v, ref_v))
-        max_v.append(v * KPH_TO_MPS)
-
-    # return itp_points, max_v, itp.s[-1], itp
-    return itp_points, max_v, itp.s[-1]
+    return itp_points, itp.s[-1]
 
 
 def node_matching(lanelet, l_id, l_idx):
@@ -318,7 +281,7 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
+def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
     i += 5
     return_v = ref_v
     x = []
@@ -334,9 +297,9 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
         x = np.array([(v-x[0]) for v in x])
         y = np.array([(v-y[0]) for v in y])
 
-        origin_plot = np.vstack((x,y))
+        origin_plot = np.vstack((x, y))
         rotation_radians = math.radians(-yawRate) + math.pi/2
-        rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],   
+        rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
                                  [math.sin(rotation_radians), math.cos(rotation_radians)]])
         rotation_plot = rotation_mat@origin_plot
         x, y = rotation_plot
@@ -346,115 +309,93 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, maxv_threshold=300):
             if cr[0] != 0:
                 curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
             else:
-                curvated = maxv_threshold
+                curvated = curv_threshold
         else:
-            curvated = maxv_threshold+1
-        if curvated < maxv_threshold:
-            return_v = ref_v - (abs(maxv_threshold-curvated)*0.13)
+            curvated = curv_threshold+1
+        if curvated < curv_threshold:
+            return_v = ref_v - (abs(curv_threshold-curvated)*0.13)
             return_v = return_v if return_v > 0 else 5
-    
+
     return return_v*KPH_TO_MPS, x, y
 
 
-def ref_to_max_v(ref_path, precision, v_offset, min_v, ref_v):
-    csp = ref_to_csp(ref_path)
-    max_v = []
+def get_forward_direction(global_path, i, ws=200):
+    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
+    x = []
+    y = []
+    # if i < len(global_path)-1:
+    if ws+100 < len(global_path[i:])-1:
+        x = [v[0] for v in global_path[i+ws:i+ws+100]]
+        y = [v[1] for v in global_path[i+ws:i+ws+100]]
+    elif ws < len(global_path[i:])-1:
+        x = [v[0] for v in global_path[i+ws:]]
+        y = [v[1] for v in global_path[i+ws:]]
+    else:
+        x = [v[0] for v in global_path[i:]]
+        y = [v[1] for v in global_path[i:]]
 
-    for i in range(len(ref_path)):
-        s = i * precision
-        k = csp.calc_curvature(s)
-        if k != 0.0 and k is not None:
-            R = abs(1.0 / k)
-            curvature_v = math.sqrt(127 * 0.25 * R) - v_offset
+    tmp_x = np.array([(v) for v in x])
+    tmp_y = np.array([(v) for v in y])
+
+    forward_path = []
+    for i in range(len(tmp_x)):
+        forward_path.append([tmp_x[i], tmp_y[i]])
+
+    x = np.array([(v-x[0]) for v in x])
+    y = np.array([(v-y[0]) for v in y])
+
+    origin_plot = np.vstack((x, y))
+    theta = math.atan((y[1] - y[0]) / (x[1] - x[0]))
+    if (x[1] - x[0]) < 0 :
+        rotation_radians = -theta + math.pi/2 + math.pi
+    else:
+        rotation_radians = -theta + math.pi/2
+
+    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
+                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
+    rotation_plot = rotation_mat@origin_plot
+    x, y = rotation_plot
+
+    if len(x) > 2:
+        cr = np.polyfit(x, y, 2)
+        if cr[0] != 0:
+            curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
         else:
-            curvature_v = 300
-
-        v = max(min_v, min(curvature_v, ref_v))
-
-        max_v.append(v * KPH_TO_MPS)
-
-    return max_v
-
-
-def local_velocity(path, max_v, ws=25, road_friction=0.15):
-    max_v *= KPH_TO_MPS
-    velocity_profile = []
-    for i in range(0, ws):
-        velocity_profile.append(max_v)
-
-    tar_v = max_v
-
-    for i in range(ws, len(path)-ws):
-        x_list = []
-        y_list = []
-        for w in range(-ws, ws):
-            x = path[i+w][0]
-            y = path[i+w][1]
-            x_list.append(x)
-            y_list.append(y)
-
-        x_start = x_list[0]
-        x_end = x_list[-1]
-        x_mid = x_list[int(len(x_list)/2)]
-
-        y_start = y_list[0]
-        y_end = y_list[-1]
-        y_mid = y_list[int(len(y_list)/2)]
-
-        dSt = np.array([x_start - x_mid, y_start - y_mid])
-        dEd = np.array([x_end - x_mid, y_end - y_mid])
-
-        Dcom = 2 * (dSt[0]*dEd[1] - dSt[1]*dEd[0])
-
-        dSt2 = np.dot(dSt, dSt)
-        dEd2 = np.dot(dEd, dEd)
-
-        U1 = (dEd[1] * dSt2 - dSt[1] * dEd2)/Dcom
-        U2 = (dSt[0] * dEd2 - dEd[0] * dSt2)/Dcom
-
-        tmp_r = math.sqrt(pow(U1, 2) + pow(U2, 2))
-
-        if np.isnan(tmp_r):
-            tmp_r = float('inf')
-
-        tar_v = math.sqrt(tmp_r*9.8*road_friction) if tar_v < max_v else max_v
-
-        velocity_profile.append(tar_v)
-
-    for i in range(len(path)-ws, len(path)-10):
-        velocity_profile.append(max_v)
-
-    for i in range(len(path)-10, len(path)):
-        velocity_profile.append(0)
-
-    return velocity_profile
+            curvated = 10000
+    else:
+        curvated = 10000
+    #print(x[-1], y[-1], "curvated:",curvated)
+    if curvated < 1000:
+        if x[-1] < -8 and curvated < 500:
+            return 5, forward_path
+        elif x[-1] < -15 :
+            return 1, forward_path
+        elif x[-1] >= 15:
+            return 2, forward_path
+        else:
+            return 0, forward_path
+    else:
+        return 0, forward_path
 
 
-def signal_light_toggle(path, ego_idx, precision, t_map, lmap, stage):
-    ids = []
+def get_blinker(lanelets, ids, ego_idx, look_forward=40):
+    look_forward *= M_TO_IDX
+    blinker = 0
+
+    now_id = ids[ego_idx].split('_')[0]
+
+    left_id = lanelets[now_id]['adjacentLeft']
+    right_id = lanelets[now_id]['adjacentRight']
+
     try:
-        forward_range = 40  # meter
-        ego_pt = path[ego_idx]
-        ego_lanelet_id, _ = lanelet_matching(
-            t_map.tiles, t_map.tile_size, ego_pt)
-        left_lanelet = lmap.lanelets[ego_lanelet_id]['adjacentLeft']
-        right_lanelet = lmap.lanelets[ego_lanelet_id]['adjacentRight']
-
-        for distance in range(forward_range+1):
-            forward_pt = path[ego_idx+int(distance/precision)]
-            id, _ = lanelet_matching(t_map.tiles, t_map.tile_size, forward_pt)
-            ids.append(id)
-
-        forward_lanelet_ids = np.array(ids)
-        # 0: normal, 1: left, 2: right
-        # if forward_lanelet_id == left_lanelet or (stage == 1 and ):
-        if np.any(forward_lanelet_ids == left_lanelet):
-            change = 1
-        elif np.any(forward_lanelet_ids == right_lanelet):
-            change = 2
+        forward_ids = np.array([fid.split('_')[0]
+                               for fid in ids[ego_idx:ego_idx+look_forward]])
+        if np.any(forward_ids == left_id):
+            blinker = 1
+        elif np.any(forward_ids == right_id):
+            blinker = 2
         else:
-            change = 0
-        # print(change)
-        return change
+            blinker = 0
+        return blinker
     except IndexError:
-        pass
+        return blinker

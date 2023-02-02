@@ -27,23 +27,24 @@ class ObstacleDetector:
 
         self.is_morai = False
 
-        self.sub_local_path = rospy.Subscriber(
-            '/mobinha/local_path', Marker, self.local_path_cb)
-        self.sub_lidar_cluster_box = rospy.Subscriber(
-            '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+        rospy.Subscriber(
+            '/mobinha/planning/local_path', Marker, self.local_path_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
 
-        self.sub_morai_object_list = rospy.Subscriber(
+        #MORAI
+        rospy.Subscriber(
             '/morai/object_list', PoseArray, self.morai_object_list_cb)
-        self.sub_morai_ego_topic = rospy.Subscriber(
+        rospy.Subscriber(
             '/morai/ego_topic', Pose, self.morai_ego_topic_cb)
 
         self.pub_object_marker = rospy.Publisher(
-            '/object_marker', MarkerArray, queue_size=1)
+            '/mobinha/perception/object_marker', MarkerArray, queue_size=1)
 
         self.pub_lidar_obstacle = rospy.Publisher(
-            '/lidar_obstacle', PoseArray, queue_size=1)
+            '/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher(
-            '/nearest_obstacle_distance', Float32, queue_size=1)
+            '/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]

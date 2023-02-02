@@ -38,6 +38,8 @@ def FinalPathViz(waypoints):
 def LocalPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 0.0, 1.0))
 
+def ForwardPathViz(waypoints):
+    return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 1.0, 1.0))
 
 def LocalPathSelectedViz(path):
     waypoints = zip(path.x, path.y)
@@ -230,6 +232,7 @@ def PostPoint(ns, id_, data, radius, height, color):
     marker.pose.orientation.z = 0.0
     marker.pose.orientation.w = 1.0
     return marker
+
 
 def MicroLaneletGraphViz(lanelet, graph):
     array = MarkerArray()

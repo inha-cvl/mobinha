@@ -4,7 +4,7 @@ import math
 import pymap3d
 
 import rospy
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int8
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
 
@@ -37,8 +37,10 @@ class SimulatorTransceiver:
 
         self.wheel_angle = 0.0
         self.accel_brake = 0.0
+        self.gear = 0
 
-        self.ego = Vehicle(0.0, 0.0, math.radians(-60), 0.0, 2.65)
+        self.ego = Vehicle(957.41073774482, -851.3138579149752,
+                           math.radians(-60), 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
 
@@ -46,14 +48,17 @@ class SimulatorTransceiver:
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
         self.pub_ins_imu = rospy.Publisher(
             '/sbg/ekf_euler', SbgEkfEuler, queue_size=1)
-        self.pub_ins_odom = rospy.Publisher('/car_v', Float32, queue_size=1)
+        self.pub_ins_odom = rospy.Publisher(
+            '/mobinha/car/car_v', Float32, queue_size=1)
+        self.pub_gear = rospy.Publisher(
+            '/mobinha/car/gear', Int8, queue_size=1)
 
-        self.sub_initpose = rospy.Subscriber(
+        rospy.Subscriber(
             '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
-        self.sub_wheel_angle = rospy.Subscriber(
-            '/wheel_angle', Float32, self.wheel_angle_cb)
-        self.sub_accel_brake = rospy.Subscriber(
-            '/accel_brake', Float32, self.accel_brake_cb)
+        rospy.Subscriber(
+            '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cb)
+        rospy.Subscriber(
+            '/mobinha/control/accel_brake', Float32, self.accel_brake_cb)
 
     def init_pose_cb(self, msg):
         x = msg.pose.pose.position.x
@@ -74,10 +79,18 @@ class SimulatorTransceiver:
         self.accel_brake = msg.data
 
     def run(self):
+        self.pub_gear.publish(self.gear)
+        
+
         dt = 0.1
         x, y, yaw, v = self.ego.next_state(
             dt, self.wheel_angle, self.accel_brake)
 
+        if v > 0:
+            self.gear = 3
+        else:
+            self.gear = 0
+            
         msg = SbgEkfNav()
         lat, lon, alt = pymap3d.enu2geodetic(
             x, y, 0, self.base_lla[0], self.base_lla[1], self.base_lla[2])

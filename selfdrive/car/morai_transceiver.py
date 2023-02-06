@@ -17,6 +17,7 @@ class MoraiTransceiver:
 
         self.roll = 0.0
         self.pitch = 0.0
+        self.heading = 0.0
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)

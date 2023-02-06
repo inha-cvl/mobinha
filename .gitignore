@@ -109,10 +109,7 @@ ENV/
 env.bak/
 venv.bak/
 
-<<<<<<< HEAD
 #Map
 songdo/
 songdo-wgs84/
-
-=======
->>>>>>> 11-code-upgrade
+songdo_plus_alpha/

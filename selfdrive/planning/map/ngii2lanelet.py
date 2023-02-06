@@ -280,6 +280,7 @@ class NGII2LANELET:
                 if b3_surfacemark.LinkID is not None:
                     ori_id = b3_surfacemark.LinkID
                     new_id = ori2new.get(ori_id)
+                    # print(ori_id,new_id, lanelets['2143'], self.new2ori['2143'])#, lanelets['2145'], self.new2ori['2145'])
                     if new_id is not None:
                         #new and pre id crosswalks append
                         lanelets[new_id]['crosswalk'].append(points)

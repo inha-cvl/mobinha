@@ -364,11 +364,7 @@ def get_forward_direction(global_path, i, ws=200):
             curvated = 10000
     else:
         curvated = 10000
-<<<<<<< HEAD
     # print(x[-1], y[-1], "curvated:",curvated)
-=======
-    #print(x[-1], y[-1], "curvated:",curvated)
->>>>>>> 11-code-upgrade
     if curvated < 1000:
         if x[-1] < -8 and curvated < 500:
             return 5, forward_path

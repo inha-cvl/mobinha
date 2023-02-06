@@ -39,12 +39,7 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
         self.gear = 0
 
-<<<<<<< HEAD
-        self.ego = Vehicle(957.4133396023974, -851.312333902648, math.radians(-60), 0.0, 2.65) # 957.4133396023974, -851.312333902648
-=======
-        self.ego = Vehicle(957.41073774482, -851.3138579149752,
-                           math.radians(-60), 0.0, 2.65)
->>>>>>> 11-code-upgrade
+        self.ego = Vehicle(-1601.567, 2375.599, math.radians(180), 0.0, 2.65) # posco 957.413, -851.312, terminal -1601.567, 2375.599
         self.roll = 0.0
         self.pitch = 0.0
 

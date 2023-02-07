@@ -3,8 +3,8 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import String, Int8, Float32
-from geometry_msgs.msg import PoseStamped, PoseArray
+from std_msgs.msg import Int8, Float32
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -17,6 +17,7 @@ class PathPlanner:
         self.state = 'WAITING'
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+        # self.crosswalk = CrossWalk(self.lmap.lanelets)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
         self.precision = CP.mapParam.precision
 
@@ -38,33 +39,47 @@ class PathPlanner:
         self.nearest_obstacle_distance = -1
 
         self.pub_lanelet_map = rospy.Publisher(
-            '/lanelet_map', MarkerArray, queue_size=1, latch=True)
-        self.pub_goal = rospy.Publisher(
-            '/goal', Marker, queue_size=1, latch=True)
+            '/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
+        self.pub_goal_viz = rospy.Publisher(
+            '/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher(
             '/mobinha/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher(
-            '/mobinha/local_path', Marker, queue_size=1)
-        self.pub_now_lane_id = rospy.Publisher(
-            '/now_lane_id', String, queue_size=1)
+            '/mobinha/planning/local_path', Marker, queue_size=1)
         self.pub_blinkiker = rospy.Publisher(
-            '/lane_change', Int8, queue_size=2)
-        self.pub_distance_to_goal = rospy.Publisher(
-            '/distance_to_goal', Float32, queue_size=1)
+            '/mobinha/planning/blinker', Int8, queue_size=2)
+        self.pub_goal_object = rospy.Publisher(
+            '/mobinha/planning/goal_information', Pose, queue_size=1)
+        self.pub_forward_direction = rospy.Publisher(
+            '/mobinha/planning/forward_direction', Int8, queue_size=1)
+        self.pub_forward_path = rospy.Publisher(
+            '/mobinha/planning/forward_path', Marker, queue_size=1)
+
+        self.pub_crosswalk = rospy.Publisher(
+            '/crosswalk', Marker, queue_size=1)
+
 
         lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
-        self.sub_goal = rospy.Subscriber(
-            '/move_base_simple/goal', PoseStamped, self.goal_cb)
-        self.sub_lidar_obstacle = rospy.Subscriber(
-            '/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber(
+            '/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
+        rospy.Subscriber('/mobinha/visualize/scenario_goal',
+                         PoseArray, self.scenario_goal_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
-        self.sub_nearest_obstacle_distance = rospy.Subscriber(
-            '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
+    def single_goal_cb(self, msg):
+        self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
+        self.get_goal = True
 
-    def goal_cb(self, msg):
-        self.goal_pt = [msg.pose.position.x, msg.pose.position.y]
+    def scenario_goal_cb(self, msg):
+        scenario_goal = []
+        for pose in msg.poses:
+            scenario_goal.append((pose.position.x, pose.position.y))
+        self.goal_pts = scenario_goal
         self.get_goal = True
 
     def lidar_obstacle_cb(self, msg):
@@ -74,66 +89,78 @@ class PathPlanner:
     def nearest_obstacle_distance_cb(self, msg):
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
 
-    def returnAppendedNonIntpPath(self, goal_pt):
-        shortest_path = []
+    def returnAppendedNonIntpPath(self):
+        appended_non_intp_path = []
+        appended_non_intp_id = []
+        goal_pt = None
 
-        g_id = None
-        g_idx = None
+        for pt in self.goal_pts:
+            goal_pt = pt
+            shortest_path = []
 
-        while True:
-            ego_lanelets = lanelet_matching(
-                self.tmap.tiles, self.tmap.tile_size, self.temp_pt)
-            if ego_lanelets is not None:
-                e_id, e_idx = ego_lanelets
-            else:
-                rospy.logerr(
-                    'Failed to match ego to lanelets, Insert Goal Again')
-                self.get_goal = False
-                self.state = 'WAITING'
-                return
+            g_id = None
+            g_idx = None
 
+            while True:
+                ego_lanelets = lanelet_matching(
+                    self.tmap.tiles, self.tmap.tile_size, self.temp_pt)
+                if ego_lanelets is not None:
+                    e_id, e_idx = ego_lanelets
+                else:
+                    rospy.logerr(
+                        'Failed to match ego to lanelets, Insert Goal Again')
+                    self.get_goal = 0
+                    self.state = 'WAITING'
+                    return None, None
 
-            goal_lanelets = lanelet_matching(
-                self.tmap.tiles, self.tmap.tile_size, goal_pt)
-            if goal_lanelets is not None:
-                g_id, g_idx = goal_lanelets
-                goal_viz = GoalViz(goal_pt)
-                self.pub_goal.publish(goal_viz)
-            else:
-                rospy.logerr(
-                    'Failed to match ego to lanelets, Insert Goal Again')
-                self.get_goal = False
-                self.state = 'WAITING'
-                return
+                goal_lanelets = lanelet_matching(
+                    self.tmap.tiles, self.tmap.tile_size, goal_pt)
+                if goal_lanelets is not None:
+                    g_id, g_idx = goal_lanelets
 
-            e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
-            g_node = node_matching(
-                self.lmap.lanelets, g_id, g_idx)
+                else:
+                    rospy.logerr(
+                        'Failed to match ego to lanelets, Insert Goal Again')
+                    self.get_goal = 0
+                    self.state = 'WAITING'
+                    return None, None
 
-            if e_node == g_node:
-                shortest_path = ([e_node], 0)
-            else:
-                shortest_path = dijkstra(self.graph, e_node, g_node)
+                e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
+                g_node = node_matching(
+                    self.lmap.lanelets, g_id, g_idx)
 
-            if shortest_path is not None:
-                shortest_path = shortest_path[0]
-                break
-            else:
-                rospy.logerr(
-                    'Failed to match ego to lanelets, Insert Goal Again')
-                self.get_goal = False
-                self.state = 'WAITING'
-                return
+                if e_node == g_node:
+                    shortest_path = ([e_node], 0)
+                else:
+                    shortest_path = dijkstra(self.graph, e_node, g_node)
 
-        non_intp_path, non_intp_id = node_to_waypoints2(
-            self.lmap.lanelets, shortest_path)
-        _, intp_start_idx = calc_cte_and_idx(non_intp_path, self.temp_pt)
-        _, intp_last_idx = calc_cte_and_idx(non_intp_path, goal_pt)
+                if shortest_path is not None:
+                    shortest_path = shortest_path[0]
+                    break
+                else:
+                    rospy.logerr(
+                        'Failed to match ego to lanelets, Insert Goal Again')
+                    self.get_goal = 0
+                    self.state = 'WAITING'
+                    return None, None
 
-        non_intp_path = non_intp_path[intp_start_idx:intp_last_idx+1]
-        non_intp_id = non_intp_id[intp_start_idx:intp_last_idx+1]
+            non_intp_path, non_intp_id = node_to_waypoints2(
+                self.lmap.lanelets, shortest_path)
+            intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
+            intp_last_idx = calc_idx(non_intp_path, goal_pt)
 
-        return non_intp_path, non_intp_id
+            non_intp_path = non_intp_path[intp_start_idx:intp_last_idx+1]
+            non_intp_id = non_intp_id[intp_start_idx:intp_last_idx+1]
+
+            appended_non_intp_path.extend(non_intp_path)
+            appended_non_intp_id.extend(non_intp_id)
+
+            self.temp_pt = goal_pt
+
+        goal_viz = GoalViz(goal_pt)
+        self.pub_goal_viz.publish(goal_viz)
+
+        return appended_non_intp_path, appended_non_intp_id
 
     def run(self, sm):
         CS = sm.CS
@@ -142,7 +169,7 @@ class PathPlanner:
         if self.state == 'WAITING':
             #print("[{}] Waiting Goal Point".format(self.__class__.__name__))
             time.sleep(1)
-            if self.get_goal:
+            if self.get_goal != 0:
                 self.state = 'READY'
             pp = 3
 
@@ -153,21 +180,21 @@ class PathPlanner:
             self.local_path = None
             self.temp_global_idx = 0
             self.l_idx = 0
-            self.min_v = 0.5
             self.local_path_cut_value = 300
             self.local_path_nitting_value = 150
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
-            non_intp_path, non_intp_id = self.returnAppendedNonIntpPath(
-                self.goal_pt)
+            non_intp_path, non_intp_id = self.returnAppendedNonIntpPath()
+            if non_intp_path == None and non_intp_id == None:
+                pass
 
             if non_intp_path is not None:
                 self.state = 'MOVE'
                 #print("[{}] Move to Goal".format(self.__class__.__name__))
-                global_path, _, self.last_s = ref_interpolate(
+                global_path, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
-
+   
                 # For Normal Arrive
                 last_idx_of_global = len(global_path)-1
                 x_increment = (
@@ -191,23 +218,23 @@ class PathPlanner:
             pp = 0
 
         elif self.state == 'MOVE':
-            _, idx = calc_cte_and_idx(
+            idx = calc_idx(
                 self.global_path, (CS.position.x, CS.position.y))
 
             if abs(idx-self.temp_global_idx) <= 50:
                 self.temp_global_idx = idx
 
-            s = idx * self.precision
-            _, n_id = calc_cte_and_idx(
+            s = idx * self.precision  # m
+            n_id = calc_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
-
             # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
-            self.pub_now_lane_id.publish(String(now_lane_id))
-
+            now_lane_id = now_lane_id.split('_')[0]
+            print("ID : ", now_lane_id)
+            
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
-                _, eg_idx = calc_cte_and_idx(
+                eg_idx = calc_idx(
                     self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 if len(self.erase_global_path)-eg_idx > self.local_path_cut_value:
@@ -228,42 +255,74 @@ class PathPlanner:
 
                 self.local_path = local_path
 
+            forward_direction, forward_path = get_forward_direction(self.global_path, idx)
+            self.pub_forward_direction.publish(forward_direction)
+            forward_path_viz = ForwardPathViz(forward_path)
+            self.pub_forward_path.publish(forward_path_viz)
+            
             if self.local_path is not None:
 
-                _, self.l_idx = calc_cte_and_idx(
+                self.l_idx = calc_idx(
                     self.local_path, (CS.position.x, CS.position.y))
 
+
+                ## Crosswalk Viz
+                # print("1")
+                crosswalk = []
+                for id_, data in self.lmap.lanelets.items():
+                    # print("2")
+                    if id_ == now_lane_id:
+                        # print("3")
+                        # print(data)
+                        if len(data['crosswalk']) > 0:
+                            crosswalks = data['crosswalk']
+                            # print("FFF",crosswalks)
+                            
+                            for arr in crosswalks:
+                                crosswalk.extend(arr)
+                # print("WWWW",crosswalk)
+                crosswalk_viz = CrosswalkViz(crosswalk)
+                self.pub_crosswalk.publish(crosswalk_viz)
+                # print("?")
+                # print(now_lane_id)
+                # print(type(now_lane_id))
+                # if self.lmap.stoplines.get(now_lane_id) is not None:
+                #     [trafficlight_x, trafficlight_y] = self.lmap.stoplines[now_lane_id][(len(self.lmap.stoplines[now_lane_id])+1)//2]
+                #     stopline_idx = calc_idx(
+                #     self.local_path, (trafficlight_x, trafficlight_y))
+                #     print(idx, stopline_idx)
                 # local_point = KDTree(self.local_path)
                 # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
-                # print(self.l_idx, point)
 
-                if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
-                    if self.obstacle_detect_timer == 0.0:
-                        self.obstacle_detect_timer = time.time()
-                    if time.time()-self.obstacle_detect_timer >= 10:
-                        #print('[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
-                        # pp = 4
-                        # return pp
-                        # Create Avoidance Trajectory
-                        splited_id = now_lane_id.split('_')[0]
-                        avoid_path = generate_avoid_path(
-                            self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25)
-                        if avoid_path is not None:
-                            for i, avoid_pt in enumerate(avoid_path):
-                                self.local_path[self.l_idx+i] = avoid_pt
-                            self.obstacle_detect_timer = 0.0
-                else:
-                    self.obstacle_detect_timer = 0.0
+                # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
+                #     if self.obstacle_detect_timer == 0.0:
+                #         self.obstacle_detect_timer = time.time()
+                #     if time.time()-self.obstacle_detect_timer >= 10:
+                #         #print('[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
+                #         # pp = 4
+                #         # return pp
+                #         # Create Avoidance Trajectory
+                #         splited_id = now_lane_id.split('_')[0]
+                #         avoid_path = generate_avoid_path(
+                #             self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25)
+                #         if avoid_path is not None:
+                #             for i, avoid_pt in enumerate(avoid_path):
+                #                 self.local_path[self.l_idx+i] = avoid_pt
+                #             self.obstacle_detect_timer = 0.0
+                # else:
+                #     self.obstacle_detect_timer = 0.0
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
 
-            blinker = signal_light_toggle(
-                self.non_intp_path, n_id, self.precision,  self.tmap, self.lmap, 1)
+            blinker = get_blinker(self.lmap.lanelets, self.non_intp_id, n_id)
             self.pub_blinkiker.publish(blinker)
 
-            self.pub_distance_to_goal.publish(
-                Float32((self.last_s - s)*0.5))  # m
+            pose = Pose()
+            pose.position.x = 1
+            pose.position.y = self.last_s  # m
+            pose.position.z = s
+            self.pub_goal_object.publish(pose)
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'
@@ -273,4 +332,4 @@ class PathPlanner:
         elif self.state == 'ARRIVED':
             pp = 2
 
-        return pp
+        return pp, self.local_path

@@ -23,9 +23,10 @@ class Planning:
         self.planning_state = 'GOOD'
         self.morai_use = False
         self.need_init = True
-        sub_state = rospy.Subscriber('/state', String, self.state_cb)
+        rospy.Subscriber(
+            '/mobinha/visualize/system_state', String, self.state_cb)
         self.pub_planning_State = rospy.Publisher(
-            '/planning_state', Int16MultiArray, queue_size=1)
+            '/mobinha/planning_state', Int16MultiArray, queue_size=1)
 
     def planning(self):
         pp = 0
@@ -44,9 +45,9 @@ class Planning:
             elif self.state == 'START':
                 self.need_init = True
                 sm.update()
-                pp = path_planner.run(sm)
-                lgp = longitudinal_planner.run(sm, pp)
-                time.sleep(0.05)  # 10Hz
+                pp, local_path = path_planner.run(sm)
+                lgp = longitudinal_planner.run(sm, pp, local_path)
+                time.sleep(0.05)  # 20Hz
 
                 if pp == 2 and lgp == 2:
                     time.sleep(1)

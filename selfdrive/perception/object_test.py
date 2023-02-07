@@ -13,11 +13,12 @@ from selfdrive.message.messaging import *
 class PublishBBox:
     def __init__(self):
         self.state = 'WAITING'
-        sub_state = rospy.Subscriber('/state', String, self.state_cb)
+        rospy.Subscriber(
+            '/mobinha/visualize/system_state', String, self.state_cb)
         sub_goal = rospy.Subscriber(
-            '/move_base_simple/goal', PoseStamped, self.goal_cb)
+            '/move_base_simple/single_goal', PoseStamped, self.goal_cb)
         self.pub_bbox_array = rospy.Publisher(
-            '/lidar/cluster_box', BoundingBoxArray, queue_size=1)
+            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, queue_size=1)
         self.x = 90
         self.y = 0
         self.get_goal = False

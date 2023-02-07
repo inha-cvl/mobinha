@@ -23,24 +23,28 @@ class ObstacleDetector:
 
         self.local_path = None
         self.lidar_object = []
+        self.goal_object = []
 
         self.is_morai = False
 
-        self.sub_local_path = rospy.Subscriber(
-            '/mobinha/local_path', Marker, self.local_path_cb)
-        self.sub_lidar_cluster_box = rospy.Subscriber(
-            '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
-        self.sub_morai_object_list = rospy.Subscriber(
+        rospy.Subscriber(
+            '/mobinha/planning/local_path', Marker, self.local_path_cb)
+        rospy.Subscriber(
+            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+
+        #MORAI
+        rospy.Subscriber(
             '/morai/object_list', PoseArray, self.morai_object_list_cb)
-        self.sub_morai_ego_topic = rospy.Subscriber(
+        rospy.Subscriber(
             '/morai/ego_topic', Pose, self.morai_ego_topic_cb)
+
         self.pub_object_marker = rospy.Publisher(
-            '/object_marker', MarkerArray, queue_size=2)
+            '/mobinha/perception/object_marker', MarkerArray, queue_size=1)
 
         self.pub_lidar_obstacle = rospy.Publisher(
-            '/lidar_obstacle', PoseArray, queue_size=1)
+            '/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher(
-            '/nearest_obstacle_distance', Float32, queue_size=1)
+            '/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -55,6 +59,8 @@ class ObstacleDetector:
                 objects.append([nx, ny, 60])
 
         self.lidar_object = objects
+
+
 
     def morai_object_list_cb(self, msg):
         objects = []
@@ -86,16 +92,17 @@ class ObstacleDetector:
                 for obj in self.lidar_object:
                     obj_s, obj_d = ObstacleUtils.object2frenet(
                         local_point, self.local_path, (obj[0]+dx, obj[1]+dy))
-                    if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 60*M_TO_IDX and obj_d > -3.5 and obj_d < 3.5:
+                    if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*M_TO_IDX and obj_d > -3.5 and obj_d < 3.5:
                         obstacle_sd.append((obj_s, obj_d))
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2]))
 
+            # TODO: Traffic Light
             sorted_obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
 
             lidar_obstacle = PoseArray()
             for sd in sorted_obstacle_sd:
                 pose = Pose()
-                pose.position.x = 0
+                pose.position.x = 0  # 0:dynamic, 1:static
                 pose.position.y = sd[0]
                 pose.position.z = sd[1]
                 lidar_obstacle.poses.append(pose)

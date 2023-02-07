@@ -34,10 +34,23 @@ def LookAheadViz(pt):
 def FinalPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.1, 0.2, (0.0, 1.0, 0.0, 1.0))
 
-
 def LocalPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 0.0, 1.0))
 
+def ForwardPathViz(waypoints):
+    return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 1.0, 1.0))
+
+def FinalPath(waypoints, id_, z, scale, color):
+    marker = Line('final_path', int(id_), scale, color)
+    for pt in waypoints:
+        marker.points.append(Point(x=pt[0], y=pt[1], z=z))
+    return marker
+
+def CrosswalkViz(waypoints):
+    marker = Line('crosswalk', 999, 0.4, (1.0, 0.2, 0.6, 1.0))
+    for _, pt in enumerate(waypoints):
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
+    return marker
 
 def LocalPathSelectedViz(path):
     waypoints = zip(path.x, path.y)
@@ -118,17 +131,17 @@ def LaneletMapViz(lanelet, for_viz):
                            rightType, (1.0, 1.0, 1.0, 1.0))
             array.markers.append(marker)
 
-        color = (random.randint(0, 255)/255.0, random.randint(0,
-                 255)/255.0, random.randint(0, 255)/255.0, 1.0)
+        # color = (random.randint(0, 255)/255.0, random.randint(0,
+        #          255)/255.0, random.randint(0, 255)/255.0, 1.0)
 
-        marker = Waypoints(id_, data['waypoints'], color)
-        array.markers.append(marker)
+        # marker = Waypoints(id_, data['waypoints'], color)
+        # array.markers.append(marker)
 
-        idx = len(data['waypoints']) // 2
-        mid_pt = data['waypoints'][idx]
+        # idx = len(data['waypoints']) // 2
+        # mid_pt = data['waypoints'][idx]
 
-        marker = ID(id_, mid_pt, color)
-        array.markers.append(marker)
+        # marker = ID(id_, mid_pt, color)
+        # array.markers.append(marker)
 
     for n, (points, type_) in enumerate(for_viz):
         if type_ == 'stop_line':
@@ -141,6 +154,95 @@ def LaneletMapViz(lanelet, for_viz):
             array.markers.append(marker)
 
     return array
+
+
+def VectorMapVis(map_data):
+    lanelet = map_data['lanelets']
+    #side_lanelets = map_data['side_lanelets']
+    # stoplines = map_data['stoplines']
+    # safetysigns = map_data['safetysigns']
+    # surfacemarks = map_data['surfacemarks']
+    trafficlights = map_data['trafficlights']
+    # vehicleprotectionsafetys = map_data['vehicleprotectionsafetys']
+    # speedbumps = map_data['speedbumps']
+    # postpoints = map_data['postpoints']
+
+    array = MarkerArray()
+    for id_, data in lanelet.items():
+        for n, (leftBound, leftType) in enumerate(zip(data['leftBound'], data['leftType'])):
+            marker = Bound('leftBound', id_, n, leftBound,
+                           leftType, (1.0, 1.0, 1.0, 0.5))
+            array.markers.append(marker)
+
+        for n, (rightBound, rightType) in enumerate(zip(data['rightBound'], data['rightType'])):
+            marker = Bound('rightBound', id_, n, rightBound,
+                           rightType, (1.0, 1.0, 1.0, 0.5))
+            array.markers.append(marker)
+
+    # for id_, data in side_lanelets.items():
+    #     marker = Bound('side', id_, 0, data[0], data[1], (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    # for id_, data in safetysigns.items():
+    #     marker = Bound('safetysign', id_, n, data,
+    #                    'solid', (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    # for id_, data in stoplines.items():
+    #     marker = Bound('stopline', id_, 0, data, 'solid', (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    # for id_, data in surfacemarks.items():
+    #     marker = Bound('surfacemark', id_, 0, data,
+    #                    'solid', (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    for id_, data in trafficlights.items():
+        marker = Sphere('traifficlight_%s' %
+                        (id_), 0, data, 0.1, (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
+
+    # for id_, data in vehicleprotectionsafetys.items():
+    #     marker = Bound('vehicleprotectionsafety', id_, 0,
+    #                    data, 'solid', (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    # for id_, data in speedbumps.items():
+    #     marker = Bound('speedbump', id_, 0, data,
+    #                    'solid', (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    # for id_, data in postpoints.items():
+    #     marker = PostPoint('postpoint_%s' % (id_), 0, data,
+    #                        0.2, 4.0, (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
+
+    return array
+
+
+def PostPoint(ns, id_, data, radius, height, color):
+    marker = Marker()
+    marker.type = Marker.CYLINDER
+    marker.action = Marker.ADD
+    marker.header.frame_id = 'map'
+    marker.ns = ns
+    marker.id = id_
+    marker.lifetime = rospy.Duration(0)
+    marker.scale.x = radius
+    marker.scale.y = radius
+    marker.scale.z = height
+    marker.color.r = color[0]
+    marker.color.g = color[1]
+    marker.color.b = color[2]
+    marker.color.a = color[3]
+    marker.pose.position.x = data[0]
+    marker.pose.position.y = data[1]
+    marker.pose.position.z = height / 2.0 + data[2]
+    marker.pose.orientation.x = 0.0
+    marker.pose.orientation.y = 0.0
+    marker.pose.orientation.z = 0.0
+    marker.pose.orientation.w = 1.0
+    return marker
 
 
 def MicroLaneletGraphViz(lanelet, graph):
@@ -433,18 +535,18 @@ def EgoCarViz():
     marker.mesh_resource = 'file://{}/obj/car.dae'.format(dir_path)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = 1.75
-    marker.scale.y = 1.75
-    marker.scale.z = 1.75
+    marker.scale.x = 2.0
+    marker.scale.y = 2.0
+    marker.scale.z = 2.0
     marker.color.r = 0.7
     marker.color.g = 0.7
     marker.color.b = 0.7
     marker.color.a = 1.0
-    marker.pose.position.x = 1.15
-    marker.pose.position.y = -0.03
+    marker.pose.position.x = 0
+    marker.pose.position.y = 0
     marker.pose.position.z = 0.0
     quaternion = tf.transformations.quaternion_from_euler(
-        0, 0, -math.radians(270))
+        0, 0, math.radians(90))
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]
     marker.pose.orientation.z = quaternion[2]

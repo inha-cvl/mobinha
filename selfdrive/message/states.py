@@ -7,7 +7,7 @@ from sensor_msgs.msg import NavSatFix, Imu
 import tf
 
 from nav_msgs.msg import Odometry
-
+from geometry_msgs.msg import Pose2D
 from std_msgs.msg import Int8, Float32
 
 from selfdrive.message.car_message import car_state
@@ -49,7 +49,7 @@ class StateMaster:
         self.longitude = msg.longitude
         self.altitude = msg.altitude
         self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, msg.
+            msg.latitude, msg.longitude, msg.altitude
             , self.base_lla[0], self.base_lla[1], self.base_lla[2])
 
     def ins_odom_cb(self, msg):

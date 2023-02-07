@@ -20,9 +20,9 @@ class StateMaster:
         self.sub_rtk_gps = rospy.Subscriber('/gps/fix', NavSatFix, self.rtk_gps_cb)
         self.sub_ins_imu = rospy.Subscriber('/gps/imu', Imu, self.ins_imu_cb)
         
-        self.sub_ins_odom = rospy.Subscriber('/car_v', Float32, self.ins_odom_cb)
+        self.sub_ins_odom = rospy.Subscriber('/mobinha/car/car_v', Float32, self.ins_odom_cb)
 
-        self.sub_gear = rospy.Subscriber('/gear', Int8, self.gear_cb)
+        self.sub_gear = rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
         self.sub_blinker = rospy.Subscriber('/blinker', Int8, self.blinker_cb)
 
         self.CS = CS

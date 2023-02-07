@@ -23,11 +23,11 @@ class IoniqTransceiver():
             CP.dbc)
 
         rospy.init_node('can_transceiver', anonymous=False)
-        self.pub_velocity = rospy.Publisher('/car_v', Float32, queue_size=1)
-        self.sub_can_cmd = rospy.Subscriber('/can_cmd', Int16MultiArray, self.can_cmd)
+        self.pub_velocity = rospy.Publisher('/mobinha/car/car_v', Float32, queue_size=1)
+        self.sub_can_cmd = rospy.Subscriber('/mobinha/visualize/can_cmd', Int16MultiArray, self.can_cmd)
         self.sub_wheel_angle = rospy.Subscriber('/wheel_angle', Float32, self.wheel_angle_cmd)
         self.sub_accel_brake = rospy.Subscriber('/accel_brake', Float32, self.accel_brake_cmd)
-        # self.sub_gear = rospy.Subscriber('/gear', String, self.gear_cmd)
+        # self.sub_gear = rospy.Subscriber('/mobinha/car', String, self.gear_cmd)
         # self.sub_velocity = rospy.Subscriber('/velocity', Float32, self.velocity_cmd)
         
         self.accel_value = 0

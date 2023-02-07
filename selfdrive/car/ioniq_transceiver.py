@@ -141,7 +141,7 @@ class IoniqTransceiver():
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 
-            def accelerator(self, msg_name):
+    def accelerator(self, msg_name):
         msg_id = self.msg_id[msg_name]
         self.counter[msg_name] = (lambda x: ( x + 1) % 15)(self.counter[msg_name])
 

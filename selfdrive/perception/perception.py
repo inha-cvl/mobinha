@@ -12,7 +12,8 @@ class Perception:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
-        sub_state = rospy.Subscriber('/state', String, self.state_cb)
+        rospy.Subscriber(
+            '/mobinha/visualize/system_state', String, self.state_cb)
 
     def perception(self):
         sm = None
@@ -50,10 +51,8 @@ class Perception:
                 print("[{}] Initialize".format(self.__class__.__name__))
         self.state = str(msg.data)
 
-
 def signal_handler(sig, frame):
     sys.exit(0)
-
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)

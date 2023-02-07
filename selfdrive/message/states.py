@@ -17,14 +17,9 @@ CS = car_state.CarState()
 
 class StateMaster:
     def __init__(self, CP):
-        # self.sub_rtk_gps = rospy.Subscriber(
-        #     '/sbg/ekf_nav', SbgEkfNav, self.rtk_gps_cb)
-        
-        # self.sub_ins_imu = rospy.Subscriber(
-        #     '/sbg/ekf_euler', SbgEkfEuler, self.ins_imu_cb)
-
         self.sub_rtk_gps = rospy.Subscriber('/gps/fix', NavSatFix, self.rtk_gps_cb)
         self.sub_ins_imu = rospy.Subscriber('/gps/imu', Imu, self.ins_imu_cb)
+        
         self.sub_ins_odom = rospy.Subscriber('/car_v', Float32, self.ins_odom_cb)
 
         self.sub_gear = rospy.Subscriber('/gear', Int8, self.gear_cb)

@@ -19,17 +19,17 @@ class Controller:
         self.target_v = 0.0
         self.local_path = None
 
-        self.sub_local_path = rospy.Subscriber(
-            '/mobinha/local_path', Marker, self.local_path_cb)
-        self.sub_target_v = rospy.Subscriber(
-            '/target_v', Float32, self.target_v_cb)
+        rospy.Subscriber(
+            '/mobinha/planning/local_path', Marker, self.local_path_cb)
+        rospy.Subscriber(
+            '/mobinha/planning/target_v', Float32, self.target_v_cb)
 
         self.pub_wheel_angle = rospy.Publisher(
-            '/wheel_angle', Float32, queue_size=1)
+            '/mobinha/control/wheel_angle', Float32, queue_size=1)
         self.pub_accel_brake = rospy.Publisher(
-            '/accel_brake', Float32, queue_size=1)
+            '/mobinha/control/accel_brake', Float32, queue_size=1)
         self.pub_lah = rospy.Publisher(
-            '/look_ahead', Marker, queue_size=1, latch=True)
+            '/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]

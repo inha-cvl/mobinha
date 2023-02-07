@@ -41,6 +41,7 @@ class StateMaster:
         self.altitude = 0.0
         self.gear = 0
         self.blinker = 0
+        
 
         self.pub_egocar_enu_pose = rospy.Publisher('/enu_pose', Pose2D, queue_size=1)
 
@@ -70,10 +71,10 @@ class StateMaster:
         orientation = msg.orientation
         quaternion = (orientation.x, orientation.y, orientation.z, orientation.w)
         roll, pitch, yaw = tf.transformations.euler_from_quaternion(quaternion)
-        self.roll = roll
-        self.pitch = pitch
-        self.yaw = yaw
-
+        self.roll = math.degrees(roll)
+        self.pitch = math.degrees(pitch)
+        self.yaw = math.degrees(yaw)
+        # self.yaw = 90 + yaw if (yaw >= -90 and yaw <= 180) else -270 + yaw
     def update(self):
         car_state = self.CS._asdict()
 

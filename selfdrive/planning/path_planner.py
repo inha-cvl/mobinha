@@ -230,7 +230,7 @@ class PathPlanner:
             # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
             now_lane_id = now_lane_id.split('_')[0]
-            print("ID : ", now_lane_id)
+            #print("ID : ", now_lane_id)
             
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 

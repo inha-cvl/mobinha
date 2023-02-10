@@ -31,7 +31,7 @@ class NiroTransceiver():
 
         # ROS Init
         self.pub_velocity = rospy.Publisher(
-            '/mobinha/car/car_v', Float32, queue_size=1)
+            '/mobinha/car/velocity', Float32, queue_size=1)
         rospy.Subscriber('/mobinha/visualize/can_cmd', Int16, self.can_cmd)
         rospy.Subscriber(
             '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cmd)

@@ -29,11 +29,14 @@ class MoraiPlanner():
         self.ego_topic_pub = rospy.Publisher(
             '/morai/ego_topic', Pose, queue_size=1)
         #subscriber
-        sub_state = rospy.Subscriber('/state', String, self.state_cb)
+        rospy.Subscriber(
+            '/mobinha/visualize/system_state', String, self.state_cb)
         rospy.Subscriber("/Ego_topic", EgoVehicleStatus,
                          self.statusCB)  # Vehicl Status Subscriber
-        rospy.Subscriber('/wheel_angle', Float32, self.wheel_angle_cb)
-        rospy.Subscriber('/accel_brake', Float32, self.accel_brake_cb)
+        rospy.Subscriber('/mobinha/control/wheel_angle',
+                         Float32, self.wheel_angle_cb)
+        rospy.Subscriber('/mobinha/control/accel_brake',
+                         Float32, self.accel_brake_cb)
         rospy.Subscriber("/Object_topic", ObjectStatusList,
                          self.object_topic_cb)
         self.ctrl_msg = CtrlCmd()

@@ -17,16 +17,18 @@ class MoraiTransceiver:
 
         self.roll = 0.0
         self.pitch = 0.0
+        self.heading = 0.0
 
         self.pub_rtk_gps = rospy.Publisher(
             '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
         self.pub_ins_imu = rospy.Publisher(
             '/sbg/ekf_euler', SbgEkfEuler, queue_size=1)
-        self.pub_ins_odom = rospy.Publisher('/car_v', Float32, queue_size=1)
+        self.pub_ins_odom = rospy.Publisher(
+            '/mobinha/car/car_v', Float32, queue_size=1)
 
+        #From MORAI
         rospy.Subscriber("/gps", GPSMessage, self.gps_cb)
         rospy.Subscriber("/imu", Imu, self.imu_cb)
-
         rospy.Subscriber("/Ego_topic", EgoVehicleStatus, self.ego_topic_cb)
 
     def gps_cb(self, msg):

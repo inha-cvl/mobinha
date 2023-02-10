@@ -1,6 +1,7 @@
 import sys
 import signal
 import time
+import importlib
 import numpy as np
 import cv2
 import rospy
@@ -41,42 +42,42 @@ class MainWindow(QMainWindow, form_class):
         self.over_cnt = 0
         self.can_cmd = 0
         self.scenario = 0
-        self.scenario_goal = PoseStamped()
-        self.scenario_goal.header.frame_id = 'world'
+        self.goal_update = True
 
         self.map_view_manager = None
         self.lidar_view_manager = None
 
-        self.sub_wheel_angle = rospy.Subscriber(
-            '/wheel_angle', Float32, self.wheel_angle_cb)
-        self.sub_target_v = rospy.Subscriber(
-            '/target_v', Float32, self.target_v_cb)
-        self.sub_planning_state = rospy.Subscriber(
-            '/planning_state', Int16MultiArray, self.planning_state_cb)
-        self.sub_goal = rospy.Subscriber(
-            '/move_base_simple/goal', PoseStamped, self.goal_cb)
-        self.sub_goal_object = rospy.Subscriber(
-            '/goal_object', Pose, self.goal_object_cb)
-        self.sub_nearest_obstacle_distance = rospy.Subscriber(
-            '/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
-        self.sub_trajectory = rospy.Subscriber(
-            '/trajectory', PoseArray, self.trajectory_cb)
-        self.sub_forward_direction = rospy.Subscriber(
-            '/forward_direction', Int8, self.forward_direction_cb)
-        self.sub_image1 = rospy.Subscriber(
-            '/gmsl_camera/dev/video0/compressed', CompressedImage, self.image1_cb)
-        self.sub_image2 = rospy.Subscriber(
-            '/gmsl_camera/dev/video1/compressed', CompressedImage, self.image2_cb)
-        self.sub_image3 = rospy.Subscriber(
-            '/gmsl_camera/dev/video2/compressed', CompressedImage, self.image3_cb)
+        rospy.Subscriber('/move_base_simple/single_goal',
+                         PoseStamped, self.goal_cb)
+        rospy.Subscriber('/mobinha/control/wheel_angle',
+                         Float32, self.wheel_angle_cb)
+        rospy.Subscriber('/mobinha/planning/target_v',
+                         Float32, self.target_v_cb)
+        rospy.Subscriber('/mobinha/planning_state',
+                         Int16MultiArray, self.planning_state_cb)
+        rospy.Subscriber('/mobinha/planning/goal_information',
+                         Pose, self.goal_information_cb)
+        rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance',
+                         Float32, self.nearest_obstacle_distance_cb)
+        rospy.Subscriber('/mobinha/planning/trajectory',
+                         PoseArray, self.trajectory_cb)
+        rospy.Subscriber('/mobinha/planning/forward_direction',
+                         Int8, self.forward_direction_cb)
+        rospy.Subscriber('/gmsl_camera/dev/video0/compressed',
+                         CompressedImage, self.image1_cb)
+        rospy.Subscriber('/gmsl_camera/dev/video1/compressed',
+                         CompressedImage, self.image2_cb)
+        rospy.Subscriber('/gmsl_camera/dev/video2/compressed',
+                         CompressedImage, self.image3_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
-        self.pub_state = rospy.Publisher('/state', String, queue_size=1)
-        self.pub_can_cmd = rospy.Publisher('/can_cmd', Int16, queue_size=1)
-
-        self.pub_goal = rospy.Publisher(
-            '/move_base_simple/goal', PoseStamped, queue_size=1)
+        self.pub_state = rospy.Publisher(
+            '/mobinha/visualize/system_state', String, queue_size=1)
+        self.pub_can_cmd = rospy.Publisher(
+            '/mobinha/visualize/can_cmd', Int16, queue_size=1)
+        self.pub_scenario_goal = rospy.Publisher(
+            '/mobinha/visualize/scenario_goal', PoseArray, queue_size=1)
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
@@ -116,9 +117,14 @@ class MainWindow(QMainWindow, form_class):
         self.cmd_only_long_button.clicked.connect(
             self.cmd_only_long_button_clicked)
 
-        self.scenario1_button.clicked.connect(self.scenario1_button_clicked)
-        self.scenario2_button.clicked.connect(self.scenario2_button_clicked)
-        self.scenario3_button.clicked.connect(self.scenario3_button_clicked)
+        self.scenario1_button.clicked.connect(
+            lambda state, idx=1:  self.scenario_button_clicked(idx))
+
+        self.scenario2_button.clicked.connect(
+            lambda state, idx=2:  self.scenario_button_clicked(idx))
+
+        self.scenario3_button.clicked.connect(
+            lambda state, idx=3:  self.scenario_button_clicked(idx))
 
         self.view_third_button.clicked.connect(
             lambda state, idx=0: self.view_button_clicked(idx))
@@ -127,13 +133,24 @@ class MainWindow(QMainWindow, form_class):
         self.view_xy_top_button.clicked.connect(
             lambda state, idx=2: self.view_button_clicked(idx))
 
+    def get_scenario_goal_msg(self):
+        scenario_goal = PoseArray()
+        for goal in self.scenario_goal:
+            pose = Pose()
+            pose.position.x = goal[0]
+            pose.position.y = goal[1]
+            scenario_goal.poses.append(pose)
+        return scenario_goal
+
     def publish_system_state(self):
         while self.system_state:
             self.pub_state.publish(String(self.state))
             self.pub_can_cmd.publish(Int16(self.can_cmd))
             if self.state == 'START':
-                if self.scenario != 0:
-                    self.pub_goal.publish(self.scenario_goal)
+                if self.goal_update and self.scenario != 0:
+                    scenario_goal = self.get_scenario_goal_msg()
+                    self.pub_scenario_goal.publish(scenario_goal)
+
                 self.sm.update()
                 self.CS = self.sm.CS
                 self.display()
@@ -189,13 +206,14 @@ class MainWindow(QMainWindow, form_class):
 
         direction_image_list = [dir_path+"/icon/straight_b.png",
                        dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
+                                dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
                        dir_path+"/icon/uturn_b.png"]
         self.direction_pixmap_list = []
         for i in range(4):
             self.direction_pixmap_list.append(
                 QPixmap(direction_image_list[i]))
         self.direction_message_list = [
-            'Go Straight', 'Turn Left', 'Turn Right', 'U-Turn']
+            'Go Straight', 'Turn Left', 'Turn Right', 'Left Change', 'Right Change', 'U-Turn']
 
         l_blinker = QPixmap(dir_path+"/icon/l_blinker.png")
         r_blinker = QPixmap(dir_path+"/icon/r_blinker.png")
@@ -239,7 +257,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
-    def goal_object_cb(self, msg):
+    def goal_information_cb(self, msg):
         m_distance = msg.position.y-msg.position.z
         distance = str(round(m_distance / 1000, 5))+" km" if m_distance / \
             1000 >= 1 else str(round(m_distance, 5))+" m"
@@ -317,6 +335,7 @@ class MainWindow(QMainWindow, form_class):
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
             self.status_label.setText("Moving")
+            self.goal_update = False
             self.start_button.setDisabled(True)
             self.initialize_button.setDisabled(True)
             self.pause_button.setEnabled(True)
@@ -357,6 +376,7 @@ class MainWindow(QMainWindow, form_class):
     def initialize_button_clicked(self):
         self.status_label.setText("Initialize")
         self.initialize()
+        self.goal_update = True
         # self.reset_rviz()
         self.start_button.setEnabled(True)
         self.scenario = 0
@@ -383,20 +403,12 @@ class MainWindow(QMainWindow, form_class):
     def cmd_only_long_button_clicked(self):
         self.can_cmd = 2 if self.can_cmd == 4 else 4
 
-    def scenario1_button_clicked(self):
-        self.scenario = 1
-        self.scenario_goal.pose.position.x = 110.51365
-        self.scenario_goal.pose.position.y = -219.24281
-
-    def scenario2_button_clicked(self):
-        self.scenario = 2
-        self.scenario_goal.pose.position.x = 105.68604
-        self.scenario_goal.pose.position.y = -92.7337
-
-    def scenario3_button_clicked(self):
-        self.scenario = 3
-        self.scenario_goal.pose.position.x = 394.54889
-        self.scenario_goal.pose.position.y = -12.554
+    def scenario_button_clicked(self, idx):
+        self.scenario = idx
+        module = importlib.import_module(
+            'selfdrive.visualize.routes.{}'.format(self.map_name))
+        scenario = getattr(module, 'scenario_{}'.format(idx))
+        self.scenario_goal = scenario
 
     def view_button_clicked(self, idx):
         if self.map_view_manager is not None:

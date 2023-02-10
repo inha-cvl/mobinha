@@ -10,10 +10,10 @@ form_class = uic.loadUiType(dir_path+"/forms/simple_writer.ui")[0]
 
 
 class SimpleWriter(QMainWindow, form_class):
-    def __init__(self, parent=None):
+    def __init__(self, path='', parent=None):
         super(SimpleWriter, self).__init__(parent)
         self.setupUi(self)
-        self.path = "{}/record_list.txt".format(dir_path)
+        self.path = path
         self.save_button.clicked.connect(self.save_file)
 
     def save_file(self):

@@ -47,6 +47,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.map_view_manager = None
         self.lidar_view_manager = None
+        self.record_list_file = "{}/record_list.txt".format(dir_path)
         self.rosbag_proc = None
 
         rospy.Subscriber('/move_base_simple/single_goal',
@@ -88,6 +89,13 @@ class MainWindow(QMainWindow, form_class):
         self.initialize()
         self.connection_setting()
 
+    def setting_topic_list_toggled(self):
+        simple_writer = SimpleWriter(self.record_list_file, self)
+        simple_writer.show()
+        with open(self.record_list_file, 'r') as f:
+            contents = f.read()
+            simple_writer.textEdit.setText(contents)
+
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
         rospy.set_param('map_name', self.map_name)
@@ -103,20 +111,13 @@ class MainWindow(QMainWindow, form_class):
             path = QFileDialog.getExistingDirectory(
                 None, 'Select folder to save .bag file', QDir.homePath(), QFileDialog.ShowDirsOnly)
             topiclist = ''
-            with open("{}/record_list.txt".format(dir_path)) as f:
+            with open(self.record_list_file) as f:
                 lines = f.readlines()
                 for topic in lines:
                     topiclist += str(topic)+" "
             command = "rosbag record -o {}/ {}".format(str(path), topiclist)
             command = shlex.split(command)
             self.rosbag_proc = subprocess.Popen(command)
-
-    def setting_topic_list_toggled(self):
-        simple_writer = SimpleWriter(self)
-        simple_writer.show()
-        with open("{}/record_list.txt".format(dir_path), 'r') as f:
-            contents = f.read()
-            simple_writer.textEdit.setText(contents)
 
     def reset_rviz(self):
         self.lidar_layout.itemAt(0).widget().reset()
@@ -506,6 +507,7 @@ class MainWindow(QMainWindow, form_class):
 def signal_handler(sig, frame):
     QApplication.quit()
     sys.exit(0)
+
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)

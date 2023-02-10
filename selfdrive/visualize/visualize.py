@@ -14,12 +14,13 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
 import pyqtgraph as pg
-
+import subprocess
+import shlex
 from selfdrive.message.messaging import *
-from sensor_msgs.msg import Image, CompressedImage
+from sensor_msgs.msg import CompressedImage
 
 import selfdrive.visualize.libs.imugl as imugl
-
+from simple_writer import SimpleWriter
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
@@ -46,6 +47,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.map_view_manager = None
         self.lidar_view_manager = None
+        self.rosbag_proc = None
 
         rospy.Subscriber('/move_base_simple/single_goal',
                          PoseStamped, self.goal_cb)
@@ -96,26 +98,50 @@ class MainWindow(QMainWindow, form_class):
         # setting button
         self.pause_button.setDisabled(True)
 
+        # setting record
+        if self.radioButton.isChecked():
+            path = QFileDialog.getExistingDirectory(
+                None, 'Select folder to save .bag file', QDir.homePath(), QFileDialog.ShowDirsOnly)
+            topiclist = ''
+            with open("{}/record_list.txt".format(dir_path)) as f:
+                lines = f.readlines()
+                for topic in lines:
+                    topiclist += str(topic)+" "
+            command = "rosbag record -o {}/ {}".format(str(path), topiclist)
+            command = shlex.split(command)
+            self.rosbag_proc = subprocess.Popen(command)
+
+    def setting_topic_list_toggled(self):
+        simple_writer = SimpleWriter(self)
+        simple_writer.show()
+        with open("{}/record_list.txt".format(dir_path), 'r') as f:
+            contents = f.read()
+            simple_writer.textEdit.setText(contents)
+
     def reset_rviz(self):
         self.lidar_layout.itemAt(0).widget().reset()
         self.rviz_layout.itemAt(0).widget().reset()
 
     def connection_setting(self):
+        self.initialize_button.clicked.connect(self.initialize_button_clicked)
+        self.actionTopic_List.triggered.connect(
+            self.setting_topic_list_toggled)
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)
-        self.initialize_button.clicked.connect(self.initialize_button_clicked)
         self.over_button.clicked.connect(self.over_button_clicked)
         self.car_name_combo_box.currentIndexChanged.connect(
             self.car_name_changed)
         self.map_name_combo_box.currentIndexChanged.connect(
             self.map_name_changed)
-        self.cmd_full_button.clicked.connect(self.cmd_full_button_clicked)
+
+        self.cmd_full_button.clicked.connect(
+            lambda state, idx=3: self.cmd_button_clicked(idx))
         self.cmd_disable_button.clicked.connect(
-            self.cmd_disable_button_clicked)
+            lambda state, idx=0: self.cmd_button_clicked(idx))
         self.cmd_only_lat_button.clicked.connect(
-            self.cmd_only_lat_button_clicked)
+            lambda state, idx=1: self.cmd_button_clicked(idx))
         self.cmd_only_long_button.clicked.connect(
-            self.cmd_only_long_button_clicked)
+            lambda state, idx=4: self.cmd_button_clicked(idx))
 
         self.scenario1_button.clicked.connect(
             lambda state, idx=1:  self.scenario_button_clicked(idx))
@@ -205,11 +231,11 @@ class MainWindow(QMainWindow, form_class):
         self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
 
         direction_image_list = [dir_path+"/icon/straight_b.png",
-                       dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
                                 dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
-                       dir_path+"/icon/uturn_b.png"]
+                                dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
+                                dir_path+"/icon/uturn_b.png"]
         self.direction_pixmap_list = []
-        for i in range(4):
+        for i in range(5):
             self.direction_pixmap_list.append(
                 QPixmap(direction_image_list[i]))
         self.direction_message_list = [
@@ -389,19 +415,15 @@ class MainWindow(QMainWindow, form_class):
         self.status_label.setText("Over")
         rospy.set_param('car_name', 'None')
         rospy.set_param('map_name', 'None')
+        if self.rosbag_proc is not None:
+            self.rosbag_proc.send_signal(subprocess.signal.SIGINT)
         self.state = 'OVER'
 
-    def cmd_disable_button_clicked(self):
-        self.can_cmd = 0
-
-    def cmd_full_button_clicked(self):
-        self.can_cmd = 2 if self.can_cmd == 3 else 3
-
-    def cmd_only_lat_button_clicked(self):
-        self.can_cmd = 2 if self.can_cmd == 1 else 1
-
-    def cmd_only_long_button_clicked(self):
-        self.can_cmd = 2 if self.can_cmd == 4 else 4
+    def cmd_button_clicked(self, idx):
+        if idx != 0:
+            self.can_cmd = 2 if self.can_cmd == idx else idx
+        else:
+            self.can_cmd = idx
 
     def scenario_button_clicked(self, idx):
         self.scenario = idx
@@ -480,10 +502,10 @@ class MainWindow(QMainWindow, form_class):
                 self.blinker_l_label.setHidden(True)
                 self.blinker_r_label.setHidden(True)
 
+
 def signal_handler(sig, frame):
     QApplication.quit()
     sys.exit(0)
-
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)

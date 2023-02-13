@@ -18,11 +18,6 @@ class WheelSpeeds(NamedTuple):
     rr: float = 0.0
 
 
-class CruiseState(NamedTuple):
-    enabled: bool = False
-    speed: float = 0.0
-    available: bool = False
-
 
 class ButtonEvent(NamedTuple):
     leftBlinker: int = 0
@@ -50,8 +45,8 @@ class CarState(NamedTuple):
     steeringAngleDeg: float = 0.0
     steeringTorque: float = 0.0
 
-    cruiseState: CruiseState = CruiseState()
+    cruiseState: int = 0 # 0:Manual,1:Auto
 
-    gearShifter: int = 0
+    gearShifter: int = 0  # 0P 1R 2N 3D
 
     buttonEvent: ButtonEvent = ButtonEvent()

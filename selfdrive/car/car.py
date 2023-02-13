@@ -4,6 +4,7 @@ import sys
 import signal
 import time
 import rospy
+import traceback
 from std_msgs.msg import String
 
 from selfdrive.message.messaging import *
@@ -26,31 +27,34 @@ class Transceiver:
 
     def transceiver(self):
         can = None
+        timer = 0.1
         while True:
             if self.state == 'INITIALIZE':
                 if self.need_init:
-                    can = self.init()
+                    can, timer = self.init()
             elif self.state == 'START':
                 self.need_init = True
                 can.run()
             elif self.state == 'OVER':
                 return 1
-            time.sleep(0.1)
+            time.sleep(timer)
 
     def init(self):
         self.need_init = False
         car = rospy.get_param('car_name', None)
         map = rospy.get_param('map_name', None)
         CP = (getattr(sys.modules[__name__], car)(map)).CP
+        timer = 0.1
         if car == "SIMULATOR":
             can = SimulatorTransceiver(CP)
         elif car == "MORAI":
             can = MoraiTransceiver()
         elif car == "IONIQ":
             can = IoniqTransceiver(CP)
+            timer = 0.02
         else:
             can = NiroTransceiver(CP)
-        return can
+        return can, timer
 
     def state_cb(self, msg):
         if self.state != str(msg.data):
@@ -73,8 +77,8 @@ def main():
             time.sleep(4)
             sys.exit(0)
 
-    except Exception as e:
-        print("[{} Error]".format(t.__class__.__name__), e)
+    except Exception:
+        print("[{} Error]".format(t.__class__.__name__), traceback.print_exc())
     except KeyboardInterrupt:
         print("[{}] Force Quit".format(t.__class__.__name__))
         sys.exit(0)

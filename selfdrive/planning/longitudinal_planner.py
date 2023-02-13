@@ -24,9 +24,8 @@ VIZ_GRAPH = False
 
 class LongitudinalPlanner:
     def __init__(self, CP):
-        self.lmap = LaneletMap(CP.mapParam.path)
-
         self.lidar_obstacle = None
+        self.traffic_light_obstacle = None
         self.goal_object = None
 
         self.min_v = CP.minEnableSpeed
@@ -49,6 +48,8 @@ class LongitudinalPlanner:
 
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',
+                         PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber(
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
@@ -59,6 +60,10 @@ class LongitudinalPlanner:
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
                                for pose in msg.poses]
+
+    def traffic_light_obstacle_cb(self, msg):
+        self.traffic_light_obstacle = [
+            (pose.position.x, pose.position.y, pose.position.z) for pose in msg.poses]
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
@@ -217,7 +222,10 @@ class LongitudinalPlanner:
                     [self.goal_object[0], left, 0])
 
         # TODO: Add Traffic Light
-
+        #[2] = Traffic Light
+        # if self.traffic_light_obstacle is not None:
+        #     for tlosb in self.traffic_light_obstacle:
+        #         print(tlosb[1])  # cls
         return object_list
 
     def run(self, sm, pp=0, local_path=None):

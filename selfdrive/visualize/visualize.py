@@ -5,8 +5,9 @@ import importlib
 import numpy as np
 import cv2
 import rospy
+import traceback
 from rviz import bindings as rviz
-from std_msgs.msg import String, Float32, Int16, Int8, Int16MultiArray
+from std_msgs.msg import String, Float32, Int8, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
 
 from PyQt5.QtGui import *
@@ -62,10 +63,12 @@ class MainWindow(QMainWindow, form_class):
                          Pose, self.goal_information_cb)
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance',
                          Float32, self.nearest_obstacle_distance_cb)
+        rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',
+                         PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/trajectory',
                          PoseArray, self.trajectory_cb)
-        rospy.Subscriber('/mobinha/planning/forward_direction',
-                         Int8, self.forward_direction_cb)
+        rospy.Subscriber('/mobinha/planning/lane_information',
+                         Pose, self.lane_information_cb)
         rospy.Subscriber('/gmsl_camera/dev/video0/compressed',
                          CompressedImage, self.image1_cb)
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',
@@ -78,7 +81,7 @@ class MainWindow(QMainWindow, form_class):
         self.pub_state = rospy.Publisher(
             '/mobinha/visualize/system_state', String, queue_size=1)
         self.pub_can_cmd = rospy.Publisher(
-            '/mobinha/visualize/can_cmd', Int16, queue_size=1)
+            '/mobinha/visualize/can_cmd', Int8, queue_size=1)
         self.pub_scenario_goal = rospy.Publisher(
             '/mobinha/visualize/scenario_goal', PoseArray, queue_size=1)
 
@@ -135,14 +138,14 @@ class MainWindow(QMainWindow, form_class):
         self.map_name_combo_box.currentIndexChanged.connect(
             self.map_name_changed)
 
-        self.cmd_full_button.clicked.connect(
-            lambda state, idx=3: self.cmd_button_clicked(idx))
         self.cmd_disable_button.clicked.connect(
             lambda state, idx=0: self.cmd_button_clicked(idx))
-        self.cmd_only_lat_button.clicked.connect(
+        self.cmd_full_button.clicked.connect(
             lambda state, idx=1: self.cmd_button_clicked(idx))
+        self.cmd_only_lat_button.clicked.connect(
+            lambda state, idx=2: self.cmd_button_clicked(idx))
         self.cmd_only_long_button.clicked.connect(
-            lambda state, idx=4: self.cmd_button_clicked(idx))
+            lambda state, idx=3: self.cmd_button_clicked(idx))
 
         self.scenario1_button.clicked.connect(
             lambda state, idx=1:  self.scenario_button_clicked(idx))
@@ -172,12 +175,11 @@ class MainWindow(QMainWindow, form_class):
     def publish_system_state(self):
         while self.system_state:
             self.pub_state.publish(String(self.state))
-            self.pub_can_cmd.publish(Int16(self.can_cmd))
+            self.pub_can_cmd.publish(Int8(self.can_cmd))
             if self.state == 'START':
                 if self.goal_update and self.scenario != 0:
                     scenario_goal = self.get_scenario_goal_msg()
                     self.pub_scenario_goal.publish(scenario_goal)
-
                 self.sm.update()
                 self.CS = self.sm.CS
                 self.display()
@@ -228,7 +230,7 @@ class MainWindow(QMainWindow, form_class):
         self.trajectory_widget.getPlotItem().hideAxis('left')
 
         self.trajectory_layout.addWidget(self.trajectory_widget)
-        pen = pg.mkPen(color='#1363DF', width=80)
+        pen = pg.mkPen(color='#1363DF', width=120)
         self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
 
         direction_image_list = [dir_path+"/icon/straight_b.png",
@@ -260,6 +262,15 @@ class MainWindow(QMainWindow, form_class):
         self.obstacle_pixmap_list = [QPixmap(
             dir_path+"/icon/object_car_b.png"), QPixmap(dir_path+"/icon/object_pedestrian_b.png")]
         self.distance_pixmap = QPixmap(dir_path+"/icon/distance.png")
+        self.distance_label_list = [
+            self.distance_1_label, self.distance_2_label, self.distance_3_label, self.distance_4_label]
+        self.distance_label_styles = [
+            "background-color:rgb(0,10,20); color:rgb(0,10,20);", "background-color:rgb(88,93,99); color:rgb(88,93,99);", "background-color:rgb(0,10,20); color: rgb(239,114,122);"]
+        self.tl_label_list = [
+            self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
+        self.tl_label_styles = [
+            "background-color:rgb(239,114,122); ", "background-color:rgb(239,199,114); ",
+            "color:rgb(51,196,136); ", "background-color:rgb(51,196,136); "]
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -284,6 +295,16 @@ class MainWindow(QMainWindow, form_class):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            lat, lng, alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,
+                                                 self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
+            self.info_goal_lat_label.setText(
+                "lat : {}".format(lat))
+            self.info_goal_lng_label.setText(
+                "lng : {}".format(lng))
+            self.info_goal_alt_label.setText(
+                "alt : {}".format(alt))
+
     def goal_information_cb(self, msg):
         m_distance = msg.position.y-msg.position.z
         distance = str(round(m_distance / 1000, 5))+" km" if m_distance / \
@@ -296,28 +317,59 @@ class MainWindow(QMainWindow, form_class):
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             if msg.data > 0 and msg.data <= 7:
-                self.distance_4_label.setHidden(True)
-                self.distance_3_label.setHidden(True)
-                self.distance_2_label.setHidden(True)
-                self.distance_1_label.setPixmap(self.obstacle_pixmap_list[0])
+                for i in range(1, 4):
+                    self.distance_label_list[i].setStyleSheet(
+                        self.distance_label_styles[0])
+                self.distance_label_list[0].setStyleSheet(
+                    self.distance_label_styles[2])
             elif msg.data > 7 and msg.data <= 15:
-                self.distance_4_label.setHidden(True)
-                self.distance_3_label.setHidden(True)
-                self.distance_2_label.setPixmap(self.obstacle_pixmap_list[0])
-                self.distance_2_label.setHidden(False)
+                for i in range(2, 4):
+                    self.distance_label_list[i].setStyleSheet(
+                        self.distance_label_styles[0])
+                self.distance_label_list[1].setStyleSheet(
+                    self.distance_label_styles[2])
+                self.distance_label_list[0].setStyleSheet(
+                    self.distance_label_styles[1])
             elif msg.data > 15 and msg.data <= 30:
-                self.distance_4_label.setHidden(True)
-                self.distance_3_label.setPixmap(self.obstacle_pixmap_list[0])
-                self.distance_3_label.setHidden(False)
+                self.distance_label_list[3].setStyleSheet(
+                    self.distance_label_styles[0])
+                self.distance_label_list[2].setStyleSheet(
+                    self.distance_label_styles[2])
+                for i in range(2):
+                    self.distance_label_list[i].setStyleSheet(
+                        self.distance_label_styles[1])
             elif msg.data > 30:
-                self.distance_4_label.setPixmap(self.obstacle_pixmap_list[0])
-                self.distance_4_label.setHidden(False)
+                self.distance_label_list[3].setStyleSheet(
+                    self.distance_label_styles[2])
+                for i in range(3):
+                    self.distance_label_list[i].setStyleSheet(
+                        self.distance_label_styles[1])
             elif msg.data < 0:
-                self.distance_4_label.setHidden(True)
-                self.distance_3_label.setPixmap(self.distance_pixmap)
-                self.distance_3_label.setHidden(False)
-                self.distance_2_label.setPixmap(self.distance_pixmap)
-                self.distance_2_label.setHidden(False)
+                for i in range(3):
+                    self.distance_label_list[i].setStyleSheet(
+                        self.distance_label_styles[1])
+                self.distance_label_list[3].setStyleSheet(
+                    self.distance_label_styles[0])
+
+    def traffic_light_obstacle_cb(self, msg):
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4 and len(msg.poses) > 0:
+            tl_cls = msg.poses[0].position.y
+            tl_cls_list = [{"red": [6, 10, 12, 13]}, {"yellow": [8, 11, 13]}, {
+                "arrow": [12, 14]}, {"green": [4, 9, 14]}]
+            tl_detect_cls = []
+            for i, cls in enumerate(tl_cls_list):
+                if tl_cls in list(cls.values())[0]:
+                    tl_detect_cls.append(i)
+            for i in range(4):
+                if i in tl_detect_cls:
+                    self.tl_label_list[i].setStyleSheet(
+                        self.tl_label_styles[i]+"border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
+                else:
+                    self.tl_label_list[i].setStyleSheet(
+                        "background-color:rgb(0,10,20); border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
+                    if i == 2:
+                        self.tl_label_list[i].setStyleSheet(
+                            "color:rgb(88, 93, 99);")
 
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
@@ -327,9 +379,9 @@ class MainWindow(QMainWindow, form_class):
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
 
-    def forward_direction_cb(self, msg):
+    def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            idx = int(msg.data)
+            idx = int(msg.position.y)
             self.direction_text_label.setText(
                 self.direction_message_list[idx])
             self.direction_image_label.setPixmap(
@@ -421,10 +473,7 @@ class MainWindow(QMainWindow, form_class):
         self.state = 'OVER'
 
     def cmd_button_clicked(self, idx):
-        if idx != 0:
-            self.can_cmd = 2 if self.can_cmd == idx else idx
-        else:
-            self.can_cmd = idx
+        self.can_cmd = idx
 
     def scenario_button_clicked(self, idx):
         self.scenario = idx
@@ -475,8 +524,22 @@ class MainWindow(QMainWindow, form_class):
                 str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            mode_string = "Manual Mode" if self.CS.cruiseState == 0 else "Auto Mode"
+            self.info_mode_label.setText(mode_string)
             self.info_velocity_label.setText(
                 str(int(round(self.CS.vEgo*MPH_TO_KPH))))
+            self.info_car_lat_label.setText(
+                "lat : {}".format(round(self.CS.position.latitude, 5)))
+            self.info_car_lng_label.setText(
+                "lng : {}".format(round(self.CS.position.longitude, 5)))
+            self.info_car_alt_label.setText(
+                "alt : {}".format(round(self.CS.position.altitude, 5)))
+            self.info_y_label.setText("Y: {}".format(
+                round(self.CS.yawRate, 5)))
+            self.info_p_label.setText("P: {}".format(
+                round(self.CS.pitchRate, 5)))
+            self.info_r_label.setText("R: {}".format(
+                round(self.CS.rollRate, 5)))
 
             for i in range(4):
                 if self.CS.gearShifter == i:
@@ -525,8 +588,8 @@ def main():
             mainWindow.system_state == False
         sys.exit(app.exec_())
 
-    except Exception as e:
-        print("[Visualize Error]", e)
+    except Exception:
+        print("[Visualize Error]", traceback.print_exc())
 
     except KeyboardInterrupt:
         print("[Visualize] Force Quit")

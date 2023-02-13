@@ -16,6 +16,7 @@ class StateMaster:
         rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
         rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
         rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
+        rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
 
         self.CS = CS
@@ -33,6 +34,7 @@ class StateMaster:
         self.longitude = 0.0
         self.altitude = 0.0
         self.gear = 0
+        self.mode = 0
         self.blinker = 0
 
     def novatel_cb(self, msg):
@@ -51,6 +53,9 @@ class StateMaster:
 
     def gear_cb(self, msg):
         self.gear = msg.data
+
+    def mode_cb(self, msg):
+        self.mode = msg.data
 
     def blinker_cb(self, msg):
         self.blinker = msg.data  # 0:stay 1:left 2:right
@@ -72,6 +77,7 @@ class StateMaster:
         car_state["pitchRate"] = self.pitch
         car_state["rollRate"] = self.roll
         car_state["gearShifter"] = self.gear
+        car_state["cruiseState"] = self.mode
         car_state_button_event = car_state["buttonEvent"]._asdict()
         car_state_button_event["leftBlinker"] = 1 if self.blinker == 1 else 0
         car_state_button_event["rightBlinker"] = 1 if self.blinker == 2 else 0

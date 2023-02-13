@@ -2,6 +2,7 @@
 
 import rospy
 import time
+import math
 from scipy.spatial import KDTree
 from std_msgs.msg import Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose
@@ -17,12 +18,12 @@ class PathPlanner:
         self.state = 'WAITING'
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
-        # self.crosswalk = CrossWalk(self.lmap.lanelets)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
         self.precision = CP.mapParam.precision
 
         self.temp_pt = None
         self.global_path = None
+        self.erase_global_point = None
         self.non_intp_path = None
         self.non_intp_id = None
         self.local_path = None
@@ -54,12 +55,15 @@ class PathPlanner:
             '/mobinha/planning/forward_direction', Int8, queue_size=1)
         self.pub_forward_path = rospy.Publisher(
             '/mobinha/planning/forward_path', Marker, queue_size=1)
+        self.pub_lane_information = rospy.Publisher(
+            '/mobinha/planning/lane_information', Pose, queue_size=1)
 
-        self.pub_crosswalk = rospy.Publisher(
-            '/crosswalk', Marker, queue_size=1)
-
-
-        lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
+        map_name = rospy.get_param('map_name', 'None')
+        if map_name == 'songdo':
+            lanelet_map_viz = VectorMapVis(self.lmap.map_data)
+        else:
+            lanelet_map_viz = LaneletMapViz(
+                self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
         rospy.Subscriber(
@@ -194,7 +198,7 @@ class PathPlanner:
                 #print("[{}] Move to Goal".format(self.__class__.__name__))
                 global_path, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
-   
+
                 # For Normal Arrive
                 last_idx_of_global = len(global_path)-1
                 x_increment = (
@@ -215,6 +219,7 @@ class PathPlanner:
                 self.erase_global_path = global_path
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
+
             pp = 0
 
         elif self.state == 'MOVE':
@@ -224,14 +229,11 @@ class PathPlanner:
             if abs(idx-self.temp_global_idx) <= 50:
                 self.temp_global_idx = idx
 
-            s = idx * self.precision  # m
+            s = self.temp_global_idx * self.precision  # m
             n_id = calc_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
-            # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
-            now_lane_id = now_lane_id.split('_')[0]
-            #print("ID : ", now_lane_id)
-            
+
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
                 eg_idx = calc_idx(
@@ -252,48 +254,42 @@ class PathPlanner:
                         local_path = self.erase_global_path[eg_idx:]
 
                 self.erase_global_path = self.erase_global_path[eg_idx:]
-
+                self.erase_global_point = KDTree(self.erase_global_path)
                 self.local_path = local_path
 
-            forward_direction, forward_path = get_forward_direction(self.global_path, idx)
-            self.pub_forward_direction.publish(forward_direction)
-            forward_path_viz = ForwardPathViz(forward_path)
-            self.pub_forward_path.publish(forward_path_viz)
-            
             if self.local_path is not None:
 
-                self.l_idx = calc_idx(
-                    self.local_path, (CS.position.x, CS.position.y))
+                local_point = KDTree(self.local_path)
+                self.l_idx = local_point.query(
+                    (CS.position.x, CS.position.y), 1)[1]
+                splited_id = now_lane_id.split('_')[0]
 
+                erase_idx = self.erase_global_point.query(
+                    (CS.position.x, CS.position.y), 1)[1]
+                forward_direction, forward_path = get_forward_direction(
+                    self.erase_global_path, erase_idx)
+                self.pub_forward_direction.publish(forward_direction)
+                #for visualize
+                forward_path_viz = ForwardPathViz(forward_path)
+                self.pub_forward_path.publish(forward_path_viz)
 
-                ## Crosswalk Viz
-                # print("1")
-                crosswalk = []
-                for id_, data in self.lmap.lanelets.items():
-                    # print("2")
-                    if id_ == now_lane_id:
-                        # print("3")
-                        # print(data)
-                        if len(data['crosswalk']) > 0:
-                            crosswalks = data['crosswalk']
-                            # print("FFF",crosswalks)
-                            
-                            for arr in crosswalks:
-                                crosswalk.extend(arr)
-                # print("WWWW",crosswalk)
-                crosswalk_viz = CrosswalkViz(crosswalk)
-                self.pub_crosswalk.publish(crosswalk_viz)
-                # print("?")
-                # print(now_lane_id)
-                # print(type(now_lane_id))
+                cw_s = get_nearest_crosswalk(
+                    self.lmap.lanelets, splited_id, local_point)
+                pose = Pose()
+                pose.position.x = int(splited_id)
+                # straight, left, right, l-change, r-change, uturn
+                pose.position.y = forward_direction
+                pose.position.z = cw_s
+                self.pub_lane_information.publish(pose)
+
                 # if self.lmap.stoplines.get(now_lane_id) is not None:
                 #     [trafficlight_x, trafficlight_y] = self.lmap.stoplines[now_lane_id][(len(self.lmap.stoplines[now_lane_id])+1)//2]
                 #     stopline_idx = calc_idx(
                 #     self.local_path, (trafficlight_x, trafficlight_y))
                 #     print(idx, stopline_idx)
-                # local_point = KDTree(self.local_path)
-                # point = local_point.query((CS.position.x, CS.position.y), 1)[1]
 
+                #TODO: Avoidance Path
+                #
                 # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
                 #     if self.obstacle_detect_timer == 0.0:
                 #         self.obstacle_detect_timer = time.time()

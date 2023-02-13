@@ -4,10 +4,12 @@ import can
 import cantools
 # import time
 import math
+import signal
+import sys
 
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from pandas.core.indexes import interval
+# from matplotlib.animation import FuncAnimation
+# from pandas.core.indexes import interval
 
 FRONT_TREAD = 1.638 # 1,638mm
 REAR_TREAD = 1.647 #  1,647mm
@@ -29,6 +31,10 @@ class DistanceMeasurment:
         self.db = cantools.database.load_file('../dbc/ioniq/can.dbc')
 
     def encoder_measure(self):
+        pls_RL = 0
+        pls_RR = 0
+        str_ang = 0
+
         prev_pls_RL = 0
         prev_pls_RR = 0
         
@@ -43,11 +49,15 @@ class DistanceMeasurment:
         while True:
             try:
                 CAN_data = self.bus.recv(0)
+                print(CAN_data)
                 if CAN_data != None:
-                    if CCAN_data.arbitration_id == 656:
+                    # print("ok")
+                    if CAN_data.arbitration_id == 656:
+                        print(656)
                         data = self.db.decode_message(CAN_data.arbitration_id, CAN_data.data)
                         str_ang = data['Gway_Steering_Angle']
-                    if CCAN_data.arbitration_id == 641:
+                    if CAN_data.arbitration_id == 641:
+                        print(641)
                         data = self.db.decode_message(CAN_data.arbitration_id, CAN_data.data)
                         pls_FL = data['WHL_PlsFLVal']
                         pls_FR = data['WHL_PlsFRVal']

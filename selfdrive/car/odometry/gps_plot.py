@@ -27,18 +27,15 @@ class GPSPlot:
 
     def gps_plot(self):
         x, y, _ = pymap3d.geodetic2enu(self.lat, self.lon, 0, self.init_lat, self.init_lon, 0)
-        plt.scatter(x, y, color = 'blue')
+        plt.scatter(x, y, color = 'blue', s=10)
         plt.pause(0.1)
-
 
 
 if __name__=='__main__':
     rospy.init_node('gps_plot')
 
     g = GPSPlot()
-    
     time.sleep(1)
-
     while not rospy.is_shutdown():
         g.gps_plot()
 

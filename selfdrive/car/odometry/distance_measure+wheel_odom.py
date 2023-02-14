@@ -9,11 +9,12 @@ import sys
 
 import matplotlib.pyplot as plt
 
-
-FRONT_TREAD = 1.638 # 1,638mm
 REAR_TREAD = 1.647 #  1,647mm
-WHEEL_DIAMETER = 0.4826 + 12925*2# 19 * 0.0254 + tire thick * 2 
+WHEEL_DIAMETER = 0.4826 + (0.12925 * 2)
+WHEEL_BASE = 3
 ENCODER_RESOLUTION = 46
+FRAME_RATE = 50
+KMH2MS = 1 / 3.6
 
 class Activate_Signal_Interrupt_Handler:
     def __init__(self):
@@ -45,11 +46,19 @@ class DistanceMeasurment:
         self.prev_pls_RL = -1
         self.prev_pls_RR = -1
 
+        self.posTh = 0
+        self.posX = 0
+        self.posY = 0
+
     def encoder_measure(self):
         while True:
             try:
                 CAN_data = self.bus.recv(0)
                 if CAN_data != None:
+                    if CAN_data.arbitration_id == 640:
+                        data = self.db.decode_message(CAN_data.arbitration_id, CAN_data.data)
+                        v_RL = data['Gway_Wheel_Velocity_RL'] * KMH2MS
+                        v_RL = data['Gway_Wheel_Velocity_RR'] * KMH2MS
                     if CAN_data.arbitration_id == 656:
                         data = self.db.decode_message(CAN_data.arbitration_id, CAN_data.data)
                         self.str_ang = data['Gway_Steering_Angle']
@@ -58,8 +67,6 @@ class DistanceMeasurment:
                         if self.prev_pls_RL == -1 or self.prev_pls_RR == -1:
                             self.prev_pls_RL = data['WHL_PlsRLVal']
                             self.prev_pls_RR = data['WHL_PlsRRVal']
-                        pls_FL = data['WHL_PlsFLVal']
-                        pls_FR = data['WHL_PlsFRVal']
                         self.pls_RL = data['WHL_PlsRLVal']
                         self.pls_RR = data['WHL_PlsRRVal']
 
@@ -79,9 +86,29 @@ class DistanceMeasurment:
                             dy = dist*math.sin(dth)
                             dd=math.sqrt(dx**2 + dy**2)
 
+                            lin_v = dist * FRAME_RATE
+                            ang_v = lin_v * math.tan(math.radians(self.str_ang/13.6)) / WHEEL_BASE
+
+                            sinTheta = math.sin(self.posTh)
+                            cosTheta = math.cos(self.posTh)
+
+                            if ang_v == 0:
+                                self.posX = self.posX + lin_v/FRAME_RATE * cosTheta
+                                self.posY = self.posY + lin_v/FRAME_RATE * sinTheta
+                            else:
+                                velbyom = lin_v / ang_v
+                                self.posTh = self.posTh + ang_v / FRAME_RATE
+                                self.posX = self.posX + velbyom * (math.sin(self.posTh) - sinTheta)
+                                self.posY = self.posY - velbyom * (math.cos(self.posTh) - cosTheta)
+
+                            plt.scatter(self.posX, self.posY, color = 'green', alpha=0.5)
+
                             self.pose_x = dx*math.cos(self.pose_th) - dy*math.sin(self.pose_th) + self.pose_x
                             self.pose_y = dx*math.sin(self.pose_th) + dy*math.cos(self.pose_th) + self.pose_y
                             self.pose_th += dth
+
+                            plt.scatter(self.pose_x, self.pose_y, color = 'red', alpha=0.5)
+                            plt.pause(0.01)
 
                             self.d+=dd
 
@@ -95,9 +122,6 @@ class DistanceMeasurment:
 
                             self.prev_pls_RL = self.pls_RL
                             self.prev_pls_RR = self.pls_RR
-
-                            plt.scatter(self.pose_x, self.pose_y, color = 'red', alpha=0.5)
-                            plt.pause(0.01)
 
             except KeyboardInterrupt:
                         exit(0)

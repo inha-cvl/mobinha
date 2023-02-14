@@ -15,7 +15,6 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 def ObjectsViz(objects):
     array = MarkerArray()
-
     for n, pt in enumerate(objects):
         quaternion = tf.transformations.quaternion_from_euler(
             0.0, 0.0, math.radians(pt[2]))
@@ -25,9 +24,23 @@ def ObjectsViz(objects):
     return array
 
 
+def TrafficLightViz(tl, cls):
+    quaternion = tf.transformations.quaternion_from_euler(
+        0.0, 0.0, 0.0)
+    if cls == 0:  # Red
+        color = (1.0, 0.0, 0.0, 1.0)
+    elif cls == 1:  # Yellow
+        color = (1.0, 1.0, 0.0, 1.0)
+    elif cls == 2:  # Green
+        color = (0.0, 1.0, 0.0, 1.0)
+    marker = Cube('traffic light', 0, 1, quaternion, color)
+    marker.pose.position = Point(x=tl[0], y=tl[1], z=tl[2])
+    return marker
+
+
 def LookAheadViz(pt):
-    marker = Sphere('look_ahead', 0, 2.0, (0.0, 0.0, 1.0, 1.0))
-    marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
+    data = (pt[0], pt[1])
+    marker = Sphere('look_ahead', 0, data, 2.0, (0.0, 0.0, 1.0, 1.0))
     return marker
 
 
@@ -159,13 +172,13 @@ def LaneletMapViz(lanelet, for_viz):
 def VectorMapVis(map_data):
     lanelet = map_data['lanelets']
     #side_lanelets = map_data['side_lanelets']
-    # stoplines = map_data['stoplines']
-    # safetysigns = map_data['safetysigns']
-    # surfacemarks = map_data['surfacemarks']
+    stoplines = map_data['stoplines']
+    safetysigns = map_data['safetysigns']
+    surfacemarks = map_data['surfacemarks']
     trafficlights = map_data['trafficlights']
-    # vehicleprotectionsafetys = map_data['vehicleprotectionsafetys']
-    # speedbumps = map_data['speedbumps']
-    # postpoints = map_data['postpoints']
+    vehicleprotectionsafetys = map_data['vehicleprotectionsafetys']
+    speedbumps = map_data['speedbumps']
+    postpoints = map_data['postpoints']
 
     array = MarkerArray()
     for id_, data in lanelet.items():
@@ -183,39 +196,39 @@ def VectorMapVis(map_data):
     #     marker = Bound('side', id_, 0, data[0], data[1], (1.0, 1.0, 1.0, 0.5))
     #     array.markers.append(marker)
 
-    # for id_, data in safetysigns.items():
-    #     marker = Bound('safetysign', id_, n, data,
-    #                    'solid', (1.0, 1.0, 1.0, 0.5))
-    #     array.markers.append(marker)
+    for id_, data in safetysigns.items():
+        marker = Bound('safetysign', id_, n, data,
+                       'solid', (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
 
-    # for id_, data in stoplines.items():
-    #     marker = Bound('stopline', id_, 0, data, 'solid', (1.0, 1.0, 1.0, 0.5))
-    #     array.markers.append(marker)
+    for id_, data in stoplines.items():
+        marker = Bound('stopline', id_, 0, data, 'solid', (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
 
-    # for id_, data in surfacemarks.items():
-    #     marker = Bound('surfacemark', id_, 0, data,
-    #                    'solid', (1.0, 1.0, 1.0, 0.5))
-    #     array.markers.append(marker)
+    for id_, data in surfacemarks.items():
+        marker = Bound('surfacemark', id_, 0, data,
+                       'solid', (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
 
     for id_, data in trafficlights.items():
         marker = Sphere('traifficlight_%s' %
                         (id_), 0, data, 0.1, (1.0, 1.0, 1.0, 0.5))
         array.markers.append(marker)
 
-    # for id_, data in vehicleprotectionsafetys.items():
-    #     marker = Bound('vehicleprotectionsafety', id_, 0,
-    #                    data, 'solid', (1.0, 1.0, 1.0, 0.5))
-    #     array.markers.append(marker)
+    for id_, data in vehicleprotectionsafetys.items():
+        marker = Bound('vehicleprotectionsafety', id_, 0,
+                       data, 'solid', (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
 
-    # for id_, data in speedbumps.items():
-    #     marker = Bound('speedbump', id_, 0, data,
-    #                    'solid', (1.0, 1.0, 1.0, 0.5))
-    #     array.markers.append(marker)
+    for id_, data in speedbumps.items():
+        marker = Bound('speedbump', id_, 0, data,
+                       'solid', (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
 
-    # for id_, data in postpoints.items():
-    #     marker = PostPoint('postpoint_%s' % (id_), 0, data,
-    #                        0.2, 4.0, (1.0, 1.0, 1.0, 0.5))
-    #     array.markers.append(marker)
+    for id_, data in postpoints.items():
+        marker = PostPoint('postpoint_%s' % (id_), 0, data,
+                           0.2, 4.0, (1.0, 1.0, 1.0, 0.5))
+        array.markers.append(marker)
 
     return array
 
@@ -403,7 +416,7 @@ def Bound(ns, id_, n, points, type_, color):
     return marker
 
 
-def Sphere(ns, id_, scale, color):
+def Sphere(ns, id_, data, scale, color):
     marker = Marker()
     marker.type = Marker.SPHERE
     marker.action = Marker.ADD
@@ -418,8 +431,9 @@ def Sphere(ns, id_, scale, color):
     marker.color.g = color[1]
     marker.color.b = color[2]
     marker.color.a = color[3]
-    marker.pose.position.z = 0.5
-    marker.pose.orientation.w = 1.0
+    marker.pose.position.x = data[0]
+    marker.pose.position.y = data[1]
+    marker.pose.position.z = 1.0
     return marker
 
 
@@ -433,6 +447,29 @@ def Cube(ns, id_, scale, quaternion, color):
     marker.lifetime = rospy.Duration(0)
     marker.scale.x = scale*3
     marker.scale.y = scale
+    marker.scale.z = scale
+    marker.pose.orientation.x = quaternion[0]
+    marker.pose.orientation.y = quaternion[1]
+    marker.pose.orientation.z = quaternion[2]
+    marker.pose.orientation.w = quaternion[3]
+    marker.color.r = color[0]
+    marker.color.g = color[1]
+    marker.color.b = color[2]
+    marker.color.a = color[3]
+    marker.pose.orientation.w = 1.0
+    return marker
+
+
+def CubeV(ns, id_, scale, quaternion, color):
+    marker = Marker()
+    marker.type = Marker.CUBE
+    marker.action = Marker.ADD
+    marker.header.frame_id = 'world'
+    marker.ns = ns
+    marker.id = id_
+    marker.lifetime = rospy.Duration(0)
+    marker.scale.x = scale
+    marker.scale.y = scale*3
     marker.scale.z = scale
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]

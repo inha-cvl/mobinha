@@ -6,7 +6,7 @@ import signal
 import time
 
 from std_msgs.msg import String
-from morai_msgs.msg import EgoVehicleStatus, ObjectStatusList, CtrlCmd
+from morai_msgs.msg import EgoVehicleStatus, ObjectStatusList, CtrlCmd, GetTrafficLightStatus
 import tf
 from math import pi, radians
 
@@ -26,6 +26,8 @@ class MoraiPlanner():
             '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
         self.obj_list_pub = rospy.Publisher(
             '/morai/object_list', PoseArray, queue_size=1)
+        self.traffic_light_pub = rospy.Publisher(
+            '/morai/traffic_light', PoseArray, queue_size=1)
         self.ego_topic_pub = rospy.Publisher(
             '/morai/ego_topic', Pose, queue_size=1)
         #subscriber
@@ -39,6 +41,8 @@ class MoraiPlanner():
                          Float32, self.accel_brake_cb)
         rospy.Subscriber("/Object_topic", ObjectStatusList,
                          self.object_topic_cb)
+        rospy.Subscriber("/GetTrafficLightStatus",
+                         GetTrafficLightStatus, self.get_traffic_light_status_cb)
         self.ctrl_msg = CtrlCmd()
 
     def planning(self):
@@ -127,6 +131,37 @@ class MoraiPlanner():
             pose.position.z = obj.heading
             object_list.poses.append(pose)
         self.obj_list_pub.publish(object_list)
+
+    def get_traffic_light_status_cb(self, data):
+        traffic_light_list = PoseArray()
+
+        pose = Pose()
+        st = data.trafficLightStatus
+        stt = 10
+        if st == 1:  # Red
+            stt = 10
+        elif st == 4:  # Yellow
+            stt = 11
+        elif st == 16:  # Green
+            stt = 9
+        elif st == 32:  # Green Left
+            stt = 12
+        elif st == 33:  # Red wotj Greem :left
+            stt = 12
+        elif st == 48:  # Green with Green Left
+            stt = 14
+        elif st == 20:  # Yellow with Green
+            stt = 12
+        elif st == 36:  # Yellow with Green Left
+            stt = 12
+        elif st == 5:  # Red with YUellow
+            stt = 13
+
+        pose.position.x = stt
+        pose.position.y = 0.8
+        pose.position.z = 0.3
+        traffic_light_list.poses.append(pose)
+        self.traffic_light_pub.publish(traffic_light_list)
 
     def state_cb(self, msg):
         if self.state != str(msg.data):

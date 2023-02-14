@@ -2,6 +2,7 @@ import sys
 import signal
 import time
 import rospy
+import traceback
 from std_msgs.msg import String
 
 from selfdrive.message.messaging import *
@@ -71,8 +72,8 @@ def main():
             print("[{}] Over".format(c.__class__.__name__))
             time.sleep(4)
             sys.exit(0)
-    except Exception as e:
-        print("[{} Error]".format(c.__class__.__name__), e)
+    except Exception:
+        print("[{} Error]".format(c.__class__.__name__), traceback.print_exc())
     except KeyboardInterrupt:
         print("[{}] Force Quit".format(c.__class__.__name__))
         sys.exit(0)

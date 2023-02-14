@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import rospy
 import traceback
+import pymap3d
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
@@ -238,7 +239,7 @@ class MainWindow(QMainWindow, form_class):
                                 dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
                                 dir_path+"/icon/uturn_b.png"]
         self.direction_pixmap_list = []
-        for i in range(5):
+        for i in range(6):
             self.direction_pixmap_list.append(
                 QPixmap(direction_image_list[i]))
         self.direction_message_list = [
@@ -265,12 +266,12 @@ class MainWindow(QMainWindow, form_class):
         self.distance_label_list = [
             self.distance_1_label, self.distance_2_label, self.distance_3_label, self.distance_4_label]
         self.distance_label_styles = [
-            "background-color:rgb(0,10,20); color:rgb(0,10,20);", "background-color:rgb(88,93,99); color:rgb(88,93,99);", "background-color:rgb(0,10,20); color: rgb(239,114,122);"]
+            "QLabel{background-color:rgb(0,10,20); color:rgb(0,10,20);}", "QLabel{background-color:rgb(88,93,99); color:rgb(88,93,99);}", "QLabel{background-color:rgb(0,10,20); color: rgb(239,114,122);}"]
         self.tl_label_list = [
             self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
         self.tl_label_styles = [
-            "background-color:rgb(239,114,122); ", "background-color:rgb(239,199,114); ",
-            "color:rgb(51,196,136); ", "background-color:rgb(51,196,136); "]
+            "QLabel{color:rgb(239,114,122);} ", "QLabel{color:rgb(239,199,114);} ",
+            "QLabel{color:rgb(51,196,136);}", "QLabel{color:rgb(51,196,136);} "]
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -299,11 +300,11 @@ class MainWindow(QMainWindow, form_class):
             lat, lng, alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,
                                                  self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
             self.info_goal_lat_label.setText(
-                "lat : {}".format(lat))
+                "lat : {}".format(round(lat, 5)))
             self.info_goal_lng_label.setText(
-                "lng : {}".format(lng))
+                "lng : {}".format(round(lng, 5)))
             self.info_goal_alt_label.setText(
-                "alt : {}".format(alt))
+                "alt : {}".format(round(alt, 5)))
 
     def goal_information_cb(self, msg):
         m_distance = msg.position.y-msg.position.z
@@ -316,40 +317,43 @@ class MainWindow(QMainWindow, form_class):
             str(round(msg.data, 5))+" m")  # nearest obstacle
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            if msg.data > 0 and msg.data <= 7:
-                for i in range(1, 4):
-                    self.distance_label_list[i].setStyleSheet(
+            try:
+                if msg.data > 0 and msg.data <= 7:
+                    for i in range(1, 4):
+                        self.distance_label_list[i].setStyleSheet(
+                            self.distance_label_styles[0])
+                    self.distance_label_list[0].setStyleSheet(
+                        self.distance_label_styles[2])
+                elif msg.data > 7 and msg.data <= 15:
+                    for i in range(2, 4):
+                        self.distance_label_list[i].setStyleSheet(
+                            self.distance_label_styles[0])
+                    self.distance_label_list[1].setStyleSheet(
+                        self.distance_label_styles[2])
+                    self.distance_label_list[0].setStyleSheet(
+                        self.distance_label_styles[1])
+                elif msg.data > 15 and msg.data <= 30:
+                    self.distance_label_list[3].setStyleSheet(
                         self.distance_label_styles[0])
-                self.distance_label_list[0].setStyleSheet(
-                    self.distance_label_styles[2])
-            elif msg.data > 7 and msg.data <= 15:
-                for i in range(2, 4):
-                    self.distance_label_list[i].setStyleSheet(
+                    self.distance_label_list[2].setStyleSheet(
+                        self.distance_label_styles[2])
+                    for i in range(2):
+                        self.distance_label_list[i].setStyleSheet(
+                            self.distance_label_styles[1])
+                elif msg.data > 30:
+                    self.distance_label_list[3].setStyleSheet(
+                        self.distance_label_styles[2])
+                    for i in range(3):
+                        self.distance_label_list[i].setStyleSheet(
+                            self.distance_label_styles[1])
+                elif msg.data < 0:
+                    for i in range(3):
+                        self.distance_label_list[i].setStyleSheet(
+                            self.distance_label_styles[1])
+                    self.distance_label_list[3].setStyleSheet(
                         self.distance_label_styles[0])
-                self.distance_label_list[1].setStyleSheet(
-                    self.distance_label_styles[2])
-                self.distance_label_list[0].setStyleSheet(
-                    self.distance_label_styles[1])
-            elif msg.data > 15 and msg.data <= 30:
-                self.distance_label_list[3].setStyleSheet(
-                    self.distance_label_styles[0])
-                self.distance_label_list[2].setStyleSheet(
-                    self.distance_label_styles[2])
-                for i in range(2):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[1])
-            elif msg.data > 30:
-                self.distance_label_list[3].setStyleSheet(
-                    self.distance_label_styles[2])
-                for i in range(3):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[1])
-            elif msg.data < 0:
-                for i in range(3):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[1])
-                self.distance_label_list[3].setStyleSheet(
-                    self.distance_label_styles[0])
+            except:
+                pass
 
     def traffic_light_obstacle_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4 and len(msg.poses) > 0:
@@ -360,17 +364,16 @@ class MainWindow(QMainWindow, form_class):
             for i, cls in enumerate(tl_cls_list):
                 if tl_cls in list(cls.values())[0]:
                     tl_detect_cls.append(i)
-            for i in range(4):
-                if i in tl_detect_cls:
-                    self.tl_label_list[i].setStyleSheet(
-                        self.tl_label_styles[i]+"border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
-                else:
-                    self.tl_label_list[i].setStyleSheet(
-                        "background-color:rgb(0,10,20); border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
-                    if i == 2:
+            try:
+                for i in range(4):
+                    if i in tl_detect_cls:
                         self.tl_label_list[i].setStyleSheet(
-                            "color:rgb(88, 93, 99);")
-
+                            self.tl_label_styles[i])
+                    else:
+                        self.tl_label_list[i].setStyleSheet(
+                            "QLabel{color:rgb(88, 93, 99);}")
+            except:
+                pass
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             x = [v.position.x for v in msg.poses]

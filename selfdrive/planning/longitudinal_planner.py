@@ -19,7 +19,7 @@ MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
 
-VIZ_GRAPH = False
+VIZ_GRAPH = True
 
 
 class LongitudinalPlanner:
@@ -79,8 +79,8 @@ class LongitudinalPlanner:
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
-        obs_time = [5, self.st_param['tMax'], 5]  # sec
-        offset = [6+(cur_v*obs_time[i]), 1, 2]  # m
+        obs_time = [5, self.st_param['tMax'], 7]  # sec
+        offset = [6+(cur_v*obs_time[i]), 1, 5]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
 
@@ -101,7 +101,7 @@ class LongitudinalPlanner:
         dt, dt_exp = self.st_param['dt'], self.st_param['dtExp']
 
         target_v = ref_v
-        s += 3.0  # loof a little bit forward
+        s += 3.0  # loof a little b it forward
 
         if VIZ_GRAPH:
             if self.drawn is not None:
@@ -212,14 +212,24 @@ class LongitudinalPlanner:
 
         return target_v
 
+    def traffic_light_to_obstacle(self, traffic_light, forward_direction):
+        # straight, turn_left, turn_right, left_change, right_change, u-turn
+        #TODO: consideration filtering
+        consideration_class_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
+            6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
+        if traffic_light in consideration_class_list[forward_direction]:
+            return True
+        else:
+            return False
+
     def check_objects(self, local_len):
         object_list = []
 
         # [0] = Dynamic Object
         if self.lidar_obstacle is not None:
-            for losb in self.lidar_obstacle:
-                if losb[2] >= -2.0 and losb[2] <= 2.0:  # object in my lane
-                    object_list.append(losb)
+            for lobs in self.lidar_obstacle:
+                if lobs[2] >= -2.0 and lobs[2] <= 2.0:  # object in my lane
+                    object_list.append(lobs)
 
         # [1] = Goal Object
         if self.goal_object is not None:
@@ -230,9 +240,10 @@ class LongitudinalPlanner:
 
         # TODO: Add Traffic Light
         #[2] = Traffic Light
-        # if self.traffic_light_obstacle is not None:
-        #     for tlosb in self.traffic_light_obstacle:
-        #         print(tlosb[1])  # cls
+        if self.traffic_light_obstacle is not None:
+            for tlobs in self.traffic_light_obstacle:
+                if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
+                    object_list.append((tlobs[0], self.lane_information[2], 0))
         return object_list
 
     def run(self, sm, pp=0, local_path=None):

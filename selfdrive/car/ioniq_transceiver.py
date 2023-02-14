@@ -17,7 +17,7 @@ class IoniqTransceiver():
         }
         self.CP = CP
         self.bus = can.ThreadSafeBus(
-            interface='socketcan', channel='can0', bitreate=500000)
+            interface='socketcan', channel='can0', bitrate=500000)
         self.steer_angle = 0.
         self.db = cantools.database.load_file(CP.dbc)
 
@@ -36,7 +36,8 @@ class IoniqTransceiver():
         self.accel_val = 0
         self.brake_val = 0
         self.wheel_angle = 0
-
+        self.rcv_velocity = 0
+        # self.reference_velocity = CP.maxEnableSpeed / 3.6
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
         self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 8}
 
@@ -62,12 +63,12 @@ class IoniqTransceiver():
             steer['busy'] = True
             if steer['current'] < self.wheel_angle:
                 for i in range(int(steer['current']), self.wheel_angle, steer['step']):
-                    self.steer_angle == i/10
+                    self.steer_angle =  i/10
                     time.sleep(0.05)
                     steer['current'] = i
             else:
                 for i in range(int(steer['current']), self.wheel_angle, -steer['step']):
-                    self.steer_angle == i/10
+                    self.steer_angle = i/10
                     time.sleep(0.05)
                     steer['current'] = i
             steer['busy'] = False
@@ -83,7 +84,8 @@ class IoniqTransceiver():
         elif val_data <= 0.:
             self.accel_val = 0.0
             self.brake_val = val_data * -10.0
-            if self.reference_velocity == 0.0 and self.rcv_velocity < 3.5:
+            # if self.reference_velocity == 0.0 and self.rcv_velocity < 3.5:
+            if self.rcv_velocity < 3.5:
                 self.brake_val = 100.
 
     def receiver(self):
@@ -129,7 +131,7 @@ class IoniqTransceiver():
 
     def ioniq_control(self):
         signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.steer_angle * self.CP.steerRatio,
-                   'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.brake_val, 'Target_Accel': self.accel_val, 'Alive_cnt': 0x0}
+                   'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.brake_val, 'Target_Accel': self.accel_val, 'Alive_cnt': 0x0, 'Reset_Flag': 1}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 

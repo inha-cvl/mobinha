@@ -13,11 +13,6 @@ CS = car_state.CarState()
 
 class StateMaster:
     def __init__(self, CP):
-        rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
-        rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
-        rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
-        rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
-        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
 
         self.CS = CS
         self.base_lla = [CP.mapParam.baseLatitude,
@@ -37,15 +32,23 @@ class StateMaster:
         self.mode = 0
         self.blinker = 0
 
+
+        rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
+        rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
+        rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
+        rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
+        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
+
     def novatel_cb(self, msg):
         self.latitude = msg.latitude
         self.longitude = msg.longitude
         self.altitude = msg.height
         self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, msg.height, self.base_lla[0], self.base_lla[1], self.base_lla[2])
-        self.roll = math.degrees(msg.roll)
-        self.pitch = math.degrees(msg.pitch)
-        self.yaw = msg.azimuth
+            msg.latitude, msg.longitude, self.base_lla[2], self.base_lla[0], self.base_lla[1], self.base_lla[2])
+        self.roll = msg.roll#math.degrees(msg.roll)
+        self.pitch = msg.pitch#math.degrees(msg.pitch)
+        self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
+        #msg.azimuth
         #90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
 
     def velocity_cb(self, msg):

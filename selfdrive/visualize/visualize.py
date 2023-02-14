@@ -315,41 +315,41 @@ class MainWindow(QMainWindow, form_class):
         self.label_obstacle_distance.setText(
             str(round(msg.data, 5))+" m")  # nearest obstacle
 
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            if msg.data > 0 and msg.data <= 7:
-                for i in range(1, 4):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[0])
-                self.distance_label_list[0].setStyleSheet(
-                    self.distance_label_styles[2])
-            elif msg.data > 7 and msg.data <= 15:
-                for i in range(2, 4):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[0])
-                self.distance_label_list[1].setStyleSheet(
-                    self.distance_label_styles[2])
-                self.distance_label_list[0].setStyleSheet(
-                    self.distance_label_styles[1])
-            elif msg.data > 15 and msg.data <= 30:
-                self.distance_label_list[3].setStyleSheet(
-                    self.distance_label_styles[0])
-                self.distance_label_list[2].setStyleSheet(
-                    self.distance_label_styles[2])
-                for i in range(2):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[1])
-            elif msg.data > 30:
-                self.distance_label_list[3].setStyleSheet(
-                    self.distance_label_styles[2])
-                for i in range(3):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[1])
-            elif msg.data < 0:
-                for i in range(3):
-                    self.distance_label_list[i].setStyleSheet(
-                        self.distance_label_styles[1])
-                self.distance_label_list[3].setStyleSheet(
-                    self.distance_label_styles[0])
+        # if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+        #     if msg.data > 0 and msg.data <= 7:
+        #         for i in range(1, 4):
+        #             self.distance_label_list[i].setStyleSheet(
+        #                 self.distance_label_styles[0])
+        #         self.distance_label_list[0].setStyleSheet(
+        #             self.distance_label_styles[2])
+        #     elif msg.data > 7 and msg.data <= 15:
+        #         for i in range(2, 4):
+        #             self.distance_label_list[i].setStyleSheet(
+        #                 self.distance_label_styles[0])
+        #         self.distance_label_list[1].setStyleSheet(
+        #             self.distance_label_styles[2])
+        #         self.distance_label_list[0].setStyleSheet(
+        #             self.distance_label_styles[1])
+        #     elif msg.data > 15 and msg.data <= 30:
+        #         self.distance_label_list[3].setStyleSheet(
+        #             self.distance_label_styles[0])
+        #         self.distance_label_list[2].setStyleSheet(
+        #             self.distance_label_styles[2])
+        #         for i in range(2):
+        #             self.distance_label_list[i].setStyleSheet(
+        #                 self.distance_label_styles[1])
+        #     elif msg.data > 30:
+        #         self.distance_label_list[3].setStyleSheet(
+        #             self.distance_label_styles[2])
+        #         for i in range(3):
+        #             self.distance_label_list[i].setStyleSheet(
+        #                 self.distance_label_styles[1])
+        #     elif msg.data < 0:
+        #         for i in range(3):
+        #             self.distance_label_list[i].setStyleSheet(
+        #                 self.distance_label_styles[1])
+        #         self.distance_label_list[3].setStyleSheet(
+        #             self.distance_label_styles[0])
 
     def traffic_light_obstacle_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4 and len(msg.poses) > 0:
@@ -360,17 +360,17 @@ class MainWindow(QMainWindow, form_class):
             for i, cls in enumerate(tl_cls_list):
                 if tl_cls in list(cls.values())[0]:
                     tl_detect_cls.append(i)
-            for i in range(4):
-                if i in tl_detect_cls:
-                    self.tl_label_list[i].setStyleSheet(
-                        self.tl_label_styles[i]+"border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
-                else:
-                    self.tl_label_list[i].setStyleSheet(
-                        "background-color:rgb(0,10,20); border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
-                    if i == 2:
-                        self.tl_label_list[i].setStyleSheet(
-                            "color:rgb(88, 93, 99);")
-
+            # for i in range(4):
+            #     if i in tl_detect_cls:
+            #         self.tl_label_list[i].setStyleSheet(
+            #             self.tl_label_styles[i]+"border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
+            #     else:
+            #         self.tl_label_list[i].setStyleSheet(
+            #             "background-color:rgb(0,10,20); border:3px; border-style:solid; border-radius:38px; border-color: rgb(88, 93, 99);")
+            #         if i == 2:
+            #             self.tl_label_list[i].setStyleSheet(
+            #                 "color:rgb(88, 93, 99);")
+                                    
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             x = [v.position.x for v in msg.poses]

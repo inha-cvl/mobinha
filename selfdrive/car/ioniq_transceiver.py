@@ -5,7 +5,7 @@ import cantools
 import time
 
 import rospy
-from std_msgs.msg import Float32, Int16
+from std_msgs.msg import Float32, Int8
 
 
 class IoniqTransceiver():
@@ -19,26 +19,24 @@ class IoniqTransceiver():
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitreate=500000)
         self.steer_angle = 0.
-        self.msg_id = {'w_BRK11': 0x200, 'w_BRK12': 0x500, 'w_BRK21': 0x220,
-                       'w_BRK22': 0x230, 'w_BRK23': 0x380, 'w_BRK24': 0x240}
         self.db = cantools.database.load_file(CP.dbc)
 
         self.pub_velocity = rospy.Publisher(
             '/mobinha/car/velocity', Float32, queue_size=1)
-        rospy.Subscriber('/mobinha/visualize/can_cmd', Int16, self.can_cmd)
+        self.pub_gear = rospy.Publisher(
+            '/mobinha/car/gear', Int8, queue_size=1)
+        self.pub_mode = rospy.Publisher(
+            '/mobinha/car/mode', Int8, queue_size=1)
+        rospy.Subscriber('/mobinha/visualize/can_cmd', Int8, self.can_cmd)
         rospy.Subscriber(
             '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cmd)
         rospy.Subscriber(
             '/mobinha/control/accel_brake', Float32, self.accel_brake_cmd)
 
-        self.accel_value = 0
         self.accel_val = 0
         self.brake_val = 0
         self.wheel_angle = 0
-        self.gear = 'N'
 
-        self.counter = {'w_BRK11': 0, 'w_BRK12': 0,
-                        'w_BRK21': 0, 'w_BRK22': 0, 'w_BRK23': 0, 'w_BRK24': 0}
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
         self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 8}
 
@@ -49,13 +47,11 @@ class IoniqTransceiver():
         state = self.control_state
         if data == 0:  # Full disable
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-        elif data == 1:  # Only Lateral
-            state = {**state, 'steer_en': 0x1}
-        elif data == 2:  # Mode AB -> Mid
-            state = {**state, 'acc_en': 0x0}
-        elif data == 3:  # Full
-            state = {**state, 'acc_en': 0x1}
-        elif data == 4:  # Only Longitudinal
+        elif data == 1:  # Full
+            state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
+        elif data == 2:  # Only Lateral
+            state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
+        elif data == 3:  # Only Longitudinal
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
         self.control_state = state
 
@@ -108,22 +104,28 @@ class IoniqTransceiver():
                 # use
                 self.velocity_FL = res['Gway_Wheel_Velocity_FL']
                 self.rcv_velocity = (self.velocity_RR + self.velocity_RL)/7.2
-                self.pub_velocity.publish(self.rcv_velocity)
-            elif (data.arbitration_id == 0x290):
-                res = self.db.decode_message(data.arbitration_id, data.data)
-                self.rcv_wheel_angle = res['Gway_Steering_Angle']     # use
-                self.rcv_steer_status = res['Gway_Steering_Status']
+                self.pub_velocity.publish(Float32(self.rcv_velocity))
             elif (data.arbitration_id == 0x170):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                self.rcv_gear = res['Gway_GearSelDisp']                 # use
+                gear_sel_disp = res['Gway_GearSelDisp']                 # use
+                if gear_sel_disp == 7:  # R
+                    gear_sel_disp = 1
+                elif gear_sel_disp == 6:  # N
+                    gear_sel_disp = 2
+                elif gear_sel_disp == 5:  # D
+                    gear_sel_disp = 3
+                else:  # P
+                    gear_sel_disp = 0
+                self.pub_gear.publish(Int8(gear_sel_disp))
+            elif (data.arbitration_id == 0x210):
+                res = self.db.decode_message(data.arbitration_id, data.data)
+                mode = 0
+                if res['PA_Enable'] and res['LON_Enable']:
+                    mode = 1
+                self.pub_mode.publish(Int8(mode))
 
         except Exception as e:
             print(e)
-
-    def steer(self, angle):
-        msg = self.db.encode_message(
-            'PA', {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': angle * self.CP.steerRatio})  # 13.73
-        self.sender(0x210, msg)
 
     def ioniq_control(self):
         signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.steer_angle * self.CP.steerRatio,

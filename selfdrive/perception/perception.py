@@ -2,6 +2,7 @@ import sys
 import signal
 import time
 import rospy
+import traceback
 from std_msgs.msg import String
 
 from obstacle_detector import ObstacleDetector
@@ -65,8 +66,8 @@ def main():
             print("[{}] Over".format(p.__class__.__name__))
             time.sleep(4)
             sys.exit(0)
-    except Exception as e:
-        print("[{} Error]".format(p.__class__.__name__), e)
+    except Exception:
+        print("[{} Error]".format(p.__class__.__name__), traceback.print_exc())
     except KeyboardInterrupt:
         print("[{}] Force Quit".format(p.__class__.__name__))
         sys.exit(0)

@@ -104,7 +104,7 @@ border-radius: 3px
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>0</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -2500,12 +2500,12 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
-          <string>SIMULATOR</string>
+          <string>IONIQ</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>IONIQ</string>
+          <string>SIMULATOR</string>
          </property>
         </item>
         <item>
@@ -2537,6 +2537,11 @@ border-color: rgb(71,181,255);</string>
         <property name="styleSheet">
          <string notr="true">color: rgb(223, 246, 255);</string>
         </property>
+        <item>
+         <property name="text">
+          <string>campus</string>
+         </property>
+        </item>
         <item>
          <property name="text">
           <string>songdo</string>

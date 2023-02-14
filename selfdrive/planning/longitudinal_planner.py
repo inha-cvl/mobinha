@@ -24,8 +24,10 @@ VIZ_GRAPH = False
 
 class LongitudinalPlanner:
     def __init__(self, CP):
+
         self.lidar_obstacle = None
         self.traffic_light_obstacle = None
+        self.lane_information = None
         self.goal_object = None
 
         self.min_v = CP.minEnableSpeed
@@ -50,6 +52,7 @@ class LongitudinalPlanner:
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',
                          PoseArray, self.traffic_light_obstacle_cb)
+        rospy.Subscriber('/mobinha/planning/lane_information', Pose, self.lane_information_cb)
         rospy.Subscriber(
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
@@ -64,6 +67,10 @@ class LongitudinalPlanner:
     def traffic_light_obstacle_cb(self, msg):
         self.traffic_light_obstacle = [
             (pose.position.x, pose.position.y, pose.position.z) for pose in msg.poses]
+    
+    def lane_information_cb(self, msg):
+        # id, forward_direction, cross_walk distance
+        self.lane_information = [msg.position.x, msg.position.y, msg.position.z]
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)

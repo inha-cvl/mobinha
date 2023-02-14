@@ -40,7 +40,7 @@ class SimulatorTransceiver:
         self.gear = 0
 
         # posco 957.413, -851.312, terminal -1601.567, 2375.599
-        self.ego = Vehicle(957.413, -851.312, math.radians(180), 0.0, 2.65)
+        self.ego = Vehicle(0.0, 0.0, math.radians(180), 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
 

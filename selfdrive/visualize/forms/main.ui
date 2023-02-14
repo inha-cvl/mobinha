@@ -104,7 +104,7 @@ border-radius: 3px
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -1609,14 +1609,21 @@ color:rgb(0,10,20);</string>
                 <height>76</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>60</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
-               <string/>
+               <string>●</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -1653,14 +1660,21 @@ border-color: rgb(88, 93, 99);</string>
                 <height>76</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>60</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
-               <string/>
+               <string>●</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -1699,17 +1713,13 @@ border-color: rgb(88, 93, 99);</string>
               </property>
               <property name="font">
                <font>
-                <pointsize>60</pointsize>
+                <pointsize>65</pointsize>
                 <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);
-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
                <string>⬅</string>
@@ -1752,14 +1762,21 @@ color: rgb(88, 93, 99);</string>
                 <height>76</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>60</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
-               <string/>
+               <string>●</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>

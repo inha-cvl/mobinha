@@ -139,14 +139,11 @@ class MainWindow(QMainWindow, form_class):
         self.map_name_combo_box.currentIndexChanged.connect(
             self.map_name_changed)
 
-        self.cmd_disable_button.clicked.connect(
-            lambda state, idx=0: self.cmd_button_clicked(idx))
-        self.cmd_full_button.clicked.connect(
-            lambda state, idx=1: self.cmd_button_clicked(idx))
-        self.cmd_only_lat_button.clicked.connect(
-            lambda state, idx=2: self.cmd_button_clicked(idx))
-        self.cmd_only_long_button.clicked.connect(
-            lambda state, idx=3: self.cmd_button_clicked(idx))
+        self.can_cmd_buttons = [self.cmd_disable_button, self.cmd_full_button,
+                                self.cmd_only_lat_button, self.cmd_only_long_button]
+        for i in range(4):
+            self.can_cmd_buttons[i].clicked.connect(
+                lambda state, idx=i: self.cmd_button_clicked(idx))
 
         self.scenario1_button.clicked.connect(
             lambda state, idx=1:  self.scenario_button_clicked(idx))
@@ -296,15 +293,8 @@ class MainWindow(QMainWindow, form_class):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
         self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            lat, lng, alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,
-                                                 self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
-            self.info_goal_lat_label.setText(
-                "lat : {}".format(round(lat, 5)))
-            self.info_goal_lng_label.setText(
-                "lng : {}".format(round(lng, 5)))
-            self.info_goal_alt_label.setText(
-                "alt : {}".format(round(alt, 5)))
+        self.goal_lat, self.goal_lng, self.goal_alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,
+                                                                           self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
 
     def goal_information_cb(self, msg):
         m_distance = msg.position.y-msg.position.z
@@ -320,38 +310,28 @@ class MainWindow(QMainWindow, form_class):
             try:
                 if msg.data > 0 and msg.data <= 7:
                     for i in range(1, 4):
-                        self.distance_label_list[i].setStyleSheet(
-                            self.distance_label_styles[0])
-                    self.distance_label_list[0].setStyleSheet(
-                        self.distance_label_styles[2])
+                        self.distance_label_list[i].setText("")
+                    self.distance_label_list[0].setText("❗️")
                 elif msg.data > 7 and msg.data <= 15:
                     for i in range(2, 4):
-                        self.distance_label_list[i].setStyleSheet(
-                            self.distance_label_styles[0])
-                    self.distance_label_list[1].setStyleSheet(
-                        self.distance_label_styles[2])
-                    self.distance_label_list[0].setStyleSheet(
-                        self.distance_label_styles[1])
+                        self.distance_label_list[i].setText("")
+                    self.distance_label_list[1].setText("❗️")
+                    self.distance_label_list[0].setText("7m")
                 elif msg.data > 15 and msg.data <= 30:
-                    self.distance_label_list[3].setStyleSheet(
-                        self.distance_label_styles[0])
-                    self.distance_label_list[2].setStyleSheet(
-                        self.distance_label_styles[2])
-                    for i in range(2):
-                        self.distance_label_list[i].setStyleSheet(
-                            self.distance_label_styles[1])
+                    self.distance_label_list[3].setText("")
+                    self.distance_label_list[2].setText("❗️")
+                    self.distance_label_list[1].setText("15m")
+                    self.distance_label_list[0].setText("7m")
                 elif msg.data > 30:
-                    self.distance_label_list[3].setStyleSheet(
-                        self.distance_label_styles[2])
-                    for i in range(3):
-                        self.distance_label_list[i].setStyleSheet(
-                            self.distance_label_styles[1])
+                    self.distance_label_list[3].setText("❗️")
+                    self.distance_label_list[2].setText("30m")
+                    self.distance_label_list[1].setText("15m")
+                    self.distance_label_list[0].setText("7m")
                 elif msg.data < 0:
-                    for i in range(3):
-                        self.distance_label_list[i].setStyleSheet(
-                            self.distance_label_styles[1])
-                    self.distance_label_list[3].setStyleSheet(
-                        self.distance_label_styles[0])
+                    self.distance_label_list[3].setText("")
+                    self.distance_label_list[2].setText("30m")
+                    self.distance_label_list[1].setText("15m")
+                    self.distance_label_list[0].setText("7m")
             except:
                 pass
 
@@ -360,20 +340,19 @@ class MainWindow(QMainWindow, form_class):
             tl_cls = msg.poses[0].position.y
             tl_cls_list = [{"red": [6, 10, 12, 13]}, {"yellow": [8, 11, 13]}, {
                 "arrow": [12, 14]}, {"green": [4, 9, 14]}]
+            tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
+            tl_off = "⬛️"
             tl_detect_cls = []
             for i, cls in enumerate(tl_cls_list):
                 if tl_cls in list(cls.values())[0]:
                     tl_detect_cls.append(i)
-            try:
-                for i in range(4):
-                    if i in tl_detect_cls:
-                        self.tl_label_list[i].setStyleSheet(
-                            self.tl_label_styles[i])
-                    else:
-                        self.tl_label_list[i].setStyleSheet(
-                            "QLabel{color:rgb(88, 93, 99);}")
-            except:
-                pass
+
+            for i in range(4):
+                if i in tl_detect_cls:
+                    self.tl_label_list[i].setText(tl_on_list[i])
+                else:
+                    self.tl_label_list[i].setText(tl_off)
+
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             x = [v.position.x for v in msg.poses]
@@ -477,6 +456,13 @@ class MainWindow(QMainWindow, form_class):
 
     def cmd_button_clicked(self, idx):
         self.can_cmd = idx
+        for i in range(1,4):
+            if i == idx:
+                continue
+            self.can_cmd_buttons[i].setDisabled(True)
+        if idx == 0:
+            for button in self.can_cmd_buttons:
+                button.setEnabled(True)
 
     def scenario_button_clicked(self, idx):
         self.scenario = idx
@@ -527,7 +513,7 @@ class MainWindow(QMainWindow, form_class):
                 str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            mode_string = "Manual Mode" if self.CS.cruiseState == 0 else "Auto Mode"
+            mode_string = "Manual Mode" if self.can_cmd != 1 else "Auto Mode"
             self.info_mode_label.setText(mode_string)
             self.info_velocity_label.setText(
                 str(int(round(self.CS.vEgo*MPH_TO_KPH))))
@@ -543,6 +529,13 @@ class MainWindow(QMainWindow, form_class):
                 round(self.CS.pitchRate, 5)))
             self.info_r_label.setText("R: {}".format(
                 round(self.CS.rollRate, 5)))
+
+            self.info_goal_lat_label.setText(
+                "lat : {}".format(round(self.goal_lat, 5)))
+            self.info_goal_lng_label.setText(
+                "lng : {}".format(round(self.goal_lng, 5)))
+            self.info_goal_alt_label.setText(
+                "alt : {}".format(round(self.goal_alt, 5)))
 
             for i in range(4):
                 if self.CS.gearShifter == i:

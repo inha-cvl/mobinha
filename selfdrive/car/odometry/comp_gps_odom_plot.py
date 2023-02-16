@@ -26,6 +26,7 @@ ENCODER_RESOLUTION = 46
 KMH2MS = 1/3.6
 FRAME_RATE = 50
 WHEEL_BASE = 3
+STEERRATIO = 17
 
 class Activate_Signal_Interrupt_Handler:
     def __init__(self):
@@ -101,12 +102,12 @@ class DistanceMeasurment:
                             dd=math.sqrt(dx**2 + dy**2)
 
                             lin_v = dist * FRAME_RATE
-                            ang_v = lin_v * math.tan(math.radians(self.str_ang/18)) / WHEEL_BASE
+                            ang_v = lin_v * math.tan(math.radians(self.str_ang/STEERRATIO)) / WHEEL_BASE
 
                             sinTheta = math.sin(self.posTh)
                             cosTheta = math.cos(self.posTh)
 
-                            if ang_v == 0:
+                            if -10<ang_v<10:
                                 self.posX = self.posX + lin_v/FRAME_RATE * cosTheta
                                 self.posY = self.posY + lin_v/FRAME_RATE * sinTheta
                             else:
@@ -139,28 +140,35 @@ class GPSPlot:
 
         self.init_lat = 0
         self.init_lon = 0
-        
+        self.init_yaw = 10000
+
         self.x = 0
         self.y = 0
         self.yaw = 0
 
     def novatel_cb(self, msg):
-        if self.init_lat > 37:
+        if self.init_lat != 0:
             self.lat = msg.latitude
         else:
             self.init_lat = msg.latitude
 
-        if self.init_lon > 126:
+        if self.init_lon != 0:
             self.lon = msg.longitude
         else:
             self.init_lon = msg.longitude
-        
-        self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <= 180) else -270 - msg.azimuth
+            
+        if self.init_yaw != 10000:
+            self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <= 180) else -270 - msg.azimuth
+        else:
+            self.init_yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <= 180) else -270 - msg.azimuth
 
     def gps_plot(self):
-        self.x, self.y, _ = pymap3d.geodetic2enu(self.lat, self.lon, 0, self.init_lat, self.init_lon, 0)
-        plt.scatter(self.x, self.y, color = 'blue', s=10, alpha=0.5)
-        plt.pause(0.02)
+        while True:
+            self.x, self.y, _ = pymap3d.geodetic2enu(self.lat, self.lon, 0, self.init_lat, self.init_lon, 0)
+            self.r_x = math.cos(math.radians(self.init_yaw))*self.x - math.sin(math.radians(self.init_yaw))*self.y
+            self.r_y = math.sin(math.radians(self.init_yaw))*self.x + math.cos(math.radians(self.init_yaw))*self.y
+        # plt.scatter(self.x, self.y, color = 'blue', s=10, alpha=0.5)
+        # plt.pause(0.02)
 
 
 if __name__ == '__main__':
@@ -170,30 +178,26 @@ if __name__ == '__main__':
     GP = GPSPlot()
     DM = DistanceMeasurment()
 
-    time.sleep(1)
+    time.sleep(5)
+    print(GP.init_yaw, GP.init_lat, GP.init_lon, GP.yaw, GP.lat, GP.lon)
     
     t1 = threading.Thread(target=DM.encoder_measure)
     t2 = threading.Thread(target=GP.gps_plot)
     t1.start()
     t2.start()  
     
-    # while True:
+    while True:
     # while not rospy.is_shutdown():
-        #   t2.join()
-        # DM.encoder_measure()
-        # GP.gps_plot()
-    
+        data = {'time':[time.time()], 'lat':[GP.lat], 'lon':[GP.lon], 'enu_x':[GP.x], 'enu_y':[GP.y], 'yaw':[GP.yaw], 'r_x':[GP.r_x], 'r_y':[GP.r_y], 'init_lat':[GP.init_lat], 'init_lon':[GP.init_lon], 'init_yaw':[GP.init_yaw], 
+        '2wheel_x':[DM.pose_x], '2wheel_y':[DM.pose_y], 'bicycle_x':[DM.posX], 'bicycle_y':[DM.posY], 'pulse_L':[DM.diff_enc_cnt_L], 'pulse_R':[DM.diff_enc_cnt_R], 'avg_tire_ang':[DM.str_ang/STEERRATIO]}
+        df = pd.DataFrame(data)
 
+        if not os.path.exists('./encoder_odom.csv'):
+            df.to_csv('./encoder_odom.csv', index=False, mode='w', header=True)
+        else:
+            df.to_csv('./encoder_odom.csv', index=False, mode='a', header=False)
 
-        # data = {'time':[time.time()], 'lat':[GP.lat], 'lon':[GP.lon], 'enu_x':[GP.x], 'enu_y':[GP.y], 'yaw':[GP.yaw], 
-        # '2wheel_x':[DM.pose_x], '2wheel_y':[DM.pose_y], 'bicycle_x':[DM.posX], 'bicycle_y':[DM.posY], 'pulse_L':[DM.diff_enc_cnt_L], 'pulse_R':[DM.diff_enc_cnt_R], 'avg_tire_ang':[DM.str_ang/13.6]}
-        # df = pd.DataFrame(data)
-        # if not os.path.exists('./encoder_odom.csv'):
-        #     df.to_csv('./encoder_odom.csv', index=False, mode='w')
-        # else:
-        #     df.to_csv('./encoder_odom.csv', index=False, mode='a')
-
-    plt.show()
+    # plt.show()
     rospy.spin()
     
     

@@ -87,17 +87,17 @@ class DistanceMeasurment:
                             dd=math.sqrt(dx**2 + dy**2)
 
                             lin_v = dist * FRAME_RATE
-                            ang_v = lin_v * math.tan(math.radians(self.str_ang/13.6)) / WHEEL_BASE
+                            omega = lin_v * math.tan(math.radians(self.str_ang/13.6)) / WHEEL_BASE
 
                             sinTheta = math.sin(self.posTh)
                             cosTheta = math.cos(self.posTh)
 
-                            if ang_v == 0:
+                            if omega == 0:
                                 self.posX = self.posX + lin_v/FRAME_RATE * cosTheta
                                 self.posY = self.posY + lin_v/FRAME_RATE * sinTheta
                             else:
-                                velbyom = lin_v / ang_v
-                                self.posTh = self.posTh + ang_v / FRAME_RATE
+                                velbyom = lin_v / omega
+                                self.posTh = self.posTh + omega / FRAME_RATE
                                 self.posX = self.posX + velbyom * (math.sin(self.posTh) - sinTheta)
                                 self.posY = self.posY - velbyom * (math.cos(self.posTh) - cosTheta)
 

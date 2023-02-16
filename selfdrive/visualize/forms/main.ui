@@ -1415,7 +1415,7 @@ border-color: rgb(71,181,255);</string>
 color:rgb(0,10,20);</string>
               </property>
               <property name="text">
-               <string>▲</string>
+               <string/>
               </property>
               <property name="alignment">
                <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -1463,10 +1463,10 @@ color:rgb(0,10,20);</string>
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: rgb(88, 93, 99); color: rgb(88, 93, 99);</string>
+               <string notr="true"/>
               </property>
               <property name="text">
-               <string>▲</string>
+               <string>30m</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1514,10 +1514,10 @@ color:rgb(0,10,20);</string>
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: rgb(88, 93, 99); color: rgb(88, 93, 99);</string>
+               <string notr="true"/>
               </property>
               <property name="text">
-               <string>▲</string>
+               <string>15m</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1565,10 +1565,10 @@ color:rgb(0,10,20);</string>
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: rgb(88, 93, 99); color: rgb(88, 93, 99);</string>
+               <string notr="true"/>
               </property>
               <property name="text">
-               <string>▲</string>
+               <string>7m</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1609,14 +1609,21 @@ color:rgb(0,10,20);</string>
                 <height>76</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>50</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
-               <string/>
+               <string>⬛️</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -1653,14 +1660,21 @@ border-color: rgb(88, 93, 99);</string>
                 <height>76</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>50</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
-               <string/>
+               <string>⬛️</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -1699,20 +1713,16 @@ border-color: rgb(88, 93, 99);</string>
               </property>
               <property name="font">
                <font>
-                <pointsize>60</pointsize>
+                <pointsize>50</pointsize>
                 <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);
-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(51,196,136);</string>
               </property>
               <property name="text">
-               <string>⬅</string>
+               <string>⬛️</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1752,14 +1762,21 @@ color: rgb(88, 93, 99);</string>
                 <height>76</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>50</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border:3px;
-border-style:solid;
-border-radius:38px;
-border-color: rgb(88, 93, 99);</string>
+               <string notr="true">color: rgb(88, 93, 99);</string>
               </property>
               <property name="text">
-               <string/>
+               <string>⬛️</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -3808,7 +3825,7 @@ Long</string>
          </sizepolicy>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">background-color:rgb(239,114,122)</string>
         </property>
         <property name="text">
          <string>Disable</string>

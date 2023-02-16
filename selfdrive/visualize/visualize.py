@@ -52,6 +52,8 @@ class MainWindow(QMainWindow, form_class):
         self.record_list_file = "{}/record_list.txt".format(dir_path)
         self.rosbag_proc = None
 
+        self.goal_lat , self.goal_lng, self.goal_alt = 0,0,0
+
         rospy.Subscriber('/move_base_simple/single_goal',
                          PoseStamped, self.goal_cb)
         rospy.Subscriber('/mobinha/control/wheel_angle',

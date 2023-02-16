@@ -72,26 +72,27 @@ class IoniqTransceiver():
             if steer['current'] < self.wheel_angle:
                 for i in range(int(steer['current']), self.wheel_angle, steer['step']):
                     self.steer_angle =  i/10
-                    time.sleep(0.05)
+                    # time.sleep(0.05)
                     steer['current'] = i
             else:
                 for i in range(int(steer['current']), self.wheel_angle, -steer['step']):
                     self.steer_angle = i/10
-                    time.sleep(0.05)
+                    # time.sleep(0.05)
                     steer['current'] = i
             steer['busy'] = False
             self.wheel = steer
         else:
             return
 
-    def accel_brake_cmd(self, msg):
+    def accel_brake_cmd(self, msg): # pid output is m/s^2 -10 ~ 10
         val_data = max(-10, min(10, msg.data))
+        gain = 3
         if val_data > 0.:
-            self.accel_val = val_data * 10.0
+            self.accel_val = val_data * gain
             self.brake_val = 0.0
         elif val_data <= 0.:
             self.accel_val = 0.0
-            self.brake_val = val_data * -10.0
+            self.brake_val = val_data * -gain
             if self.target_v == 0.0 and self.rcv_velocity < 1:
             # if self.rcv_velocity < 1:
                 self.brake_val = 20.

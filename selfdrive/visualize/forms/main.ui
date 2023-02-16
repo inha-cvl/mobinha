@@ -2556,12 +2556,12 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
-          <string>campus</string>
+          <string>songdo</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>songdo</string>
+          <string>campus</string>
          </property>
         </item>
         <item>

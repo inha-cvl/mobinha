@@ -48,7 +48,7 @@ class IONIQ:
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
         car_param_lateral_tuning_lqr["l"] = 3.0  # Lfc, look-ahead distance
-        car_param_lateral_tuning_lqr["k"] = 0.85  # k, look forward gain
+        car_param_lateral_tuning_lqr["k"] = 1.5  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(

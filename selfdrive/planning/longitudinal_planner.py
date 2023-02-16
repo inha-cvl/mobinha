@@ -19,7 +19,7 @@ MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
 
-VIZ_GRAPH = False
+VIZ_GRAPH = True
 
 
 class LongitudinalPlanner:
@@ -96,7 +96,7 @@ class LongitudinalPlanner:
     def velocity_plan(self, cur_v, ref_v, max_v, last_s, s, object_list):
         # cur_v : m/s
         # s = 0.5m
-        ref_v *= KPH_TO_MPS
+        # ref_v *= KPH_TO_MPS
         s_min, s_max, t_max = self.st_param['sMin'], self.st_param['sMax'], self.st_param['tMax']
         dt, dt_exp = self.st_param['dt'], self.st_param['dtExp']
 
@@ -190,25 +190,25 @@ class LongitudinalPlanner:
                 if skip:
                     continue
 
-                neighbor = (t_exp, s_exp, v_exp)
-                cost_to_neighbor = node_total_cost - goal_cost(d_node)
-                heurestic = goal_cost((t_exp, s_exp, v_exp))
-                total_cost = heurestic + cost_to_neighbor
+            neighbor = (t_exp, s_exp, v_exp)
+            cost_to_neighbor = node_total_cost - goal_cost(d_node)
+            heurestic = goal_cost((t_exp, s_exp, v_exp))
+            total_cost = heurestic + cost_to_neighbor
 
-                skip = False
-                found_lower_cost_path_in_open = False
+            skip = False
+            found_lower_cost_path_in_open = False
 
-                if neighbor in open_dict:
-                    if total_cost > open_dict[neighbor][0]:
-                        skip = True
-                    elif neighbor in visited_dict:
-                        if total_cost > visited_dict[neighbor][0]:
-                            found_lower_cost_path_in_open = True
+            if neighbor in open_dict:
+                if total_cost > open_dict[neighbor][0]:
+                    skip = True
+                elif neighbor in visited_dict:
+                    if total_cost > visited_dict[neighbor][0]:
+                        found_lower_cost_path_in_open = True
 
-                # if new node is better than parent
-                if skip == False and found_lower_cost_path_in_open == False:
-                    hq.heappush(open_heap, (total_cost, neighbor))
-                    open_dict[neighbor] = (total_cost, neighbor, d_node)
+            # if new node is better than parent
+            if skip == False and found_lower_cost_path_in_open == False:
+                hq.heappush(open_heap, (total_cost, neighbor))
+                open_dict[neighbor] = (total_cost, neighbor, d_node)
 
         return target_v
 
@@ -256,6 +256,7 @@ class LongitudinalPlanner:
                 local_path, (CS.position.x, CS.position.y))
             local_max_v, tx, ty = max_v_by_curvature(
                 local_path, l_idx, self.ref_v, CS.yawRate)
+            # local_max_v = self.ref_v *KPH_TO_MPS
             object_list = self.check_objects(len(local_path))
             self.target_v = self.velocity_plan(
                 CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)

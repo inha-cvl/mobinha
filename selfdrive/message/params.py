@@ -30,17 +30,17 @@ class IONIQ:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 3  # min_v
-        car_param_dict["maxEnableSpeed"] = 50  # ref_v
+        car_param_dict["maxEnableSpeed"] = 30  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 3.00  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
-        car_param_dict["steerRatio"] = 13.73
+        car_param_dict["steerRatio"] = 13.5
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 0.75  # K_P
-        car_param_longitudinal_tuning["kiV"] = 0.15  # K_I
-        car_param_longitudinal_tuning["kf"] = 0.06  # K_D
+        car_param_longitudinal_tuning["kpV"] = 2.98  # K_P
+        car_param_longitudinal_tuning["kiV"] = 2.38  # K_I
+        car_param_longitudinal_tuning["kf"] = 0.00  # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 

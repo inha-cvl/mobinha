@@ -37,7 +37,7 @@ class Transceiver:
                 can.run()
             elif self.state == 'OVER':
                 return 1
-            time.sleep(timer)
+            # time.sleep(timer)
 
     def init(self):
         self.need_init = False

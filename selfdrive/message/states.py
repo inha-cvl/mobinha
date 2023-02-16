@@ -13,11 +13,6 @@ CS = car_state.CarState()
 
 class StateMaster:
     def __init__(self, CP):
-        rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
-        rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
-        rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
-        rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
-        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
 
         self.CS = CS
         self.base_lla = [CP.mapParam.baseLatitude,
@@ -36,6 +31,12 @@ class StateMaster:
         self.gear = 0
         self.mode = 0
         self.blinker = 0
+
+        rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
+        rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
+        rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
+        rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
+        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
 
     def novatel_cb(self, msg):
         self.latitude = msg.latitude

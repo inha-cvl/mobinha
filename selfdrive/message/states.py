@@ -42,11 +42,12 @@ class StateMaster:
         self.longitude = msg.longitude
         self.altitude = msg.height
         self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, msg.height, self.base_lla[0], self.base_lla[1], self.base_lla[2])
-        self.roll = math.degrees(msg.roll)
-        self.pitch = math.degrees(msg.pitch)
-        self.yaw = msg.azimuth
-        #90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
+            msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+        self.roll = msg.roll
+        self.pitch = msg.pitch
+        self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
+        # msg.azimuth
+        # 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
 
     def velocity_cb(self, msg):
         self.v = msg.data

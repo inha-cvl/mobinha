@@ -107,7 +107,7 @@ class DistanceMeasurment:
                             sinTheta = math.sin(self.posTh)
                             cosTheta = math.cos(self.posTh)
 
-                            if -10<ang_v<10:
+                            if ang_v==0:
                                 self.posX = self.posX + lin_v/FRAME_RATE * cosTheta
                                 self.posY = self.posY + lin_v/FRAME_RATE * sinTheta
                             else:
@@ -116,14 +116,14 @@ class DistanceMeasurment:
                                 self.posX = self.posX + velbyom * (math.sin(self.posTh) - sinTheta)
                                 self.posY = self.posY - velbyom * (math.cos(self.posTh) - cosTheta)
 
-                            plt.scatter(self.posX, self.posY, color = 'green', s=10, alpha=0.5)
+                            # plt.scatter(self.posX, self.posY, color = 'green', s=10, alpha=0.5)
 
                             self.pose_x = dx*math.cos(self.pose_th) - dy*math.sin(self.pose_th) + self.pose_x
                             self.pose_y = dx*math.sin(self.pose_th) + dy*math.cos(self.pose_th) + self.pose_y
                             self.pose_th += dth
 
-                            plt.scatter(self.pose_x, self.pose_y, color = 'red', s=10, alpha=0.5)
-                            plt.pause(0.02)
+                            # plt.scatter(self.pose_x, self.pose_y, color = 'red', s=10, alpha=0.5)
+                            # plt.pause(0.02)
 
                             self.prev_pls_RL = self.pls_RL
                             self.prev_pls_RR = self.pls_RR
@@ -192,10 +192,10 @@ if __name__ == '__main__':
         '2wheel_x':[DM.pose_x], '2wheel_y':[DM.pose_y], 'bicycle_x':[DM.posX], 'bicycle_y':[DM.posY], 'pulse_L':[DM.diff_enc_cnt_L], 'pulse_R':[DM.diff_enc_cnt_R], 'avg_tire_ang':[DM.str_ang/STEERRATIO]}
         df = pd.DataFrame(data)
 
-        if not os.path.exists('./encoder_odom.csv'):
-            df.to_csv('./encoder_odom.csv', index=False, mode='w', header=True)
+        if not os.path.exists('./4.csv'):
+            df.to_csv('./4.csv', index=False, mode='w', header=True)
         else:
-            df.to_csv('./encoder_odom.csv', index=False, mode='a', header=False)
+            df.to_csv('./4.csv', index=False, mode='a', header=False)
 
     # plt.show()
     rospy.spin()

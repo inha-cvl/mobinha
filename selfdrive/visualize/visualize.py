@@ -39,7 +39,9 @@ class MainWindow(QMainWindow, form_class):
 
         self.CP = None
         self.CS = None
+        self.CC = None
         self.sm = None
+        self.cm = None
         self.imu_widget = None
         self.system_state = False
         self.over_cnt = 0
@@ -52,12 +54,10 @@ class MainWindow(QMainWindow, form_class):
         self.record_list_file = "{}/record_list.txt".format(dir_path)
         self.rosbag_proc = None
 
-        self.goal_lat , self.goal_lng, self.goal_alt = 0,0,0
+        self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
 
         rospy.Subscriber('/move_base_simple/single_goal',
                          PoseStamped, self.goal_cb)
-        rospy.Subscriber('/mobinha/control/wheel_angle',
-                         Float32, self.wheel_angle_cb)
         rospy.Subscriber('/mobinha/planning/target_v',
                          Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning_state',
@@ -109,6 +109,7 @@ class MainWindow(QMainWindow, form_class):
             sys.modules[__name__], self.car_name)(self.map_name)
         self.CP = car_class.CP
         self.sm = StateMaster(self.CP)
+        self.cm = ControlMaster()
         # setting button
         self.pause_button.setDisabled(True)
 
@@ -181,7 +182,9 @@ class MainWindow(QMainWindow, form_class):
                     scenario_goal = self.get_scenario_goal_msg()
                     self.pub_scenario_goal.publish(scenario_goal)
                 self.sm.update()
+                self.cm.update()
                 self.CS = self.sm.CS
+                self.CC = self.cm.CC
                 self.display()
             elif self.state == 'OVER':
                 self.over_cnt += 1
@@ -282,10 +285,6 @@ class MainWindow(QMainWindow, form_class):
 
     def map_name_changed(self, map_idx):
         self.map_name = str(self.map_name_combo_box.currentText())
-
-    def wheel_angle_cb(self, msg):
-        self.label_target_yaw.setText(
-            str(round(float(msg.data*self.CP.steerRatio)+self.CS.yawRate, 5))+" deg")
 
     def target_v_cb(self, msg):
         self.label_target_v.setText(
@@ -458,7 +457,7 @@ class MainWindow(QMainWindow, form_class):
 
     def cmd_button_clicked(self, idx):
         self.can_cmd = idx
-        for i in range(1,4):
+        for i in range(1, 4):
             if i == idx:
                 continue
             self.can_cmd_buttons[i].setDisabled(True)
@@ -482,8 +481,11 @@ class MainWindow(QMainWindow, form_class):
         self.label_vehicle_vel.setText(
             str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
         self.label_vehicle_yaw.setText(str(round(self.CS.yawRate, 5))+" deg")
+        self.label_target_yaw.setText(
+            str(round(float(self.CC.actuators.steer*self.CP.steerRatio)+self.CS.yawRate, 5))+" deg")
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
+
             self.imu_widget.updateRP(
                 self.CS.rollRate, self.CS.pitchRate, self.CS.yawRate)
             self.gps_latitude_label.setText(
@@ -498,24 +500,25 @@ class MainWindow(QMainWindow, form_class):
                 str(self.CS.position.y))
             self.gps_z_label.setText(
                 str(self.CS.position.z))
-            error = 100-self.CS.position.accuracy
-            self.gps_error_label.setText(str((error)))
-            fixed = "True" if self.CS.position.accuracy > 70 else "False"
-            self.gps_fixed_label.setText(fixed)
             self.imu_angle_label.setText("Y: {}".format(
                 self.CS.yawRate))
             self.imu_angle_label_2.setText("P: {}".format(
                 self.CS.pitchRate))
             self.imu_angle_label_3.setText("R: {}".format(
                 self.CS.rollRate))
-            # self.imu_orientation_label
-            # self.imu_angular_velocity_label
-            # self.imu_linear_velocity_label
             self.car_velocity_label.setText(
                 str(float(round(self.CS.vEgo*MPH_TO_KPH)))+" km/h")
 
+            mode_string = "Manual" if self.can_cmd != 1 else "Auto"
+            self.target_mode_label.setText(mode_string)
+            mode_string = "Manual" if self.CS.cruiseState != 1 else "Auto"
+            self.car_mode_label.setText(mode_string)
+            self.target_steer_angle_label.setText(str(self.CC.actuators.steer))
+            self.target_accel_label.setText(str(self.CC.actuators.accel))
+            self.target_brake_label.setText(str(self.CC.actuators.brake))
+
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            mode_string = "Manual Mode" if self.can_cmd != 1 else "Auto Mode"
+            mode_string = "Manual Mode" if self.CS.cruiseState != 1 else "Auto Mode"
             self.info_mode_label.setText(mode_string)
             self.info_velocity_label.setText(
                 str(int(round(self.CS.vEgo*MPH_TO_KPH))))

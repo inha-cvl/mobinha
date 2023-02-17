@@ -28,7 +28,6 @@ class IoniqTransceiver():
             '/mobinha/car/gear', Int8, queue_size=1)
         self.pub_mode = rospy.Publisher(
             '/mobinha/car/mode', Int8, queue_size=1)
-        rospy.Subscriber('/mobinha/visualize/can_cmd', Int8, self.can_cmd)
         rospy.Subscriber(
             '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cmd)
         rospy.Subscriber(
@@ -50,17 +49,16 @@ class IoniqTransceiver():
     def target_v_cb(self, msg):
         self.target_v = msg.data
 
-    def can_cmd(self, msg):
-        data = msg.data
+    def can_cmd(self, canCmd):
         state = self.control_state
-        if data == 0:  # Full disable
+        if canCmd.disable:  # Full disable
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-        elif data == 1:  # Full
+        elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
             self.reset = 1
-        elif data == 2:  # Only Lateral
+        elif canCmd.latActive:  # Only Lateral
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
-        elif data == 3:  # Only Longitudinal
+        elif canCmd.longActive:  # Only Longitudinal
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
         self.control_state = state
 
@@ -71,7 +69,7 @@ class IoniqTransceiver():
             steer['busy'] = True
             if steer['current'] < self.wheel_angle:
                 for i in range(int(steer['current']), self.wheel_angle, steer['step']):
-                    self.steer_angle =  i/10
+                    self.steer_angle = i/10
                     # time.sleep(0.05)
                     steer['current'] = i
             else:
@@ -84,7 +82,7 @@ class IoniqTransceiver():
         else:
             return
 
-    def accel_brake_cmd(self, msg): # pid output is m/s^2 -10 ~ 10
+    def accel_brake_cmd(self, msg):  # pid output is m/s^2 -10 ~ 10
         val_data = max(-10, min(10, msg.data))
         gain = 3
         if val_data > 0.:
@@ -94,7 +92,7 @@ class IoniqTransceiver():
             self.accel_val = 0.0
             self.brake_val = val_data * -gain
             if self.target_v == 0.0 and self.rcv_velocity < 1:
-            # if self.rcv_velocity < 1:
+                # if self.rcv_velocity < 1:
                 self.brake_val = 20.
 
     def receiver(self):
@@ -136,7 +134,7 @@ class IoniqTransceiver():
                 self.pub_mode.publish(Int8(mode))
             if (data.arbitration_id == 641):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                plsRR=res['WHL_PlsRRVal']
+                plsRR = res['WHL_PlsRRVal']
                 # print(plsRR)
 
         except Exception as e:
@@ -164,7 +162,8 @@ class IoniqTransceiver():
     def cleanup(self):
         self.bus.shutdown()
 
-    def run(self):
+    def run(self, CM):
+        self.can_cmd(CM.CC.canCmd)
         if self.timer(0.02):
             self.ioniq_control()
         self.receiver()

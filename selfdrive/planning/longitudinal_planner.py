@@ -33,7 +33,7 @@ class LongitudinalPlanner:
         self.min_v = CP.minEnableSpeed
         self.ref_v = CP.maxEnableSpeed
         self.wheel_base = CP.wheelbase
-        self.target_v = 0
+        self.target_v = self.min_v*KPH_TO_MPS
         self.st_param = CP.stParam._asdict()
         self.cc_param = CP.ccParam._asdict()
         self.precision = CP.mapParam.precision
@@ -80,7 +80,7 @@ class LongitudinalPlanner:
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
         obs_time = [5, self.st_param['tMax'], 7]  # sec
-        offset = [6+(cur_v*obs_time[i]), 1, 5]  # m
+        offset = [6+(cur_v*obs_time[i]), 5, 7]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
 
@@ -96,10 +96,8 @@ class LongitudinalPlanner:
     def velocity_plan(self, cur_v, ref_v, max_v, last_s, s, object_list):
         # cur_v : m/s
         # s = 0.5m
-        # ref_v *= KPH_TO_MPS
         s_min, s_max, t_max = self.st_param['sMin'], self.st_param['sMax'], self.st_param['tMax']
         dt, dt_exp = self.st_param['dt'], self.st_param['dtExp']
-
         target_v = ref_v
         s += 3.0  # loof a little b it forward
 
@@ -117,7 +115,7 @@ class LongitudinalPlanner:
             obstacles.append(obs)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############
-        start = (0.0, s, cur_v)  # t, s, v
+        start = (0.0, s, target_v)  # t, s, v 
         open_heap = []
         open_dict = {}
         visited_dict = {}
@@ -130,6 +128,7 @@ class LongitudinalPlanner:
         hq.heappush(open_heap, (0 + goal_cost(start), start))
         open_dict[start] = (0 + goal_cost(start), start, start)
 
+        test_i = 0
         while len(open_heap) > 0:
             d_node = open_heap[0][1]  # (t,s,v), parent
             node_total_cost = open_heap[0][0]  # last_s - s
@@ -167,14 +166,12 @@ class LongitudinalPlanner:
             hq.heappop(open_heap)
 
             # push
-            for a in [-1.5, 0.0, 1.5]:
+            for a in [-3.0, -1.5, 0.0, 1.5]:
                 t_exp, s_exp, v_exp = d_node
 
                 skip = False
                 for _ in range(int(dt_exp // dt + 1)):  # range(5), dtExp= 1.0, dt = 0.2
-                    if skip:
-                        break
-                    t_exp = round((t_exp+dt), 1)
+                    t_exp += dt
                     s_exp += (v_exp * dt) * M_TO_IDX
                     v_exp += a * dt
 
@@ -190,26 +187,26 @@ class LongitudinalPlanner:
                 if skip:
                     continue
 
-            neighbor = (t_exp, s_exp, v_exp)
-            cost_to_neighbor = node_total_cost - goal_cost(d_node)
-            heurestic = goal_cost((t_exp, s_exp, v_exp))
-            total_cost = heurestic + cost_to_neighbor
+                neighbor = (t_exp, s_exp, v_exp)
+                cost_to_neighbor = node_total_cost - goal_cost(d_node)
+                heurestic = goal_cost((t_exp, s_exp, v_exp))
+                total_cost = heurestic + cost_to_neighbor
 
-            skip = False
-            found_lower_cost_path_in_open = False
+                skip = False
+                found_lower_cost_path_in_open = False
 
-            if neighbor in open_dict:
-                if total_cost > open_dict[neighbor][0]:
-                    skip = True
-                elif neighbor in visited_dict:
-                    if total_cost > visited_dict[neighbor][0]:
-                        found_lower_cost_path_in_open = True
+                if neighbor in open_dict:
+                    if total_cost > open_dict[neighbor][0]:
+                        skip = True
+                    elif neighbor in visited_dict:
+                        if total_cost > visited_dict[neighbor][0]:
+                            found_lower_cost_path_in_open = True
 
-            # if new node is better than parent
-            if skip == False and found_lower_cost_path_in_open == False:
-                hq.heappush(open_heap, (total_cost, neighbor))
-                open_dict[neighbor] = (total_cost, neighbor, d_node)
-
+                # if new node is better than parent
+                if skip == False and found_lower_cost_path_in_open == False:
+                    hq.heappush(open_heap, (total_cost, neighbor))
+                    open_dict[neighbor] = (total_cost, neighbor, d_node)
+            test_i+=1
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):

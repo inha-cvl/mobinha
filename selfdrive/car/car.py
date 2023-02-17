@@ -11,7 +11,6 @@ from selfdrive.message.messaging import *
 from selfdrive.car.simulator_transceiver import SimulatorTransceiver
 from selfdrive.car.morai_transceiver import MoraiTransceiver
 from selfdrive.car.ioniq_transceiver import IoniqTransceiver
-from selfdrive.car.niro_transceiver import NiroTransceiver
 
 
 def signal_handler(sig, frame):
@@ -28,22 +27,25 @@ class Transceiver:
     def transceiver(self):
         can = None
         timer = 0.1
+        cm = None
         while True:
             if self.state == 'INITIALIZE':
                 if self.need_init:
-                    can, timer = self.init()
+                    cm, can, timer = self.init()
             elif self.state == 'START':
                 self.need_init = True
-                can.run()
+                cm.update()
+                can.run(cm)
             elif self.state == 'OVER':
                 return 1
-            # time.sleep(timer)
+            time.sleep(timer)
 
     def init(self):
         self.need_init = False
         car = rospy.get_param('car_name', None)
         map = rospy.get_param('map_name', None)
         CP = (getattr(sys.modules[__name__], car)(map)).CP
+        cm = ControlMaster()
         timer = 0.1
         if car == "SIMULATOR":
             can = SimulatorTransceiver(CP)
@@ -51,10 +53,8 @@ class Transceiver:
             can = MoraiTransceiver()
         elif car == "IONIQ":
             can = IoniqTransceiver(CP)
-            timer = 0.02
-        else:
-            can = NiroTransceiver(CP)
-        return can, timer
+            timer = 0
+        return cm, can, timer
 
     def state_cb(self, msg):
         if self.state != str(msg.data):

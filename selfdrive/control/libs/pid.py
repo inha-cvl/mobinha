@@ -20,7 +20,12 @@ class PID:
         diff_error = error - self.pre_error
         self.pre_error = error
         self.error_sum += error
-        if -5 < self.error_sum < 5:
-            self.error_sum = 0
-        return self.K_P*error + self.K_D*diff_error/self.dt + \
+        if self.error_sum < -5:
+            self.error_sum = -5
+        elif self.error_sum > 5:
+            self.error_sum = 5
+        
+        pid = self.K_P*error + self.K_D*diff_error/self.dt + \
         self.K_I*self.error_sum*self.dt
+        
+        return pid

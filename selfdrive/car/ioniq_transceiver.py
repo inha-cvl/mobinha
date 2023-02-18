@@ -18,7 +18,8 @@ class IoniqTransceiver():
         self.CP = CP
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
-        self.steer_angle = 0.
+        self.target_steer = 0.
+        self.temp_steer = 0.
         self.reset = 0
         self.db = cantools.database.load_file(CP.dbc)
 
@@ -53,37 +54,26 @@ class IoniqTransceiver():
         state = self.control_state
         if canCmd.disable:  # Full disable
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+            self.reset = 1
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
             self.reset = 1
         elif canCmd.latActive:  # Only Lateral
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
+            self.reset = 1
         elif canCmd.longActive:  # Only Longitudinal
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
+            self.reset = 1
         self.control_state = state
 
     def wheel_angle_cmd(self, msg):
-        steer = self.wheel
-        self.wheel_angle = int(msg.data) * 10
-        if not steer['busy']:
-            steer['busy'] = True
-            if steer['current'] < self.wheel_angle:
-                for i in range(int(steer['current']), self.wheel_angle, steer['step']):
-                    self.steer_angle = i/10
-                    # time.sleep(0.05)
-                    steer['current'] = i
-            else:
-                for i in range(int(steer['current']), self.wheel_angle, -steer['step']):
-                    self.steer_angle = i/10
-                    # time.sleep(0.05)
-                    steer['current'] = i
-            steer['busy'] = False
-            self.wheel = steer
-        else:
-            return
-
+        self.target_steer = msg.data        
+        #TODO: lateral pid 
+        # steer_dt = self.temp_steer-self.target_
+        # for i in range(5):
+            
     def accel_brake_cmd(self, msg):  # pid output is m/s^2 -10 ~ 10
-        val_data = max(-10, min(10, msg.data))
+        val_data = max(-4, min(4, msg.data))
         gain = 3
         if val_data > 0.:
             self.accel_val = val_data * gain
@@ -92,7 +82,6 @@ class IoniqTransceiver():
             self.accel_val = 0.0
             self.brake_val = val_data * -gain
             if self.target_v == 0.0 and self.rcv_velocity < 1:
-                # if self.rcv_velocity < 1:
                 self.brake_val = 20.
 
     def receiver(self):
@@ -136,12 +125,16 @@ class IoniqTransceiver():
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 plsRR = res['WHL_PlsRRVal']
                 # print(plsRR)
+            
+            if(data.arbitration_id == 656):
+                res = self.db.decode_message(data.arbitration_id, data.data)
+                self.temp_steer = res['Gway_Steering_Angle']
 
         except Exception as e:
             print(e)
 
     def ioniq_control(self):
-        signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.steer_angle * self.CP.steerRatio,
+        signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_steer*self.CP.steerRatio,
                    'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.brake_val, 'Target_Accel': self.accel_val, 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)

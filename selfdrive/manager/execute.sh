@@ -1,7 +1,7 @@
 #!/bin/bash
-python ../visualize/visualize.py 2> >(grep -v TF_REPEATED_DATA) &
+python3 ../visualize/visualize.py 2> >(grep -v TF_REPEATED_DATA) &
 sleep 3
-python ../car/car.py &
-python ../control/control.py &
-python ../planning/planning.py &
-python ../perception/perception.py 
+python3 ../car/car.py &
+python3 ../control/control.py &
+python3 ../planning/planning.py &
+python3 ../perception/perception.py 

@@ -52,7 +52,8 @@ class LongitudinalPlanner:
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',
                          PoseArray, self.traffic_light_obstacle_cb)
-        rospy.Subscriber('/mobinha/planning/lane_information', Pose, self.lane_information_cb)
+        rospy.Subscriber('/mobinha/planning/lane_information',
+                         Pose, self.lane_information_cb)
         rospy.Subscriber(
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
@@ -67,10 +68,11 @@ class LongitudinalPlanner:
     def traffic_light_obstacle_cb(self, msg):
         self.traffic_light_obstacle = [
             (pose.position.x, pose.position.y, pose.position.z) for pose in msg.poses]
-    
+
     def lane_information_cb(self, msg):
         # id, forward_direction, cross_walk distance
-        self.lane_information = [msg.position.x, msg.position.y, msg.position.z]
+        self.lane_information = [msg.position.x,
+                                 msg.position.y, msg.position.z]
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
@@ -80,12 +82,12 @@ class LongitudinalPlanner:
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
         obs_time = [5, self.st_param['tMax'], 7]  # sec
-        offset = [6+(cur_v*obs_time[i]), 5, 7]  # m
+        offset = [6+(cur_v*obs_time[i]), 5+(cur_v), 15]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
 
-        polygon = [(0.0, pos-offset[i]), (obs_time[i], pos-offset[i]),
-                   (obs_time[i], pos+offset[i]), (0.0, pos+offset[i])]
+        polygon = [(0.0, pos-2*offset[i]), (obs_time[i], pos-2*offset[i]),
+                   (obs_time[i], pos), (0.0, pos)]
 
         if VIZ_GRAPH:
             draw = self.ax.add_patch(patches.Polygon(
@@ -115,7 +117,7 @@ class LongitudinalPlanner:
             obstacles.append(obs)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############
-        start = (0.0, s, target_v)  # t, s, v 
+        start = (0.0, s, cur_v)  # t, s, v
         open_heap = []
         open_dict = {}
         visited_dict = {}
@@ -133,7 +135,6 @@ class LongitudinalPlanner:
             d_node = open_heap[0][1]  # (t,s,v), parent
             node_total_cost = open_heap[0][0]  # last_s - s
             visited_dict[d_node] = open_dict[d_node]
-
             # get final trajectory
             # time is bigger than 8 sec or s(longitudinal distance) is bigger than 50
             if d_node[0] > t_max or d_node[1] > s + s_max:
@@ -166,16 +167,17 @@ class LongitudinalPlanner:
             hq.heappop(open_heap)
 
             # push
-            for a in [-3.0, -1.5, 0.0, 1.5]:
+
+            for a in [-15.0, -3.0, -1.5, 0.0, 1.5]:
                 t_exp, s_exp, v_exp = d_node
 
                 skip = False
                 for _ in range(int(dt_exp // dt + 1)):  # range(5), dtExp= 1.0, dt = 0.2
-                    t_exp += dt
+                    t_exp = round(t_exp+dt, 1)
                     s_exp += (v_exp * dt) * M_TO_IDX
                     v_exp += a * dt
 
-                    if v_exp < 0.0 or v_exp > max_v:
+                    if v_exp > max_v:
                         skip = True
                         break
 
@@ -184,34 +186,38 @@ class LongitudinalPlanner:
                         if point.within(Polygon(obstacle)):
                             skip = True
                             break
-                if skip:
-                    continue
+
+                # if skip:
+                #     continue
 
                 neighbor = (t_exp, s_exp, v_exp)
                 cost_to_neighbor = node_total_cost - goal_cost(d_node)
-                heurestic = goal_cost((t_exp, s_exp, v_exp))
+                heurestic = goal_cost(neighbor)
                 total_cost = heurestic + cost_to_neighbor
 
-                skip = False
-                found_lower_cost_path_in_open = False
+                # not_low_cost = False
+                # found_lower_cost_path_in_open = False
 
-                if neighbor in open_dict:
-                    if total_cost > open_dict[neighbor][0]:
-                        skip = True
-                    elif neighbor in visited_dict:
-                        if total_cost > visited_dict[neighbor][0]:
-                            found_lower_cost_path_in_open = True
+                # if neighbor in open_dict:
+                #     if total_cost > open_dict[neighbor][0]:
+                #         not_low_cost = True
+                #     elif neighbor in visited_dict:
+                #         if total_cost > visited_dict[neighbor][0]:
+                #             found_lower_cost_path_in_open = True
 
-                # if new node is better than parent
-                if skip == False and found_lower_cost_path_in_open == False:
-                    hq.heappush(open_heap, (total_cost, neighbor))
-                    open_dict[neighbor] = (total_cost, neighbor, d_node)
-            test_i+=1
+                # if not_low_cost == False and found_lower_cost_path_in_open == False:
+                hq.heappush(open_heap, (total_cost, neighbor))
+                open_dict[neighbor] = (total_cost, neighbor, d_node)
+
+                if skip:
+                    break
+
+            test_i += 1
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
         # straight, turn_left, turn_right, left_change, right_change, u-turn
-        #TODO: consideration filtering
+        # TODO: consideration filtering
         consideration_class_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
             6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
         if traffic_light in consideration_class_list[forward_direction]:
@@ -235,8 +241,7 @@ class LongitudinalPlanner:
                 object_list.append(
                     [self.goal_object[0], left, 0])
 
-        # TODO: Add Traffic Light
-        #[2] = Traffic Light
+        # [2] = Traffic Light
         if self.traffic_light_obstacle is not None:
             for tlobs in self.traffic_light_obstacle:
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
@@ -251,9 +256,8 @@ class LongitudinalPlanner:
         if local_path is not None:
             l_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
-            local_max_v, tx, ty = max_v_by_curvature(
+            local_max_v, curvature, tx, ty = max_v_by_curvature(
                 local_path, l_idx, self.ref_v, CS.yawRate)
-            # local_max_v = self.ref_v *KPH_TO_MPS
             object_list = self.check_objects(len(local_path))
             self.target_v = self.velocity_plan(
                 CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)
@@ -271,6 +275,7 @@ class LongitudinalPlanner:
                     pose = Pose()
                     pose.position.x = x
                     pose.position.y = ty[i]
+                    pose.position.z = curvature
                     trajectory.poses.append(pose)
                 self.pub_trajectory.publish(trajectory)
 

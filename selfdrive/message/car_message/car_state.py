@@ -18,6 +18,10 @@ class WheelSpeeds(NamedTuple):
     rr: float = 0.0
 
 
+class Actuators(NamedTuple):
+    brake: float = 0.0
+    steer: float = 0.0
+    accel: float = 0.0
 
 class ButtonEvent(NamedTuple):
     leftBlinker: int = 0
@@ -39,11 +43,7 @@ class CarState(NamedTuple):
     rollRate: float = 0.0
     wheelSpeeds: WheelSpeeds = WheelSpeeds()
 
-    brake: float = 0.0
-    accel: float = 0.0
-
-    steeringAngleDeg: float = 0.0
-    steeringTorque: float = 0.0
+    actuators: Actuators = Actuators()
 
     cruiseState: int = 0 # 0:Manual,1:Auto
 

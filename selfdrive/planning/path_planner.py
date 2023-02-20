@@ -50,8 +50,6 @@ class PathPlanner:
             '/mobinha/planning/blinker', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher(
             '/mobinha/planning/goal_information', Pose, queue_size=1)
-        self.pub_forward_direction = rospy.Publisher(
-            '/mobinha/planning/forward_direction', Int8, queue_size=1)
         self.pub_forward_path = rospy.Publisher(
             '/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher(
@@ -95,6 +93,7 @@ class PathPlanner:
     def returnAppendedNonIntpPath(self):
         appended_non_intp_path = []
         appended_non_intp_id = []
+        appended_head_lane_ids = []
         goal_pt = None
 
         for pt in self.goal_pts:
@@ -156,13 +155,16 @@ class PathPlanner:
 
             appended_non_intp_path.extend(non_intp_path)
             appended_non_intp_id.extend(non_intp_id)
+            appended_head_lane_ids.extend(shortest_path)
 
             self.temp_pt = goal_pt
+
+        appended_head_lane_ids = set_lane_ids(appended_head_lane_ids)
 
         goal_viz = GoalViz(goal_pt)
         self.pub_goal_viz.publish(goal_viz)
 
-        return appended_non_intp_path, appended_non_intp_id
+        return appended_non_intp_path, appended_non_intp_id, appended_head_lane_ids
 
     def run(self, sm):
         CS = sm.CS
@@ -177,6 +179,7 @@ class PathPlanner:
         elif self.state == 'READY':
             non_intp_path = None
             non_intp_id = None
+            head_lane_ids = None
             self.local_path = None
             self.temp_global_idx = 0
             self.l_idx = 0
@@ -185,7 +188,7 @@ class PathPlanner:
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
-            non_intp_path, non_intp_id = self.returnAppendedNonIntpPath()
+            non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath()
             if non_intp_path == None and non_intp_id == None:
                 pass
             if non_intp_path is not None:
@@ -196,6 +199,18 @@ class PathPlanner:
                 self.global_path = global_path
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
+                self.head_lane_ids = head_lane_ids
+
+                if len(head_lane_ids) > 2:
+                    self.next_head_lane_id = head_lane_ids[1]
+                    self.now_head_lane_id = head_lane_ids[0]
+                elif len(head_lane_ids) == 1:
+                    self.now_head_lane_id = head_lane_ids[0]
+                    self.next_head_lane_id = head_lane_ids[0]
+                else:
+                    self.next_head_lane_id = None
+                    self.now_head_lane_id = None
+
                 self.erase_global_path = global_path
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
@@ -213,6 +228,15 @@ class PathPlanner:
             n_id = calc_idx(
                 self.non_intp_path, (CS.position.x, CS.position.y))
             now_lane_id = self.non_intp_id[n_id]
+            splited_id = now_lane_id.split('_')[0]
+
+            if splited_id == self.next_head_lane_id:
+                if len(self.head_lane_ids) < 2:
+                    self.now_head_lane_id = self.next_head_lane_id
+                else:
+                    self.now_head_lane_id = self.next_head_lane_id
+                    self.next_head_lane_id = self.head_lane_ids[1]
+                    self.head_lane_ids = self.head_lane_ids[1:]
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 
@@ -242,23 +266,17 @@ class PathPlanner:
                 local_point = KDTree(self.local_path)
                 self.l_idx = local_point.query(
                     (CS.position.x, CS.position.y), 1)[1]
-                splited_id = now_lane_id.split('_')[0]
 
-                erase_idx = self.erase_global_point.query(
-                    (CS.position.x, CS.position.y), 1)[1]
-                forward_direction, forward_path = get_forward_direction(
-                    self.erase_global_path, erase_idx)
-                self.pub_forward_direction.publish(forward_direction)
-                # for visualize
-                forward_path_viz = ForwardPathViz(forward_path)
-                self.pub_forward_path.publish(forward_path_viz)
+                forward_direction = get_forward_direction(
+                    self.lmap.lanelets, self.next_head_lane_id)
 
+                #Pubulish Lane Information
                 cw_s = get_nearest_crosswalk(
                     self.lmap.lanelets, splited_id, local_point)
                 pose = Pose()
                 pose.position.x = int(splited_id)
-                # straight, left, right, l-change, r-change, uturn
-                pose.position.y = forward_direction
+                pose.position.y = get_direction_number(
+                    self.lmap.lanelets, splited_id, forward_direction)
                 pose.position.z = cw_s
                 self.pub_lane_information.publish(pose)
 

@@ -49,6 +49,10 @@ class Controller:
                 self.pub_lah.publish(lah_viz)
 
             accel_brake = self.pid.run(self.target_v, CS.vEgo)
+            if -100 > accel_brake:
+                accel_brake = -100
+            elif accel_brake > 100:
+                accel_brake = 100
 
             self.pub_wheel_angle.publish(Float32(wheel_angle))
             self.pub_accel_brake.publish(Float32(accel_brake))

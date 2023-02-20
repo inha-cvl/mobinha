@@ -3,6 +3,7 @@ import math
 import heapq as hq
 import numpy as np
 import pymap3d as pm
+from scipy.spatial import KDTree
 
 import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
@@ -90,6 +91,23 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
 
     return avoid_path
 
+
+def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
+    crosswalk = []
+    for id_, data in lanelets.items():
+        if id_ == now_lane_id:
+            if len(data['crosswalk']) > 0:
+                crosswalks = data['crosswalk']
+                for arr in crosswalks:
+                    crosswalk.extend(arr)
+    now_cw_idx = math.inf
+
+    for cw_wp in crosswalk:
+        idx = local_point.query(cw_wp, 1)[1]
+        if idx < now_cw_idx:
+            now_cw_idx = idx
+
+    return now_cw_idx
 
 def interpolate(points, precision):
     def filter_same_points(points):

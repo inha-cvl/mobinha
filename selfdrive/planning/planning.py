@@ -2,7 +2,7 @@ import sys
 import signal
 import time
 import threading
-
+import traceback
 import rospy
 from std_msgs.msg import String, Int16MultiArray
 from path_planner import PathPlanner
@@ -101,9 +101,9 @@ def main():
             print("[{}] Over".format(p.__class__.__name__))
             time.sleep(4)
             sys.exit(0)
-    except Exception as e:
+    except Exception:
         p.planning_state = 'BAD'
-        print("[{} Error]".format(p.__class__.__name__), e)
+        print("[{} Error]".format(p.__class__.__name__), traceback.print_exc())
     except KeyboardInterrupt:
         print("[{}] Force Quit".format(p.__class__.__name__))
         sys.exit(0)

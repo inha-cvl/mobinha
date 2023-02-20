@@ -1,5 +1,5 @@
 import rospy
-from std_msgs.msg import Float32, Int8
+from std_msgs.msg import Float32
 from numpy.linalg import norm
 from math import sin, cos, atan2, radians, degrees
 from numpy import abs
@@ -19,17 +19,11 @@ class PurePursuit:
         self.isBank = False
         rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
         rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
-        rospy.Subscriber('/lane_change', Int8, self.lane_change_cb)
-        rospy.Subscriber('/is_bank', Int8, self.bank_cb)
 
         self.k = CP.lateralTuning.lqr.k
         self.Lfc = CP.lateralTuning.lqr.l
         self.k_curva = 20.0
 
-        self.lookahead_monitor = rospy.Publisher(
-            'lookahead_monitor', Float32, queue_size=1)
-        self.steer_monitor = rospy.Publisher(
-            'steer_monitor', Float32, queue_size=1)
         self.cur_curvature = 0.0
 
     def target_lfc_cb(self, msg):
@@ -61,7 +55,7 @@ class PurePursuit:
             if dist < min_dist:
                 min_dist = dist
                 min_idx = idx
-        return min_idx, min_dist
+        return min_idx
 
     def get_local(self, my_x, my_y, yaw, path):
         in_x, in_y = path
@@ -72,7 +66,7 @@ class PurePursuit:
     def run(self, x, y, yaw, v, path):
         yaw = radians(yaw)
 
-        i, cte = self.find_nearest_idx(path, (x, y))
+        i = self.find_nearest_idx(path, (x, y))
 
         step = 10
         if (len(path) - len(path[:i])) > step:
@@ -81,7 +75,6 @@ class PurePursuit:
         else:  # end path
             self.cur_curvature = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-        #print('curva', self.cur_curvature)
         lx, ly = path[i]
 
         v = max(v, 5.0 * self.KPH_TO_MPS)
@@ -115,9 +108,5 @@ class PurePursuit:
 
         # Set min/max
         angle = max(min(angle, 35.0), -35.0)
-
-        # Publish results
-        self.lookahead_monitor.publish(Float32(Lf))
-        self.steer_monitor.publish(Float32(angle))
 
         return angle, (lx, ly)

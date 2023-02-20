@@ -24,15 +24,16 @@ VIZ_GRAPH = False
 
 class LongitudinalPlanner:
     def __init__(self, CP):
-        self.lmap = LaneletMap(CP.mapParam.path)
 
         self.lidar_obstacle = None
+        self.traffic_light_obstacle = None
+        self.lane_information = None
         self.goal_object = None
 
         self.min_v = CP.minEnableSpeed
         self.ref_v = CP.maxEnableSpeed
         self.wheel_base = CP.wheelbase
-        self.target_v = 0
+        self.target_v = self.min_v*KPH_TO_MPS
         self.st_param = CP.stParam._asdict()
         self.cc_param = CP.ccParam._asdict()
         self.precision = CP.mapParam.precision
@@ -49,6 +50,9 @@ class LongitudinalPlanner:
 
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',
+                         PoseArray, self.traffic_light_obstacle_cb)
+        rospy.Subscriber('/mobinha/planning/lane_information', Pose, self.lane_information_cb)
         rospy.Subscriber(
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
@@ -60,6 +64,14 @@ class LongitudinalPlanner:
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
                                for pose in msg.poses]
 
+    def traffic_light_obstacle_cb(self, msg):
+        self.traffic_light_obstacle = [
+            (pose.position.x, pose.position.y, pose.position.z) for pose in msg.poses]
+    
+    def lane_information_cb(self, msg):
+        # id, forward_direction, cross_walk distance
+        self.lane_information = [msg.position.x, msg.position.y, msg.position.z]
+
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
 
@@ -67,8 +79,8 @@ class LongitudinalPlanner:
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
-        obs_time = [5, self.st_param['tMax'], 5]  # sec
-        offset = [6+(cur_v*obs_time[i]), 1, 2]  # m
+        obs_time = [5, self.st_param['tMax'], 7]  # sec
+        offset = [6+(cur_v*obs_time[i]), 5, 7]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
 
@@ -84,12 +96,10 @@ class LongitudinalPlanner:
     def velocity_plan(self, cur_v, ref_v, max_v, last_s, s, object_list):
         # cur_v : m/s
         # s = 0.5m
-        ref_v *= KPH_TO_MPS
         s_min, s_max, t_max = self.st_param['sMin'], self.st_param['sMax'], self.st_param['tMax']
         dt, dt_exp = self.st_param['dt'], self.st_param['dtExp']
-
         target_v = ref_v
-        s += 3.0  # loof a little bit forward
+        s += 3.0  # loof a little b it forward
 
         if VIZ_GRAPH:
             if self.drawn is not None:
@@ -105,7 +115,7 @@ class LongitudinalPlanner:
             obstacles.append(obs)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############
-        start = (0.0, s, cur_v)  # t, s, v
+        start = (0.0, s, target_v)  # t, s, v 
         open_heap = []
         open_dict = {}
         visited_dict = {}
@@ -118,6 +128,7 @@ class LongitudinalPlanner:
         hq.heappush(open_heap, (0 + goal_cost(start), start))
         open_dict[start] = (0 + goal_cost(start), start, start)
 
+        test_i = 0
         while len(open_heap) > 0:
             d_node = open_heap[0][1]  # (t,s,v), parent
             node_total_cost = open_heap[0][0]  # last_s - s
@@ -155,14 +166,12 @@ class LongitudinalPlanner:
             hq.heappop(open_heap)
 
             # push
-            for a in [-1.5, 0.0, 1.5]:
+            for a in [-3.0, -1.5, 0.0, 1.5]:
                 t_exp, s_exp, v_exp = d_node
 
                 skip = False
                 for _ in range(int(dt_exp // dt + 1)):  # range(5), dtExp= 1.0, dt = 0.2
-                    if skip:
-                        break
-                    t_exp = round((t_exp+dt), 1)
+                    t_exp += dt
                     s_exp += (v_exp * dt) * M_TO_IDX
                     v_exp += a * dt
 
@@ -197,17 +206,27 @@ class LongitudinalPlanner:
                 if skip == False and found_lower_cost_path_in_open == False:
                     hq.heappush(open_heap, (total_cost, neighbor))
                     open_dict[neighbor] = (total_cost, neighbor, d_node)
-
+            test_i+=1
         return target_v
+
+    def traffic_light_to_obstacle(self, traffic_light, forward_direction):
+        # straight, turn_left, turn_right, left_change, right_change, u-turn
+        #TODO: consideration filtering
+        consideration_class_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
+            6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
+        if traffic_light in consideration_class_list[forward_direction]:
+            return True
+        else:
+            return False
 
     def check_objects(self, local_len):
         object_list = []
 
         # [0] = Dynamic Object
         if self.lidar_obstacle is not None:
-            for losb in self.lidar_obstacle:
-                if losb[2] >= -2.0 and losb[2] <= 2.0:  # object in my lane
-                    object_list.append(losb)
+            for lobs in self.lidar_obstacle:
+                if lobs[2] >= -2.0 and lobs[2] <= 2.0:  # object in my lane
+                    object_list.append(lobs)
 
         # [1] = Goal Object
         if self.goal_object is not None:
@@ -217,7 +236,11 @@ class LongitudinalPlanner:
                     [self.goal_object[0], left, 0])
 
         # TODO: Add Traffic Light
-
+        #[2] = Traffic Light
+        if self.traffic_light_obstacle is not None:
+            for tlobs in self.traffic_light_obstacle:
+                if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
+                    object_list.append((tlobs[0], self.lane_information[2], 0))
         return object_list
 
     def run(self, sm, pp=0, local_path=None):
@@ -230,6 +253,7 @@ class LongitudinalPlanner:
                 local_path, (CS.position.x, CS.position.y))
             local_max_v, tx, ty = max_v_by_curvature(
                 local_path, l_idx, self.ref_v, CS.yawRate)
+            # local_max_v = self.ref_v *KPH_TO_MPS
             object_list = self.check_objects(len(local_path))
             self.target_v = self.velocity_plan(
                 CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)

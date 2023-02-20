@@ -7,7 +7,7 @@ from std_msgs.msg import Float32
 from morai_msgs.msg import GPSMessage, EgoVehicleStatus
 from sensor_msgs.msg import Imu
 
-from sbg_driver.msg import SbgEkfNav, SbgEkfEuler
+from novatel_oem7_msgs.msg import INSPVA
 
 
 class MoraiTransceiver:
@@ -17,14 +17,12 @@ class MoraiTransceiver:
 
         self.roll = 0.0
         self.pitch = 0.0
-        self.heading = 0.0
+        self.yaw = 0.0
 
-        self.pub_rtk_gps = rospy.Publisher(
-            '/sbg/ekf_nav', SbgEkfNav, queue_size=1)
-        self.pub_ins_imu = rospy.Publisher(
-            '/sbg/ekf_euler', SbgEkfEuler, queue_size=1)
-        self.pub_ins_odom = rospy.Publisher(
-            '/mobinha/car/car_v', Float32, queue_size=1)
+        self.pub_novatel = rospy.Publisher(
+            '/novatel/oem7/inspva', INSPVA, queue_size=1)
+        self.pub_velocity = rospy.Publisher(
+            '/mobinha/car/velocity', Float32, queue_size=1)
 
         #From MORAI
         rospy.Subscriber("/gps", GPSMessage, self.gps_cb)
@@ -39,14 +37,8 @@ class MoraiTransceiver:
         self.imu_ok = True
         quaternion = (msg.orientation.x, msg.orientation.y,
                       msg.orientation.z, msg.orientation.w)
-        roll, pitch, yaw = tf.transformations.euler_from_quaternion(
+        self.roll, self.pitch, self.yaw = tf.transformations.euler_from_quaternion(
             quaternion)
-        yaw = math.degrees(yaw)
-        self.roll = roll
-        self.pitch = pitch
-        # self.heading = 90 - \
-        #     yaw if (yaw >= -90 and yaw <= 180) else -270 - yaw
-        # self.velocity = msg.linear_acceleration.x
 
     def ego_topic_cb(self, msg):
         self.imu_ok = True
@@ -58,18 +50,13 @@ class MoraiTransceiver:
     def run(self):
         if self.gps_ok and self.imu_ok:
 
-            msg = SbgEkfNav()
+            msg = INSPVA()
             msg.latitude = self.ll_position[0]
             msg.longitude = self.ll_position[1]
-            msg.altitude = self.ll_position[2]
-            self.pub_rtk_gps.publish(msg)
+            msg.height = self.ll_position[2]
+            msg.roll = self.roll
+            msg.pitch = self.pitch
+            msg.azimuth = math.degrees(self.yaw)
+            self.pub_novatel.publish(msg)
 
-            msg = SbgEkfEuler()
-            yaw = self.heading
-            yaw = math.radians(yaw)
-            msg.angle.x = self.roll
-            msg.angle.y = self.pitch
-            msg.angle.z = yaw
-
-            self.pub_ins_imu.publish(msg)
-            self.pub_ins_odom.publish(Float32(self.velocity))
+            self.pub_velocity.publish(Float32(self.velocity))

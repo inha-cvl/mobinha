@@ -84,7 +84,7 @@ Visualization Manager:
   Global Options:
     Background Color: 0; 10; 20
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: Pandar64
     Frame Rate: 30
   Name: root
   Tools:
@@ -144,5 +144,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1534
-  X: 60
-  Y: 27
+  X: 96
+  Y: 53

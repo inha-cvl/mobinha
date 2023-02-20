@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-from libs.quintic_polynomials_planner import QuinticPolynomial
+#from libs.quintic_polynomials_planner import QuinticPolynomial
 
 
 class QuarticPolynomial:

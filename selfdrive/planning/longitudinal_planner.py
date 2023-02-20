@@ -82,7 +82,7 @@ class LongitudinalPlanner:
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
         obs_time = [5, self.st_param['tMax'], 7]  # sec
-        offset = [6+(cur_v*obs_time[i]), 5+(cur_v), 15]  # m
+        offset = [6+(cur_v*obs_time[i]), 5+(cur_v*MPS_TO_KPH), 15]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
 
@@ -150,7 +150,7 @@ class LongitudinalPlanner:
 
                 # to make large cost -> small cost
                 final_path.reverse()
-                target_v = final_path[1][2]  # for safety
+                target_v = final_path[-1][2]  # for safety
                 if VIZ_GRAPH:
                     t_list = []
                     s_list = []
@@ -168,7 +168,7 @@ class LongitudinalPlanner:
 
             # push
 
-            for a in [-15.0, -3.0, -1.5, 0.0, 1.5]:
+            for a in [-10.0, -3.0, -1.5, 0.0, 1.5]:
                 t_exp, s_exp, v_exp = d_node
 
                 skip = False
@@ -177,9 +177,9 @@ class LongitudinalPlanner:
                     s_exp += (v_exp * dt) * M_TO_IDX
                     v_exp += a * dt
 
-                    if v_exp > max_v:
-                        skip = True
-                        break
+                    # if v_exp > max_v:
+                    #     skip = True
+                    #     break
 
                     point = GPoint(t_exp, s_exp)
                     for obstacle in obstacles:
@@ -213,6 +213,8 @@ class LongitudinalPlanner:
                     break
 
             test_i += 1
+        
+        target_v = max_v if target_v > max_v else target_v
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):

@@ -59,7 +59,7 @@ class IoniqTransceiver():
     def can_cmd(self, canCmd):
         state = self.control_state
         if canCmd.disable:  # Full disable
-            state = [{**state, 'steer_en': 0x0, 'acc_en': 0x0}]
+            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset = 1
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
@@ -102,8 +102,8 @@ class IoniqTransceiver():
             if (data.arbitration_id == 0x130):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 #'%.4f' % res['Gway_Lateral_Accel_Speed']
-                self.temp_actuators['brake'] = '%.4f' % res['Gway_Brake_Cylinder_Pressure']
-                self.temp_actuators['accel'] = '%.4f' % res['Gway_Longitudinal_Accel_Speed']
+                self.temp_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
+                self.temp_actuators['accel'] = res['Gway_Longitudinal_Accel_Speed']
 
             if (data.arbitration_id == 0x280):
                 res = self.db.decode_message(data.arbitration_id, data.data)

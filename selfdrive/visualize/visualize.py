@@ -238,23 +238,19 @@ class MainWindow(QMainWindow, form_class):
 
         direction_image_list = [dir_path+"/icon/straight_b.png",
                                 dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
-                                dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",
                                 dir_path+"/icon/uturn_b.png"]
         self.direction_pixmap_list = []
-        for i in range(6):
+        for i in range(4):
             self.direction_pixmap_list.append(
                 QPixmap(direction_image_list[i]))
         self.direction_message_list = [
-            'Go Straight', 'Turn Left', 'Turn Right', 'Left Change', 'Right Change', 'U-Turn']
+            'Go Straight', 'Turn Left', 'Turn Right', 'U-Turn']
 
         l_blinker = QPixmap(dir_path+"/icon/l_blinker.png")
         r_blinker = QPixmap(dir_path+"/icon/r_blinker.png")
 
         self.blinker_l_label.setPixmap(l_blinker)
         self.blinker_r_label.setPixmap(r_blinker)
-        blinker_space = QPixmap(l_blinker.size())
-        blinker_space.fill(Qt.transparent)
-        self.blinker_space_label.setPixmap(blinker_space)
 
         self.blinker_l_label.setHidden(True)
         self.blinker_r_label.setHidden(True)
@@ -267,13 +263,8 @@ class MainWindow(QMainWindow, form_class):
         self.distance_pixmap = QPixmap(dir_path+"/icon/distance.png")
         self.distance_label_list = [
             self.distance_1_label, self.distance_2_label, self.distance_3_label, self.distance_4_label]
-        self.distance_label_styles = [
-            "QLabel{background-color:rgb(0,10,20); color:rgb(0,10,20);}", "QLabel{background-color:rgb(88,93,99); color:rgb(88,93,99);}", "QLabel{background-color:rgb(0,10,20); color: rgb(239,114,122);}"]
         self.tl_label_list = [
             self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
-        self.tl_label_styles = [
-            "QLabel{color:rgb(239,114,122);} ", "QLabel{color:rgb(239,199,114);} ",
-            "QLabel{color:rgb(51,196,136);}", "QLabel{color:rgb(51,196,136);} "]
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -362,6 +353,9 @@ class MainWindow(QMainWindow, form_class):
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
 
+            self.info_curvature_label.setText(
+                "{} m".format(str(msg.poses[0].position.z)))
+
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             idx = int(msg.position.y)
@@ -398,9 +392,6 @@ class MainWindow(QMainWindow, form_class):
         if msg.data[0] == 1 and msg.data[1] == 1:
             self.status_label.setText("Moving")
             self.goal_update = False
-            self.start_button.setDisabled(True)
-            self.initialize_button.setDisabled(True)
-            self.pause_button.setEnabled(True)
             self.scenario1_button.setDisabled(True)
             self.scenario2_button.setDisabled(True)
             self.scenario3_button.setDisabled(True)
@@ -427,6 +418,9 @@ class MainWindow(QMainWindow, form_class):
     def start_button_clicked(self):
         self.state = 'START'
         self.status_label.setText("Starting ...")
+        self.start_button.setDisabled(True)
+        self.initialize_button.setDisabled(True)
+        self.pause_button.setEnabled(True)
 
     def pause_button_clicked(self):
         self.state = 'PAUSE'
@@ -513,6 +507,10 @@ class MainWindow(QMainWindow, form_class):
             self.target_mode_label.setText(mode_string)
             mode_string = "Manual" if self.CS.cruiseState != 1 else "Auto"
             self.car_mode_label.setText(mode_string)
+            self.car_steer_angle_label.setText(str(self.CS.actuators.steer))
+            self.car_accel_label.setText(str(self.CS.actuators.accel))
+            self.car_brake_label.setText(str(self.CS.actuators.brake))
+
             self.target_steer_angle_label.setText(str(self.CC.actuators.steer))
             self.target_accel_label.setText(str(self.CC.actuators.accel))
             self.target_brake_label.setText(str(self.CC.actuators.brake))

@@ -109,6 +109,7 @@ def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
 
     return now_cw_idx
 
+
 def interpolate(points, precision):
     def filter_same_points(points):
         filtered_points = []
@@ -260,6 +261,20 @@ def node_to_waypoints2(lanelet, shortest_path):
     return final_path, final_id_path
 
 
+def get_direction_number(lanelet, splited_id, forward_direction):  # lanlet, 0, 'S'
+    direction_list = lanelet[splited_id]["direction"]
+    direction_dir = {'S': 0, 'L': 1, 'R': 2, 'U': 3}
+    direction_number = 0
+    if len(direction_list) == 1:
+        direction_number = direction_dir[direction_list[0]]
+    elif len(direction_list) > 1:
+        if forward_direction in direction_list:
+            direction_number = direction_dir[forward_direction]
+    else:
+        direction_number = direction_dir[forward_direction]
+    return direction_number
+
+
 def find_nearest_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
@@ -299,11 +314,12 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
+def max_v_by_curvature(path, i, ref_v, yawRate, ws=150, curv_threshold=500):
     i += 5
     return_v = ref_v
     x = []
     y = []
+    curvated = 1000
     if i < len(path)-1:
         if i+ws < len(path):
             x = [v[0] for v in path[i:i+ws]]
@@ -330,70 +346,37 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
                 curvated = curv_threshold
         else:
             curvated = curv_threshold+1
+
         if curvated < curv_threshold:
-            return_v = ref_v - (abs(curv_threshold-curvated)*0.13)
-            return_v = return_v if return_v > 0 else 5
+            return_v = ref_v - (abs(curv_threshold-curvated)*3)
+            return_v = return_v if return_v > 0 else 3
 
-    return return_v*KPH_TO_MPS, x, y
+    return return_v*KPH_TO_MPS, curvated, x, y
 
 
-def get_forward_direction(global_path, i, ws=200):
+def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
-    x = []
-    y = []
-    # if i < len(global_path)-1:
-    if ws+100 < len(global_path[i:])-1:
-        x = [v[0] for v in global_path[i+ws:i+ws+100]]
-        y = [v[1] for v in global_path[i+ws:i+ws+100]]
-    elif ws < len(global_path[i:])-1:
-        x = [v[0] for v in global_path[i+ws:]]
-        y = [v[1] for v in global_path[i+ws:]]
-    else:
-        x = [v[0] for v in global_path[i:]]
-        y = [v[1] for v in global_path[i:]]
+    link = lanelets[next_id]
+    p = (link['waypoints'][0][0], link['waypoints'][0][1])
+    q = (link['waypoints'][len(link['waypoints'])//2][0],
+         link['waypoints'][len(link['waypoints'])//2][1])
+    r = (link['waypoints'][-1][0], link['waypoints'][-1][1])
 
-    tmp_x = np.array([(v) for v in x])
-    tmp_y = np.array([(v) for v in y])
+    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
 
-    forward_path = []
-    for i in range(len(tmp_x)):
-        forward_path.append([tmp_x[i], tmp_y[i]])
-
-    x = np.array([(v-x[0]) for v in x])
-    y = np.array([(v-y[0]) for v in y])
-
-    origin_plot = np.vstack((x, y))
-    theta = math.atan((y[1] - y[0]) / (x[1] - x[0]))
-    if (x[1] - x[0]) < 0 :
-        rotation_radians = -theta + math.pi/2 + math.pi
-    else:
-        rotation_radians = -theta + math.pi/2
-
-    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
-                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
-    rotation_plot = rotation_mat@origin_plot
-    x, y = rotation_plot
-
-    if len(x) > 2:
-        cr = np.polyfit(x, y, 2)
-        if cr[0] != 0:
-            curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
-        else:
-            curvated = 10000
-    else:
-        curvated = 10000
-    # print(x[-1], y[-1], "curvated:",curvated)
-    if curvated < 1000:
-        if x[-1] < -8 and curvated < 500:
-            return 5, forward_path
-        elif x[-1] < -15 :
-            return 1, forward_path
-        elif x[-1] >= 15:
-            return 2, forward_path
-        else:
-            return 0, forward_path
-    else:
-        return 0, forward_path
+    if link['uTurn']:
+        return 'U'
+    if link['rightTurn']:
+        return 'R'
+    if link['leftTurn']:
+        return 'L'
+    threshold = 100
+    if -threshold < val < threshold:
+        return 'S'  # collinear
+    elif val <= -threshold:
+        return 'L'  # left turn
+    elif val >= threshold:
+        return 'R'  # right turn
 
 
 def get_blinker(lanelets, ids, ego_idx, look_forward=40):
@@ -417,3 +400,15 @@ def get_blinker(lanelets, ids, ego_idx, look_forward=40):
         return blinker
     except IndexError:
         return blinker
+
+
+def set_lane_ids(lst):
+    lst = [elem.split("_")[0] for elem in lst]
+
+    lane_ids = [lst[0]]
+
+    for i in range(1, len(lst)):
+        if lst[i] != lst[i-1]:
+            lane_ids.append(lst[i])
+
+    return lane_ids

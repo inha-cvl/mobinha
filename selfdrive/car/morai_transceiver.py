@@ -47,7 +47,7 @@ class MoraiTransceiver:
                             180) else -270 - msg.heading
         self.velocity = msg.velocity.x
 
-    def run(self):
+    def run(self, CM=None):
         if self.gps_ok and self.imu_ok:
 
             msg = INSPVA()

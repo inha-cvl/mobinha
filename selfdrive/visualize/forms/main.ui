@@ -86,438 +86,6 @@ border-radius: 3px
 }</string>
    </property>
    <layout class="QGridLayout" name="gridLayout_6">
-    <item row="2" column="2">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Preferred</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>40</width>
-        <height>10</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="0" column="5" colspan="3">
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QLabel" name="status_label">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);
-background-color: rgb(19, 99, 223);</string>
-        </property>
-        <property name="text">
-         <string>Stand by</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="5" column="8">
-     <spacer name="horizontalSpacer_6">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Preferred</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>10</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="0" column="3">
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="1" column="1">
-       <widget class="QPushButton" name="initialize_button">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Initialize</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QPushButton" name="start_button">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Start</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="11" colspan="3">
-       <widget class="QLabel" name="label_15">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>20</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-        </property>
-        <property name="text">
-         <string>Scenario</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="4">
-       <widget class="QPushButton" name="over_button">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Over</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="8">
-       <widget class="QPushButton" name="cmd_only_long_button">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="acceptDrops">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string notr="true">Only
-Long</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="13">
-       <widget class="QPushButton" name="scenario3_button">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>3</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="9">
-       <widget class="QPushButton" name="cmd_disable_button">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color:rgb(239,114,122)</string>
-        </property>
-        <property name="text">
-         <string>Disable</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="6">
-       <widget class="QPushButton" name="cmd_full_button">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Full</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="12">
-       <widget class="QPushButton" name="scenario2_button">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QPushButton" name="pause_button">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Pause</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="10">
-       <spacer name="horizontalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>13</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="1" column="0">
-       <spacer name="horizontalSpacer_5">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>13</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1" colspan="4">
-       <widget class="QLabel" name="label_13">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>20</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-        </property>
-        <property name="text">
-         <string>System</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="6" colspan="4">
-       <widget class="QLabel" name="label_14">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>20</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-        </property>
-        <property name="text">
-         <string>Control</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="14">
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>13</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="1" column="11">
-       <widget class="QPushButton" name="scenario1_button">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>1</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="7">
-       <widget class="QPushButton" name="cmd_only_lat_button">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Only
-Lat</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="5">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>13</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
     <item row="0" column="2">
      <layout class="QGridLayout" name="gridLayout_3">
       <property name="sizeConstraint">
@@ -573,12 +141,12 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
-          <string>IONIQ</string>
+          <string>SIMULATOR</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>SIMULATOR</string>
+          <string>IONIQ</string>
          </property>
         </item>
         <item>
@@ -605,6 +173,11 @@ border-color: rgb(71,181,255);</string>
         <property name="styleSheet">
          <string notr="true">color: rgb(223, 246, 255);</string>
         </property>
+        <item>
+         <property name="text">
+          <string>songdo-site</string>
+         </property>
+        </item>
         <item>
          <property name="text">
           <string>songdo</string>
@@ -713,34 +286,6 @@ border-color: rgb(71,181,255);</string>
       </item>
      </layout>
     </item>
-    <item row="0" column="0" rowspan="3">
-     <spacer name="horizontalSpacer_7">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Preferred</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>10</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="3" column="2" colspan="6">
-     <widget class="Line" name="line">
-      <property name="styleSheet">
-       <string notr="true">border-width: 2px;
-border-style: solid;
-border-color: rgb(19, 99, 223);</string>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
     <item row="5" column="4">
      <widget class="Line" name="line_4">
       <property name="sizePolicy">
@@ -754,18 +299,55 @@ border-color: rgb(19, 99, 223);</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="6">
-     <spacer name="verticalSpacer_10">
+    <item row="0" column="5" colspan="3">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="status_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(223, 246, 255);
+background-color: rgb(19, 99, 223);</string>
+        </property>
+        <property name="text">
+         <string>Stand by</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0" rowspan="3">
+     <spacer name="horizontalSpacer_7">
       <property name="orientation">
-       <enum>Qt::Vertical</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <property name="sizeType">
-       <enum>QSizePolicy::Fixed</enum>
+       <enum>QSizePolicy::Preferred</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
-        <width>20</width>
-        <height>10</height>
+        <width>10</width>
+        <height>20</height>
        </size>
       </property>
      </spacer>
@@ -1688,6 +1270,50 @@ border-color: rgb(71,181,255);</string>
       </item>
      </layout>
     </item>
+    <item row="3" column="2" colspan="6">
+     <widget class="Line" name="line">
+      <property name="styleSheet">
+       <string notr="true">border-width: 2px;
+border-style: solid;
+border-color: rgb(19, 99, 223);</string>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Preferred</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>10</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="5" column="8">
+     <spacer name="horizontalSpacer_6">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Preferred</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>10</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
     <item row="4" column="2" rowspan="2" colspan="2">
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -1842,39 +1468,72 @@ border-color: rgb(71,181,255);</string>
        <layout class="QGridLayout" name="gridLayout_12">
         <item row="1" column="0">
          <layout class="QGridLayout" name="gridLayout_11">
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_59">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Brake</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_60">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Steer Angle          </string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="2">
+           <widget class="QLabel" name="target_steer_angle_label">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="2">
+           <widget class="QLabel" name="target_mode_label">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>Manual</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="0">
+           <widget class="QLabel" name="label_66">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Mode</string>
+            </property>
+           </widget>
+          </item>
           <item row="10" column="1">
-           <widget class="QLabel" name="car_light_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>D</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_57">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>  Accel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="1">
            <widget class="QLabel" name="car_mode_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -1916,21 +1575,8 @@ border-color: rgb(71,181,255);</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="2">
-           <widget class="QLabel" name="target_velocity_label">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>0 km/h</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QLabel" name="car_accel_label">
+          <item row="3" column="1">
+           <widget class="QLabel" name="car_velocity_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -1944,56 +1590,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>0.0</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="0">
-           <widget class="QLabel" name="label_58">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>  Gear</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_59">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>  Brake</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_54">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>  Car</string>
+             <string>0 km/h</string>
             </property>
            </widget>
           </item>
@@ -2010,8 +1607,8 @@ border-color: rgb(71,181,255);</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_56">
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_57">
             <property name="styleSheet">
              <string notr="true">color: rgb(223, 246, 255);
 border-bottom-width: 1px;
@@ -2019,125 +1616,12 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>  Velocity</string>
+             <string>  Accel</string>
             </property>
            </widget>
           </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="label_60">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>  Steer Angle          </string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="2">
-           <widget class="QLabel" name="target_mode_label">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>Manual</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="1">
-           <widget class="QLabel" name="car_brake_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>0.0</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_19">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>Ego</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="QLabel" name="label_66">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>  Mode</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="2">
-           <widget class="QLabel" name="target_accel_label">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>0.0</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="2">
-           <widget class="QLabel" name="target_gear_label">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
-            </property>
-            <property name="text">
-             <string>D</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="car_velocity_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+          <item row="3" column="2">
+           <widget class="QLabel" name="target_velocity_label">
             <property name="styleSheet">
              <string notr="true">color: rgb(223, 246, 255);
 border-bottom-width: 1px;
@@ -2168,8 +1652,105 @@ border-color: rgb(71,181,255);</string>
             </property>
            </widget>
           </item>
-          <item row="8" column="2">
-           <widget class="QLabel" name="target_steer_angle_label">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_56">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Velocity</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLabel" name="car_accel_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_54">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>  Car</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_19">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>Ego</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QLabel" name="car_brake_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="QLabel" name="target_accel_label">
             <property name="styleSheet">
              <string notr="true">color: rgb(223, 246, 255);
 border-bottom-width: 1px;
@@ -3721,7 +3302,30 @@ color:rgb(0,10,20);</string>
          <layout class="QGridLayout" name="gridLayout_15">
           <item row="0" column="0" colspan="5">
            <layout class="QGridLayout" name="gridLayout_19">
-            <item row="1" column="0">
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_37">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>1</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>13</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Next Lane</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignHCenter|Qt::AlignTop</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
              <widget class="QLabel" name="direction_text_label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -3744,7 +3348,7 @@ color:rgb(0,10,20);</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1" rowspan="2">
+            <item row="2" column="1" rowspan="2">
              <widget class="QLabel" name="direction_image_label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -3778,31 +3382,27 @@ color:rgb(0,10,20);</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_37">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>1</horstretch>
-                <verstretch>1</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>13</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Forward 100m</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignHCenter|Qt::AlignTop</set>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="0" colspan="2">
              <layout class="QGridLayout" name="gridLayout_21">
+              <item row="0" column="3">
+               <widget class="QLabel" name="info_goal_alt_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>2</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>alt : </string>
+                </property>
+               </widget>
+              </item>
               <item row="0" column="0">
                <widget class="QLabel" name="label_43">
                 <property name="sizePolicy">
@@ -3866,12 +3466,37 @@ color:rgb(0,10,20);</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="3">
-               <widget class="QLabel" name="info_goal_alt_label">
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_35">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                  <horstretch>2</horstretch>
-                  <verstretch>0</verstretch>
+                  <horstretch>0</horstretch>
+                  <verstretch>1</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Path Curvature</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1" colspan="3">
+               <widget class="QLabel" name="info_curvature_label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>1</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="minimumSize">
@@ -3881,7 +3506,7 @@ color:rgb(0,10,20);</string>
                  </size>
                 </property>
                 <property name="text">
-                 <string>alt : </string>
+                 <string>1000 m</string>
                 </property>
                </widget>
               </item>
@@ -3889,33 +3514,31 @@ color:rgb(0,10,20);</string>
             </item>
            </layout>
           </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="blinker_space_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>1</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+          <item row="2" column="4">
+           <spacer name="horizontalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="minimumSize">
+            <property name="sizeHint" stdset="0">
              <size>
-              <width>100</width>
-              <height>100</height>
+              <width>40</width>
+              <height>20</height>
              </size>
             </property>
-            <property name="maximumSize">
+           </spacer>
+          </item>
+          <item row="2" column="0">
+           <spacer name="horizontalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
              <size>
-              <width>100</width>
-              <height>100</height>
+              <width>40</width>
+              <height>20</height>
              </size>
             </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="scaledContents">
-             <bool>true</bool>
-            </property>
-           </widget>
+           </spacer>
           </item>
           <item row="2" column="1">
            <widget class="QLabel" name="blinker_l_label">
@@ -3954,32 +3577,6 @@ color:rgb(0,10,20);</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="4">
-           <spacer name="horizontalSpacer_9">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="2" column="0">
-           <spacer name="horizontalSpacer_8">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
           <item row="2" column="3">
            <widget class="QLabel" name="blinker_r_label">
             <property name="sizePolicy">
@@ -4011,6 +3608,19 @@ color:rgb(0,10,20);</string>
             </property>
            </widget>
           </item>
+          <item row="2" column="2">
+           <spacer name="horizontalSpacer_19">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>100</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </item>
         <item row="0" column="0" rowspan="2">
@@ -4029,6 +3639,418 @@ color:rgb(0,10,20);</string>
        </layout>
       </widget>
      </widget>
+    </item>
+    <item row="6" column="6">
+     <spacer name="verticalSpacer_10">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>10</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="0" column="3">
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="1" column="1">
+       <widget class="QPushButton" name="initialize_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Initialize</string>
+        </property>
+        <property name="shortcut">
+         <string>Q</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="start_button">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Start</string>
+        </property>
+        <property name="shortcut">
+         <string>W</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="11" colspan="3">
+       <widget class="QLabel" name="label_15">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+        </property>
+        <property name="text">
+         <string>Scenario</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <widget class="QPushButton" name="over_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Over</string>
+        </property>
+        <property name="shortcut">
+         <string>R</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="8">
+       <widget class="QPushButton" name="cmd_only_long_button">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="acceptDrops">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string notr="true">Only
+Long</string>
+        </property>
+        <property name="shortcut">
+         <string>D</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="13">
+       <widget class="QPushButton" name="scenario3_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>3</string>
+        </property>
+        <property name="shortcut">
+         <string>3</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="9">
+       <widget class="QPushButton" name="cmd_disable_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color:rgb(239,114,122)</string>
+        </property>
+        <property name="text">
+         <string>Disable</string>
+        </property>
+        <property name="shortcut">
+         <string>F</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="6">
+       <widget class="QPushButton" name="cmd_full_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Full</string>
+        </property>
+        <property name="shortcut">
+         <string>A</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="12">
+       <widget class="QPushButton" name="scenario2_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>2</string>
+        </property>
+        <property name="shortcut">
+         <string>2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="pause_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Pause</string>
+        </property>
+        <property name="shortcut">
+         <string>E</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="10">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>13</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0">
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>13</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="1" colspan="4">
+       <widget class="QLabel" name="label_13">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+        </property>
+        <property name="text">
+         <string>System</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6" colspan="4">
+       <widget class="QLabel" name="label_14">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+        </property>
+        <property name="text">
+         <string>Control</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="14">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>13</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="11">
+       <widget class="QPushButton" name="scenario1_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>1</string>
+        </property>
+        <property name="shortcut">
+         <string>1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="7">
+       <widget class="QPushButton" name="cmd_only_lat_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Only
+Lat</string>
+        </property>
+        <property name="shortcut">
+         <string>S</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>13</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

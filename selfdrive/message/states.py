@@ -5,6 +5,7 @@ import rospy
 from novatel_oem7_msgs.msg import INSPVA
 import math
 from std_msgs.msg import Int8, Float32
+from geometry_msgs.msg import Pose
 
 from selfdrive.message.car_message import car_state
 
@@ -31,12 +32,17 @@ class StateMaster:
         self.gear = 0
         self.mode = 0
         self.blinker = 0
+        self.brake = 0
+        self.steer = 0
+        self.accel = 0
 
         rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
         rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
         rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
         rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
+        rospy.Subscriber('/mobinha/car/temp_actuators',
+                         Pose, self.temp_actuators_cb)
 
     def novatel_cb(self, msg):
         self.latitude = msg.latitude
@@ -62,6 +68,11 @@ class StateMaster:
     def blinker_cb(self, msg):
         self.blinker = msg.data  # 0:stay 1:left 2:right
 
+    def temp_actuators_cb(self, msg):
+        self.brake = msg.position.x
+        self.steer = msg.position.y
+        self.accel = msg.position.z
+
     def update(self):
         car_state = self.CS._asdict()
 
@@ -78,6 +89,12 @@ class StateMaster:
         car_state["yawRate"] = self.yaw
         car_state["pitchRate"] = self.pitch
         car_state["rollRate"] = self.roll
+        car_state_actuators = car_state["actuators"]._asdict()
+        car_state_actuators["brake"] = self.brake
+        car_state_actuators["steer"] = self.steer
+        car_state_actuators["accel"] = self.accel
+        car_state["actuators"] = self.CS.actuators._make(
+            car_state_actuators.values())
         car_state["gearShifter"] = self.gear
         car_state["cruiseState"] = self.mode
         car_state_button_event = car_state["buttonEvent"]._asdict()

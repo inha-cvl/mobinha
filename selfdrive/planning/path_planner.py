@@ -2,7 +2,6 @@
 
 import rospy
 import time
-import math
 from scipy.spatial import KDTree
 from std_msgs.msg import Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose
@@ -147,7 +146,6 @@ class PathPlanner:
                     self.get_goal = 0
                     self.state = 'WAITING'
                     return None, None
-
             non_intp_path, non_intp_id = node_to_waypoints2(
                 self.lmap.lanelets, shortest_path)
             intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
@@ -171,20 +169,18 @@ class PathPlanner:
         pp = 0
 
         if self.state == 'WAITING':
-            #print("[{}] Waiting Goal Point".format(self.__class__.__name__))
             time.sleep(1)
             if self.get_goal != 0:
                 self.state = 'READY'
             pp = 3
 
         elif self.state == 'READY':
-            #print("[{}] Making Path".format(self.__class__.__name__))
             non_intp_path = None
             non_intp_id = None
             self.local_path = None
             self.temp_global_idx = 0
             self.l_idx = 0
-            self.local_path_cut_value = 300
+            self.local_path_cut_value = 500
             self.local_path_nitting_value = 150
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
@@ -192,26 +188,10 @@ class PathPlanner:
             non_intp_path, non_intp_id = self.returnAppendedNonIntpPath()
             if non_intp_path == None and non_intp_id == None:
                 pass
-
             if non_intp_path is not None:
                 self.state = 'MOVE'
-                #print("[{}] Move to Goal".format(self.__class__.__name__))
                 global_path, self.last_s = ref_interpolate(
                     non_intp_path, self.precision, 0, 0)
-
-                # For Normal Arrive
-                last_idx_of_global = len(global_path)-1
-                x_increment = (
-                    global_path[last_idx_of_global][0]-global_path[last_idx_of_global-1][0])
-                y_increment = (
-                    global_path[last_idx_of_global][1]-global_path[last_idx_of_global-1][1])
-                while True:
-                    global_path.append(
-                        [(global_path[last_idx_of_global][0]+x_increment), (global_path[last_idx_of_global][1]+y_increment)])
-                    x_increment += x_increment
-                    y_increment += y_increment
-                    if x_increment >= 5 or y_increment >= 5:
-                        break
 
                 self.global_path = global_path
                 self.non_intp_path = non_intp_path
@@ -269,7 +249,7 @@ class PathPlanner:
                 forward_direction, forward_path = get_forward_direction(
                     self.erase_global_path, erase_idx)
                 self.pub_forward_direction.publish(forward_direction)
-                #for visualize
+                # for visualize
                 forward_path_viz = ForwardPathViz(forward_path)
                 self.pub_forward_path.publish(forward_path_viz)
 
@@ -282,19 +262,12 @@ class PathPlanner:
                 pose.position.z = cw_s
                 self.pub_lane_information.publish(pose)
 
-                # if self.lmap.stoplines.get(now_lane_id) is not None:
-                #     [trafficlight_x, trafficlight_y] = self.lmap.stoplines[now_lane_id][(len(self.lmap.stoplines[now_lane_id])+1)//2]
-                #     stopline_idx = calc_idx(
-                #     self.local_path, (trafficlight_x, trafficlight_y))
-                #     print(idx, stopline_idx)
-
-                #TODO: Avoidance Path
+                # TODO: Avoidance Path
                 #
                 # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
                 #     if self.obstacle_detect_timer == 0.0:
                 #         self.obstacle_detect_timer = time.time()
                 #     if time.time()-self.obstacle_detect_timer >= 10:
-                #         #print('[{}] 10sec have passed since an Obstacle was Detected'.format(self.__class__.__name__))
                 #         # pp = 4
                 #         # return pp
                 #         # Create Avoidance Trajectory
@@ -322,7 +295,6 @@ class PathPlanner:
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'
-                #print('[{}] Arrived at Goal'.format(self.__class__.__name__))
             pp = 1
 
         elif self.state == 'ARRIVED':

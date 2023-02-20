@@ -203,7 +203,7 @@ class PathPlanner:
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
                 self.lane_ids = lane_ids
-                print(self.lane_ids)
+                # print(self.lane_ids)
                 if len(lane_ids) > 2:
                     self.next_lane_id = lane_ids[1]
                     self.now_lane_id = lane_ids[0]
@@ -234,24 +234,13 @@ class PathPlanner:
             now_lane_id = self.non_intp_id[n_id]
             now_lane_id = now_lane_id.split('_')[0]
             
-
-            # if len(self.lane_ids)!=0:
-            #     tmp_lane_id = self.lane_ids[0]
-            #     next_lane_id = self.lane_ids[1]
-            #     # print(tmp_lane_id)
-            # if tmp_lane_id != now_lane_id:
-            #     if len(self.lane_ids)>1:
-            #         self.lane_ids = self.lane_ids[1:]
-            #         tmp_lane_id = now_lane_id
-            #         next_lane_id = self.lane_ids[0]
-            # print(now_lane_id,next)
             if now_lane_id == self.next_lane_id:
-                if len(self.lane_ids) < 3:
+                if len(self.lane_ids) < 2:
+                    self.now_lane_id = self.next_lane_id
+                else:
                     self.now_lane_id = self.next_lane_id
                     self.next_lane_id = self.lane_ids[1]
-                self.now_lane_id = self.next_lane_id
-                self.next_lane_id = self.lane_ids[1]
-                self.lane_ids = self.lane_ids[1:]
+                    self.lane_ids = self.lane_ids[1:]
             
             print("ID now & next : ", self.now_lane_id, self.next_lane_id)
             
@@ -287,12 +276,12 @@ class PathPlanner:
 
                 erase_idx = self.erase_global_point.query(
                     (CS.position.x, CS.position.y), 1)[1]
-                forward_direction, forward_path = get_forward_direction(
-                    self.erase_global_path, erase_idx)
+                forward_direction = get_forward_direction(
+                    self.lmap.lanelets, self.next_lane_id)
                 self.pub_forward_direction.publish(forward_direction)
                 # for visualize
-                forward_path_viz = ForwardPathViz(forward_path)
-                self.pub_forward_path.publish(forward_path_viz)
+                # forward_path_viz = ForwardPathViz(forward_path)
+                # self.pub_forward_path.publish(forward_path_viz)
 
                 cw_s = get_nearest_crosswalk(
                     self.lmap.lanelets, splited_id, local_point)

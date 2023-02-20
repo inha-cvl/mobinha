@@ -337,8 +337,31 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=30, curv_threshold=300):
     return return_v*KPH_TO_MPS, x, y
 
 
-def get_forward_direction(global_path, i, ws=200):
+def get_forward_direction(lanelets, next_id):#(global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
+    link = lanelets[next_id]
+    p = (link['waypoints'][0][0], link['waypoints'][0][1])
+    q = (link['waypoints'][len(link['waypoints'])//2][0], link['waypoints'][len(link['waypoints'])//2][1])
+    r = (link['waypoints'][-1][0], link['waypoints'][-1][1])
+
+    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+    print(val)
+
+    if link['uTurn']:
+        return 5
+    if link['rightTurn']:
+        return 2
+    if link['leftTurn']:
+        return 1
+    threshold = 100
+    if -threshold < val < threshold:
+        return 0  # collinear
+    elif val <= -threshold:
+        return 1  # left turn
+    elif val >= threshold:
+        return 2  # right turn
+    '''
+    
     x = []
     y = []
     # if i < len(global_path)-1:
@@ -394,9 +417,22 @@ def get_forward_direction(global_path, i, ws=200):
             return 0, forward_path
     else:
         return 0, forward_path
+    '''
 
 def set_lane_ids(lst):
-    return list(set([i.split("_")[0] for i in lst]))
+    # Split each element on "_" and keep only the first part
+    lst = [elem.split("_")[0] for elem in lst]
+    
+    # Initialize a new list with the first element
+    lane_ids = [lst[0]]
+    
+    # Iterate over the remaining elements in the list
+    for i in range(1, len(lst)):
+        # If the current element is not the same as the previous element, add it to the new list
+        if lst[i] != lst[i-1]:
+            lane_ids.append(lst[i])
+
+    return lane_ids
 
 def get_blinker(lanelets, ids, ego_idx, look_forward=40):
     look_forward *= M_TO_IDX

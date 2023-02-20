@@ -377,6 +377,8 @@ def get_forward_direction(global_path, i, ws=200):
     else:
         return 0, forward_path
 
+def set_lane_ids(lst):
+    return list(set([i.split("_")[0] for i in lst]))
 
 def get_blinker(lanelets, ids, ego_idx, look_forward=40):
     look_forward *= M_TO_IDX

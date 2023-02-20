@@ -92,6 +92,7 @@ class PathPlanner:
     def returnAppendedNonIntpPath(self):
         appended_non_intp_path = []
         appended_non_intp_id = []
+        appended_lane_ids = []
         goal_pt = None
 
         for pt in self.goal_pts:
@@ -154,13 +155,15 @@ class PathPlanner:
 
             appended_non_intp_path.extend(non_intp_path)
             appended_non_intp_id.extend(non_intp_id)
+            appended_lane_ids.extend(shortest_path)
+            appended_lane_ids = set_lane_ids(appended_lane_ids)
 
             self.temp_pt = goal_pt
 
         goal_viz = GoalViz(goal_pt)
         self.pub_goal_viz.publish(goal_viz)
 
-        return appended_non_intp_path, appended_non_intp_id
+        return appended_non_intp_path, appended_non_intp_id, appended_lane_ids
 
     def run(self, sm):
         CS = sm.CS
@@ -177,6 +180,7 @@ class PathPlanner:
             #print("[{}] Making Path".format(self.__class__.__name__))
             non_intp_path = None
             non_intp_id = None
+            lane_ids = None
             self.local_path = None
             self.temp_global_idx = 0
             self.l_idx = 0
@@ -185,7 +189,7 @@ class PathPlanner:
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
-            non_intp_path, non_intp_id = self.returnAppendedNonIntpPath()
+            non_intp_path, non_intp_id, lane_ids = self.returnAppendedNonIntpPath()
             if non_intp_path == None and non_intp_id == None:
                 pass
 
@@ -212,6 +216,9 @@ class PathPlanner:
                 self.global_path = global_path
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
+                print(lane_ids)
+                if len(lane_ids)!=0:
+                    tmp_lane_id = lane_ids[0]
                 self.erase_global_path = global_path
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
@@ -230,7 +237,14 @@ class PathPlanner:
             # Pub Now Lane ID
             now_lane_id = self.non_intp_id[n_id]
             now_lane_id = now_lane_id.split('_')[0]
-            print("ID : ", now_lane_id)
+            
+            next_lane_id = lane_ids[1]
+            if tmp_lane_id != now_lane_id:
+                if len(lane_ids)>1:
+                    lane_ids = lane_ids[1:]
+                    tmp_lane_id = now_lane_id
+            
+            print("ID now & next : ", now_lane_id, next_lane_id)
             
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.local_path_nitting_value) and len(self.local_path) > self.local_path_nitting_value):
 

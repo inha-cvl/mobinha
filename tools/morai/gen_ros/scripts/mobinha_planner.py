@@ -31,15 +31,10 @@ class MoraiPlanner():
             '/morai/traffic_light', PoseArray, queue_size=1)
         self.ego_topic_pub = rospy.Publisher(
             '/morai/ego_topic', Pose, queue_size=1)
-        #subscriber
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
-        # rospy.Subscriber('/mobinha/control/wheel_angle',
-        #                  Float32, self.wheel_angle_cb)
-        # rospy.Subscriber('/mobinha/control/accel_brake',
-        #                  Float32, self.accel_brake_cb)
         rospy.Subscriber("/Ego_topic", EgoVehicleStatus,
-                         self.statusCB)  # Vehicle Status Subscriber
+                         self.statusCB)
         rospy.Subscriber("/Object_topic", ObjectStatusList,
                          self.object_topic_cb)
         rospy.Subscriber("/GetTrafficLightStatus",
@@ -61,7 +56,6 @@ class MoraiPlanner():
             elif self.state == 'INITIALIZE':
                 self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
                 self.ctrl_pub.publish(self.ctrl_msg)
-
             elif self.state == 'OVER':
                 self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
                 self.ctrl_pub.publish(self.ctrl_msg)
@@ -77,26 +71,13 @@ class MoraiPlanner():
         return ctrl_cmd
 
     def set_ctrl_cmd(self, ctrl_cmd):
-        ctrl_cmd.steering = radians(self.CM.CC.actuators.steer*13.75)
+        gain = 0.2
+        ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
         ctrl_cmd.accel = self.CM.CC.actuators.accel * \
-            3 if self.CM.CC.actuators.accel*3 < 4 else 4
+            gain if self.CM.CC.actuators.accel*gain < gain else gain
         ctrl_cmd.brake = self.CM.CC.actuators.brake * \
-            3 if self.CM.CC.actuators.brake*3 < 4 else 4
+            gain if self.CM.CC.actuators.brake*gain < gain else gain
         return ctrl_cmd
-
-    # def wheel_angle_cb(self, msg):
-    #     if msg.data != 0:
-    #         self.ctrl_msg.steering = radians(msg.data)
-
-    # def accel_brake_cb(self, msg):
-    #     if msg.data != 0:
-    #         accel_brake = msg.data
-    #         if accel_brake > 0:
-    #             self.ctrl_msg.accel = accel_brake
-    #             self.ctrl_msg.brake = 0
-    #         else:
-    #             self.ctrl_msg.accel = 0
-    #             self.ctrl_msg.brake = -1 * accel_brake
 
     def statusCB(self, data):  # Vehicle Status Subscriber
         self.status_msg = data
@@ -156,7 +137,7 @@ class MoraiPlanner():
         elif st == 5:  # Red with YUellow
             stt = 13
 
-        pose.position.x = stt
+        pose.position.x = 0  # stt
         pose.position.y = 0.8
         pose.position.z = 0.3
         traffic_light_list.poses.append(pose)

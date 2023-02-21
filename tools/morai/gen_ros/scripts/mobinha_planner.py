@@ -21,6 +21,7 @@ from geometry_msgs.msg import Pose, PoseArray
 class MoraiPlanner():
     def __init__(self):
         self.state = 'WAITING'
+        self.CM = None
         #publisher
         self.ctrl_pub = rospy.Publisher(
             '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
@@ -33,46 +34,37 @@ class MoraiPlanner():
         #subscriber
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
+        # rospy.Subscriber('/mobinha/control/wheel_angle',
+        #                  Float32, self.wheel_angle_cb)
+        # rospy.Subscriber('/mobinha/control/accel_brake',
+        #                  Float32, self.accel_brake_cb)
         rospy.Subscriber("/Ego_topic", EgoVehicleStatus,
-                         self.statusCB)  # Vehicl Status Subscriber
-        rospy.Subscriber('/mobinha/control/wheel_angle',
-                         Float32, self.wheel_angle_cb)
-        rospy.Subscriber('/mobinha/control/accel_brake',
-                         Float32, self.accel_brake_cb)
+                         self.statusCB)  # Vehicle Status Subscriber
         rospy.Subscriber("/Object_topic", ObjectStatusList,
                          self.object_topic_cb)
         rospy.Subscriber("/GetTrafficLightStatus",
                          GetTrafficLightStatus, self.get_traffic_light_status_cb)
         self.ctrl_msg = CtrlCmd()
 
-    def planning(self):
+    def planning(self, CM):
         self.wheel_angle = 0
         self.accel_brake = 0
         self.is_status = False  # 차량 상태 점검
 
         self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
-
+        self.CM = CM
         while True:
+            self.CM.update()
             if self.state == 'START':
-                # ctrl_msg.steering = self.wheel_angle
-                # control_input = self.accel_brake
-
-                # if control_input > 0:
-                #     ctrl_msg.accel = control_input
-                #     ctrl_msg.brake = 0
-                # else:
-                #     ctrl_msg.accel = 0
-                #     ctrl_msg.brake = -control_input
-
+                self.ctrl_msg = self.set_ctrl_cmd(self.ctrl_msg)
                 self.ctrl_pub.publish(self.ctrl_msg)
-
             elif self.state == 'INITIALIZE':
                 self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
-                self.ctrl_pub.publish(self.init_ctrl_cmd(self.ctrl_msg))
+                self.ctrl_pub.publish(self.ctrl_msg)
 
             elif self.state == 'OVER':
                 self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
-                self.ctrl_pub.publish(self.init_ctrl_cmd(self.ctrl_msg))
+                self.ctrl_pub.publish(self.ctrl_msg)
                 return 1
             else:
                 self.ctrl_pub.publish(self.ctrl_msg)
@@ -84,20 +76,27 @@ class MoraiPlanner():
         ctrl_cmd.brake = 1.0
         return ctrl_cmd
 
-    def wheel_angle_cb(self, msg):
-        if msg.data != 0:
-            self.ctrl_msg.steering = radians(msg.data)
+    def set_ctrl_cmd(self, ctrl_cmd):
+        ctrl_cmd.steering = radians(self.CM.CC.actuators.steer*13.75)
+        ctrl_cmd.accel = self.CM.CC.actuators.accel * \
+            3 if self.CM.CC.actuators.accel*3 < 4 else 4
+        ctrl_cmd.brake = self.CM.CC.actuators.brake * \
+            3 if self.CM.CC.actuators.brake*3 < 4 else 4
+        return ctrl_cmd
 
+    # def wheel_angle_cb(self, msg):
+    #     if msg.data != 0:
+    #         self.ctrl_msg.steering = radians(msg.data)
 
-    def accel_brake_cb(self, msg):
-        if msg.data != 0:
-            accel_brake = msg.data
-            if accel_brake > 0:
-                self.ctrl_msg.accel = accel_brake
-                self.ctrl_msg.brake = 0
-            else:
-                self.ctrl_msg.accel = 0
-                self.ctrl_msg.brake = -1 * accel_brake
+    # def accel_brake_cb(self, msg):
+    #     if msg.data != 0:
+    #         accel_brake = msg.data
+    #         if accel_brake > 0:
+    #             self.ctrl_msg.accel = accel_brake
+    #             self.ctrl_msg.brake = 0
+    #         else:
+    #             self.ctrl_msg.accel = 0
+    #             self.ctrl_msg.brake = -1 * accel_brake
 
     def statusCB(self, data):  # Vehicle Status Subscriber
         self.status_msg = data
@@ -172,13 +171,13 @@ class MoraiPlanner():
         self.state = str(msg.data)
 
 
-def run():
+def run(CM):
     #signal.signal(signal.SIGINT, signal_handler)
     m = MoraiPlanner()
     print("[{}] Created".format(m.__class__.__name__))
 
     try:
-        if m.planning() == 1:
+        if m.planning(CM) == 1:
             print("[{}] Over".format(m.__class__.__name__))
             time.sleep(4)
             sys.exit(0)

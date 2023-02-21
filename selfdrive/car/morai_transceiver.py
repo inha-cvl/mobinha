@@ -42,9 +42,7 @@ class MoraiTransceiver:
 
     def ego_topic_cb(self, msg):
         self.imu_ok = True
-        self.heading = 90 - \
-            msg.heading if (msg.heading >= -90 and msg.heading <=
-                            180) else -270 - msg.heading
+        self.heading = msg.heading-30
         self.velocity = msg.velocity.x
 
     def run(self, CM=None):
@@ -56,7 +54,7 @@ class MoraiTransceiver:
             msg.height = self.ll_position[2]
             msg.roll = self.roll
             msg.pitch = self.pitch
-            msg.azimuth = math.degrees(self.yaw)
+            msg.azimuth = -(math.degrees(self.yaw)+270)
             self.pub_novatel.publish(msg)
 
             self.pub_velocity.publish(Float32(self.velocity))

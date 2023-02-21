@@ -73,7 +73,8 @@ class Planning:
         CP = (getattr(sys.modules[__name__], car)(map)).CP
         if not self.morai_use and car == 'MORAI':
             self.morai_use = True
-            t = threading.Thread(target=mobinha_planner.run)
+            cm = ControlMaster()
+            t = threading.Thread(target=mobinha_planner.run, args=(cm,))
             t.start()
         sm = StateMaster(CP)
         path_planner = PathPlanner(CP)

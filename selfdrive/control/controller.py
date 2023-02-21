@@ -39,14 +39,14 @@ class Controller:
 
     def run(self, sm):
         CS = sm.CS
-        if CS.yawRate != 0.0:
-            if self.local_path is None:
-                wheel_angle = 0.0
-            else:
-                wheel_angle, lah_pt = self.purepursuit.run(
-                    CS.position.x, CS.position.y, CS.yawRate, CS.vEgo, self.local_path)
-                lah_viz = LookAheadViz(lah_pt)
-                self.pub_lah.publish(lah_viz)
+        if self.local_path is None:
+            wheel_angle = 0.0
+            accel_brake = -1.0
+        else:
+            wheel_angle, lah_pt = self.purepursuit.run(
+                CS.position.x, CS.position.y, CS.yawRate, CS.vEgo, self.local_path)
+            lah_viz = LookAheadViz(lah_pt)
+            self.pub_lah.publish(lah_viz)
 
             accel_brake = self.pid.run(self.target_v, CS.vEgo)
             if -100 > accel_brake:
@@ -54,5 +54,5 @@ class Controller:
             elif accel_brake > 100:
                 accel_brake = 100
 
-            self.pub_wheel_angle.publish(Float32(wheel_angle))
-            self.pub_accel_brake.publish(Float32(accel_brake))
+        self.pub_wheel_angle.publish(Float32(wheel_angle))
+        self.pub_accel_brake.publish(Float32(accel_brake))

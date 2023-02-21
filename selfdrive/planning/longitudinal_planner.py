@@ -19,7 +19,7 @@ MPS_TO_KPH = 3.6
 IDX_TO_M = 0.5
 M_TO_IDX = 2
 
-VIZ_GRAPH = False
+VIZ_GRAPH = True
 
 
 class LongitudinalPlanner:

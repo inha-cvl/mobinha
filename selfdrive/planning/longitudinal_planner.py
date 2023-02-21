@@ -77,17 +77,19 @@ class LongitudinalPlanner:
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
 
-    def obstacle_polygon(self, obj, s, cur_v):
+    def obstacle_polygon(self, obj, s, cur_v, target_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
-        obs_time = [5, self.st_param['tMax'], 7]  # sec
-        offset = [6+(cur_v*obs_time[i]), 5+(cur_v*MPS_TO_KPH), 15]  # m
+        offset = [15, 3, 10]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
+        obs_after_time = [5, self.st_param['tMax'], 7]
 
-        polygon = [(0.0, pos-2*offset[i]), (obs_time[i], pos-2*offset[i]),
-                   (obs_time[i], pos), (0.0, pos)]
+        obs_before_time = (((pos-offset[i])-s)
+                           * IDX_TO_M) / cur_v if cur_v > 1 else 0
+        polygon = [(obs_before_time, pos-offset[i]), (obs_before_time+obs_after_time[i], pos-offset[i]),
+                   (obs_before_time+obs_after_time[i], pos+offset[i]), (obs_before_time, pos+offset[i])]
 
         if VIZ_GRAPH:
             draw = self.ax.add_patch(patches.Polygon(
@@ -113,11 +115,11 @@ class LongitudinalPlanner:
 
         obstacles = []
         for obj in object_list:
-            obs = self.obstacle_polygon(obj, s, cur_v)
+            obs = self.obstacle_polygon(obj, s, cur_v, target_v)
             obstacles.append(obs)
 
         ############### Search-Based Optimal Velocity Planning  ( A* )###############
-        start = (0.0, s, cur_v)  # t, s, v
+        start = (0.0, s, target_v)  # t, s, v
         open_heap = []
         open_dict = {}
         visited_dict = {}
@@ -135,11 +137,9 @@ class LongitudinalPlanner:
             d_node = open_heap[0][1]  # (t,s,v), parent
             node_total_cost = open_heap[0][0]  # last_s - s
             visited_dict[d_node] = open_dict[d_node]
-            # get final trajectory
-            # time is bigger than 8 sec or s(longitudinal distance) is bigger than 50
             if d_node[0] > t_max or d_node[1] > s + s_max:
                 final_path = []
-                node = d_node  # parent
+                node = d_node
 
                 while True:
                     open_node_contents = visited_dict[node]
@@ -148,9 +148,8 @@ class LongitudinalPlanner:
                     if node == start:
                         break
 
-                # to make large cost -> small cost
                 final_path.reverse()
-                target_v = final_path[-1][2]  # for safety
+                target_v = final_path[-1][2]
                 if VIZ_GRAPH:
                     t_list = []
                     s_list = []
@@ -163,23 +162,22 @@ class LongitudinalPlanner:
 
                 break
 
-            # pop
             hq.heappop(open_heap)
 
-            # push
-
-            for a in [-10.0, -3.0, -1.5, 0.0, 1.5]:
-                t_exp, s_exp, v_exp = d_node
-
+            for a in [-15.0, -3.0, -1.5, 0.0, 1.5]:
                 skip = False
-                for _ in range(int(dt_exp // dt + 1)):  # range(5), dtExp= 1.0, dt = 0.2
+
+                t_exp, s_exp, v_exp = d_node
+                # t_exp += 1
+                # v_exp += a
+                # s_exp += (v_exp)*M_TO_IDX
+
+                for _ in range(int(dt_exp // dt + 1)):
+                    if skip:
+                        break
                     t_exp = round(t_exp+dt, 1)
                     s_exp += (v_exp * dt) * M_TO_IDX
                     v_exp += a * dt
-
-                    # if v_exp > max_v:
-                    #     skip = True
-                    #     break
 
                     point = GPoint(t_exp, s_exp)
                     for obstacle in obstacles:
@@ -187,25 +185,11 @@ class LongitudinalPlanner:
                             skip = True
                             break
 
-                # if skip:
-                #     continue
-
                 neighbor = (t_exp, s_exp, v_exp)
                 cost_to_neighbor = node_total_cost - goal_cost(d_node)
                 heurestic = goal_cost(neighbor)
                 total_cost = heurestic + cost_to_neighbor
 
-                # not_low_cost = False
-                # found_lower_cost_path_in_open = False
-
-                # if neighbor in open_dict:
-                #     if total_cost > open_dict[neighbor][0]:
-                #         not_low_cost = True
-                #     elif neighbor in visited_dict:
-                #         if total_cost > visited_dict[neighbor][0]:
-                #             found_lower_cost_path_in_open = True
-
-                # if not_low_cost == False and found_lower_cost_path_in_open == False:
                 hq.heappush(open_heap, (total_cost, neighbor))
                 open_dict[neighbor] = (total_cost, neighbor, d_node)
 
@@ -213,12 +197,13 @@ class LongitudinalPlanner:
                     break
 
             test_i += 1
-        
+
+        target_v = 0 if target_v < 0 else target_v
         target_v = max_v if target_v > max_v else target_v
+
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
-        # straight, turn_left, turn_right, left_change, right_change, u-turn
         # TODO: consideration filtering
         consideration_class_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
             6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]

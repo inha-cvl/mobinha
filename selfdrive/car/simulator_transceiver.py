@@ -26,6 +26,7 @@ class Vehicle:
         self.yaw += self.v * dt * math.tan(wheel_angle) / self.L
         self.yaw = (self.yaw + math.pi) % (2 * math.pi) - math.pi
         tar_v = self.v
+
         if accel > 0 and brake == 0:
             tar_v += accel * dt
         elif accel == 0 and brake >= 0:

@@ -79,7 +79,7 @@ class SIMULATOR:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 7  # min_v
-        car_param_dict["maxEnableSpeed"] = 20  # ref_v
+        car_param_dict["maxEnableSpeed"] = 30  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
@@ -87,17 +87,17 @@ class SIMULATOR:
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 0.75  # K_P
-        car_param_longitudinal_tuning["kiV"] = 0.15  # K_I
-        car_param_longitudinal_tuning["kf"] = 0.06  # K_D
+        car_param_longitudinal_tuning["kpV"] = 2.98   # K_P
+        car_param_longitudinal_tuning["kiV"] = 2.38  # K_I
+        car_param_longitudinal_tuning["kf"] = 0.0  # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 
         car_param_lateral_tuning = car_param_dict["lateralTuning"]._asdict()
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
-        car_param_lateral_tuning_lqr["l"] = 3.0  # Lfc, look-ahead distance
-        car_param_lateral_tuning_lqr["k"] = 0.85  # k, look forward gain
+        car_param_lateral_tuning_lqr["l"] = 1.5  # Lfc, look-ahead distance
+        car_param_lateral_tuning_lqr["k"] = 1.0  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
@@ -127,8 +127,8 @@ class MORAI:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 10  # min_v
-        car_param_dict["maxEnableSpeed"] = 60  # ref_v
+        car_param_dict["minEnableSpeed"] = 7  # min_v
+        car_param_dict["maxEnableSpeed"] = 30  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.8  # L, vehicle length
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4

@@ -18,7 +18,7 @@ class PublishBBox:
         sub_goal = rospy.Subscriber(
             '/move_base_simple/single_goal', PoseStamped, self.goal_cb)
         self.pub_bbox_array = rospy.Publisher(
-            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, queue_size=1)
+            '/lidar/cluster_box', BoundingBoxArray, queue_size=1)
         self.x = 90
         self.y = 0
         self.get_goal = False

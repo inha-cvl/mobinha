@@ -31,7 +31,7 @@ class ObstacleDetector:
         rospy.Subscriber(
             '/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber(
-            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+            '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
         rospy.Subscriber('/mobinha/perception/camera/bounding_box',
                          PoseArray, self.camera_bounding_box_cb)
         #MORAI
@@ -59,10 +59,10 @@ class ObstacleDetector:
         objects = []
         for obj in msg.boxes:
             x, y = obj.pose.position.x, obj.pose.position.y
-            #if self.CS is not None:
-            nx, ny = ObstacleUtils.object2enu(
-                (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
-            objects.append([nx, ny, 60])  # [2] heading
+            if self.CS is not None:
+                nx, ny = ObstacleUtils.object2enu(
+                    (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
+                objects.append([nx, ny, 60])  # [2] heading
         self.lidar_object = objects
 
     def camera_bounding_box_cb(self, msg):

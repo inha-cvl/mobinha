@@ -24,8 +24,8 @@ class StateMaster:
         self.pitch = 0.0
         self.roll = 0.0
         self.yaw = 0.0
-        self.x = 0.0
-        self.y = 0.0
+        self.x = 1037 # 1037 for songdo simulator  
+        self.y = -747 # -747 for songdo simulator
         self.z = 0.0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -37,9 +37,9 @@ class StateMaster:
         self.steer = 0
         self.accel = 0
 
-        rospy.Subscriber('/gps/imu', Imu, self.imu_cb)
-        rospy.Subscriber('/gps/fix', NavSatFix, self.gps_cb)
-        # rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
+        # rospy.Subscriber('/gps/imu', Imu, self.imu_cb)
+        # rospy.Subscriber('/gps/fix', NavSatFix, self.gps_cb)
+        rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
         rospy.Subscriber('/mobinha/car/velocity', Float32, self.velocity_cb)
         rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
         rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
@@ -47,33 +47,33 @@ class StateMaster:
         rospy.Subscriber('/mobinha/car/temp_actuators',
                          Pose, self.temp_actuators_cb)
 
-    def imu_cb(self, msg):
-        orientation = msg.orientation
-        quaternion = (orientation.x, orientation.y, orientation.z, orientation.w)
-        roll, pitch, yaw = tf.transformations.euler_from_quaternion(quaternion)
-        self.roll = math.degrees(roll)
-        self.pitch = math.degrees(pitch)
-        self.yaw = math.degrees(yaw)
-        # self.yaw = 90 + yaw if (yaw >= -90 and yaw <=180) else -270 + yaw
+    # def imu_cb(self, msg):
+    #     orientation = msg.orientation
+    #     quaternion = (orientation.x, orientation.y, orientation.z, orientation.w)
+    #     roll, pitch, yaw = tf.transformations.euler_from_quaternion(quaternion)
+    #     self.roll = math.degrees(roll)
+    #     self.pitch = math.degrees(pitch)
+    #     self.yaw = math.degrees(yaw)
+    #     # self.yaw = 90 + yaw if (yaw >= -90 and yaw <=180) else -270 + yaw
 
-    def gps_cb(self, msg):
-        self.latitude = msg.latitude
-        self.longitude = msg.longitude
-        self.altitude = msg.altitude
-        self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
-
-    # def novatel_cb(self, msg):
+    # def gps_cb(self, msg):
     #     self.latitude = msg.latitude
     #     self.longitude = msg.longitude
-    #     self.altitude = msg.height
+    #     self.altitude = msg.altitude
     #     self.x, self.y, self.z = pymap3d.geodetic2enu(
     #         msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
-    #     self.roll = msg.roll
-    #     self.pitch = msg.pitch
-    #     self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
-        # msg.azimuth
-        # 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
+
+    def novatel_cb(self, msg):
+        self.latitude = msg.latitude
+        self.longitude = msg.longitude
+        self.altitude = msg.height
+        self.x, self.y, self.z = pymap3d.geodetic2enu(
+            msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+        self.roll = msg.roll
+        self.pitch = msg.pitch
+        self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
+        msg.azimuth
+        90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=180) else -270 - msg.azimuth
 
     def velocity_cb(self, msg):
         self.v = msg.data

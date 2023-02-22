@@ -314,7 +314,7 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, yawRate, ws=70, curv_threshold=100):
+def max_v_by_curvature(path, i, ref_v, yawRate, ws=70, curv_threshold=250):
     i -= 10 if i > 10 else 0
     return_v = ref_v
     x = []

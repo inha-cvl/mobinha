@@ -164,7 +164,7 @@ class LongitudinalPlanner:
 
             hq.heappop(open_heap)
 
-            for a in [-15.0, -3.0, -1.5, 0.0, 1.5]:
+            for a in [-15.0, -3.0, -1.5, 0.0, 2.5]:
                 skip = False
 
                 t_exp, s_exp, v_exp = d_node
@@ -200,10 +200,10 @@ class LongitudinalPlanner:
 
         target_v = 0 if target_v < 0 else target_v
         target_v = max_v if target_v > max_v else target_v
-        if ref_v - target_v > 3:
-            target_v = ref_v-3
-        elif ref_v - target_v <-3:
-            target_v = ref_v+3
+        # if ref_v - target_v > 3:
+        #     target_v = ref_v-3
+        # elif ref_v - target_v <-3:
+        #     target_v = ref_v+3
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):

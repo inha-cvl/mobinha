@@ -128,7 +128,7 @@ class MORAI:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 7  # min_v
-        car_param_dict["maxEnableSpeed"] = 30  # ref_v
+        car_param_dict["maxEnableSpeed"] = 60  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.8  # L, vehicle length
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4

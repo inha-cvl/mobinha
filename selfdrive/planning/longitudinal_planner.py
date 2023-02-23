@@ -87,7 +87,7 @@ class LongitudinalPlanner:
         obs_after_time = [5, self.st_param['tMax'], 7]
 
         obs_before_time = (((pos-offset[i])-s)
-                           * IDX_TO_M) / cur_v if cur_v > 1 else 0
+                           * IDX_TO_M) / cur_v if cur_v > 1 else 0.5
         polygon = [(obs_before_time, pos-offset[i]), (obs_before_time+obs_after_time[i], pos-offset[i]),
                    (obs_before_time+obs_after_time[i], pos+offset[i]), (obs_before_time, pos+offset[i])]
 
@@ -198,6 +198,11 @@ class LongitudinalPlanner:
 
             test_i += 1
 
+        if ref_v-target_v > 1:
+            target_v = ref_v - 1
+        elif ref_v-target_v < -1:
+            target_v = ref_v+1
+
         target_v = 0 if target_v < 0 else target_v
         target_v = max_v if target_v > max_v else target_v
 
@@ -244,7 +249,7 @@ class LongitudinalPlanner:
             l_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
             local_max_v, curvature, tx, ty = max_v_by_curvature(
-                local_path, l_idx, self.ref_v, CS.yawRate)
+                local_path, l_idx, self.ref_v, CS.vEgo, CS.yawRate)
             object_list = self.check_objects(len(local_path))
             self.target_v = self.velocity_plan(
                 CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)

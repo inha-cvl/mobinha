@@ -79,8 +79,8 @@ class IoniqTransceiver():
         # for i in range(5):
 
     def accel_brake_cmd(self, msg):  # pid output is m/s^2 -10 ~ 10
-        gain = 3
-        val_data = max(-4, min(4, msg.data*gain))
+        gain = 10
+        val_data = max(-60, min(10, msg.data*gain))
         if val_data > 0.:
             self.accel_val = val_data
             self.brake_val = 0.0

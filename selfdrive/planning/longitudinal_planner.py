@@ -81,15 +81,16 @@ class LongitudinalPlanner:
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         color = ['yellow', 'gray', 'red']
-        offset = [15, 3, 10]  # m
+        offset = [15,5+(cur_v*MPS_TO_KPH), 10]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         obs_after_time = [5, self.st_param['tMax'], 7]
 
-        obs_before_time = (((pos-offset[i])-s)
-                           * IDX_TO_M) / cur_v if cur_v > 1 else 0.5
+        # obs_before_time = (((pos-offset[i])-s)
+        #                    * IDX_TO_M) / cur_v if cur_v > 1 else 0.5
+        obs_before_time = 0
         polygon = [(obs_before_time, pos-offset[i]), (obs_before_time+obs_after_time[i], pos-offset[i]),
-                   (obs_before_time+obs_after_time[i], pos+offset[i]), (obs_before_time, pos+offset[i])]
+                   (obs_before_time+obs_after_time[i], pos), (obs_before_time, pos)]
 
         if VIZ_GRAPH:
             draw = self.ax.add_patch(patches.Polygon(
@@ -251,6 +252,7 @@ class LongitudinalPlanner:
             local_max_v, curvature, tx, ty = max_v_by_curvature(
                 local_path, l_idx, self.ref_v, CS.vEgo, CS.yawRate)
             object_list = self.check_objects(len(local_path))
+            local_max_v = self.ref_v*KPH_TO_MPS
             self.target_v = self.velocity_plan(
                 CS.vEgo, self.target_v, local_max_v, len(local_path), l_idx, object_list)
 

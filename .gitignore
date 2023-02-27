@@ -111,5 +111,4 @@ venv.bak/
 
 #Map
 songdo/
-songdo-wgs84/
-songdo_plus_alpha/
+songdo+testbed/

@@ -5,7 +5,7 @@ import pymap3d
 
 import rospy
 from std_msgs.msg import Float32, Int8
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, Pose
 from novatel_oem7_msgs.msg import INSPVA
 
 
@@ -56,6 +56,8 @@ class SimulatorTransceiver:
             '/mobinha/car/velocity', Float32, queue_size=1)
         self.pub_gear = rospy.Publisher(
             '/mobinha/car/gear', Int8, queue_size=1)
+        self.pub_temp_actuators = rospy.Publisher(
+            '/mobinha/car/temp_actuators', Pose, queue_size=1)
 
         rospy.Subscriber(
             '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
@@ -95,6 +97,12 @@ class SimulatorTransceiver:
         inspva.roll = self.roll
         inspva.pitch = self.pitch
         inspva.azimuth = -(math.degrees(yaw)+270)
+
+        pose = Pose()
+        pose.position.x = CC.actuators.brake
+        pose.position.y = CC.actuators.steer
+        pose.position.z = CC.actuators.accel
+        self.pub_temp_actuators.publish(pose)
 
         self.pub_novatel.publish(inspva)
         self.pub_velocity.publish(Float32(v))

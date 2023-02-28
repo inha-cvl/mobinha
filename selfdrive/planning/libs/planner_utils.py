@@ -320,8 +320,9 @@ def ref_to_csp(ref_path):
 
 def max_v_by_curvature(forward_curvature, ref_v, min_v):
     threshold = 150
+    return_v = ref_v
     if forward_curvature < threshold:
-        return_v = ref_v - (abs(threshold-forward_curvature)*0.2)
+        return_v = ref_v - (abs(threshold-forward_curvature)*0.3)
         return_v = return_v if return_v > 0 else min_v
     return return_v*KPH_TO_MPS
 

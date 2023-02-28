@@ -66,7 +66,7 @@ class LongitudinalPlanner:
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
-        consider_distance = 80*M_TO_IDX
+        consider_distance = 50*M_TO_IDX
         for obj in object_list:
             s = self.obstacle_handler(
                 obj, local_s, cur_v) - local_s  # Remain Distance

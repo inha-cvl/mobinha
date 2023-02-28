@@ -55,7 +55,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [15, 5+(cur_v*MPS_TO_KPH), 10]  # m
+        offset = [15, 5, 10]  # m
         offset = [os*M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return pos-offset[i]
@@ -66,10 +66,11 @@ class LongitudinalPlanner:
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
-        consider_distance = 50*M_TO_IDX
+        consider_distance = 70*M_TO_IDX
         for obj in object_list:
             s = self.obstacle_handler(
                 obj, local_s, cur_v) - local_s  # Remain Distance
+            # print(s)
             norm_s = 1
             if 0 < s < consider_distance:
                 norm_s = s/consider_distance
@@ -77,7 +78,7 @@ class LongitudinalPlanner:
                 norm_s = 0
             if min_obs_s > norm_s:
                 min_obs_s = norm_s
-
+        # print(min_obs_s)
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
         elif min_obs_s <= 0:

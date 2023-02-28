@@ -328,12 +328,17 @@ class MainWindow(QMainWindow, form_class):
                 pass
 
     def traffic_light_obstacle_cb(self, msg):
+        tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
+        tl_off = "⬛️"
+        
+        if len(msg.poses) == 0:
+            for i in range(4):
+                self.tl_label_list[i].setText(tl_off)
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4 and len(msg.poses) > 0:
             tl_cls = msg.poses[0].position.y
             tl_cls_list = [{"red": [6, 10, 12, 13, 15]}, {"yellow": [8, 11, 13, 16]}, {
                 "arrow": [12, 14]}, {"green": [4, 9, 14, 17]}]
-            tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
-            tl_off = "⬛️"
+            
             tl_detect_cls = []
             for i, cls in enumerate(tl_cls_list):
                 if tl_cls in list(cls.values())[0]:
@@ -344,6 +349,7 @@ class MainWindow(QMainWindow, form_class):
                     self.tl_label_list[i].setText(tl_on_list[i])
                 else:
                     self.tl_label_list[i].setText(tl_off)
+        
 
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:

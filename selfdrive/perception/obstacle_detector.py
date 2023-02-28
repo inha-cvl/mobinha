@@ -24,6 +24,7 @@ class ObstacleDetector:
         self.local_path = None
         self.lidar_object = []
         self.goal_object = []
+        self.lidar_object = []
         self.traffic_light_object = []
 
         self.is_morai = False
@@ -156,3 +157,8 @@ class ObstacleDetector:
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
+            
+            self.lidar_object = []
+            self.traffic_light_object = []
+
+

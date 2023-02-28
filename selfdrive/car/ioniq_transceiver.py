@@ -81,6 +81,7 @@ class IoniqTransceiver():
     def accel_brake_cmd(self, msg):  # pid output is m/s^2 -10 ~ 10
         gain = 10
         val_data = max(-60, min(10, msg.data*gain))
+
         if val_data > 0.:
             self.accel_val = val_data
             self.brake_val = 0.0
@@ -92,11 +93,10 @@ class IoniqTransceiver():
 
     def set_actuators(self, actuators):
         gain = 3
-        self.target_steer = actuators.steero
-        self.accel_val = min(4, actuators.accel*gain)
-        self.brake_val = min(4, actuators.brake*gain) if (
-            self.target_v > 0 and self.rcv_velcity >= 1) else 10
-
+        self.target_steer = actuators.steer
+        self.accel_val = min(5, actuators.accel) * gain
+        self.brake_val = min(5, actuators.brake) if (
+            self.target_v > 0 and self.rcv_velocity >= 1) else 20
     def receiver(self):
         data = self.bus.recv()
         try:

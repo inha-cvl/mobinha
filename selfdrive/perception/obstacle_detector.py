@@ -60,10 +60,10 @@ class ObstacleDetector:
         objects = []
         for obj in msg.boxes:
             x, y = obj.pose.position.x, obj.pose.position.y
-            #if self.CS is not None:
-            nx, ny = ObstacleUtils.object2enu(
-                (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
-            objects.append([nx, ny, 60])  # [2] heading
+            if self.CS is not None:
+                nx, ny = ObstacleUtils.object2enu(
+                    (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
+                objects.append([nx, ny, 60])  # [2] heading
         self.lidar_object = objects
 
     def camera_bounding_box_cb(self, msg):
@@ -114,7 +114,7 @@ class ObstacleDetector:
 
         if len(self.traffic_light_object) > 0:
             for traffic_light in self.traffic_light_object:
-                if traffic_light[1] > 0.5:  # if probability exceed 50%
+                if traffic_light[1] > 0.1:  # if probability exceed 50%
                     traffic_light_obs.append(traffic_light)
         #sorting by size
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[2])

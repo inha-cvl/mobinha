@@ -6,7 +6,7 @@ class NGIIParser:
         a1_path,
         a2_path,
         a3_path,
-        # a4_path,
+        a4_path,
         b1_path, 
         b2_path, 
         b3_path, 
@@ -18,7 +18,7 @@ class NGIIParser:
         self.a1_node = self.parse_a1_node(a1_path)
         self.a2_link = self.parse_a2_link(a2_path)
         self.a3_drivewaysection = self.parse_a3_drivewaysection(a3_path)
-        # self.a4_subsidiarysection = self.parse_a4_subsidiarysection(a4_path)
+        self.a4_subsidiarysection = self.parse_a4_subsidiarysection(a4_path)
 
         self.b1_safetysign = self.parse_b1_safetysign(b1_path)
         self.b2_surfacelinemark = self.parse_b2_surfacelinemark(b2_path)

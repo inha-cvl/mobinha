@@ -319,8 +319,6 @@ def ref_to_csp(ref_path):
 
 def max_v_by_curvature(forward_curvature, ref_v, min_v):
     threshold = 150
-    return_v = ref_v
-
     if forward_curvature < threshold:
         return_v = ref_v - (abs(threshold-forward_curvature)*0.2)
         return_v = return_v if return_v > 0 else min_v
@@ -386,10 +384,12 @@ def get_forward_curvature(lanlets, ids, idx, path, yawRate):
 def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
     link = lanelets[next_id]
-    p = (link['waypoints'][0][0], link['waypoints'][0][1])
+    p = (link['waypoints'][len(link['waypoints'])//5][0],
+         link['waypoints'][len(link['waypoints'])//5][1])
     q = (link['waypoints'][len(link['waypoints'])//2][0],
          link['waypoints'][len(link['waypoints'])//2][1])
-    r = (link['waypoints'][-1][0], link['waypoints'][-1][1])
+    r = (link['waypoints'][len(link['waypoints'])//5*4][0],
+         link['waypoints'][len(link['waypoints'])//5*4][1])
 
     val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
 
@@ -399,7 +399,7 @@ def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
         return 'R'
     if link['leftTurn']:
         return 'L'
-    threshold = 100
+    threshold = 10
     if -threshold < val < threshold:
         return 'S'  # collinear
     elif val <= -threshold:

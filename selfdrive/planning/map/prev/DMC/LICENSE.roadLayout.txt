@@ -1,0 +1,17 @@
+# LICENSE 
+
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 License 
+
+All datasets are copyrighted by NAVER LABS and published under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 License. You must attribute the work in the manner specified by the author. You may not use the work for commercial purposes, and you may only distribute the resulting work under the same license if you alter, transform, or create the work. 
+
+ 
+
+# 지도 관련 법적 공지 
+
+공간정보산업협회 심사필 제2019-031호(2019.10.28)
+
+ 
+
+# 사용자 준수사항 
+
+「공간정보의 구축 및 관리 등에 관한 법률」 제14조 내지 제21호, 제108조, 제109조, 「국가공간정보 기본법」 제37조 내지 제41조, 「국토교통부 국가공간정보 보안관리규정」, 「국토지리정보원 공간정보 제공에 관한 규정」 에 따라 공급받은 목적 이외의 사용을 금하며, 무단배포, 해외반출, 유출 및 분실이 없도록 철저히 관리하여 주시기 바랍니다.

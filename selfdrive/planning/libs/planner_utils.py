@@ -167,6 +167,7 @@ def id_interpolate(non_intp, intp, non_intp_id):
         itp_ids.append(n_id)
     return itp_ids
 
+
 def node_matching(lanelet, l_id, l_idx):
     node_id = l_id
 
@@ -369,6 +370,7 @@ def get_forward_curvature(lanlets, ids, idx, path, yawRate):
     '''
 
     # Calculate curvature by trajectory
+
     if len(x) > 2:
         cr = np.polyfit(x, y, 2)
         if cr[0] != 0:

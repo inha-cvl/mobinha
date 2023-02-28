@@ -94,7 +94,7 @@ class LongitudinalPlanner:
 
         if target_v > self.ref_v*KPH_TO_MPS:
             target_v = self.ref_v*KPH_TO_MPS
-        elif target_v < 0:
+        elif target_v < 0.3:
             target_v = 0
 
         return target_v

@@ -319,7 +319,7 @@ def ref_to_csp(ref_path):
 
 
 def max_v_by_curvature(forward_curvature, ref_v, min_v):
-    threshold = 150
+    threshold = 200
     return_v = ref_v
     if forward_curvature < threshold:
         return_v = ref_v - (abs(threshold-forward_curvature)*0.3)
@@ -328,7 +328,7 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v):
 
 
 def get_forward_curvature(lanlets, ids, idx, path, yawRate):
-    ws = 60
+    ws = 100
     idx -= 10 if idx > 10 else 0
 
     x = []

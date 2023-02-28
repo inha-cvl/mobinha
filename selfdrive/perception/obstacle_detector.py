@@ -30,8 +30,9 @@ class ObstacleDetector:
 
         rospy.Subscriber(
             '/mobinha/planning/local_path', Marker, self.local_path_cb)
+        #/mobinha/perception
         rospy.Subscriber(
-            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+            '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
         rospy.Subscriber('/mobinha/perception/camera/bounding_box',
                          PoseArray, self.camera_bounding_box_cb)
         #MORAI

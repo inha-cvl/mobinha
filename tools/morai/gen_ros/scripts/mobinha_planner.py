@@ -71,7 +71,7 @@ class MoraiPlanner():
         return ctrl_cmd
 
     def set_ctrl_cmd(self, ctrl_cmd):
-        gain = 0.2
+        gain = 0.4
         ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
         ctrl_cmd.accel = self.CM.CC.actuators.accel * \
             gain if self.CM.CC.actuators.accel*gain < gain else gain

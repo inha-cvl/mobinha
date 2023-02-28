@@ -149,7 +149,7 @@ def interpolate(points, precision):
     return itp_points, s, yaw, k
 
 
-def ref_interpolate(points, precision, min_v, ref_v):
+def ref_interpolate(points, precision):
     wx, wy = zip(*points)
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
@@ -158,6 +158,14 @@ def ref_interpolate(points, precision, min_v, ref_v):
         itp_points.append((float(x), float(y)))
 
     return itp_points, itp.s[-1]
+
+
+def id_interpolate(non_intp, intp, non_intp_id):
+    itp_ids = []
+    for wp in intp:
+        n_id = non_intp_id[calc_idx(non_intp, wp)]
+        itp_ids.append(n_id)
+    return itp_ids
 
 
 def node_matching(lanelet, l_id, l_idx):
@@ -249,10 +257,8 @@ def node_to_waypoints2(lanelet, shortest_path):
             s_idx, e_idx = (lanelet[split_id[0]]['cut_idx'][int(split_id[1])])
             alpha_path.append(lanelet[split_id[0]]
                               ['waypoints'][int((s_idx+e_idx)//2)])
-            for i in range(len(alpha_path)):
-                final_id_path.append(str("{}{}".format(id, i)))
+            final_id_path.append(str(id))
             final_path.extend(alpha_path)
-
         else:
             alpha_path.extend(lanelet[split_id[0]]['waypoints'])
             for i in range(len(alpha_path)):
@@ -300,10 +306,8 @@ def calc_idx(pts, pt):
 
     if min_idx == len(pts) - 1:
         pt1 = pts[min_idx-1]
-        pt2 = pts[min_idx]
     else:
         pt1 = pts[min_idx]
-        pt2 = pts[min_idx+1]
 
     return min_idx
 
@@ -314,19 +318,35 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, yawRate, ws=70, curv_threshold=100):
-    i -= 10 if i > 10 else 0
+def max_v_by_curvature(forward_curvature, ref_v, min_v):
+    threshold = 150
     return_v = ref_v
+
+    if forward_curvature < threshold:
+        return_v = ref_v - (abs(threshold-forward_curvature)*0.2)
+        return_v = return_v if return_v > 0 else min_v
+    return return_v*KPH_TO_MPS
+
+
+def get_forward_curvature(lanlets, ids, idx, path, yawRate):
+    ws = 60
+    idx -= 10 if idx > 10 else 0
+
     x = []
     y = []
-    curvated = 1000
-    if i < len(path)-1:
-        if i+ws < len(path):
-            x = [v[0] for v in path[i:i+ws]]
-            y = [v[1] for v in path[i:i+ws]]
+    idx_list = []
+    trajectory = []
+    if idx < len(path)-1:
+        if idx+ws < len(path):
+            x = [v[0] for v in path[idx:idx+ws]]
+            y = [v[1] for v in path[idx:idx+ws]]
+            idx_list = list(range(idx, idx+ws))
+            trajectory = path[idx:idx+ws]
         else:
-            x = [v[0] for v in path[i:]]
-            y = [v[1] for v in path[i:]]
+            x = [v[0] for v in path[idx:]]
+            y = [v[1] for v in path[idx:]]
+            idx_list = list(range(idx, len(path)-1))
+            trajectory = path[idx:]
 
         x = np.array([(v-x[0]) for v in x])
         y = np.array([(v-y[0]) for v in y])
@@ -335,23 +355,34 @@ def max_v_by_curvature(path, i, ref_v, yawRate, ws=70, curv_threshold=100):
         rotation_radians = math.radians(-yawRate) + math.pi/2
         rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
                                  [math.sin(rotation_radians), math.cos(rotation_radians)]])
-        rotation_plot = rotation_mat@origin_plot
-        x, y = rotation_plot
+        rot_x, rot_y = list(rotation_mat@origin_plot)
 
-        if len(x) > 2:
-            cr = np.polyfit(x, y, 2)
-            if cr[0] != 0:
-                curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
-            else:
-                curvated = curv_threshold
+    # Calculate curvature by K
+    '''
+    k_sum = 0
+    k_sum_cnt = 0
+    for i in idx_list:
+        now_id = ids[i].split('_')
+        k = abs(lanlets[now_id[0]]['k'][int(now_id[1])])
+        k = k**-1 if k > 0 else 0
+        if 0 < k < 1000:
+            k_sum += k
+            k_sum_cnt += 1
+    curvature = k_sum / float(k_sum_cnt) if k_sum_cnt > 0 else 10000
+    '''
+
+    # Calculate curvature by trajectory
+
+    if len(x) > 2:
+        cr = np.polyfit(x, y, 2)
+        if cr[0] != 0:
+            curvature = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
         else:
-            curvated = curv_threshold+1
+            curvature = 10000
+    else:
+        curvature = 10000
 
-        if curvated < curv_threshold:
-            return_v = ref_v - (abs(curv_threshold-curvated)*0.15)
-            return_v = return_v if return_v > 0 else 7
-    curvated = 1000 if curvated > 1000 else curvated
-    return return_v*KPH_TO_MPS, curvated, x, y
+    return curvature, rot_x, rot_y, trajectory
 
 
 def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
@@ -379,18 +410,18 @@ def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
         return 'R'  # right turn
 
 
-def get_blinker(lanelets, ids, ego_idx, look_forward=40):
+def get_blinker(lanelets, ids, idx, look_forward=40):
     look_forward *= M_TO_IDX
     blinker = 0
 
-    now_id = ids[ego_idx].split('_')[0]
+    now_id = ids[idx].split('_')[0]
 
     left_id = lanelets[now_id]['adjacentLeft']
     right_id = lanelets[now_id]['adjacentRight']
 
     try:
         forward_ids = np.array([fid.split('_')[0]
-                               for fid in ids[ego_idx:ego_idx+look_forward]])
+                               for fid in ids[idx:idx+look_forward]])
         if np.any(forward_ids == left_id):
             blinker = 1
         elif np.any(forward_ids == right_id):

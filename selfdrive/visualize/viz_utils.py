@@ -177,7 +177,7 @@ def VectorMapVis(map_data):
     surfacemarks = map_data['surfacemarks']
     trafficlights = map_data['trafficlights']
     vehicleprotectionsafetys = map_data['vehicleprotectionsafetys']
-    speedbumps = map_data['speedbumps']
+    #speedbumps = map_data['speedbumps']
     postpoints = map_data['postpoints']
 
     array = MarkerArray()
@@ -220,10 +220,10 @@ def VectorMapVis(map_data):
                        data, 'solid', (1.0, 1.0, 1.0, 0.5))
         array.markers.append(marker)
 
-    for id_, data in speedbumps.items():
-        marker = Bound('speedbump', id_, 0, data,
-                       'solid', (1.0, 1.0, 1.0, 0.5))
-        array.markers.append(marker)
+    # for id_, data in speedbumps.items():
+    #     marker = Bound('speedbump', id_, 0, data,
+    #                    'solid', (1.0, 1.0, 1.0, 0.5))
+    #     array.markers.append(marker)
 
     for id_, data in postpoints.items():
         marker = PostPoint('postpoint_%s' % (id_), 0, data,

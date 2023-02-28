@@ -22,6 +22,7 @@ class PathPlanner:
 
         self.temp_pt = None
         self.global_path = None
+        self.global_id = None
         self.erase_global_point = None
         self.non_intp_path = None
         self.non_intp_id = None
@@ -54,6 +55,8 @@ class PathPlanner:
             '/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher(
             '/mobinha/planning/lane_information', Pose, queue_size=1)
+        self.pub_trajectory = rospy.Publisher(
+            '/mobinha/planning/trajectory', PoseArray, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -193,10 +196,13 @@ class PathPlanner:
                 pass
             if non_intp_path is not None:
                 self.state = 'MOVE'
-                global_path, self.last_s = ref_interpolate(
-                    non_intp_path, self.precision, 0, 0)
 
+                global_path, self.last_s = ref_interpolate(
+                    non_intp_path, self.precision)
+                global_id = id_interpolate(
+                    non_intp_path, global_path, non_intp_id)
                 self.global_path = global_path
+                self.global_id = global_id
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
                 self.head_lane_ids = head_lane_ids
@@ -218,6 +224,7 @@ class PathPlanner:
             pp = 0
 
         elif self.state == 'MOVE':
+
             idx = calc_idx(
                 self.global_path, (CS.position.x, CS.position.y))
 
@@ -225,9 +232,8 @@ class PathPlanner:
                 self.temp_global_idx = idx
 
             s = self.temp_global_idx * self.precision  # m
-            n_id = calc_idx(
-                self.non_intp_path, (CS.position.x, CS.position.y))
-            now_lane_id = self.non_intp_id[n_id]
+
+            now_lane_id = self.global_id[idx]
             splited_id = now_lane_id.split('_')[0]
 
             if splited_id == self.next_head_lane_id:
@@ -270,15 +276,11 @@ class PathPlanner:
                 forward_direction = get_forward_direction(
                     self.lmap.lanelets, self.next_head_lane_id)
 
-                #Pubulish Lane Information
                 cw_s = get_nearest_crosswalk(
                     self.lmap.lanelets, splited_id, local_point)
-                pose = Pose()
-                pose.position.x = int(splited_id)
-                pose.position.y = get_direction_number(
-                    self.lmap.lanelets, splited_id, forward_direction)
-                pose.position.z = cw_s
-                self.pub_lane_information.publish(pose)
+
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(
+                    self.lmap.lanelets, self.global_id, self.l_idx, self.local_path, CS.yawRate)
 
                 # TODO: Avoidance Path
                 #
@@ -299,11 +301,33 @@ class PathPlanner:
                 # else:
                 #     self.obstacle_detect_timer = 0.0
 
+                # Pubulish Lane Information
+                pose = Pose()
+                pose.position.x = int(splited_id)
+                pose.position.y = get_direction_number(
+                    self.lmap.lanelets, splited_id, forward_direction)
+                pose.position.z = cw_s
+                pose.orientation.x = forward_curvature
+                self.pub_lane_information.publish(pose)
+
+                poseArray = PoseArray()
+                for i, x in enumerate(rot_x):
+                    pose = Pose()
+                    pose.position.x = x
+                    pose.position.y = rot_y[i]
+                    pose.position.z = forward_curvature
+                    poseArray.poses.append(pose)
+                self.pub_trajectory.publish(poseArray)
+
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
 
-            blinker = get_blinker(self.lmap.lanelets, self.non_intp_id, n_id)
-            self.pub_blinkiker.publish(blinker)
+                forward_path_viz = ForwardPathViz(trajectory)
+                self.pub_forward_path.publish(forward_path_viz)
+
+                blinker = get_blinker(self.lmap.lanelets,
+                                      self.global_id, self.l_idx,)
+                self.pub_blinkiker.publish(blinker)
 
             pose = Pose()
             pose.position.x = 1

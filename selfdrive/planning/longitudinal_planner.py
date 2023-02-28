@@ -20,7 +20,8 @@ class LongitudinalPlanner:
         self.goal_object = None
 
         self.ref_v = CP.maxEnableSpeed
-        self.target_v = CP.minEnableSpeed*KPH_TO_MPS
+        self.min_v = CP.minEnableSpeed
+        self.target_v = self.min_v*KPH_TO_MPS
         self.st_param = CP.stParam._asdict()
         self.sl_param = CP.slParam._asdict()
 
@@ -34,8 +35,6 @@ class LongitudinalPlanner:
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
             '/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
-        self.pub_trajectory = rospy.Publisher(
-            '/mobinha/planning/trajectory', PoseArray, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
@@ -46,9 +45,9 @@ class LongitudinalPlanner:
             (pose.position.x, pose.position.y, pose.position.z) for pose in msg.poses]
 
     def lane_information_cb(self, msg):
-        # id, forward_direction, cross_walk distance
+        # [0] id, [1] forward_direction, [2] cross_walk distance [3] forward_curvature
         self.lane_information = [msg.position.x,
-                                 msg.position.y, msg.position.z]
+                                 msg.position.y, msg.position.z, msg.orientation.x]
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
@@ -67,25 +66,35 @@ class LongitudinalPlanner:
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
+        consider_distance = 80*M_TO_IDX
         for obj in object_list:
-            s = self.obstacle_handler(obj, local_s, cur_v)
-            s -= local_s
-            norm_s = 9
-            if s*IDX_TO_M < 100:
-                norm_s = s/100*M_TO_IDX
-            else:
-                norm_s = 100
+            s = self.obstacle_handler(
+                obj, local_s, cur_v) - local_s  # Remain Distance
+            norm_s = 1
+            if 0 < s < consider_distance:
+                norm_s = s/consider_distance
+            elif s <= 0:
+                norm_s = 0
             if min_obs_s > norm_s:
                 min_obs_s = norm_s
 
-        if min_obs_s < 1:
+        if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
+        elif min_obs_s <= 0:
+            pi = 0
 
         target_v = max_v * pi
-        # if target_v-self.target_v < -1:
-        #     target_v = self.target_v + 1
-        # elif target_v-self.target_v > 1:
-        #     target_v = self.target_v - 1
+
+        gain = 0.3
+        if self.target_v-target_v < -gain:
+            target_v = self.target_v + gain
+        elif self.target_v-target_v > gain:
+            target_v = self.target_v - gain
+
+        if target_v > self.ref_v*KPH_TO_MPS:
+            target_v = self.ref_v*KPH_TO_MPS
+        elif target_v < 0:
+            target_v = 0
 
         return target_v
 
@@ -126,17 +135,18 @@ class LongitudinalPlanner:
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
 
-        if local_path is not None:
-            l_idx = calc_idx(
+        if local_path != None and self.lane_information != None:
+            local_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
-            local_max_v, curvature, tx, ty = max_v_by_curvature(
-                local_path, l_idx, self.ref_v, CS.vEgo, CS.yawRate)
+            local_curv_v = max_v_by_curvature(
+                self.lane_information[3], self.ref_v, self.min_v)
             object_list = self.check_objects(len(local_path))
-            #local_max_v = self.ref_v*KPH_TO_MPS
-            #self.target_v = self.velocity_plan(CS.vEgo, local_max_v, local_max_v, CS.actuators.accel, len(local_path), l_idx, object_list)
 
             self.target_v = self.simple_velocity_plan(
-                CS.vEgo, local_max_v, l_idx, object_list)
+                CS.vEgo, self.ref_v*KPH_TO_MPS, local_idx, object_list)
+
+            if self.target_v > local_curv_v:
+                self.target_v = local_curv_v
 
             if pp == 2:
                 self.target_v = 0.0
@@ -146,13 +156,5 @@ class LongitudinalPlanner:
                 self.target_v = 0.0
             else:
                 lgp = 1
-                trajectory = PoseArray()
-                for i, x in enumerate(tx):
-                    pose = Pose()
-                    pose.position.x = x
-                    pose.position.y = ty[i]
-                    pose.position.z = curvature
-                    trajectory.poses.append(pose)
-                self.pub_trajectory.publish(trajectory)
 
         return lgp

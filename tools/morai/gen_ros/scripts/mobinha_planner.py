@@ -22,7 +22,7 @@ class MoraiPlanner():
     def __init__(self):
         self.state = 'WAITING'
         self.CM = None
-        #publisher
+        # publisher
         self.ctrl_pub = rospy.Publisher(
             '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
         self.obj_list_pub = rospy.Publisher(
@@ -70,13 +70,16 @@ class MoraiPlanner():
         ctrl_cmd.brake = 1.0
         return ctrl_cmd
 
+    def clip(self, x, lo, hi):
+        return max(lo, min(hi, x))
+
+    def rmin(self, x, hi):
+        return min(hi, x)
+
     def set_ctrl_cmd(self, ctrl_cmd):
-        gain = 0.4
         ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
-        ctrl_cmd.accel = self.CM.CC.actuators.accel * \
-            gain if self.CM.CC.actuators.accel*gain < gain else gain
-        ctrl_cmd.brake = self.CM.CC.actuators.brake * \
-            gain if self.CM.CC.actuators.brake*gain < gain else gain
+        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel, 10)/10 * 0.5
+        ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake, 10)/10 * 0.75
         return ctrl_cmd
 
     def statusCB(self, data):  # Vehicle Status Subscriber
@@ -137,7 +140,7 @@ class MoraiPlanner():
         elif st == 5:  # Red with YUellow
             stt = 13
 
-        pose.position.x = 0  # stt
+        pose.position.x = stt
         pose.position.y = 0.8
         pose.position.z = 0.3
         traffic_light_list.poses.append(pose)

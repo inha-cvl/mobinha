@@ -1,7 +1,4 @@
 class PID:
-    KPH_TO_MPS = 1 / 3.6
-    MPS_TO_KPH = 3.6
-
     def __init__(self, CP, dt=0.1):
         self.K_P = CP.kpV
         self.K_I = CP.kiV

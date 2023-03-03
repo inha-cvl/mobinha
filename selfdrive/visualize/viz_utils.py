@@ -445,8 +445,8 @@ def Cube(ns, id_, scale, quaternion, color):
     marker.ns = ns
     marker.id = id_
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = scale*3
-    marker.scale.y = scale
+    marker.scale.x = scale
+    marker.scale.y = scale*2.5
     marker.scale.z = scale
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]

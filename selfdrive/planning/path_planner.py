@@ -293,7 +293,7 @@ class PathPlanner:
                 #         # Create Avoidance Trajectory
                 #         splited_id = now_lane_id.split('_')[0]
                 #         avoid_path = generate_avoid_path(
-                #             self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25)
+                #             self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25*(1/self.precision))
                 #         if avoid_path is not None:
                 #             for i, avoid_pt in enumerate(avoid_path):
                 #                 self.local_path[self.l_idx+i] = avoid_pt
@@ -326,7 +326,7 @@ class PathPlanner:
                 self.pub_forward_path.publish(forward_path_viz)
 
                 blinker = get_blinker(self.lmap.lanelets,
-                                      self.global_id, self.l_idx,)
+                                      self.global_id, self.l_idx, 1/self.precision,)
                 self.pub_blinkiker.publish(blinker)
 
             pose = Pose()

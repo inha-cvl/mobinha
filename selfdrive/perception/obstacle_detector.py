@@ -1,6 +1,6 @@
-from scipy.spatial import KDTree
-import math
 import tf
+from scipy.spatial import KDTree
+import time
 import rospy
 import pymap3d as pm
 
@@ -10,9 +10,6 @@ from jsk_recognition_msgs.msg import BoundingBoxArray
 
 from selfdrive.visualize.viz_utils import *
 from selfdrive.perception.libs.obstacle_utils import ObstacleUtils
-
-IDX_TO_M = 0.5
-M_TO_IDX = 2
 
 
 class ObstacleDetector:
@@ -28,15 +25,16 @@ class ObstacleDetector:
         self.traffic_light_object = []
 
         self.is_morai = False
+        self.traffic_ligth_timer = time.time()
 
         rospy.Subscriber(
             '/mobinha/planning/local_path', Marker, self.local_path_cb)
-        #/mobinha/perception
+        # /mobinha/perception
         rospy.Subscriber(
             '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
         rospy.Subscriber('/mobinha/perception/camera/bounding_box',
                          PoseArray, self.camera_bounding_box_cb)
-        #MORAI
+        # MORAI
         rospy.Subscriber(
             '/morai/object_list', PoseArray, self.morai_object_list_cb)
         rospy.Subscriber(
@@ -64,7 +62,7 @@ class ObstacleDetector:
             if self.CS is not None:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
-                objects.append([nx, ny, 60])  # [2] heading
+                objects.append([nx, ny, 0])  # [2] heading
         self.lidar_object = objects
 
     def camera_bounding_box_cb(self, msg):
@@ -77,7 +75,7 @@ class ObstacleDetector:
     def morai_object_list_cb(self, msg):
         objects = []
         for obj in msg.poses:
-            objects.append((obj.position.x, obj.position.y, obj.position.z))
+            objects.append((obj.position.x, obj.position.y, 0))
         self.lidar_object = objects
 
     def morai_traffic_light_cb(self, msg):
@@ -86,6 +84,7 @@ class ObstacleDetector:
             traffic_lights.append(
                 (tl.position.x, tl.position.y, tl.position.z))
         self.traffic_light_object = traffic_lights
+        self.traffic_ligth_timer = time.time()
 
     def morai_ego_topic_cb(self, msg):
         self.is_morai = True
@@ -103,7 +102,7 @@ class ObstacleDetector:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(
                     local_point, self.local_path, (obj[0]+dx, obj[1]+dy))
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*M_TO_IDX and obj_d > -3.5 and obj_d < 3.5:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3.5 and obj_d < 3.5:
                     obstacle_sd.append((obj_s, obj_d))
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2]))
         # sorting by s
@@ -117,7 +116,7 @@ class ObstacleDetector:
             for traffic_light in self.traffic_light_object:
                 if traffic_light[1] > 0.1:  # if probability exceed 50%
                     traffic_light_obs.append(traffic_light)
-        #sorting by size
+        # sorting by size
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[2])
         return traffic_light_obs
 
@@ -140,7 +139,7 @@ class ObstacleDetector:
                 pose.position.z = sd[1]
                 lidar_obstacle.poses.append(pose)
             obstacle_distance = (
-                obstacle_sd[0][0]-car_idx)*IDX_TO_M if len(obstacle_sd) > 0 else -1
+                obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1
 
             # TODO: Traffic Light
             traffic_light_obs = self.get_traffic_light_objects()
@@ -157,8 +156,9 @@ class ObstacleDetector:
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
-            
+
             self.lidar_object = []
-            self.traffic_light_object = []
+            if time.time()-self.traffic_ligth_timer > 5:
+                self.traffic_light_object = []
 
 

@@ -12,6 +12,12 @@ def getBaseLLA(map_path):
         return base[0], base[1], base[2]
 
 
+def getPrecision(map_name):
+    precision = 0.5
+    if map_name == 'KCity':
+        precision = 1.0
+    return precision
+
 class IONIQ:
     def __init__(self, map_name='KCity'):
         self.CP = car_param.CarParam()
@@ -120,7 +126,7 @@ class MORAI:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-
+        car_param_map_param["precision"] = getPrecision(map_name)
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng
@@ -128,7 +134,7 @@ class MORAI:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 7  # min_v
+        car_param_dict["minEnableSpeed"] = 15  # min_v
         car_param_dict["maxEnableSpeed"] = 60  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.8  # L, vehicle length

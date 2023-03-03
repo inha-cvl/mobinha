@@ -11,9 +11,6 @@ from selfdrive.visualize.viz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-IDX_TO_M = 0.5
-M_TO_IDX = 2
-
 
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
@@ -72,8 +69,8 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     right_id = lanelets[now_lane_id]['adjacentRight']
 
     if left_id is not None or right_id is not None:
-        obs_idx = obs_len*M_TO_IDX if obs_len * \
-            M_TO_IDX < len(local_path_from_now) else len(local_path_from_now)-1
+        obs_idx = obs_len if obs_len < len(
+            local_path_from_now) else len(local_path_from_now)-1
         local_path_from_now = local_path_from_now[:obs_idx+1]
 
     else:
@@ -323,13 +320,13 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v):
     return_v = ref_v
     if forward_curvature < threshold:
         return_v = ref_v - (abs(threshold-forward_curvature)*0.3)
-        return_v = return_v if return_v > 0 else min_v
+        return_v = return_v if return_v > min_v else min_v
     return return_v*KPH_TO_MPS
 
 
 def get_forward_curvature(lanlets, ids, idx, path, yawRate):
     ws = 100
-    idx -= 10 if idx > 10 else 0
+    idx -= 10 if idx > 10 else idx
 
     x = []
     y = []
@@ -411,7 +408,7 @@ def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
         return 'R'  # right turn
 
 
-def get_blinker(lanelets, ids, idx, look_forward=40):
+def get_blinker(lanelets, ids, idx, M_TO_IDX, look_forward=40):
     look_forward *= M_TO_IDX
     blinker = 0
 
@@ -422,7 +419,7 @@ def get_blinker(lanelets, ids, idx, look_forward=40):
 
     try:
         forward_ids = np.array([fid.split('_')[0]
-                               for fid in ids[idx:idx+look_forward]])
+                               for fid in ids[idx:idx+int(look_forward)]])
         if np.any(forward_ids == left_id):
             blinker = 1
         elif np.any(forward_ids == right_id):

@@ -7,9 +7,6 @@ from selfdrive.visualize.viz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-IDX_TO_M = 0.5
-M_TO_IDX = 2
-
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -18,6 +15,7 @@ class LongitudinalPlanner:
         self.traffic_light_obstacle = None
         self.lane_information = None
         self.goal_object = None
+        self.M_TO_IDX = 1/CP.mapParam.precision
 
         self.ref_v = CP.maxEnableSpeed
         self.min_v = CP.minEnableSpeed
@@ -56,7 +54,7 @@ class LongitudinalPlanner:
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         offset = [15, 5, 10]  # m
-        offset = [os*M_TO_IDX for os in offset]
+        offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return pos-offset[i]
 
@@ -66,7 +64,7 @@ class LongitudinalPlanner:
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
-        consider_distance = 70*M_TO_IDX
+        consider_distance = 70*self.M_TO_IDX
         for obj in object_list:
             s = self.obstacle_handler(
                 obj, local_s, cur_v) - local_s  # Remain Distance
@@ -119,7 +117,7 @@ class LongitudinalPlanner:
 
         # [1] = Goal Object
         if self.goal_object is not None:
-            left = (self.goal_object[1]-self.goal_object[2]) * M_TO_IDX
+            left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX
             if left <= local_len:
                 object_list.append(
                     [self.goal_object[0], left, 0])

@@ -91,30 +91,30 @@ class NGII2LANELET:
 
         a1_path = '%s/A1_NODE.shp'%(folder_path)
         a2_path = '%s/A2_LINK.shp'%(folder_path)
-        a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
-        a4_path = '%s/A4_SUBSIDIARYSECTION.shp'%(folder_path)
+        # a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
+        # a4_path = '%s/A4_SUBSIDIARYSECTION.shp'%(folder_path)
 
-        b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
+        # b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
         b2_path = '%s/B2_SURFACELINEMARK.shp'%(folder_path)
         b3_path = '%s/B3_SURFACEMARK.shp'%(folder_path)
 
-        c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
-        c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
-        c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
-        c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
+        # c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
+        # c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
+        # c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
+        # c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
 
         ngii = NGIIParser(
             a1_path,
             a2_path,
-            a3_path,
-            a4_path,
-            b1_path, 
+            # a3_path,
+            # a4_path,
+            # b1_path, 
             b2_path, 
-            b3_path, 
-            c1_path,
-            c3_path,
-            c4_path,
-            c6_path)
+            b3_path)
+            # c1_path,
+            # c3_path,
+            # c4_path,
+            # c6_path)
         self.base_lla = base_lla
         self.is_utm = is_utm
         self.generate_lanelet(ngii, precision, self.base_lla, self.is_utm)
@@ -346,16 +346,16 @@ class NGII2LANELET:
                 else:
                     data['group'] = None
 
-        for b1_safetysign in tqdm(ngii.b1_safetysign, desc="b1_safetysign: ", total=len(ngii.b1_safetysign)):
-            obj_id = b1_safetysign.ID
+        # for b1_safetysign in tqdm(ngii.b1_safetysign, desc="b1_safetysign: ", total=len(ngii.b1_safetysign)):
+        #     obj_id = b1_safetysign.ID
 
-            points = []
+        #     points = []
 
-            for tx, ty, alt in b1_safetysign.geometry.exterior.coords:
-                x, y, z = self.to_cartesian(tx, ty, alt)
-                points.append((x, y, z))
+        #     for tx, ty, alt in b1_safetysign.geometry.exterior.coords:
+        #         x, y, z = self.to_cartesian(tx, ty, alt)
+        #         points.append((x, y, z))
 
-            safetysigns[obj_id] = points
+        #     safetysigns[obj_id] = points
 
         for b2_surfacelinemark in tqdm(ngii.b2_surfacelinemark, desc="b2_surfacelinemark: ", total=len(ngii.b2_surfacelinemark)):
             if b2_surfacelinemark.Kind is not None:
@@ -443,34 +443,43 @@ class NGII2LANELET:
                 if new_id is not None:
                     if b3_surfacemark.Type == '1':
                         if b3_surfacemark.Kind == '5371':
-                            lanelets[new_id]['direction'] = ['S']
+                            lanelets[new_id]['direction'].append('S')
 
                         elif b3_surfacemark.Kind == '5372':
-                            lanelets[new_id]['direction'] = ['L']
+                            lanelets[new_id]['direction'].append('L')
 
                         elif b3_surfacemark.Kind == '5373':
-                            lanelets[new_id]['direction'] = ['R']
+                            lanelets[new_id]['direction'].append('R')
 
                         elif b3_surfacemark.Kind == '5374':
-                            lanelets[new_id]['direction'] = ['L', 'R']
+                            lanelets[new_id]['direction'].append('L')
+                            lanelets[new_id]['direction'].append('R')
 
                         elif b3_surfacemark.Kind == '5379':
-                            lanelets[new_id]['direction'] = ['L', 'S', 'R']
+                            lanelets[new_id]['direction'].append('L')
+                            lanelets[new_id]['direction'].append('S')
+                            lanelets[new_id]['direction'].append('R')
 
                         elif b3_surfacemark.Kind == '5381':
-                            lanelets[new_id]['direction'] = ['L', 'S']
+                            lanelets[new_id]['direction'].append('L')
+                            lanelets[new_id]['direction'].append('S')
 
                         elif b3_surfacemark.Kind == '5382':
-                            lanelets[new_id]['direction'] = ['S', 'R']
+                            lanelets[new_id]['direction'].append('S')
+                            lanelets[new_id]['direction'].append('R')
 
                         elif b3_surfacemark.Kind == '5383':
-                            lanelets[new_id]['direction'] = ['S', 'U']
+                            lanelets[new_id]['direction'].append('S')
+                            lanelets[new_id]['direction'].append('U')
 
                         elif b3_surfacemark.Kind == '5391':
-                            lanelets[new_id]['direction'] = ['U']
+                            lanelets[new_id]['direction'].append('U')
 
                         elif b3_surfacemark.Kind == '5392':
-                            lanelets[new_id]['direction'] = ['L', 'U']
+                            lanelets[new_id]['direction'].append('L')
+                            lanelets[new_id]['direction'].append('U')
+
+                        lanelets[new_id]['direction'] = list(set(lanelets[new_id]['direction']))
 
                         if 'R' in lanelets[new_id]['direction']:
                             right_data = None
@@ -504,41 +513,41 @@ class NGII2LANELET:
         #             right_id = lanelets[right_id]['adjacentRight']
         #             ref_n += 1
 
-        for c1_trafficlight in tqdm(ngii.c1_trafficlight, desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
-            obj_id = c1_trafficlight.ID
+        # for c1_trafficlight in tqdm(ngii.c1_trafficlight, desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
+        #     obj_id = c1_trafficlight.ID
 
-            tx, ty, alt = list(c1_trafficlight.geometry.coords)[0]
-            x, y, z = self.to_cartesian(tx, ty, alt)
+        #     tx, ty, alt = list(c1_trafficlight.geometry.coords)[0]
+        #     x, y, z = self.to_cartesian(tx, ty, alt)
 
-            trafficlights[obj_id] = (x, y)
+        #     trafficlights[obj_id] = (x, y)
 
-        for c3_vehicleprotectionsafety in tqdm(ngii.c3_vehicleprotectionsafety, desc="vehicleprotectionsafety: ", total=len(ngii.c3_vehicleprotectionsafety)):
-            obj_id = c3_vehicleprotectionsafety.ID
+        # for c3_vehicleprotectionsafety in tqdm(ngii.c3_vehicleprotectionsafety, desc="vehicleprotectionsafety: ", total=len(ngii.c3_vehicleprotectionsafety)):
+        #     obj_id = c3_vehicleprotectionsafety.ID
 
-            points = []
+        #     points = []
 
-            for tx, ty, alt in c3_vehicleprotectionsafety.geometry.coords:
-                x, y, z = self.to_cartesian(tx, ty, alt)
-                points.append((x, y, z))
+        #     for tx, ty, alt in c3_vehicleprotectionsafety.geometry.coords:
+        #         x, y, z = self.to_cartesian(tx, ty, alt)
+        #         points.append((x, y, z))
 
-            vehicleprotectionsafetys[obj_id] = points
+        #     vehicleprotectionsafetys[obj_id] = points
         
-        for c4_speedbump in tqdm(ngii.c4_speedbump, desc="speedbump: ", total=len(ngii.c4_speedbump)):
-            obj_id = c4_speedbump.ID
+        # for c4_speedbump in tqdm(ngii.c4_speedbump, desc="speedbump: ", total=len(ngii.c4_speedbump)):
+        #     obj_id = c4_speedbump.ID
 
-            for tx, ty, alt in c4_speedbump.geometry.exterior.coords:
-                x, y, z = self.to_cartesian(tx, ty, alt)
-                points.append((x, y, z))
+        #     for tx, ty, alt in c4_speedbump.geometry.exterior.coords:
+        #         x, y, z = self.to_cartesian(tx, ty, alt)
+        #         points.append((x, y, z))
 
-            speedbumps[obj_id] = (x, y)
+        #     speedbumps[obj_id] = (x, y)
         
-        for c6_postpoint in tqdm(ngii.c6_postpoint, desc="postpoint: ", total=len(ngii.c6_postpoint)):
-            obj_id = c6_postpoint.ID
+        # for c6_postpoint in tqdm(ngii.c6_postpoint, desc="postpoint: ", total=len(ngii.c6_postpoint)):
+        #     obj_id = c6_postpoint.ID
 
-            tx, ty, alt = list(c6_postpoint.geometry.coords)[0]
-            x, y, z = self.to_cartesian(tx, ty, alt)
+        #     tx, ty, alt = list(c6_postpoint.geometry.coords)[0]
+        #     x, y, z = self.to_cartesian(tx, ty, alt)
 
-            postpoints[obj_id] = (x, y, z)
+        #     postpoints[obj_id] = (x, y, z)
 
         # for b1_safetysign in tqdm(ngii.b1_safetysign, desc="safetysign: ", total=len(ngii.b1_safetysign)):
 

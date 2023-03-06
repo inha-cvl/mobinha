@@ -87,9 +87,7 @@ class IoniqTransceiver():
             self.brake_val = 0.0
         elif val_data <= 0.:
             self.accel_val = 0.0
-            self.brake_val = - \
-                val_data if (self.target_v >
-                             0.0 and self.rcv_velocity >= 1) else 60
+            self.brake_val = - val_data if (self.target_v > 0.0 and self.rcv_velocity >= 1) else 60
 
     def set_actuators(self, actuators):
         gain = 3

@@ -22,7 +22,6 @@ class PID:
         elif self.error_sum > 5:
             self.error_sum = 5
         
-        pid = self.K_P*error + self.K_D*diff_error/self.dt + \
-        self.K_I*self.error_sum*self.dt
+        pid = self.K_P*error + self.K_D*diff_error/self.dt + self.K_I*self.error_sum*self.dt
         
         return pid

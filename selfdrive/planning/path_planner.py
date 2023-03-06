@@ -27,12 +27,14 @@ class PathPlanner:
         self.non_intp_path = None
         self.non_intp_id = None
         self.local_path = None
+        self.local_id = None
         self.temp_global_idx = 0
 
         self.get_goal = False
 
         self.l_idx = 0
         self.erase_global_path = []
+        self.erase_global_id = []
         self.last_s = 99999
 
         self.lidar_obstacle = []
@@ -148,6 +150,7 @@ class PathPlanner:
                     self.get_goal = 0
                     self.state = 'WAITING'
                     return None, None
+
             non_intp_path, non_intp_id = node_to_waypoints2(
                 self.lmap.lanelets, shortest_path)
             intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
@@ -184,6 +187,7 @@ class PathPlanner:
             non_intp_id = None
             head_lane_ids = None
             self.local_path = None
+            self.local_id = None
             self.temp_global_idx = 0
             self.l_idx = 0
             self.local_path_cut_value = 500
@@ -218,6 +222,7 @@ class PathPlanner:
                     self.now_head_lane_id = None
 
                 self.erase_global_path = global_path
+                self.erase_global_id = global_id
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
 
@@ -249,40 +254,51 @@ class PathPlanner:
                 eg_idx = calc_idx(
                     self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
+                local_id = []
                 if len(self.erase_global_path)-eg_idx > self.local_path_cut_value:
                     if eg_idx-self.local_path_tail_value > 0:
                         local_path = self.erase_global_path[eg_idx-self.local_path_tail_value:eg_idx +
                                                             self.local_path_cut_value]
+                        local_id = self.erase_global_id[eg_idx-self.local_path_tail_value:eg_idx +
+                                                        self.local_path_cut_value]
                     else:
                         local_path = self.erase_global_path[eg_idx:eg_idx +
                                                             self.local_path_cut_value]
+                        local_id = self.erase_global_id[eg_idx:eg_idx +
+                                                        self.local_path_cut_value]
                 else:
                     if eg_idx-self.local_path_tail_value > 0:
                         local_path = self.erase_global_path[eg_idx -
                                                             self.local_path_tail_value:]
+                        local_id = self.erase_global_id[eg_idx -
+                                                        self.local_path_tail_value:]
                     else:
                         local_path = self.erase_global_path[eg_idx:]
+                        local_id = self.erase_global_id[eg_idx:]
 
                 self.erase_global_path = self.erase_global_path[eg_idx:]
+                self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
                 self.local_path = local_path
+                self.local_id = local_id
                 self.l_idx = 0
 
             if self.local_path is not None:
-
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query(
                     (CS.position.x, CS.position.y), 1)[1]
                 if abs(l_idx-self.l_idx) <= 50:
                     self.l_idx = l_idx
+                splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
+
                 forward_direction = get_forward_direction(
                     self.lmap.lanelets, self.next_head_lane_id)
 
                 cw_s = get_nearest_crosswalk(
-                    self.lmap.lanelets, splited_id, local_point)
+                    self.lmap.lanelets, splited_local_id, local_point)
 
-                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(
-                    self.l_idx, self.local_path, CS.yawRate, CS.vEgo)
+                forward_curvature, rot_x, rot_y, trajectory, blinker = get_forward_curvature(
+                    self.l_idx, self.local_path, self.lmap.lanelets, self.local_id, CS.yawRate, CS.vEgo)
 
                 # TODO: Avoidance Path
                 #
@@ -305,9 +321,9 @@ class PathPlanner:
 
                 # Pubulish Lane Information
                 pose = Pose()
-                pose.position.x = int(splited_id)
+                pose.position.x = int(splited_local_id)
                 pose.position.y = get_direction_number(
-                    self.lmap.lanelets, splited_id, forward_direction)
+                    self.lmap.lanelets, splited_local_id, forward_direction)
                 pose.position.z = cw_s
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
@@ -328,8 +344,8 @@ class PathPlanner:
                 forward_path_viz = ForwardPathViz(trajectory)
                 self.pub_forward_path.publish(forward_path_viz)
 
-                blinker = get_blinker(self.lmap.lanelets,
-                                      self.global_id, self.l_idx, 1/self.precision,)
+                # blinker = get_blinker(self.lmap.lanelets,
+                #                       self.global_id, self.l_idx, 1/self.precision,)
                 self.pub_blinkiker.publish(blinker)
 
             pose = Pose()

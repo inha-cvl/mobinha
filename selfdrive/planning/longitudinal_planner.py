@@ -54,7 +54,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [15, 3, 7]  # m
+        offset = [17, 5, 9]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return pos-offset[i]
@@ -83,18 +83,18 @@ class LongitudinalPlanner:
 
         target_v = max_v * pi
 
-        gain = 0.05
+        gain = 0.15
         if self.target_v-target_v < -gain:
-            if self.target_v > 0.1:
+            if self.target_v > 0.2:
                 target_v = self.target_v + gain
             else:
-                target_v = self.target_v + 0.1
+                target_v = self.target_v + 0.2
         elif self.target_v-target_v > gain:
             target_v = self.target_v - gain
 
         if target_v > self.ref_v*KPH_TO_MPS:
             target_v = self.ref_v*KPH_TO_MPS
-        elif target_v < 0.1:
+        elif target_v < 0.2:
             target_v = 0
 
         return target_v
@@ -143,10 +143,10 @@ class LongitudinalPlanner:
             object_list = self.check_objects(len(local_path))
 
             self.target_v = self.simple_velocity_plan(
-                CS.vEgo, self.ref_v*KPH_TO_MPS, local_idx, object_list)
+                CS.vEgo,  local_curv_v, local_idx, object_list)
 
-            if self.target_v > local_curv_v:
-                self.target_v = local_curv_v
+            # if self.target_v > local_curv_v:
+            #     self.target_v = local_curv_v
 
             if pp == 2:
                 self.target_v = 0.0

@@ -31,7 +31,7 @@ class ObstacleDetector:
             '/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
         rospy.Subscriber(
-            '/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+            '/mobinha/perception/lidar/cluster_box', BoundingBoxArray, self.lidar_cluster_box_cb)
         rospy.Subscriber('/mobinha/perception/camera/bounding_box',
                          PoseArray, self.camera_bounding_box_cb)
         # MORAI
@@ -71,6 +71,7 @@ class ObstacleDetector:
             cls, size, prob = pose.position.x, pose.position.y, pose.position.z
             traffic_light_object.append([cls, size, prob])
         self.traffic_light_object = traffic_light_object
+        self.traffic_ligth_timer = time.time()
 
     def morai_object_list_cb(self, msg):
         objects = []
@@ -158,6 +159,7 @@ class ObstacleDetector:
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
 
             self.lidar_object = []
+            viz_obstacle = []
             if time.time()-self.traffic_ligth_timer > 5:
                 self.traffic_light_object = []
 

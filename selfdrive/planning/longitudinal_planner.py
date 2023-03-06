@@ -8,6 +8,7 @@ from selfdrive.visualize.viz_utils import *
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
+
 class LongitudinalPlanner:
     def __init__(self, CP):
 
@@ -19,7 +20,7 @@ class LongitudinalPlanner:
 
         self.ref_v = CP.maxEnableSpeed
         self.min_v = CP.minEnableSpeed
-        self.target_v = self.min_v*KPH_TO_MPS
+        self.target_v = 0  # self.min_v*KPH_TO_MPS
         self.st_param = CP.stParam._asdict()
         self.sl_param = CP.slParam._asdict()
 
@@ -53,22 +54,21 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [15, 5, 10]  # m
+        offset = [15, 3, 7]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return pos-offset[i]
 
     def sigmoid_logit_function(self, s):
-        return ((1+((s*self.sl_param["mu"])/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
+        return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
-        consider_distance = 70*self.M_TO_IDX
+        consider_distance = 80*self.M_TO_IDX
         for obj in object_list:
             s = self.obstacle_handler(
                 obj, local_s, cur_v) - local_s  # Remain Distance
-            # print(s)
             norm_s = 1
             if 0 < s < consider_distance:
                 norm_s = s/consider_distance
@@ -76,7 +76,6 @@ class LongitudinalPlanner:
                 norm_s = 0
             if min_obs_s > norm_s:
                 min_obs_s = norm_s
-        # print(min_obs_s)
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
         elif min_obs_s <= 0:
@@ -84,15 +83,18 @@ class LongitudinalPlanner:
 
         target_v = max_v * pi
 
-        gain = 0.3
+        gain = 0.05
         if self.target_v-target_v < -gain:
-            target_v = self.target_v + gain
+            if self.target_v > 0.1:
+                target_v = self.target_v + gain
+            else:
+                target_v = self.target_v + 0.1
         elif self.target_v-target_v > gain:
             target_v = self.target_v - gain
 
         if target_v > self.ref_v*KPH_TO_MPS:
             target_v = self.ref_v*KPH_TO_MPS
-        elif target_v < 0.3:
+        elif target_v < 0.1:
             target_v = 0
 
         return target_v
@@ -133,8 +135,7 @@ class LongitudinalPlanner:
         CS = sm.CS
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
-
-        if local_path != None and self.lane_information != None:
+        if local_path != None and self.lane_information != None and CS.cruiseState == 1:
             local_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
             local_curv_v = max_v_by_curvature(

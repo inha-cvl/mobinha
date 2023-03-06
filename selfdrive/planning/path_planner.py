@@ -266,13 +266,15 @@ class PathPlanner:
                 self.erase_global_path = self.erase_global_path[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
                 self.local_path = local_path
+                self.l_idx = 0
 
             if self.local_path is not None:
 
                 local_point = KDTree(self.local_path)
-                self.l_idx = local_point.query(
+                l_idx = local_point.query(
                     (CS.position.x, CS.position.y), 1)[1]
-
+                if abs(l_idx-self.l_idx) <= 50:
+                    self.l_idx = l_idx
                 forward_direction = get_forward_direction(
                     self.lmap.lanelets, self.next_head_lane_id)
 
@@ -280,7 +282,7 @@ class PathPlanner:
                     self.lmap.lanelets, splited_id, local_point)
 
                 forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(
-                    self.lmap.lanelets, self.global_id, self.l_idx, self.local_path, CS.yawRate)
+                    self.l_idx, self.local_path, CS.yawRate, CS.vEgo)
 
                 # TODO: Avoidance Path
                 #
@@ -308,6 +310,7 @@ class PathPlanner:
                     self.lmap.lanelets, splited_id, forward_direction)
                 pose.position.z = cw_s
                 pose.orientation.x = forward_curvature
+                pose.orientation.y = self.l_idx
                 self.pub_lane_information.publish(pose)
 
                 poseArray = PoseArray()

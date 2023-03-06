@@ -334,7 +334,7 @@ def get_a_b_for_curv(min, ignore):
     return a, b
 
 
-def get_forward_curvature(idx, path, lanelets, ids, yawRate, vEgo):
+def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
     ws = 50
     a, b = get_a_b_for_curv(10*KPH_TO_MPS, 20*KPH_TO_MPS)
     x = []
@@ -363,13 +363,13 @@ def get_forward_curvature(idx, path, lanelets, ids, yawRate, vEgo):
     blinker = 0
     now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
     now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
-    for id in id_list:
-        if blinker != 0:
-            break
-        if id == now_l_id and blinker == 0:
-            blinker = 1
-        elif id == now_r_id and blinker == 0:
-            blinker = 2
+    # for id in id_list:
+        # if blinker != 0:
+            # break
+    if (next_id == now_l_id and blinker == 0) or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        blinker = 1
+    elif next_id == now_r_id and blinker == 0:
+        blinker = 2
 
     x = np.array([(v-x[0]) for v in x])
     y = np.array([(v-y[0]) for v in y])
@@ -385,7 +385,7 @@ def get_forward_curvature(idx, path, lanelets, ids, yawRate, vEgo):
         curvature = 1000
 
     if blinker > 0:
-        print(blinker)
+        # print(blinker)
         curvature = 1000
     # For Trajectory plotting
     origin_plot = np.vstack((x, y))

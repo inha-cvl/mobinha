@@ -298,7 +298,7 @@ class PathPlanner:
                     self.lmap.lanelets, splited_local_id, local_point)
 
                 forward_curvature, rot_x, rot_y, trajectory, blinker = get_forward_curvature(
-                    self.l_idx, self.local_path, self.lmap.lanelets, self.local_id, CS.yawRate, CS.vEgo)
+                    self.l_idx, self.local_path, self.lmap.lanelets, self.local_id, self.next_head_lane_id, CS.yawRate, CS.vEgo)
 
                 # TODO: Avoidance Path
                 #

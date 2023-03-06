@@ -63,19 +63,19 @@ class PurePursuit:
         new_y = (in_x - my_x) * sin(-yaw) + (in_y - my_y)*cos(-yaw)
         return (new_x, new_y)
 
-    def run(self, x, y, yaw, v, path):
+    def run(self, x, y, l_idx, yaw, v, path):
         yaw = radians(yaw)
 
-        i = self.find_nearest_idx(path, (x, y))
+        l_idx = self.find_nearest_idx(path, (x, y))
 
         step = 10
-        if (len(path) - len(path[:i])) > step:
+        if (len(path) - len(path[:l_idx])) > step:
             _, _, _, self.cur_curvature = interpolate(
-                path[i:i+step], precision=0.5)
+                path[l_idx:l_idx+step], precision=0.5)
         else:  # end path
             self.cur_curvature = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-        lx, ly = path[i]
+        lx, ly = path[l_idx]
 
         v = max(v, 5.0 * self.KPH_TO_MPS)
         Lf = min(self.k * v + self.Lfc, 30.0)  # lookahead
@@ -84,11 +84,11 @@ class PurePursuit:
         rear_y = y - ((self.L / 2) * sin(yaw))
 
         dist = 0
-        while dist <= Lf and i < len(path):
-            lx = path[i][0]
-            ly = path[i][1]
+        while dist <= Lf and l_idx < len(path):
+            lx = path[l_idx][0]
+            ly = path[l_idx][1]
             dist = self.euc_distance((x, y), (lx, ly))
-            i += 1
+            l_idx += 1
 
         # Original Pure Pursuit
         alpha = atan2(ly - rear_y, lx - rear_x) - yaw

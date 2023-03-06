@@ -140,9 +140,10 @@ class MoraiPlanner():
         elif st == 5:  # Red with YUellow
             stt = 13
 
+        #cls, size, prob
         pose.position.x = stt
-        pose.position.y = 0.8
-        pose.position.z = 0.3
+        pose.position.y = 0.3
+        pose.position.z = 0.8
         traffic_light_list.poses.append(pose)
         self.traffic_light_pub.publish(traffic_light_list)
 

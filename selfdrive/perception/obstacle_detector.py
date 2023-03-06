@@ -68,8 +68,8 @@ class ObstacleDetector:
     def camera_bounding_box_cb(self, msg):
         traffic_light_object = []
         for pose in msg.poses:
-            cls, prob, size = pose.position.x, pose.position.y, pose.position.z
-            traffic_light_object.append([cls, prob, size])
+            cls, size, prob = pose.position.x, pose.position.y, pose.position.z
+            traffic_light_object.append([cls, size, prob])
         self.traffic_light_object = traffic_light_object
 
     def morai_object_list_cb(self, msg):
@@ -114,10 +114,10 @@ class ObstacleDetector:
 
         if len(self.traffic_light_object) > 0:
             for traffic_light in self.traffic_light_object:
-                if traffic_light[1] > 0.1:  # if probability exceed 50%
+                if traffic_light[2] > 0.1:  # if probability exceed 50%
                     traffic_light_obs.append(traffic_light)
         # sorting by size
-        traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[2])
+        traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1])
         return traffic_light_obs
 
     def run(self, CS):
@@ -148,7 +148,7 @@ class ObstacleDetector:
                 pose = Pose()
                 pose.position.x = 2  # traffic light
                 pose.position.y = tl[0]  # cls
-                pose.position.z = tl[1]  # probability
+                pose.position.z = tl[2]  # probability
                 traffic_light_obstacle.poses.append(pose)
 
             self.pub_obstacle_distance.publish(Float32(obstacle_distance))

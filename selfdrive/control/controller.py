@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Float32
+from geometry_msgs.msg import Pose
 from selfdrive.visualize.viz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
 from selfdrive.control.libs.pid import PID
@@ -23,7 +24,8 @@ class Controller:
             '/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber(
             '/mobinha/planning/target_v', Float32, self.target_v_cb)
-
+        rospy.Subscriber('/mobinha/planning/lane_information',
+                         Pose, self.lane_information_cb)
         self.pub_wheel_angle = rospy.Publisher(
             '/mobinha/control/wheel_angle', Float32, queue_size=1)
         self.pub_accel_brake = rospy.Publisher(
@@ -37,6 +39,9 @@ class Controller:
     def target_v_cb(self, msg):
         self.target_v = msg.data
 
+    def lane_information_cb(self, msg):
+        self.l_idx = msg.orientation.y
+
     def run(self, sm):
         CS = sm.CS
         if self.local_path is None:
@@ -44,7 +49,7 @@ class Controller:
             accel_brake = -1.0
         else:
             wheel_angle, lah_pt = self.purepursuit.run(
-                CS.position.x, CS.position.y, CS.yawRate, CS.vEgo, self.local_path)
+                CS.position.x, CS.position.y, self.l_idx, CS.yawRate, CS.vEgo, self.local_path)
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
 

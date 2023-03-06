@@ -48,7 +48,6 @@ class SimulatorTransceiver:
         self.ego = Vehicle(0.0, 0.0, math.radians(180), 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
-        self.mode = 0
 
         self.pub_novatel = rospy.Publisher(
             '/novatel/oem7/inspva', INSPVA, queue_size=1)
@@ -58,7 +57,8 @@ class SimulatorTransceiver:
             '/mobinha/car/gear', Int8, queue_size=1)
         self.pub_temp_actuators = rospy.Publisher(
             '/mobinha/car/temp_actuators', Pose, queue_size=1)
-
+        self.pub_mode = rospy.Publisher(
+            '/mobinha/car/mode', Int8, queue_size=1)
         rospy.Subscriber(
             '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
 
@@ -72,9 +72,16 @@ class SimulatorTransceiver:
             quaternion)
         self.ego.set(x, y, yaw)
 
+    def can_cmd(self, canCmd):
+        mode = 0
+        if canCmd.enable:
+            mode = 1
+        self.pub_mode.publish(Int8(mode))
+
     def run(self, CM):
         CC = CM.CC
         self.pub_gear.publish(self.gear)
+        self.can_cmd(CM.CC.canCmd)
 
         dt = 0.1
         if not CC.canCmd.disable:

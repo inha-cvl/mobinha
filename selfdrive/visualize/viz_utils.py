@@ -44,6 +44,11 @@ def LookAheadViz(pt):
     return marker
 
 
+def TrafficLightViz(pt):
+    data = (pt[0], pt[1])
+    marker = Sphere('traffic_light', 0, data, 2.0, (1.0, 0.0, 0.0, 1.0))
+    return marker
+
 def FinalPathViz(waypoints):
     return FinalPath(waypoints, 999, 0.1, 0.2, (0.0, 1.0, 0.0, 1.0))
 

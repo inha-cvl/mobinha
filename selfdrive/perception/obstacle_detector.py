@@ -115,7 +115,7 @@ class ObstacleDetector:
 
         if len(self.traffic_light_object) > 0:
             for traffic_light in self.traffic_light_object:
-                if traffic_light[2] > 0.1:  # if probability exceed 50%
+                if traffic_light[2] > 0.5:  # if probability exceed 50%
                     traffic_light_obs.append(traffic_light)
         # sorting by size
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1])
@@ -157,6 +157,7 @@ class ObstacleDetector:
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
+            
 
             self.lidar_object = []
             viz_obstacle = []

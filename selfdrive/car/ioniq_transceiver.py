@@ -78,22 +78,12 @@ class IoniqTransceiver():
         self.pub_mode.publish(Int8(mode))
 
     def wheel_angle_cmd(self, msg):
-        th = 45
-        target_steer = msg.data*self.CP.steerRatio
-        cur_steer = self.temp_actuators['steer']
-
-        if target_steer - cur_steer > th:
-            self.target_steer = target_steer - th/2
-        elif target_steer - cur_steer < th:
-            self.target_steer = target_steer + th/2
-        else:
-            self.target_steer = target_steer
+        self.target_steer = msg.data * self.CP.steerRatio
 
     def accel_brake_cmd(self, msg): # PID output is accel_brake_cmd function input
-        th = 10
-        val_data = max(-th, min(th, msg.data))
-        norm_val_data = val_data/th
-
+        th_a = 4
+        th_b = 9
+        val_data = max(-th_b, min(th_a, msg.data))
         gain = 5
 
         if val_data > 0.:
@@ -101,11 +91,13 @@ class IoniqTransceiver():
             self.brake_val = 0.0
         elif val_data <= 0.:
             self.accel_val = 0.0
-            if 0 < (-norm_val_data) < 0.05:
-                self.brake_val = 0
-            else:
-                self.brake_val = (-norm_val_data-0.05)**1.1*th*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1) else -45
-                
+            # if 0 < (-val_data/th_b) < 0.05:
+            #     self.brake_val = 0
+            # else:
+            #     self.brake_val = ((-val_data/th_b)-0.05)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1) else 45
+            self.brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1) else 45
+
+
     # def set_actuators(self, actuators):
     #     gain = 3
     #     self.target_steer = actuators.steer

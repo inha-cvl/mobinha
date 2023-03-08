@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded: ~
       Splitter Ratio: 0.4243420958518982
-    Tree Height: 437
+    Tree Height: 371
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -21,7 +21,6 @@ Panels:
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
-    Experimental: false
     Name: Time
     SyncMode: 0
     SyncSource: ""
@@ -42,7 +41,78 @@ Visualization Manager:
       Marker Topic: /mobinha/planning/lanelet_map
       Name: LaneletMap
       Namespaces:
-        {}
+        for_viz_0: true
+        for_viz_1: true
+        for_viz_10: true
+        for_viz_11: true
+        for_viz_12: true
+        for_viz_13: true
+        for_viz_14: true
+        for_viz_15: true
+        for_viz_16: true
+        for_viz_17: true
+        for_viz_18: true
+        for_viz_19: true
+        for_viz_2: true
+        for_viz_20: true
+        for_viz_21: true
+        for_viz_22: true
+        for_viz_23: true
+        for_viz_24: true
+        for_viz_25: true
+        for_viz_26: true
+        for_viz_27: true
+        for_viz_28: true
+        for_viz_29: true
+        for_viz_3: true
+        for_viz_30: true
+        for_viz_4: true
+        for_viz_5: true
+        for_viz_6: true
+        for_viz_7: true
+        for_viz_8: true
+        for_viz_9: true
+        leftBound_0: true
+        leftBound_1: true
+        leftBound_10: true
+        leftBound_11: true
+        leftBound_12: true
+        leftBound_13: true
+        leftBound_15: true
+        leftBound_19: true
+        leftBound_21: true
+        leftBound_23: true
+        leftBound_25: true
+        leftBound_26: true
+        leftBound_3: true
+        leftBound_33: true
+        leftBound_34: true
+        leftBound_4: true
+        leftBound_5: true
+        leftBound_6: true
+        leftBound_7: true
+        leftBound_8: true
+        leftBound_9: true
+        rightBound_0: true
+        rightBound_1: true
+        rightBound_10: true
+        rightBound_11: true
+        rightBound_12: true
+        rightBound_13: true
+        rightBound_19: true
+        rightBound_20: true
+        rightBound_21: true
+        rightBound_22: true
+        rightBound_24: true
+        rightBound_26: true
+        rightBound_3: true
+        rightBound_34: true
+        rightBound_4: true
+        rightBound_5: true
+        rightBound_6: true
+        rightBound_7: true
+        rightBound_8: true
+        rightBound_9: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -58,7 +128,7 @@ Visualization Manager:
       Marker Topic: /mobinha/control/ego_car
       Name: EgoCar
       Namespaces:
-        {}
+        car: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -66,7 +136,7 @@ Visualization Manager:
       Marker Topic: /mobinha/global_path
       Name: GlobalPath
       Namespaces:
-        {}
+        final_path: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -74,7 +144,7 @@ Visualization Manager:
       Marker Topic: /mobinha/planning/local_path
       Name: LocalPath
       Namespaces:
-        {}
+        final_path: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -82,7 +152,7 @@ Visualization Manager:
       Marker Topic: /mobinha/control/look_ahead
       Name: LookAhead
       Namespaces:
-        {}
+        look_ahead: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -114,7 +184,7 @@ Visualization Manager:
       Marker Topic: /mobinha/planning/goal_viz
       Name: Goal
       Namespaces:
-        {}
+        goal: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -158,6 +228,14 @@ Visualization Manager:
       Marker Topic: /mobinha/planning/forward_path
       Name: Marker
       Namespaces:
+        final_path: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mobinha/planner/traffic_light_marker
+      Name: Marker
+      Namespaces:
         {}
       Queue Size: 100
       Value: true
@@ -189,7 +267,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 20.832000732421875
+      Distance: 15
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -266,10 +344,10 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 828
+  Height: 819
   Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000040000000000000158000002e2fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d00000238000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065000000028e000001090000000000000000fb000000100044006900730070006c00610079007300000002d30000012c0000000000000000fb0000000a00560069006500770073000000027b000000a4000000a400ffffff000000010000015800000263fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000263000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b20000000000000000000000020000039f00000136fc0100000002fb0000000a0049006d00610067006501000000000000039f0000000000000000fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000003efc0100000002fb0000000800540069006d0065000000000000000738000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000604000002e200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001a8000002d9fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d0000022f000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065000000028e000001090000000000000000fb000000100044006900730070006c00610079007300000002d30000012c0000000000000000fb0000000a005600690065007700730000000272000000a4000000a400ffffff000000010000015800000263fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000263000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b20000000000000000000000020000039f00000136fc0100000002fb0000000a0049006d00610067006501000000000000039f0000000000000000fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000003efc0100000002fb0000000800540069006d0065000000000000000738000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000005cc000002d900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -278,6 +356,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1540
-  X: 152
-  Y: 39
+  Width: 1484
+  X: 9
+  Y: 9

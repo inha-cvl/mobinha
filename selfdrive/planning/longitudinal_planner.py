@@ -1,4 +1,5 @@
 import rospy
+import math
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseArray, Pose
 
@@ -34,6 +35,7 @@ class LongitudinalPlanner:
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
             '/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
+        self.pub_traffic_light_marker= rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
@@ -54,7 +56,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [8+(1.8*cur_v), 5, 9]  # m
+        offset = [8+(1.8*cur_v), 5, 15]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return i, pos-offset[i]
@@ -91,6 +93,9 @@ class LongitudinalPlanner:
         gain = 0.15
         if obj_i == 0:
             gain = 0.3
+        elif obj_i == 2:
+            gain = 0.2
+
         ignore_gain = gain + 0.05
         if self.target_v-target_v < -gain:
             if self.target_v > ignore_gain:
@@ -116,9 +121,9 @@ class LongitudinalPlanner:
         else:
             return False
 
-    def check_objects(self, local_len):
+    def check_objects(self, local_path):
         object_list = []
-
+        local_len = len(local_path)
         # [0] = Dynamic Object
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
@@ -137,6 +142,9 @@ class LongitudinalPlanner:
             for tlobs in self.traffic_light_obstacle:
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
                     object_list.append((tlobs[0], self.lane_information[2], 0))
+                    if self.lane_information[2] < math.inf:
+                        crosswalk_point = local_path[int(self.lane_information[2])]
+                        self.pub_traffic_light_marker.publish(TrafficLightViz(crosswalk_point))
         return object_list
 
     def run(self, sm, pp=0, local_path=None):
@@ -148,8 +156,8 @@ class LongitudinalPlanner:
                 local_path, (CS.position.x, CS.position.y))
             local_curv_v = max_v_by_curvature(
                 self.lane_information[3], self.ref_v, self.min_v)
-            object_list = self.check_objects(len(local_path))
-
+            object_list = self.check_objects(local_path)
+            
             self.target_v = self.simple_velocity_plan(
                 CS.vEgo,  local_curv_v, local_idx, object_list)
 

@@ -9,6 +9,7 @@ class IONIQ:
             interface='socketcan', channel='can0', bitrate=500000)
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
         self.wheel_ang = 0
+        self.temp_wheel = 0
         self.alv_cnt = 0
         self.reset = 0
         self.time = time.time()
@@ -16,6 +17,7 @@ class IONIQ:
     def daemon(self):
         while 1:
             self.wheel_ang_cmd()
+            self.wheel_ang_rcv()
             time.sleep(0.02)
     
     def mover(self):
@@ -30,6 +32,13 @@ class IONIQ:
         self.sender(0x210, msg)
         self.reset = 0
         self.alv_cnt += 1
+
+    def wheel_ang_rcv(self):
+        data = self.bus.recv()
+        if data.arbitration_id == 656:
+            res = self.db.decode_message(656, data.data)
+            self.temp_wheel = res['Gway_Steering_Angle']
+               
 
     def sender(self, arb_id, msg):
         can_msg = can.Message(arbitration_id=arb_id,
@@ -49,6 +58,7 @@ class IONIQ:
             elif cmd == 1002:
                 print('a')
                 self.mover()
+            print(self.temp_wheel)
 
 if __name__ == '__main__':
     IONIQ = IONIQ()

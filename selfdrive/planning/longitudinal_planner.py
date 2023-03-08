@@ -62,10 +62,13 @@ class LongitudinalPlanner:
     def sigmoid_logit_function(self, s):
         return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
+    def dynamic_consider_range(self, max_v, base_range=40): # input max_v unit (m/s)
+        return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
+
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
-        consider_distance = 80*self.M_TO_IDX
+        consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
         obj_i = -1
         for obj in object_list:
             obj_i, s = self.obstacle_handler(

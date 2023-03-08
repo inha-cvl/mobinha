@@ -71,6 +71,11 @@ class IoniqTransceiver():
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
             self.reset = 1
         self.control_state = state
+        
+        mode = 0
+        if canCmd.enable:
+            mode = 1
+        self.pub_mode.publish(Int8(mode))
 
     def wheel_angle_cmd(self, msg):
         self.target_steer = msg.data
@@ -133,7 +138,7 @@ class IoniqTransceiver():
                 mode = 0
                 if res['PA_Enable'] and res['LON_Enable']:
                     mode = 1
-                self.pub_mode.publish(Int8(mode))
+                
             if (data.arbitration_id == 641):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 plsRR = res['WHL_PlsRRVal']

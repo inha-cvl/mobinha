@@ -323,26 +323,30 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v):
     threshold = 200
     return_v = ref_v
     if forward_curvature < threshold:
-        return_v = ref_v - (abs(threshold-forward_curvature)*0.3)
+        return_v = ref_v - (abs(threshold-forward_curvature)*0.2)
         return_v = return_v if return_v > min_v else min_v
     return return_v*KPH_TO_MPS
 
 
 def get_a_b_for_curv(min, ignore):
-    a = -11 / (min-ignore)
+    a = -19 / (min-ignore)
     b = 1-(ignore*a)
+    '''
+    10*a+b = -18
+    25*a+b = 1
+    '''
     return a, b
 
 
 def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
-    ws = 50
-    a, b = get_a_b_for_curv(10*KPH_TO_MPS, 20*KPH_TO_MPS)
+    ws = int(70+(1.5*vEgo))
+    a, b = get_a_b_for_curv(10*KPH_TO_MPS, 25*KPH_TO_MPS)
     x = []
     y = []
     trajectory = []
     id_list = None
 
-    lf = int(min(idx+20, max(idx+(a*vEgo+b), idx-10)))
+    lf = int(min(idx+30, max(idx+(a*vEgo+b), idx-18)))
     if lf < 0:
         lf = 0
     elif lf > len(path)-1:

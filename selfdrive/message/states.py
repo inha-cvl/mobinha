@@ -77,13 +77,8 @@ class StateMaster:
             msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
         self.roll = msg.roll
         self.pitch = msg.pitch
-        self.yaw = 90 - \
-            msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <=
-                            180) else -270 - msg.azimuth
-        msg.azimuth
-        90 - msg.azimuth if (msg.azimuth >= -
-                             90 and msg.azimuth <= 180) else -270 - msg.azimuth
-
+        self.yaw = 89 - msg.azimuth# if (msg.azimuth >= -90 and msg.azimuth <= 180) else -270 - msg.azimuth
+       
     def velocity_cb(self, msg):
         self.v = msg.data
 

@@ -269,38 +269,43 @@ class NGII2LANELET:
                     else:
                         break
                 return right_ids
+            
+        if a2_link.LinkType == '1':
+            for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="b3_surfacemark: ", total=len(ngii.b3_surfacemark)):
+                if b3_surfacemark.Type == '1':
+        else:
+            for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="b3_surfacemark: ", total=len(ngii.b3_surfacemark)):
+        
+            # # obj_id = b3_surfacemark.ID
+            # if b3_surfacemark.Type == '5':
+            #     points = []
+            #     for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
+            #         x, y, z = self.to_cartesian(tx, ty, alt)
+            #         points.append((x, y))
 
-        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="b3_surfacemark: ", total=len(ngii.b3_surfacemark)):
-            # obj_id = b3_surfacemark.ID
-            if b3_surfacemark.Type == '5':
-                points = []
-                for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
-                    x, y, z = self.to_cartesian(tx, ty, alt)
-                    points.append((x, y))
-
-                if b3_surfacemark.LinkID is not None:
-                    ori_id = b3_surfacemark.LinkID
-                    new_id = ori2new.get(ori_id)
-                    # print(ori_id,new_id, lanelets['2143'], self.new2ori['2143'])#, lanelets['2145'], self.new2ori['2145'])
-                    if new_id is not None:
-                        #new and pre id crosswalks append
-                        lanelets[new_id]['crosswalk'].append(points)
-                        pre_new_id = lanelets[new_id]['predecessor']
-                        if len(pre_new_id) != 0:
-                            for id_ in pre_new_id:
-                                lanelets[id_]['crosswalk'].append(points)
-                                l_ids = search_L_LinkID(id_)
-                                r_ids = search_R_LinKID(id_)
-                                for i in l_ids:
-                                    lanelets[i]['crosswalk'].append(points)
-                                for i in r_ids:
-                                    lanelets[i]['crosswalk'].append(points)
-                        l_ids = search_L_LinkID(new_id)
-                        r_ids = search_R_LinKID(new_id)
-                        for i in l_ids:
-                            lanelets[i]['crosswalk'].append(points)
-                        for i in r_ids:
-                            lanelets[i]['crosswalk'].append(points)
+            #     if b3_surfacemark.LinkID is not None:
+            #         ori_id = b3_surfacemark.LinkID
+            #         new_id = ori2new.get(ori_id)
+            #         # print(ori_id,new_id, lanelets['2143'], self.new2ori['2143'])#, lanelets['2145'], self.new2ori['2145'])
+            #         if new_id is not None:
+            #             #new and pre id crosswalks append
+            #             lanelets[new_id]['crosswalk'].append(points)
+            #             pre_new_id = lanelets[new_id]['predecessor']
+            #             if len(pre_new_id) != 0:
+            #                 for id_ in pre_new_id:
+            #                     lanelets[id_]['crosswalk'].append(points)
+            #                     l_ids = search_L_LinkID(id_)
+            #                     r_ids = search_R_LinKID(id_)
+            #                     for i in l_ids:
+            #                         lanelets[i]['crosswalk'].append(points)
+            #                     for i in r_ids:
+            #                         lanelets[i]['crosswalk'].append(points)
+            #             l_ids = search_L_LinkID(new_id)
+            #             r_ids = search_R_LinKID(new_id)
+            #             for i in l_ids:
+            #                 lanelets[i]['crosswalk'].append(points)
+            #             for i in r_ids:
+            #                 lanelets[i]['crosswalk'].append(points)
 
         # Correct map error
         for id_, data in lanelets.items():

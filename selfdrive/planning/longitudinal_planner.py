@@ -35,15 +35,16 @@ class LongitudinalPlanner:
             '/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher(
             '/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
-        self.pub_traffic_light_marker= rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
+        self.pub_traffic_light_marker = rospy.Publisher(
+            '/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
                                for pose in msg.poses]
 
     def traffic_light_obstacle_cb(self, msg):
-        self.traffic_light_obstacle = [
-            (pose.position.x, pose.position.y, pose.position.z) for pose in msg.poses]
+        self.traffic_light_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
+                                       for pose in msg.poses]
 
     def lane_information_cb(self, msg):
         # [0] id, [1] forward_direction, [2] cross_walk distance [3] forward_curvature
@@ -56,7 +57,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [8+(1.8*cur_v), 5, 15]  # m
+        offset = [8+(1.8*cur_v), 5, 10]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return i, pos-offset[i]
@@ -64,7 +65,7 @@ class LongitudinalPlanner:
     def sigmoid_logit_function(self, s):
         return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
-    def dynamic_consider_range(self, max_v, base_range=40): # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=40):  # input max_v unit (m/s)
         return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
 
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
@@ -117,9 +118,9 @@ class LongitudinalPlanner:
         consideration_class_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
             6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
         if traffic_light in consideration_class_list[forward_direction]:
-            return True
-        else:
             return False
+        else:
+            return True
 
     def check_objects(self, local_path):
         object_list = []
@@ -134,17 +135,18 @@ class LongitudinalPlanner:
         if self.goal_object is not None:
             left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX
             if left <= local_len:
-                object_list.append(
-                    [self.goal_object[0], left, 0])
+                object_list.append([1, left, 0])
 
         # [2] = Traffic Light
         if self.traffic_light_obstacle is not None:
-            for tlobs in self.traffic_light_obstacle:
+            can_go = False
+            if len(self.traffic_light_obstacle) > 0:
+                tlobs = self.traffic_light_obstacle[0]
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
-                    object_list.append((tlobs[0], self.lane_information[2], 0))
-                    if self.lane_information[2] < math.inf:
-                        crosswalk_point = local_path[int(self.lane_information[2])]
-                        self.pub_traffic_light_marker.publish(TrafficLightViz(crosswalk_point))
+                    can_go = True
+            if not can_go:
+                if self.lane_information[2] <= math.inf:
+                    object_list.append((2, self.lane_information[2], 0))
         return object_list
 
     def run(self, sm, pp=0, local_path=None):
@@ -157,16 +159,13 @@ class LongitudinalPlanner:
             local_curv_v = max_v_by_curvature(
                 self.lane_information[3], self.ref_v, self.min_v)
             object_list = self.check_objects(local_path)
-            
+
             self.target_v = self.simple_velocity_plan(
                 CS.vEgo,  local_curv_v, local_idx, object_list)
 
-            # if self.target_v > local_curv_v:
-            #     self.target_v = local_curv_v
-
             if pp == 2:
                 self.target_v = 0.0
-                if CS.vEgo <= 0.0001:
+                if CS.vEgo <= 0.001:
                     lgp = 2
             elif pp == 4:
                 self.target_v = 0.0

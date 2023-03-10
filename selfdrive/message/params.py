@@ -15,7 +15,7 @@ def getBaseLLA(map_path):
 def getPrecision(map_name):
     precision = 0.5
     if map_name == 'KCity':
-        precision = 1.0
+        precision = 0.5
     return precision
 
 class IONIQ:

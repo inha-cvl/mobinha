@@ -270,12 +270,14 @@ class NGII2LANELET:
                         break
                 return right_ids
             
-        if a2_link.LinkType == '1':
-            for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="b3_surfacemark: ", total=len(ngii.b3_surfacemark)):
-                if b3_surfacemark.Type == '1':
-        else:
-            for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="b3_surfacemark: ", total=len(ngii.b3_surfacemark)):
-        
+            if a2_link.LinkType == '1': #start point
+                for b3_surfacemark in ngii.b3_surfacemark:
+                    if b3_surfacemark.Type == '1':
+                        a=0
+            else: # middle and end point
+                for b3_surfacemark in ngii.b3_surfacemark:
+                    if b3_surfacemark.Type == '1':
+                        a = 0
             # # obj_id = b3_surfacemark.ID
             # if b3_surfacemark.Type == '5':
             #     points = []

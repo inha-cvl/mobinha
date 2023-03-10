@@ -7,6 +7,7 @@ import cv2
 import rospy
 import traceback
 import pymap3d
+from collections import deque
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray
@@ -48,7 +49,7 @@ class MainWindow(QMainWindow, form_class):
         self.can_cmd = 0
         self.scenario = 0
         self.goal_update = True
-
+        self.moving_start = False
         self.map_view_manager = None
         self.lidar_view_manager = None
         self.record_list_file = "{}/record_list.txt".format(dir_path)
@@ -92,6 +93,7 @@ class MainWindow(QMainWindow, form_class):
         self.rviz_frame('lidar')
         self.imu_frame()
         self.information_frame()
+        self.graph_frame()
         self.initialize()
         self.connection_setting()
 
@@ -192,7 +194,7 @@ class MainWindow(QMainWindow, form_class):
                     print("[Visualize] Over")
                     sys.exit(0)
             time.sleep(0.1)
-            QApplication.processEvents()
+            QCoreApplication.processEvents()
 
     def rviz_frame(self, type):
         rviz_frame = rviz.VisualizationFrame()
@@ -223,6 +225,72 @@ class MainWindow(QMainWindow, form_class):
     def imu_frame(self):
         self.imu_widget = imugl.ImuGL()
         self.imu_layout.addWidget(self.imu_widget)
+
+    def create_graph_widget(self, t, xmin, xmax, ymin, ymax):
+        widget = pg.PlotWidget(title=t)
+        widget.setBackground('#000A14')
+        widget.setXRange(xmin, xmax)
+        widget.setYRange(ymin, ymax)
+        widget.addLegend()
+        return widget
+
+    def graph_frame(self):
+        self.graph_timer = QTimer()
+        self.graph_time = 0
+
+        self.graph_velocity_data = {'x': deque([0]), 'ye': deque(
+            [0]), 'yt': deque([0])}
+        self.graph_acceleration_data = {'x': deque([0]), 'ya': deque(
+            [0]), 'yb': deque([0])}
+        self.graph_steer_data = {'x': deque([0]), 'ye': deque(
+            [0]), 'yt': deque([0])}
+
+        self.graph_velocity_widget = self.create_graph_widget(
+            "Velocity", 0, 10, 0, 60)
+        self.graph_acceleration_widget = self.create_graph_widget("Acceleration",
+                                                                  0, 10, -20, 20)
+        self.graph_steer_widget = self.create_graph_widget(
+            "Steer", 0, 10, -35, 35)
+
+        self.graph_velocity_widget.setLabel('left', 'v', units='km/h')
+        self.graph_acceleration_widget.setLabel('left', 'p', units='Ba')
+        self.graph_steer_widget.setLabel('left', 'a', units='deg')
+        self.graph_layout.addWidget(self.graph_velocity_widget)
+        self.graph_layout.addWidget(self.graph_acceleration_widget)
+        self.graph_layout.addWidget(self.graph_steer_widget)
+
+        for i in range(self.graph_layout.count()):
+            self.graph_layout.itemAt(i).widget().setMaximumSize(300, 200)
+            self.graph_layout.itemAt(i).widget().setMinimumSize(300, 200)
+            self.graph_layout.itemAt(i).widget().setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        pen_e = pg.mkPen(color='#1363DF', width=3)
+        pen_t = pg.mkPen(color='#df1354', width=3)
+        pen_a = pg.mkPen(color='#10dea0', width=3)
+        pen_b = pg.mkPen(color='#dede10', width=3)
+        self.graph_velocity_ego_plot = self.graph_velocity_widget.plot(
+            pen=pen_e, name='Ego')
+        self.graph_velocity_target_plot = self.graph_velocity_widget.plot(
+            pen=pen_t, name='Target')
+        self.graph_acceleration_accel_plot = self.graph_acceleration_widget.plot(
+            pen=pen_a, name='Accel')
+        self.graph_acceleration_brake_plot = self.graph_acceleration_widget.plot(
+            pen=pen_b, name='Brake')
+        self.graph_steer_ego_plot = self.graph_steer_widget.plot(
+            pen=pen_e, name='Ego')
+        self.graph_steer_target_plot = self.graph_steer_widget.plot(
+            pen=pen_t, name='Target')
+        self.graph_velocity_ego_plot.setAlpha(0.7, False)
+        self.graph_velocity_target_plot.setAlpha(0.7, False)
+        self.graph_acceleration_accel_plot.setAlpha(0.7, False)
+        self.graph_acceleration_brake_plot.setAlpha(0.7, False)
+        self.graph_steer_ego_plot.setAlpha(0.7, False)
+        self.graph_steer_target_plot.setAlpha(0.7, False)
+
+        self.graph_timer.timeout.connect(self.graph_update)
+        self.graph_timer.start(500)
+
 
     def information_frame(self):
         self.trajectory_widget = pg.PlotWidget()
@@ -280,6 +348,60 @@ class MainWindow(QMainWindow, form_class):
     def target_v_cb(self, msg):
         self.label_target_v.setText(
             str(float(round(msg.data*MPH_TO_KPH)))+" km/h")
+        self.target_v = float(round(msg.data*MPH_TO_KPH, 2))
+
+    def graph_update(self):
+        if self.moving_start:
+            self.graph_time += 0.5
+            if self.state != 'OVER' and self.tabWidget.currentIndex() == 0:
+                self.graph_velocity_data['x'].append(self.graph_time)
+                self.graph_velocity_data['yt'].append(self.target_v)
+                self.graph_velocity_data['ye'].append(self.CS.vEgo*MPH_TO_KPH)
+                self.graph_acceleration_data['x'].append(self.graph_time)
+                self.graph_acceleration_data['ya'].append(
+                    round(self.CC.actuators.accel, 3))
+                self.graph_acceleration_data['yb'].append(
+                    -round(self.CC.actuators.brake, 3))
+                self.graph_steer_data['x'].append(self.graph_time)
+                self.graph_steer_data['yt'].append(
+                    round(self.CC.actuators.steer, 3))
+                self.graph_steer_data['ye'].append(
+                    round(self.CS.actuators.steer, 3))
+
+                axX_velocity = self.graph_velocity_widget.getAxis('bottom')
+                axX_acceleration = self.graph_acceleration_widget.getAxis(
+                    'bottom')
+                axX_steer = self.graph_steer_widget.getAxis('bottom')
+
+                if self.graph_time >= axX_velocity.range[1]:
+                    self.graph_velocity_widget.setXRange(
+                        axX_velocity.range[0]+0.5, axX_velocity.range[1]+0.5, padding=0)
+                    self.graph_acceleration_widget.setXRange(
+                        axX_acceleration.range[0]+0.5, axX_acceleration.range[1]+0.5, padding=0)
+                    self.graph_steer_widget.setXRange(
+                        axX_steer.range[0]+0.5, axX_steer.range[1]+0.5, padding=0)
+                    self.graph_velocity_data['x'].popleft()
+                    self.graph_velocity_data['yt'].popleft()
+                    self.graph_velocity_data['ye'].popleft()
+                    self.graph_acceleration_data['x'].popleft()
+                    self.graph_acceleration_data['ya'].popleft()
+                    self.graph_acceleration_data['yb'].popleft()
+                    self.graph_steer_data['x'].popleft()
+                    self.graph_steer_data['yt'].popleft()
+                    self.graph_steer_data['ye'].popleft()
+
+                self.graph_velocity_ego_plot.setData(
+                    x=self.graph_velocity_data['x'], y=self.graph_velocity_data['ye'])
+                self.graph_velocity_target_plot.setData(
+                    x=self.graph_velocity_data['x'], y=self.graph_velocity_data['yt'])
+                self.graph_acceleration_accel_plot.setData(
+                    x=self.graph_acceleration_data['x'], y=self.graph_acceleration_data['ya'])
+                self.graph_acceleration_brake_plot.setData(
+                    x=self.graph_acceleration_data['x'], y=self.graph_acceleration_data['yb'])
+                self.graph_steer_ego_plot.setData(
+                    x=self.graph_steer_data['x'], y=self.graph_steer_data['ye'])
+                self.graph_steer_target_plot.setData(
+                    x=self.graph_steer_data['x'], y=self.graph_steer_data['yt'])
 
     def goal_cb(self, msg):
         self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
@@ -397,6 +519,7 @@ class MainWindow(QMainWindow, form_class):
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
             self.status_label.setText("Moving")
+            self.moving_start = True
             self.goal_update = False
             self.scenario1_button.setDisabled(True)
             self.scenario2_button.setDisabled(True)
@@ -449,6 +572,7 @@ class MainWindow(QMainWindow, form_class):
 
     def over_button_clicked(self):
         self.status_label.setText("Over")
+        self.graph_timer.stop()
         rospy.set_param('car_name', 'None')
         rospy.set_param('map_name', 'None')
         if self.rosbag_proc is not None:

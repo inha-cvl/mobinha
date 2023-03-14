@@ -1,5 +1,6 @@
 import rospy
 import math
+import time
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseArray, Pose
 
@@ -18,6 +19,9 @@ class LongitudinalPlanner:
         self.lane_information = None
         self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
+        self.IDX_TO_M = CP.mapParam.precision
+        self.long_timer = 0
+        self.long_dt = 0
 
         self.ref_v = CP.maxEnableSpeed
         self.min_v = CP.minEnableSpeed
@@ -91,27 +95,49 @@ class LongitudinalPlanner:
 
         target_v = max_v * pi
 
-        gain = 0.15
-        if obj_i == 0:
-            gain = 0.3
-        elif obj_i == 2:
-            gain = 0.2
+        # gain = 0.15
+        # if obj_i == 0:
+        #     gain = 0.3
+        # elif obj_i == 2:
+        #     gain = 0.2
 
-        ignore_gain = gain + 0.05
-        if self.target_v-target_v < -gain:
-            if self.target_v > ignore_gain:
-                target_v = self.target_v + gain
-            else:
-                target_v = self.target_v + ignore_gain
-        elif self.target_v-target_v > gain:
-            target_v = self.target_v - gain
+        # ignore_gain = gain + 0.05
+        # if self.target_v-target_v < -gain:
+        #     if self.target_v > ignore_gain:
+        #         target_v = self.target_v + gain
+        #     else:
+        #         target_v = self.target_v + ignore_gain
+        # elif self.target_v-target_v > gain:
+        #     target_v = self.target_v - gain
 
-        if target_v > self.ref_v*KPH_TO_MPS:
-            target_v = self.ref_v*KPH_TO_MPS
-        elif target_v < ignore_gain:
-            target_v = 0
+        # if target_v > self.ref_v*KPH_TO_MPS:
+        #     target_v = self.ref_v*KPH_TO_MPS
+        # elif target_v < ignore_gain:
+        #     target_v = 0
 
         return target_v
+
+    def dynamic_velocity_planner(self, cur_v, max_v, local_s, object_list):
+        obs_s = 80*self.M_TO_IDX
+        for obj in object_list:
+            obj_i, s = self.obstacle_handler(
+                obj, local_s, cur_v)  # Remain Distance
+            s -= local_s
+            if s < obs_s:
+                obs_s = s
+
+        ttc = min(20, (obs_s*self.IDX_TO_M)/cur_v)
+
+        if self.long_timer != 0:
+            self.long_dt += time.time()-self.long_timer
+        elif self.long_dt < ttc:
+            self.long_dt += 0.1
+
+        pi = self.sigmoid_logit_function(self.long_dt/ttc)
+
+
+
+
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
         # TODO: consideration filtering
@@ -171,5 +197,5 @@ class LongitudinalPlanner:
                 self.target_v = 0.0
             else:
                 lgp = 1
-
+            self.long_timer = time.time()
         return lgp

@@ -30,7 +30,7 @@ class Control:
                 sm.update()
                 localizer.run(sm)
                 controller.run(sm)
-                time.sleep(0.05)  # 20Hz
+                time.sleep(0.1)  # 20Hz
             elif self.state == 'OVER':
                 return 1
             else:

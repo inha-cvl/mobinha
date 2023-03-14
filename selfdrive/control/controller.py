@@ -48,12 +48,16 @@ class Controller:
             wheel_angle = 0.0
             accel_brake = -1.0
         else:
-            wheel_angle, lah_pt = self.purepursuit.run(
-                CS.position.x, CS.position.y, self.l_idx, CS.yawRate, CS.vEgo, self.local_path)
+            #OLD Pure Pursuit
+            # wheel_angle, lah_pt = self.purepursuit.run(
+            #     CS.position.x, CS.position.y, self.l_idx, CS.yawRate, CS.vEgo, self.local_path)
+
+            wheel_angle, lah_pt = self.purepursuit.run2(
+                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
-
             accel_brake = self.pid.run(self.target_v, CS.vEgo)
+
             if -100 > accel_brake:
                 accel_brake = -100
             elif accel_brake > 100:

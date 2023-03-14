@@ -281,7 +281,7 @@ class NGII2LANELET:
             ori_id = a2_link.ID
             new_id = ori2new[ori_id]
             # if not lanelets[new_id]['intersection']:
-            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinKID)
+            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinkID)
             lanelets[new_id]['adjacentRight'] = ori2new.get(a2_link.R_LinkID)
             # else:
                 # lanelets[new_id]['adjacentLeft'] = None

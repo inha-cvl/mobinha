@@ -209,6 +209,21 @@ class NGII2LANELET:
                     min_end_point = (p[0], p[1])
             return min_end_point
 
+        def get_intersection_direction(id):
+            link = lanelets[id]
+            p = (link['waypoints'][len(link['waypoints'])//5][0],
+                link['waypoints'][len(link['waypoints'])//5][1])
+            q = (link['waypoints'][len(link['waypoints'])//2][0],
+                link['waypoints'][len(link['waypoints'])//2][1])
+            r = (link['waypoints'][len(link['waypoints'])//5*4][0],
+                link['waypoints'][len(link['waypoints'])//5*4][1])
+            val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+            threshold = 10
+            if val <= -threshold:
+                lanelets[id]['leftTurn'] = True
+            if val >= threshold:
+                lanelets[id]['rightTurn'] = True
+
 
         for n, a2_link in tqdm(enumerate(ngii.a2_link), desc="a2_link: ", total=len(ngii.a2_link)):
             if a2_link.Length == 0:
@@ -264,10 +279,10 @@ class NGII2LANELET:
             else:
                 lanelets[new_id]['intersection'] = False
 
-            if lanelets[new_id]['intersection'] and str(a2_link.LaneNo)[0] == '9':
-                lanelets[new_id]['leftTurn'] = True
-            else:
-                lanelets[new_id]['leftTurn'] = False
+            # if lanelets[new_id]['intersection'] and str(a2_link.LaneNo)[0] == '9':
+            #     lanelets[new_id]['leftTurn'] = True
+            # else:
+            #     lanelets[new_id]['leftTurn'] = False
 
             # if int(a2_link.MaxSpeed) is None or int(a2_link.MaxSpeed) == 0.0:
             lanelets[new_id]['speedLimit'] = 50
@@ -281,7 +296,7 @@ class NGII2LANELET:
             ori_id = a2_link.ID
             new_id = ori2new[ori_id]
             # if not lanelets[new_id]['intersection']:
-            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinkID)
+            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinKID)
             lanelets[new_id]['adjacentRight'] = ori2new.get(a2_link.R_LinkID)
             # else:
                 # lanelets[new_id]['adjacentLeft'] = None
@@ -289,37 +304,6 @@ class NGII2LANELET:
 
             lanelets[new_id]['predecessor'] = to_node[a2_link.FromNodeID] if to_node.get(a2_link.FromNodeID) is not None else []
             lanelets[new_id]['successor'] = from_node[a2_link.ToNodeID] if from_node.get(a2_link.ToNodeID) is not None else []
-
-            # # obj_id = b3_surfacemark.ID
-            # if b3_surfacemark.Type == '5':
-            #     points = []
-            #     for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
-            #         x, y, z = self.to_cartesian(tx, ty, alt)
-            #         points.append((x, y))
-
-            #     if b3_surfacemark.LinkID is not None:
-            #         ori_id = b3_surfacemark.LinkID
-            #         new_id = ori2new.get(ori_id)
-            #         # print(ori_id,new_id, lanelets['2143'], self.new2ori['2143'])#, lanelets['2145'], self.new2ori['2145'])
-            #         if new_id is not None:
-            #             #new and pre id crosswalks append
-            #             lanelets[new_id]['crosswalk'].append(points)
-            #             pre_new_id = lanelets[new_id]['predecessor']
-            #             if len(pre_new_id) != 0:
-            #                 for id_ in pre_new_id:
-            #                     lanelets[id_]['crosswalk'].append(points)
-            #                     l_ids = search_L_LinkID(id_)
-            #                     r_ids = search_R_LinKID(id_)
-            #                     for i in l_ids:
-            #                         lanelets[i]['crosswalk'].append(points)
-            #                     for i in r_ids:
-            #                         lanelets[i]['crosswalk'].append(points)
-            #             l_ids = search_L_LinkID(new_id)
-            #             r_ids = search_R_LinKID(new_id)
-            #             for i in l_ids:
-            #                 lanelets[i]['crosswalk'].append(points)
-            #             for i in r_ids:
-            #                 lanelets[i]['crosswalk'].append(points)
 
         # Correct map error
         for id_, data in lanelets.items():
@@ -512,8 +496,8 @@ class NGII2LANELET:
                                             right_data[0] = id_
                                             right_data[1] = lanelets[id_]['laneNo']
                         # check plz
-                            if right_data is not None:
-                                lanelets[right_data[0]]['rightTurn'] = True
+                            # if right_data is not None:
+                            #     lanelets[right_data[0]]['rightTurn'] = True
 
         for n, c1_trafficlight in tqdm(enumerate(ngii.c1_trafficlight), desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
             obj_id = c1_trafficlight.ID
@@ -548,7 +532,7 @@ class NGII2LANELET:
                         lanelets[pre_new_id[0]]['crosswalk'].append(min_end_point)
                         sum_link_length = lanelets[pre_new_id[0]]['length']
                         pre_link_stop_point(pre_new_id[0], min_end_point, sum_link_length)
-
+                        get_intersection_direction(pre_new_id[0])
                         l_ids = search_L_LinkID(pre_new_id[0])
                         r_ids = search_R_LinKID(pre_new_id[0])
                         for i in l_ids:
@@ -556,18 +540,20 @@ class NGII2LANELET:
                             lanelets[i]['crosswalk'].append(min_end_point)
                             sum_link_length = lanelets[i]['length']
                             pre_link_stop_point(i, min_end_point, sum_link_length)
+                            get_intersection_direction(i)
                         for i in r_ids:
                             min_end_point = get_min_stop_point(i, -1)
                             lanelets[i]['crosswalk'].append(min_end_point)
                             sum_link_length = lanelets[i]['length']
                             pre_link_stop_point(i, min_end_point, sum_link_length)
+                            get_intersection_direction(i)
                 # left+right
                 else:
                     min_end_point = get_min_stop_point(new_id, len(lanelets[new_id]['waypoints'])//2)
                     lanelets[new_id]['crosswalk'].append(min_end_point)
                     sum_link_length = lanelets[new_id]['length']
                     pre_link_stop_point(new_id, min_end_point, sum_link_length)
-
+                    get_intersection_direction(new_id)
                     l_ids = search_L_LinkID(new_id)
                     r_ids = search_R_LinKID(new_id)
                     for i in l_ids:
@@ -575,13 +561,13 @@ class NGII2LANELET:
                         lanelets[i]['crosswalk'].append(min_end_point)
                         sum_link_length = lanelets[i]['length']
                         pre_link_stop_point(i, min_end_point, sum_link_length)
+                        get_intersection_direction(i)
                     for i in r_ids:
                         min_end_point = get_min_stop_point(i, len(lanelets[i]['waypoints'])//2)
                         lanelets[i]['crosswalk'].append(min_end_point)
                         sum_link_length = lanelets[i]['length']
                         pre_link_stop_point(i, min_end_point, sum_link_length)
-
-
+                        get_intersection_direction(i)
 
         # for c1_trafficlight in tqdm(ngii.c1_trafficlight, desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
 

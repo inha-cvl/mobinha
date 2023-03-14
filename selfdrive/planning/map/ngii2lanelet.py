@@ -252,7 +252,8 @@ class NGII2LANELET:
             lanelets[new_id]['k'] = k
             lanelets[new_id]['length'] = s[-1]  # a2_link.Length
             lanelets[new_id]['laneNo'] = a2_link.LaneNo
-
+            
+            lanelets[new_id]['leftTurn'] = False
             lanelets[new_id]['rightTurn'] = False
             lanelets[new_id]['uTurn'] = False
             lanelets[new_id]['direction'] = []

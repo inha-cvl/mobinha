@@ -192,6 +192,7 @@ class NGII2LANELET:
                 if len(pre_ids) != 0:
                     for i in pre_ids:
                         lanelets[i]['crosswalk'].append(stop_point)
+                        get_intersection_direction(i)
                         sum_link_length += lanelets[i]['length']
                         pre_link_stop_point(i, stop_point, sum_link_length)
                 else:
@@ -209,8 +210,8 @@ class NGII2LANELET:
                     min_end_point = (p[0], p[1])
             return min_end_point
 
-        def get_intersection_direction(id):
-            link = lanelets[id]
+        def get_intersection_direction(id_):
+            link = lanelets[id_]
             p = (link['waypoints'][len(link['waypoints'])//5][0],
                 link['waypoints'][len(link['waypoints'])//5][1])
             q = (link['waypoints'][len(link['waypoints'])//2][0],
@@ -220,9 +221,9 @@ class NGII2LANELET:
             val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
             threshold = 10
             if val <= -threshold:
-                lanelets[id]['leftTurn'] = True
+                lanelets[id_]['leftTurn'] = True
             if val >= threshold:
-                lanelets[id]['rightTurn'] = True
+                lanelets[id_]['rightTurn'] = True
 
 
         for n, a2_link in tqdm(enumerate(ngii.a2_link), desc="a2_link: ", total=len(ngii.a2_link)):

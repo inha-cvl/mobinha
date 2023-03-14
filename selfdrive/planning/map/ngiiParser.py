@@ -9,8 +9,8 @@ class NGIIParser:
         # a4_path,
         # b1_path, 
         b2_path, 
-        b3_path):
-        # c1_path,
+        b3_path,
+        c1_path):
         # c3_path,
         # c4_path,
         # c6_path):
@@ -24,7 +24,7 @@ class NGIIParser:
         self.b2_surfacelinemark = self.parse_b2_surfacelinemark(b2_path)
         self.b3_surfacemark = self.parse_b3_surfacemark(b3_path)
 
-        # self.c1_trafficlight = self.parse_c1_trafficlight(c1_path)
+        self.c1_trafficlight = self.parse_c1_trafficlight(c1_path)
         # self.c3_vehicleprotectionsafety = self.parse_c3_vehicleprotectionsafety(c3_path)
         # self.c4_speedbump = self.parse_c4_speedbump(c4_path)
         # self.c6_postpoint = self.parse_c6_postpoint(c6_path)

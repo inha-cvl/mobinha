@@ -538,7 +538,6 @@ class NGII2LANELET:
 
             #STOP LINE LINKING
             ori_id = c1_trafficlight.LinkID
-            print(ori_id)
             new_id = ori2new.get(ori_id)
             if new_id is not None:
                 # prev + left&right

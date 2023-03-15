@@ -279,7 +279,7 @@ class NGII2LANELET:
             else:
                 lanelets[new_id]['intersection'] = False
 
-            if lstr(a2_link.LaneNo)[0] == '9':
+            if str(a2_link.LaneNo)[0] == '9':
                 lanelets[new_id]['leftTurn'] = True
             else:
                 lanelets[new_id]['leftTurn'] = False

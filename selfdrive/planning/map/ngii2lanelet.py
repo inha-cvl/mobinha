@@ -279,10 +279,10 @@ class NGII2LANELET:
             else:
                 lanelets[new_id]['intersection'] = False
 
-            # if lanelets[new_id]['intersection'] and str(a2_link.LaneNo)[0] == '9':
-            #     lanelets[new_id]['leftTurn'] = True
-            # else:
-            #     lanelets[new_id]['leftTurn'] = False
+            if lstr(a2_link.LaneNo)[0] == '9':
+                lanelets[new_id]['leftTurn'] = True
+            else:
+                lanelets[new_id]['leftTurn'] = False
 
             # if int(a2_link.MaxSpeed) is None or int(a2_link.MaxSpeed) == 0.0:
             lanelets[new_id]['speedLimit'] = 50
@@ -496,8 +496,8 @@ class NGII2LANELET:
                                             right_data[0] = id_
                                             right_data[1] = lanelets[id_]['laneNo']
                         # check plz
-                            # if right_data is not None:
-                            #     lanelets[right_data[0]]['rightTurn'] = True
+                            if right_data is not None:
+                                lanelets[right_data[0]]['rightTurn'] = True
 
         for n, c1_trafficlight in tqdm(enumerate(ngii.c1_trafficlight), desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
             obj_id = c1_trafficlight.ID

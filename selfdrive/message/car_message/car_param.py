@@ -21,7 +21,7 @@ class STParam(NamedTuple):
 
 class SLParam(NamedTuple): #Sigmoid Logit Probability function params
     mu: float = 0.5
-    v: float = 2.5
+    v: float = 1.7
 
 class LongitudinalTuning(NamedTuple):
     kpBP: float = 0.0

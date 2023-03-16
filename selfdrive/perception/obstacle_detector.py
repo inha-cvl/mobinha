@@ -24,6 +24,7 @@ class ObstacleDetector:
         self.traffic_light_object = []
 
         self.is_morai = False
+        self.morai_ego_v = 0.0
         self.traffic_ligth_timer = time.time()
 
         rospy.Subscriber(
@@ -76,7 +77,7 @@ class ObstacleDetector:
     def morai_object_list_cb(self, msg):
         objects = []
         for obj in msg.poses:
-            objects.append((obj.position.x, obj.position.y, 0))
+            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v))
         self.lidar_object = objects
 
     def morai_traffic_light_cb(self, msg):
@@ -90,6 +91,7 @@ class ObstacleDetector:
     def morai_ego_topic_cb(self, msg):
         self.is_morai = True
         self.morai_local_point = (msg.position.x, msg.position.y)
+        self.morai_ego_v = msg.orientation.w
 
     def get_lidar_objects(self, local_point, car_idx):
         dx = self.CS.position.x - \

@@ -93,7 +93,7 @@ class LongitudinalPlanner:
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
         min_s = 500# prev 80
         ttc = 20.0
-        rel_v = cur_v #TODO : Tracking box velocity
+        rel_v = cur_v
         norm_s = 1
         obj_i = -1
         for obj in object_list:
@@ -127,7 +127,7 @@ class LongitudinalPlanner:
         target_v = max_v * pi
 
         gain = self.get_gain(follow_error)
-        print("obs distance:", min_s, "follow error:",round(follow_error,2), "gain:",round(gain,3))
+        print(near_obj_id,"obs distance:", min_s, "follow error:",round(follow_error,2), "gain:",round(gain,3))
 
         if near_obj_id != 0:
             if self.target_v-target_v < -gain:
@@ -138,7 +138,7 @@ class LongitudinalPlanner:
             if follow_error < 0:
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain/2)
             else:
-                target_v = self.target_v - gain
+                target_v = max(0, self.target_v - gain)
 
         return target_v
 

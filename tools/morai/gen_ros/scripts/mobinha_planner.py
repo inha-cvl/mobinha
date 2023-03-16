@@ -88,6 +88,7 @@ class MoraiPlanner():
         pose.position.x = data.position.x
         pose.position.y = data.position.y
         pose.position.z = data.position.z
+        pose.orientation.w = data.velocity.x
         self.ego_topic_pub.publish(pose)
         self.velocity = data.velocity.x
         self.heading = data.heading
@@ -100,18 +101,21 @@ class MoraiPlanner():
             pose.position.x = obj.position.x
             pose.position.y = obj.position.y
             pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         for obj in data.obstacle_list:
             pose = Pose()
             pose.position.x = obj.position.x
             pose.position.y = obj.position.y
             pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         for obj in data.pedestrian_list:
             pose = Pose()
             pose.position.x = obj.position.x
             pose.position.y = obj.position.y
             pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         self.obj_list_pub.publish(object_list)
 

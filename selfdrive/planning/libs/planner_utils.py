@@ -94,14 +94,14 @@ def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
     crosswalk = []
     for id_, data in lanelets.items():
         if id_ == now_lane_id:
-            if len(data['crosswalk']) > 0:
-                crosswalks = data['crosswalk']
-                for arr in crosswalks:
-                    crosswalk.extend(arr)
+            # if len(data['crosswalk']) > 0:
+            crosswalks = data['crosswalk']
+                # for arr in crosswalks:
+                    # crosswalk.extend(arr)
     now_cw_idx = math.inf
 
-    if len(crosswalk) > 0:
-        idx = local_point.query(crosswalk, 1)[1]
+    if len(crosswalks) > 0:
+        idx = local_point.query(crosswalks[0], 1)[1]
         if idx < now_cw_idx:
             now_cw_idx = idx
 

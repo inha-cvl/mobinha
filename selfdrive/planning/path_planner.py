@@ -191,7 +191,7 @@ class PathPlanner:
             self.temp_global_idx = 0
             self.l_idx = 0
             self.local_path_cut_value = 500
-            self.local_path_nitting_value = 150
+            self.local_path_nitting_value = 200
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 

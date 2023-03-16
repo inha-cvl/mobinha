@@ -83,7 +83,7 @@ class LongitudinalPlanner:
             return max(2.5/20, min(7/20, error*gain))
 
         
-    def dynamic_consider_range(self, max_v, base_range=40):  # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=90):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):

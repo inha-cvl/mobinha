@@ -110,7 +110,6 @@ class LongitudinalPlanner:
                 near_obj_id = obj_i
             if len(obj) == 4:
                 rel_v = obj[3]
-                print(rel_v*3.6)
 
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)

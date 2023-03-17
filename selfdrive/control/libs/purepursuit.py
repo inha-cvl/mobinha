@@ -2,7 +2,7 @@ import rospy
 from std_msgs.msg import Float32
 from numpy.linalg import norm
 from math import sin, cos, atan2, radians, degrees
-from numpy import abs
+import numpy as np
 from libs.interpolate import interpolate
 
 
@@ -100,7 +100,7 @@ class PurePursuit:
             + 0.35*self.k_curva*self.cur_curvature[3] \
             + 0.2*self.k_curva*self.cur_curvature[4]
 
-        curvature_control = abs(curvature_control)
+        curvature_control = np.abs(curvature_control)
         if pp_angle >= 0:
             angle = degrees(pp_angle) + curvature_control
         elif pp_angle < 0:
@@ -110,3 +110,24 @@ class PurePursuit:
         angle = max(min(angle, 35.0), -35.0)
 
         return angle, (lx, ly)
+
+    def run2(self, vEgo, path, position, yawRate):
+        lfd = self.k*vEgo
+        lfd = np.clip(lfd, 4, 60)
+        steering_angle = 0.
+        lx, ly = path[0]
+        for point in path:
+            diff = np.asarray((point[0]-position[0], point[1]-position[1]))
+            rotation_matrix = np.array(
+                ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), (np.sin(-radians(yawRate)),  np.cos(-radians(yawRate)))))
+            rotated_diff = rotation_matrix.dot(diff)
+            if rotated_diff[0] > 0:
+                dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
+                if dis >= lfd:
+                    theta = np.arctan2(rotated_diff[1], rotated_diff[0])
+                    steering_angle = np.arctan2(
+                        2*self.L*np.sin(theta), lfd)
+                    lx = point[0]
+                    ly = point[1]
+                    break
+        return degrees(steering_angle), (lx, ly)

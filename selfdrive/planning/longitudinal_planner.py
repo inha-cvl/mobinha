@@ -58,7 +58,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [10, 5, 10]  # m
+        offset = [10, 5, 11]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return i, pos-offset[i]
@@ -83,7 +83,7 @@ class LongitudinalPlanner:
             return max(2.5/20, min(7/20, error*gain))
 
         
-    def dynamic_consider_range(self, max_v, base_range=90):  # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
@@ -127,7 +127,7 @@ class LongitudinalPlanner:
         target_v = max_v * pi
 
         gain = self.get_gain(follow_error)
-        print(near_obj_id,"obs distance:", min_s, "follow error:",round(follow_error,2), "gain:",round(gain,3))
+        #print(near_obj_id,"obs distance:", min_s, "follow error:",round(follow_error,2), "gain:",round(gain,3))
 
         if near_obj_id != 0:
             if self.target_v-target_v < -gain:

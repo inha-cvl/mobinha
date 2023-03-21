@@ -362,10 +362,10 @@ class MainWindow(QMainWindow, form_class):
             self.graph_acceleration_data['yb'].append(
                 -round(self.CC.actuators.brake, 3))
             self.graph_steer_data['x'].append(self.graph_time)
-            self.graph_steer_data['yt'].append(
-                round(self.CC.actuators.steer*self.CP.steerRatio, 3))
-            self.graph_steer_data['ye'].append(
-                round(self.CS.actuators.steer, 3))
+            self.graph_steer_data['yt'].append(0)
+                #round(self.CC.actuators.steer*self.CP.steerRatio, 3))
+            self.graph_steer_data['ye'].append(round(self.CC.cruiseControl.accerror,2))
+                #round(self.CS.actuators.steer, 3))
 
             axX_velocity = self.graph_velocity_widget.getAxis('bottom')
             axX_acceleration = self.graph_acceleration_widget.getAxis(

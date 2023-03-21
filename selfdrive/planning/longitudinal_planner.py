@@ -26,6 +26,10 @@ class LongitudinalPlanner:
         self.st_param = CP.stParam._asdict()
         self.sl_param = CP.slParam._asdict()
 
+        self.last_error = 0
+        self.last_s = 0
+        self.follow_error = 0
+
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',
@@ -38,6 +42,7 @@ class LongitudinalPlanner:
             '/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_traffic_light_marker = rospy.Publisher(
             '/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
+        self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w)
@@ -55,7 +60,7 @@ class LongitudinalPlanner:
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
 
-    def obstacle_handler(self, obj, s, cur_v):
+    def obstacle_handler(self, obj, s):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
         offset = [10, 5, 11]  # m
@@ -74,17 +79,27 @@ class LongitudinalPlanner:
         # return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
     
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)
+        return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_gain(self, error, gain=1/50):
+    def get_gain(self, error, kp=0.2/20, kd=0.01/20):
+        derivative = error - self.last_error
+        self.last_error = error
         if error < 0:
             return 2.5 / 20
         else:
-            return max(2.5/20, min(7/20, error*gain))
+            return max(2.5/20, min(7/20, kp*error + kd*derivative))
 
         
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
+    
+    def planning_tracking(self, s):
+        if s != self.last_s:
+            ds = s - self.last_s
+            hz = 7 # avg clustering frame rate
+            rel_v = ds * hz
+            self.last_s = s
+            return rel_v
     
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
@@ -97,7 +112,7 @@ class LongitudinalPlanner:
         norm_s = 1
         obj_i = -1
         for obj in object_list:
-            obj_i, s = self.obstacle_handler(obj, local_s, cur_v)  # Remain Distance
+            obj_i, s = self.obstacle_handler(obj, local_s)  # Remain Distance
             s -= local_s
             if 0 < s < consider_distance:
                 norm_s = s/consider_distance
@@ -109,6 +124,9 @@ class LongitudinalPlanner:
                 min_s = s
                 near_obj_id = obj_i
             if len(obj) == 4:
+                # planning tracking mode
+                rel_v = self.planning_tracking(min_s)
+                # lidar clustering tracking mode
                 rel_v = obj[3]
 
         if 0 < min_obs_s < 1:
@@ -118,16 +136,16 @@ class LongitudinalPlanner:
             pi = 0
 
         if near_obj_id == 0:
-            follow_distance = self.desired_follow_distance(cur_v, rel_v - cur_v)
+            follow_distance = self.desired_follow_distance(cur_v, cur_v - rel_v)
         else:
             follow_distance = self.desired_follow_distance(cur_v)
 
-        follow_error = (follow_distance-min_s)
+        self.follow_error = (follow_distance-min_s)
 
         target_v = max_v * pi
 
-        gain = self.get_gain(follow_error)
-        #print(near_obj_id,"obs distance:", min_s, "follow error:",round(follow_error,2), "gain:",round(gain,3))
+        gain = self.get_gain(self.follow_error)
+        print(near_obj_id,"rel v:", round(rel_v*MPS_TO_KPH,1) ,"follow d:", round(follow_distance), "obs d:", round(min_s), "error(0):",round(self.follow_error,2))#, "gain:",round(gain,3))
 
         if near_obj_id != 0:
             if self.target_v-target_v < -gain:
@@ -135,9 +153,9 @@ class LongitudinalPlanner:
             elif self.target_v-target_v > gain:
                 target_v = self.target_v - gain
         else:
-            if follow_error < 0:
+            if self.follow_error < 0: # MINUS ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain/2)
-            else:
+            else: # PLUS DECEL
                 target_v = max(0, self.target_v - gain)
 
         return target_v
@@ -182,6 +200,7 @@ class LongitudinalPlanner:
         CS = sm.CS
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
+        self.pub_accerror.publish(Float32(self.follow_error))
         if local_path != None and self.lane_information != None and CS.cruiseState == 1:
             local_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))

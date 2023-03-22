@@ -30,6 +30,7 @@ class LongitudinalPlanner:
         self.last_s = 0
         self.follow_error = 0
         self.integral = 0
+        self.rel_v = 0
 
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
@@ -104,9 +105,11 @@ class LongitudinalPlanner:
         if s != self.last_s:
             ds = s - self.last_s
             hz = 7 # avg clustering frame rate
-            rel_v = ds * hz
+            self.rel_v = ds * hz
             self.last_s = s
-            return rel_v
+            return self.rel_v
+        else:
+            return self.rel_v
     
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
@@ -115,7 +118,7 @@ class LongitudinalPlanner:
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
         min_s = 500# prev 80
         ttc = 20.0
-        rel_v = cur_v
+        self.rel_v = cur_v
         norm_s = 1
         obj_i = -1
         for obj in object_list:
@@ -132,9 +135,9 @@ class LongitudinalPlanner:
                 near_obj_id = obj_i
             if len(obj) == 4:
                 # planning tracking mode
-                rel_v = self.planning_tracking(min_s)
+                self.rel_v = self.planning_tracking(min_s)
                 # lidar clustering tracking mode
-                rel_v = obj[3]
+                self.rel_v = obj[3]
 
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
@@ -143,7 +146,7 @@ class LongitudinalPlanner:
             pi = 0
 
         if near_obj_id == 0:
-            follow_distance = self.desired_follow_distance(cur_v, rel_v + cur_v)
+            follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v)
         else:
             follow_distance = self.desired_follow_distance(cur_v)
 
@@ -162,7 +165,7 @@ class LongitudinalPlanner:
                 target_v = self.target_v - gain
         else:
             gain = self.get_gain(self.follow_error)
-            print(near_obj_id,"lead v:", round((rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
             if self.follow_error < 0: # MINUS ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)
             else: # PLUS DECEL

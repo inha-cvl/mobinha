@@ -7,7 +7,7 @@ from scipy.spatial import KDTree
 
 import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6

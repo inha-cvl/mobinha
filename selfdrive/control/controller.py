@@ -2,7 +2,7 @@
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
 from selfdrive.control.libs.pid import PID
 import rospy

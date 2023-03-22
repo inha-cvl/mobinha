@@ -162,7 +162,7 @@ class ObstacleDetector:
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
             
 
-            self.lidar_object = []
+            # self.lidar_object = []
             viz_obstacle = []
             if time.time()-self.traffic_ligth_timer > 5:
                 self.traffic_light_object = []

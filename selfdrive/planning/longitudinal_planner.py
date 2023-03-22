@@ -76,14 +76,14 @@ class LongitudinalPlanner:
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=2.5, comfort_decel=2.4, offset=0): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=2.5, comfort_decel=1.5, offset=0): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_gain(self, error, kp=0.2/HZ, ki=0.0/HZ, kd=0.0/HZ):
+    def get_gain(self, error, kp=0.2/HZ, ki=0.02/HZ, kd=0.0/HZ):
         self.integral += error*(1/HZ)
         if self.integral > 10:
             self.integral = 10
@@ -104,7 +104,7 @@ class LongitudinalPlanner:
     def planning_tracking(self, s):
         if s != self.last_s:
             ds = s - self.last_s
-            hz = 7 # avg clustering frame rate
+            hz = 6 # avg clustering frame rate
             self.rel_v = ds * hz
             self.last_s = s
             return self.rel_v
@@ -131,11 +131,11 @@ class LongitudinalPlanner:
 
             if min_obs_s > norm_s:
                 min_obs_s = norm_s
-                min_s = s
+                min_s = s/2
                 near_obj_id = obj_i
             if len(obj) == 4:
                 # planning tracking mode
-                self.rel_v = self.planning_tracking(min_s)
+                # self.rel_v = self.planning_tracking(min_s)
                 # lidar clustering tracking mode
                 self.rel_v = obj[3]
 
@@ -146,7 +146,7 @@ class LongitudinalPlanner:
             pi = 0
 
         if near_obj_id == 0:
-            follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v)
+            follow_distance = self.desired_follow_distance(cur_v)#, self.rel_v + cur_v)
         else:
             follow_distance = self.desired_follow_distance(cur_v)
 
@@ -158,11 +158,16 @@ class LongitudinalPlanner:
         
 
         if near_obj_id != 0:
-            gain = 2.7/HZ
+            gain = 2.5/HZ
             if self.target_v-target_v < -gain:
                 target_v = self.target_v + gain
             elif self.target_v-target_v > gain:
                 target_v = self.target_v - gain
+            # gain = self.get_gain(self.follow_error)
+            # if self.follow_error < 0: # MINUS ACCEL
+            #     target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)
+            # else: # PLUS DECEL
+            #     target_v = max(0, self.target_v - gain)
         else:
             gain = self.get_gain(self.follow_error)
             print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))

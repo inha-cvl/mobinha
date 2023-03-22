@@ -8,7 +8,7 @@ from selfdrive.visualize.viz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-
+HZ = 10
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -29,6 +29,7 @@ class LongitudinalPlanner:
         self.last_error = 0
         self.last_s = 0
         self.follow_error = 0
+        self.integral = 0
 
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
@@ -74,20 +75,26 @@ class LongitudinalPlanner:
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=2, comfort_decel=2.5, offset=10): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=2.5, comfort_decel=2.4, offset=0): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_gain(self, error, kp=0.2/20, kd=0.01/20):
-        derivative = error - self.last_error
+    def get_gain(self, error, kp=0.2/HZ, ki=0.0/HZ, kd=0.0/HZ):
+        self.integral += error*(1/HZ)
+        if self.integral > 10:
+            self.integral = 10
+        elif self.integral < -10:
+            self.integral = -10
+
+        derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            return 2.5 / 20
+            return max(-2.5/HZ, min(0/HZ, kp*error + ki*self.integral + kd*derivative))
         else:
-            return max(2.5/20, min(7/20, kp*error + kd*derivative))
+            return max(0/HZ, min(7/HZ, kp*error + ki*self.integral + kd*derivative))
 
         
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
@@ -136,7 +143,7 @@ class LongitudinalPlanner:
             pi = 0
 
         if near_obj_id == 0:
-            follow_distance = self.desired_follow_distance(cur_v, cur_v - rel_v)
+            follow_distance = self.desired_follow_distance(cur_v, rel_v + cur_v)
         else:
             follow_distance = self.desired_follow_distance(cur_v)
 
@@ -144,17 +151,20 @@ class LongitudinalPlanner:
 
         target_v = max_v * pi
 
-        gain = self.get_gain(self.follow_error)
-        print(near_obj_id,"rel v:", round(rel_v*MPS_TO_KPH,1) ,"follow d:", round(follow_distance), "obs d:", round(min_s), "error(0):",round(self.follow_error,2))#, "gain:",round(gain,3))
+        # gain = self.get_gain(self.follow_error)
+        
 
         if near_obj_id != 0:
+            gain = 2.7/HZ
             if self.target_v-target_v < -gain:
                 target_v = self.target_v + gain
             elif self.target_v-target_v > gain:
                 target_v = self.target_v - gain
         else:
+            gain = self.get_gain(self.follow_error)
+            print(near_obj_id,"lead v:", round((rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
             if self.follow_error < 0: # MINUS ACCEL
-                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain/2)
+                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)
             else: # PLUS DECEL
                 target_v = max(0, self.target_v - gain)
 

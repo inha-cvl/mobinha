@@ -14,15 +14,15 @@ class PID:
         #     return -0.9
         # else:
         error = target - current
-        diff_error = error - self.pre_error
-        self.pre_error = error
+        diff_error = (error - self.pre_error)/self.dt
+        self.pre_error = error # *self.dt
         self.error_sum += error
         if self.error_sum < -5:
             self.error_sum = -5
         elif self.error_sum > 5:
             self.error_sum = 5
         
-        pid = self.K_P*error + self.K_D*diff_error/self.dt + self.K_I*self.error_sum*self.dt
+        pid = self.K_P*error + self.K_D*diff_error + self.K_I*self.error_sum*self.dt
         
         return pid
     

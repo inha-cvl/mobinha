@@ -143,9 +143,9 @@ class MORAI:
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 50   # K_P
-        car_param_longitudinal_tuning["kiV"] = 10  # K_I
-        car_param_longitudinal_tuning["kf"] = 0.3  # K_D
+        car_param_longitudinal_tuning["kpV"] = 10.0   # K_P
+        car_param_longitudinal_tuning["kiV"] = 0.1  # K_I
+        car_param_longitudinal_tuning["kf"] = 1.0 # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 

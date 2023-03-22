@@ -20,8 +20,6 @@ class LongitudinalPlanner:
         self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
         self.IDX_TO_M = CP.mapParam.precision
-        self.long_timer = 0
-        self.long_dt = 0
 
         self.ref_v = CP.maxEnableSpeed
         self.min_v = CP.minEnableSpeed
@@ -43,7 +41,7 @@ class LongitudinalPlanner:
             '/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
-        self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
+        self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w)
                                for pose in msg.poses]
 
     def traffic_light_obstacle_cb(self, msg):
@@ -61,7 +59,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s, cur_v):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [8+(1.8*cur_v), 5, 10]  # m
+        offset = [10, 5, 11]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return i, pos-offset[i]
@@ -69,51 +67,79 @@ class LongitudinalPlanner:
     def sigmoid_logit_function(self, s):
         return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
-    def dynamic_consider_range(self, max_v, base_range=40):  # input max_v unit (m/s)
-        return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
+        return ((v_lead**2) / (2*comfort_decel))
 
+    def get_safe_obs_distance(self, v_ego, desired_ttc=2, comfort_decel=2.5, offset=10): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+        return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
+        # return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
+    
+    def desired_follow_distance(self, v_ego, v_lead=0):
+        return self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)
+
+    def get_gain(self, error, gain=1/50):
+        if error < 0:
+            return 2.5 / 20
+        else:
+            return max(2.5/20, min(7/20, error*gain))
+
+        
+    def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
+        return base_range + (0.267*(max_v)**1.902)
+    
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
         min_obs_s = 1
+        near_obj_id = -1
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
+        min_s = 500# prev 80
+        ttc = 20.0
+        rel_v = cur_v
+        norm_s = 1
         obj_i = -1
         for obj in object_list:
-            obj_i, s = self.obstacle_handler(
-                obj, local_s, cur_v)  # Remain Distance
+            obj_i, s = self.obstacle_handler(obj, local_s, cur_v)  # Remain Distance
             s -= local_s
-            norm_s = 1
             if 0 < s < consider_distance:
                 norm_s = s/consider_distance
             elif s <= 0:
                 norm_s = 0
+
             if min_obs_s > norm_s:
                 min_obs_s = norm_s
+                min_s = s
+                near_obj_id = obj_i
+            if len(obj) == 4:
+                rel_v = obj[3]
+
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
+            # if (cur_v-0) == 0 else (follow_error) / (cur_v-0)# TODO : cur_v -> cur_v - obs_v
         elif min_obs_s <= 0:
             pi = 0
 
+        if near_obj_id == 0:
+            follow_distance = self.desired_follow_distance(cur_v, rel_v - cur_v)
+        else:
+            follow_distance = self.desired_follow_distance(cur_v)
+
+        follow_error = (follow_distance-min_s)
+
         target_v = max_v * pi
 
-        # gain = 0.15
-        # if obj_i == 0:
-        #     gain = 0.3
-        # elif obj_i == 2:
-        #     gain = 0.2
+        gain = self.get_gain(follow_error)
+        #print(near_obj_id,"obs distance:", min_s, "follow error:",round(follow_error,2), "gain:",round(gain,3))
 
-        # ignore_gain = gain + 0.05
-        # if self.target_v-target_v < -gain:
-        #     if self.target_v > ignore_gain:
-        #         target_v = self.target_v + gain
-        #     else:
-        #         target_v = self.target_v + ignore_gain
-        # elif self.target_v-target_v > gain:
-        #     target_v = self.target_v - gain
-
-        # if target_v > self.ref_v*KPH_TO_MPS:
-        #     target_v = self.ref_v*KPH_TO_MPS
-        # elif target_v < ignore_gain:
-        #     target_v = 0
+        if near_obj_id != 0:
+            if self.target_v-target_v < -gain:
+                target_v = self.target_v + gain
+            elif self.target_v-target_v > gain:
+                target_v = self.target_v - gain
+        else:
+            if follow_error < 0:
+                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain/2)
+            else:
+                target_v = max(0, self.target_v - gain)
 
         return target_v
 
@@ -155,7 +181,7 @@ class LongitudinalPlanner:
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
                 if lobs[2] >= -1.5 and lobs[2] <= 1.5:  # object in my lane
-                    object_list.append(lobs)
+                    object_list.append(lobs) # lobs[3] relative velocity
 
         # [1] = Goal Object
         if self.goal_object is not None:

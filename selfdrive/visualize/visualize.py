@@ -353,43 +353,44 @@ class MainWindow(QMainWindow, form_class):
     def graph_update(self):
         if self.moving_start:
             self.graph_time += 0.5
+            self.graph_velocity_data['x'].append(self.graph_time)
+            self.graph_velocity_data['yt'].append(self.target_v)
+            self.graph_velocity_data['ye'].append(self.CS.vEgo*MPH_TO_KPH)
+            self.graph_acceleration_data['x'].append(self.graph_time)
+            self.graph_acceleration_data['ya'].append(
+                round(self.CC.actuators.accel, 3))
+            self.graph_acceleration_data['yb'].append(
+                -round(self.CC.actuators.brake, 3))
+            self.graph_steer_data['x'].append(self.graph_time)
+            self.graph_steer_data['yt'].append(
+                round(self.CC.actuators.steer*self.CP.steerRatio, 3))
+            self.graph_steer_data['ye'].append(
+                round(self.CS.actuators.steer, 3))
+
+            axX_velocity = self.graph_velocity_widget.getAxis('bottom')
+            axX_acceleration = self.graph_acceleration_widget.getAxis(
+                'bottom')
+            axX_steer = self.graph_steer_widget.getAxis('bottom')
+
+            if self.graph_time >= axX_velocity.range[1]:
+                self.graph_velocity_widget.setXRange(
+                    axX_velocity.range[0]+0.5, axX_velocity.range[1]+0.5, padding=0)
+                self.graph_acceleration_widget.setXRange(
+                    axX_acceleration.range[0]+0.5, axX_acceleration.range[1]+0.5, padding=0)
+                self.graph_steer_widget.setXRange(
+                    axX_steer.range[0]+0.5, axX_steer.range[1]+0.5, padding=0)
+                self.graph_velocity_data['x'].popleft()
+                self.graph_velocity_data['yt'].popleft()
+                self.graph_velocity_data['ye'].popleft()
+                self.graph_acceleration_data['x'].popleft()
+                self.graph_acceleration_data['ya'].popleft()
+                self.graph_acceleration_data['yb'].popleft()
+                self.graph_steer_data['x'].popleft()
+                self.graph_steer_data['yt'].popleft()
+                self.graph_steer_data['ye'].popleft()
+
             if self.state != 'OVER' and self.tabWidget.currentIndex() == 0:
-                self.graph_velocity_data['x'].append(self.graph_time)
-                self.graph_velocity_data['yt'].append(self.target_v)
-                self.graph_velocity_data['ye'].append(self.CS.vEgo*MPH_TO_KPH)
-                self.graph_acceleration_data['x'].append(self.graph_time)
-                self.graph_acceleration_data['ya'].append(
-                    round(self.CC.actuators.accel, 3))
-                self.graph_acceleration_data['yb'].append(
-                    -round(self.CC.actuators.brake, 3))
-                self.graph_steer_data['x'].append(self.graph_time)
-                self.graph_steer_data['yt'].append(
-                    round(self.CC.actuators.steer, 3))
-                self.graph_steer_data['ye'].append(
-                    round(self.CS.actuators.steer, 3))
-
-                axX_velocity = self.graph_velocity_widget.getAxis('bottom')
-                axX_acceleration = self.graph_acceleration_widget.getAxis(
-                    'bottom')
-                axX_steer = self.graph_steer_widget.getAxis('bottom')
-
-                if self.graph_time >= axX_velocity.range[1]:
-                    self.graph_velocity_widget.setXRange(
-                        axX_velocity.range[0]+0.5, axX_velocity.range[1]+0.5, padding=0)
-                    self.graph_acceleration_widget.setXRange(
-                        axX_acceleration.range[0]+0.5, axX_acceleration.range[1]+0.5, padding=0)
-                    self.graph_steer_widget.setXRange(
-                        axX_steer.range[0]+0.5, axX_steer.range[1]+0.5, padding=0)
-                    self.graph_velocity_data['x'].popleft()
-                    self.graph_velocity_data['yt'].popleft()
-                    self.graph_velocity_data['ye'].popleft()
-                    self.graph_acceleration_data['x'].popleft()
-                    self.graph_acceleration_data['ya'].popleft()
-                    self.graph_acceleration_data['yb'].popleft()
-                    self.graph_steer_data['x'].popleft()
-                    self.graph_steer_data['yt'].popleft()
-                    self.graph_steer_data['ye'].popleft()
-
+                            
                 self.graph_velocity_ego_plot.setData(
                     x=self.graph_velocity_data['x'], y=self.graph_velocity_data['ye'])
                 self.graph_velocity_target_plot.setData(
@@ -651,11 +652,11 @@ class MainWindow(QMainWindow, form_class):
             self.info_velocity_label.setText(
                 str(int(round(self.CS.vEgo*MPH_TO_KPH))))
             self.info_car_lat_label.setText(
-                "lat : {}".format(round(self.CS.position.latitude, 5)))
+                "lat : {}".format(round(self.CS.position.latitude, 4)))
             self.info_car_lng_label.setText(
-                "lng : {}".format(round(self.CS.position.longitude, 5)))
+                "lng : {}".format(round(self.CS.position.longitude, 4)))
             self.info_car_alt_label.setText(
-                "alt : {}".format(round(self.CS.position.altitude, 5)))
+                "alt : {}".format(round(self.CS.position.altitude, 4)))
             self.info_y_label.setText("Y: {}".format(
                 round(self.CS.yawRate, 5)))
             self.info_p_label.setText("P: {}".format(

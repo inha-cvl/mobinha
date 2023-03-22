@@ -127,7 +127,7 @@ class PurePursuit:
                 if dis >= lfd:
                     theta = np.arctan2(rotated_diff[1], rotated_diff[0])
                     steering_angle = np.arctan2(
-                        2*self.wheel_base*np.sin(theta), lfd)
+                        2*self.L*np.sin(theta), lfd)
                     lx = point[0]
                     ly = point[1]
                     break

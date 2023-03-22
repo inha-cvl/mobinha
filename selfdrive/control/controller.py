@@ -48,10 +48,8 @@ class Controller:
             wheel_angle = 0.0
             accel_brake = -1.0
         else:
-            #OLD Pure Pursuit
-            # wheel_angle, lah_pt = self.purepursuit.run(
-            #     CS.position.x, CS.position.y, self.l_idx, CS.yawRate, CS.vEgo, self.local_path)
-
+            #wheel_angle, lah_pt = self.purepursuit.run(CS.position.x, CS.position.y, self.l_idx, CS.yawRate, CS.vEgo, self.local_path)
+            
             wheel_angle, lah_pt = self.purepursuit.run2(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             lah_viz = LookAheadViz(lah_pt)

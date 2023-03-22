@@ -191,7 +191,7 @@ class PathPlanner:
             self.temp_global_idx = 0
             self.l_idx = 0
             self.local_path_cut_value = 500
-            self.local_path_nitting_value = 150
+            self.local_path_nitting_value = 200
             self.local_path_tail_value = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
@@ -294,7 +294,7 @@ class PathPlanner:
                     self.lmap.lanelets, self.next_head_lane_id)
 
                 cw_s = get_nearest_crosswalk(
-                    self.lmap.lanelets, splited_local_id, local_point)
+                    self.lmap.lanelets, self.now_head_lane_id, local_point)
 
                 forward_curvature, rot_x, rot_y, trajectory, blinker = get_forward_curvature(
                     self.l_idx, self.local_path, self.lmap.lanelets, self.local_id, self.next_head_lane_id, CS.yawRate, CS.vEgo)

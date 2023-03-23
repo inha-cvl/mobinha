@@ -24,6 +24,7 @@ from sensor_msgs.msg import CompressedImage
 
 import selfdrive.visualize.libs.imugl as imugl
 from simple_writer import SimpleWriter
+from tl_simulator import TLSimulator
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
@@ -87,6 +88,10 @@ class MainWindow(QMainWindow, form_class):
         with open(self.record_list_file, 'r') as f:
             contents = f.read()
             simple_writer.textEdit.setText(contents)
+    
+    def tl_simulator_toggled(self):
+        tl_simulator = TLSimulator(self)
+        tl_simulator.show()
 
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
@@ -114,6 +119,7 @@ class MainWindow(QMainWindow, form_class):
 
     def connection_setting(self):
         self.actionTopic_List.triggered.connect(self.setting_topic_list_toggled)
+        self.actionTraffic_Light_Simulator.triggered.connect(self.tl_simulator_toggled)
         self.initialize_button.clicked.connect(self.initialize_button_clicked)
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)

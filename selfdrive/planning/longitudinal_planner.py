@@ -1,10 +1,13 @@
 import rospy
 import math
+
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseArray, Pose
 
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.viz_utils import *
+
+from collections import deque
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -27,10 +30,11 @@ class LongitudinalPlanner:
         self.sl_param = CP.slParam._asdict()
 
         self.last_error = 0
-        self.last_s = 0
+        self.last_s = None
         self.follow_error = 0
         self.integral = 0
         self.rel_v = 0
+        self.distance_queue = deque(maxlen=5)
 
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
@@ -74,11 +78,11 @@ class LongitudinalPlanner:
         return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
+        v_lead = max(0, v_lead) # Sumption : back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=2.5, comfort_decel=1.5, offset=0): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=2.5, comfort_decel=2, offset=-5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
-        # return base_range*self.M_TO_IDX + (0.267*(max_v)**1.902)*self.M_TO_IDX
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
@@ -89,7 +93,6 @@ class LongitudinalPlanner:
             self.integral = 10
         elif self.integral < -10:
             self.integral = -10
-
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
@@ -97,18 +100,25 @@ class LongitudinalPlanner:
         else:
             return max(0/HZ, min(7/HZ, kp*error + ki*self.integral + kd*derivative))
 
-        
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     
-    def planning_tracking(self, s):
-        if s != self.last_s:
-            ds = s - self.last_s
-            hz = 6 # avg clustering frame rate
-            self.rel_v = ds * hz
+    def planning_tracking(self, s, cur_v):
+        if self.last_s == None:
             self.last_s = s
-            return self.rel_v
+            return -cur_v
         else:
+            ds = s - self.last_s
+            print(s)
+            self.distance_queue.append(ds)
+            if len(self.distance_queue) == 4:  # 큐에 4개 이상의 거리 차이가 쌓였을 때
+                self.rel_v = sum(self.distance_queue) / 4 * HZ  # 거리 차이의 평균을 이용하여 속도 계산
+                # 가장 과거의 거리 차이 제거
+                self.distance_queue.popleft()
+            else:
+                self.last_s = s
+                return -cur_v
+            self.last_s = s
             return self.rel_v
     
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
@@ -116,7 +126,7 @@ class LongitudinalPlanner:
         min_obs_s = 1
         near_obj_id = -1
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
-        min_s = 500# prev 80
+        min_s = 100# prev 80
         ttc = 20.0
         self.rel_v = cur_v
         norm_s = 1
@@ -131,13 +141,13 @@ class LongitudinalPlanner:
 
             if min_obs_s > norm_s:
                 min_obs_s = norm_s
-                min_s = s/2
+                min_s = s*self.IDX_TO_M
                 near_obj_id = obj_i
             if len(obj) == 4:
                 # planning tracking mode
-                # self.rel_v = self.planning_tracking(min_s)
+                self.rel_v = self.planning_tracking(min_s, cur_v)
                 # lidar clustering tracking mode
-                self.rel_v = obj[3]
+                # self.rel_v = obj[3]
 
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
@@ -146,17 +156,15 @@ class LongitudinalPlanner:
             pi = 0
 
         if near_obj_id == 0:
-            follow_distance = self.desired_follow_distance(cur_v)#, self.rel_v + cur_v)
+            follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v)
         else:
             follow_distance = self.desired_follow_distance(cur_v)
+            self.last_s = None # Reset when the car in front is gone.
 
         self.follow_error = (follow_distance-min_s)
 
         target_v = max_v * pi
-
-        # gain = self.get_gain(self.follow_error)
-        
-
+        # gain = self.get_gain(self.follow_error) 
         if near_obj_id != 0:
             gain = 2.5/HZ
             if self.target_v-target_v < -gain:
@@ -171,9 +179,9 @@ class LongitudinalPlanner:
         else:
             gain = self.get_gain(self.follow_error)
             print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
-            if self.follow_error < 0: # MINUS ACCEL
+            if self.follow_error < 0: # MINUS is ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)
-            else: # PLUS DECEL
+            else: # PLUS is DECEL
                 target_v = max(0, self.target_v - gain)
 
         return target_v

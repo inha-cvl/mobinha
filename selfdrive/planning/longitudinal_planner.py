@@ -87,7 +87,7 @@ class LongitudinalPlanner:
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_gain(self, error, kp=0.2/HZ, ki=0.02/HZ, kd=0.0/HZ):
+    def get_dynamic_gain(self, error, kp=0.2/HZ, ki=0.02/HZ, kd=0.0/HZ):
         self.integral += error*(1/HZ)
         if self.integral > 10:
             self.integral = 10
@@ -99,7 +99,11 @@ class LongitudinalPlanner:
             return max(-2.5/HZ, min(0/HZ, kp*error + ki*self.integral + kd*derivative))
         else:
             return max(0/HZ, min(7/HZ, kp*error + ki*self.integral + kd*derivative))
-
+    def get_static_gain(self, error, gain=0.4/HZ):
+        if error < 0:
+            return 2.5 / 20
+        else:
+            return max(2.5/20, min(7/20, error*gain))
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     
@@ -126,7 +130,7 @@ class LongitudinalPlanner:
         min_obs_s = 1
         near_obj_id = -1
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
-        min_s = 100# prev 80
+        min_s = 150 # prev 80
         ttc = 20.0
         self.rel_v = cur_v
         norm_s = 1
@@ -162,22 +166,17 @@ class LongitudinalPlanner:
             self.last_s = None # Reset when the car in front is gone.
 
         self.follow_error = (follow_distance-min_s)
-
         target_v = max_v * pi
-        # gain = self.get_gain(self.follow_error) 
+
         if near_obj_id != 0:
-            gain = 2.5/HZ
+            # gain = 2.5/HZ
+            gain = self.get_static_gain(self.follow_error)
             if self.target_v-target_v < -gain:
                 target_v = self.target_v + gain
             elif self.target_v-target_v > gain:
                 target_v = self.target_v - gain
-            # gain = self.get_gain(self.follow_error)
-            # if self.follow_error < 0: # MINUS ACCEL
-            #     target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)
-            # else: # PLUS DECEL
-            #     target_v = max(0, self.target_v - gain)
         else:
-            gain = self.get_gain(self.follow_error)
+            gain = self.get_dynamic_gain(self.follow_error)
             print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
             if self.follow_error < 0: # MINUS is ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)

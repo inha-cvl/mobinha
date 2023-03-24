@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 import tf
 import math
 import rospy

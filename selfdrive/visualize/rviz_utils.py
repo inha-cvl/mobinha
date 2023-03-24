@@ -1,7 +1,6 @@
 import os
 import tf
 import math
-import random
 import numpy as np
 
 import rospy

@@ -4,7 +4,7 @@ import rospy
 from visualization_msgs.msg import MarkerArray
 
 from libs.planner_utils import *
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 
 
 class MicroLaneletGraph:

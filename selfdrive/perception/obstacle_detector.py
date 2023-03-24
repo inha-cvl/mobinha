@@ -8,7 +8,7 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose, PoseArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 from selfdrive.perception.libs.obstacle_utils import ObstacleUtils
 
 

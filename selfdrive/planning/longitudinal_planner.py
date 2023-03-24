@@ -5,7 +5,7 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseArray, Pose
 
 from selfdrive.planning.libs.planner_utils import *
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 
 from collections import deque
 

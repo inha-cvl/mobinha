@@ -2487,10 +2487,10 @@ border-color: rgb(19, 99, 223);</string>
       <property name="sizeConstraint">
        <enum>QLayout::SetDefaultConstraint</enum>
       </property>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_17">
+      <item row="0" column="1" colspan="2">
+       <widget class="QLabel" name="label_11">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -2498,14 +2498,14 @@ border-color: rgb(19, 99, 223);</string>
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>0</height>
+          <height>20</height>
          </size>
         </property>
-        <property name="baseSize">
-         <size>
-          <width>40</width>
-          <height>0</height>
-         </size>
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
         </property>
         <property name="styleSheet">
          <string notr="true">color: rgb(223, 246, 255);
@@ -2514,42 +2514,8 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
         </property>
         <property name="text">
-         <string>Car</string>
+         <string>Setting</string>
         </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QComboBox" name="car_name_combo_box">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>15</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>IONIQ</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>SIMULATOR</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>MORAI</string>
-         </property>
-        </item>
        </widget>
       </item>
       <item row="5" column="2">
@@ -2596,6 +2562,37 @@ border-color: rgb(71,181,255);</string>
         </item>
        </widget>
       </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_17">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>40</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(223, 246, 255);
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-color: rgb(71,181,255);</string>
+        </property>
+        <property name="text">
+         <string>Car</string>
+        </property>
+       </widget>
+      </item>
       <item row="5" column="1">
        <widget class="QLabel" name="label_18">
         <property name="sizePolicy">
@@ -2627,10 +2624,10 @@ border-color: rgb(71,181,255);</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="2">
-       <widget class="QLabel" name="label_11">
+      <item row="2" column="2">
+       <widget class="QComboBox" name="car_name_combo_box">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -2638,24 +2635,27 @@ border-color: rgb(71,181,255);</string>
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>20</height>
+          <height>15</height>
          </size>
         </property>
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(223, 246, 255);
-border-bottom-width: 1px;
-border-bottom-style: solid;
-border-color: rgb(71,181,255);</string>
+         <string notr="true">color: rgb(223, 246, 255);</string>
         </property>
-        <property name="text">
-         <string>Setting</string>
-        </property>
+        <item>
+         <property name="text">
+          <string>IONIQ</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>SIMULATOR</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>MORAI</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="6" column="1" colspan="2">
@@ -4103,6 +4103,7 @@ border-color: rgb(71,181,255);</string>
      <string>Setting</string>
     </property>
     <addaction name="actionTopic_List"/>
+    <addaction name="actionTraffic_Light_Simulator"/>
    </widget>
    <addaction name="menuMonitoring"/>
   </widget>
@@ -4144,6 +4145,11 @@ border-color: rgb(71,181,255);</string>
   <action name="actionTopic_List">
    <property name="text">
     <string>Topic List</string>
+   </property>
+  </action>
+  <action name="actionTraffic_Light_Simulator">
+   <property name="text">
+    <string>Traffic Light Simulator</string>
    </property>
   </action>
  </widget>

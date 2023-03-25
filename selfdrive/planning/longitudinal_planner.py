@@ -69,7 +69,7 @@ class LongitudinalPlanner:
     def obstacle_handler(self, obj, s):
         # [0] Dynamic [1] Static [2] Traffic Light
         i = int(obj[0])
-        offset = [10, 5, 11]  # m
+        offset = [10, 5, 9]  # m
         offset = [os*self.M_TO_IDX for os in offset]
         pos = obj[1] + s if obj[0] == 1 else obj[1]
         return i, pos-offset[i]
@@ -81,18 +81,18 @@ class LongitudinalPlanner:
         v_lead = max(0, v_lead) # Sumption : back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=2.5, comfort_decel=2, offset=-5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=2.5, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_dynamic_gain(self, error, kp=0.2/HZ, ki=0.02/HZ, kd=0.0/HZ):
+    def get_dynamic_gain(self, error, kp=0.15/HZ, ki=0.01/HZ, kd=0.03/HZ):
         self.integral += error*(1/HZ)
-        if self.integral > 10:
-            self.integral = 10
-        elif self.integral < -10:
-            self.integral = -10
+        if self.integral > 6:
+            self.integral = 6
+        elif self.integral < -6:
+            self.integral = -6
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
@@ -101,9 +101,9 @@ class LongitudinalPlanner:
             return max(0/HZ, min(7/HZ, kp*error + ki*self.integral + kd*derivative))
     def get_static_gain(self, error, gain=0.4/HZ):
         if error < 0:
-            return 2.5 / 20
+            return 2.5 / HZ
         else:
-            return max(2.5/20, min(7/20, error*gain))
+            return max(2.5/HZ, min(7/HZ, error*gain))
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     
@@ -113,11 +113,9 @@ class LongitudinalPlanner:
             return -cur_v
         else:
             ds = s - self.last_s
-            print(s)
             self.distance_queue.append(ds)
-            if len(self.distance_queue) == 4:  # 큐에 4개 이상의 거리 차이가 쌓였을 때
-                self.rel_v = sum(self.distance_queue) / 4 * HZ  # 거리 차이의 평균을 이용하여 속도 계산
-                # 가장 과거의 거리 차이 제거
+            if len(self.distance_queue) == 5: # 큐에 5개 이상의 거리 차이가 쌓였을 때
+                self.rel_v = sum(self.distance_queue) / len(self.distance_queue) * HZ # 거리 차이의 평균을 이용하여 속도 계산
                 self.distance_queue.popleft()
             else:
                 self.last_s = s
@@ -131,7 +129,6 @@ class LongitudinalPlanner:
         near_obj_id = -1
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
         min_s = 150 # prev 80
-        ttc = 20.0
         self.rel_v = cur_v
         norm_s = 1
         obj_i = -1
@@ -160,14 +157,16 @@ class LongitudinalPlanner:
             pi = 0
 
         if near_obj_id == 0:
-            follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v)
+            follow_distance = self.desired_follow_distance(cur_v)#, self.rel_v + cur_v)
         else:
             follow_distance = self.desired_follow_distance(cur_v)
             self.last_s = None # Reset when the car in front is gone.
 
         self.follow_error = (follow_distance-min_s)
         target_v = max_v * pi
-
+        gain = 2.5/HZ
+        # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+        
         if near_obj_id != 0:
             # gain = 2.5/HZ
             gain = self.get_static_gain(self.follow_error)

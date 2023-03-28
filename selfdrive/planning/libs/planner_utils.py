@@ -324,13 +324,13 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     return_v = ref_v
 
     # Determine the multiplier based on cur_v
-    if 0 <= cur_v < 10:
+    if 0*KPH_TO_MPS <= cur_v < 10*KPH_TO_MPS:
         coeffect = 0.0
-    elif 10 <= cur_v < 20:
+    elif 10*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
         coeffect = 0.05
-    elif 20 <= cur_v < 30:
-        coeffect = 0.1
-    elif 30 <= cur_v < 40:
+    elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
+        coeffect = 0.15
+    elif 30*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
         coeffect = 0.2
     else:
         coeffect = 0.25

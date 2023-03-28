@@ -319,13 +319,27 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(forward_curvature, ref_v, min_v):
+def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     threshold = 200
     return_v = ref_v
+
+    # Determine the multiplier based on cur_v
+    if 0 <= cur_v < 10:
+        coeffect = 0.0
+    elif 10 <= cur_v < 20:
+        coeffect = 0.05
+    elif 20 <= cur_v < 30:
+        coeffect = 0.1
+    elif 30 <= cur_v < 40:
+        coeffect = 0.2
+    else:
+        coeffect = 0.25
+
     if forward_curvature < threshold:
-        return_v = ref_v - (abs(threshold-forward_curvature)*0.25)
+        return_v = ref_v - (abs(threshold - forward_curvature) * coeffect)
         return_v = return_v if return_v > min_v else min_v
-    return return_v*KPH_TO_MPS
+
+    return return_v * KPH_TO_MPS
 
 
 def get_a_b_for_curv(min, ignore):

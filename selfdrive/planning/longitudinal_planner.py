@@ -270,7 +270,7 @@ class LongitudinalPlanner:
             local_idx = calc_idx(
                 local_path, (CS.position.x, CS.position.y))
             local_curv_v = max_v_by_curvature(
-                self.lane_information[3], self.ref_v, self.min_v)
+                self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
             object_list = self.check_objects(local_path)
 
             self.target_v = self.simple_velocity_plan(

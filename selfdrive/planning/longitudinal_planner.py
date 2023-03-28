@@ -29,7 +29,7 @@ def write_to_csv(data):
         writer = csv.writer(csvfile)
         if is_new_file:
             header = ['timestamp', 'near_obj_id', 'v_lead(km/h)', 
-                      'desired_follow_d(m)', 'front_car_d(-10)(m)', 'error', 'acc(m/s^2)']
+                      'desired_follow_d(m)', 'front_car_d(-10)(m)', 'error', 'acc(m/s^2)','target_v','cur_v']
             writer.writerow(header)
 
         current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -193,36 +193,39 @@ class LongitudinalPlanner:
         if near_obj_id != 0:
             # gain = 2.5/HZ
             gain = self.get_static_gain(self.follow_error)
+            if self.target_v-target_v < -gain:
+                target_v = self.target_v + gain
+            elif self.target_v-target_v > gain:
+                target_v = self.target_v - gain
             data_to_save = [
             near_obj_id,
             0,
             round(follow_distance,1),
             round(min_s,1),
             round(self.follow_error,3),
-            round(gain*10,2)
+            round(gain*10,2),
+            round(target_v,2),
+            round(cur_v,2)
             ]
             write_to_csv(data_to_save)
-            if self.target_v-target_v < -gain:
-                target_v = self.target_v + gain
-            elif self.target_v-target_v > gain:
-                target_v = self.target_v - gain
         else:
             gain = self.get_dynamic_gain(self.follow_error)
-            # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            if self.follow_error < 0: # MINUS is ACCEL
+                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
+            else: # PLUS is DECEL
+                target_v = max(0, self.target_v + gain)
             data_to_save = [
             near_obj_id,
             round((self.rel_v + cur_v) * MPS_TO_KPH, 1),
             round(follow_distance,1),
             round(min_s,1),
             round(self.follow_error,3),
-            round(gain*10,2)
+            round(gain*10,2),
+            round(target_v,2),
+            round(cur_v,2)
             ]
             write_to_csv(data_to_save)
-            if self.follow_error < 0: # MINUS is ACCEL
-                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
-            else: # PLUS is DECEL
-                target_v = max(0, self.target_v + gain)
-
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):

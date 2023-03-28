@@ -9,9 +9,32 @@ from selfdrive.visualize.rviz_utils import *
 
 from collections import deque
 
+import csv
+import datetime
+import os
+
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
+
+current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+file_name = f'acc_test_data_{current_time}.csv'
+
+def write_to_csv(data):
+    # file_name = 'variables.csv'
+
+    is_new_file = not os.path.exists(file_name)
+
+    with open(file_name, mode='a') as csvfile:
+        writer = csv.writer(csvfile)
+        if is_new_file:
+            header = ['timestamp', 'near_obj_id', 'v_lead(km/h)', 
+                      'desired_follow_d(m)', 'front_car_d(-10)(m)', 'error', 'acc(m/s^2)']
+            writer.writerow(header)
+
+        current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data.insert(0, current_timestamp)
+        writer.writerow(data)
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -96,9 +119,9 @@ class LongitudinalPlanner:
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            return max(-2.5/HZ, min(0/HZ, kp*error + ki*self.integral + kd*derivative))
+            return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            return max(0/HZ, min(7/HZ, kp*error + ki*self.integral + kd*derivative))
+            return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
     def get_static_gain(self, error, gain=0.4/HZ):
         if error < 0:
             return 2.5 / HZ
@@ -146,9 +169,9 @@ class LongitudinalPlanner:
                 near_obj_id = obj_i
             if len(obj) == 4:
                 # planning tracking mode
-                self.rel_v = self.planning_tracking(min_s, cur_v)
+                # self.rel_v = self.planning_tracking(min_s, cur_v)
                 # lidar clustering tracking mode
-                # self.rel_v = obj[3]
+                self.rel_v = obj[3]
 
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
@@ -170,17 +193,35 @@ class LongitudinalPlanner:
         if near_obj_id != 0:
             # gain = 2.5/HZ
             gain = self.get_static_gain(self.follow_error)
+            data_to_save = [
+            near_obj_id,
+            0,
+            round(follow_distance,1),
+            round(min_s,1),
+            round(self.follow_error,3),
+            round(gain*10,2)
+            ]
+            write_to_csv(data_to_save)
             if self.target_v-target_v < -gain:
                 target_v = self.target_v + gain
             elif self.target_v-target_v > gain:
                 target_v = self.target_v - gain
         else:
             gain = self.get_dynamic_gain(self.follow_error)
-            print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            data_to_save = [
+            near_obj_id,
+            round((self.rel_v + cur_v) * MPS_TO_KPH, 1),
+            round(follow_distance,1),
+            round(min_s,1),
+            round(self.follow_error,3),
+            round(gain*10,2)
+            ]
+            write_to_csv(data_to_save)
             if self.follow_error < 0: # MINUS is ACCEL
-                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v - gain)
+                target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
             else: # PLUS is DECEL
-                target_v = max(0, self.target_v - gain)
+                target_v = max(0, self.target_v + gain)
 
         return target_v
 

@@ -13,6 +13,8 @@ class ControlMaster:
         self.accel = 0.0
         self.brake = 0.0
         self.steer = 0.0
+
+        self.accerror = 0.0
         # disable, enable, lat, lng
         self.can_cmd = {"disable": False, "enable": False,
                         "latActive": False, "longActive": False}
@@ -22,6 +24,7 @@ class ControlMaster:
         rospy.Subscriber('/mobinha/control/accel_brake',
                          Float32, self.accel_brake_cb)
         rospy.Subscriber('/mobinha/visualize/can_cmd', Int8, self.can_cmd_cb)
+        rospy.Subscriber('/mobinha/control/accerror', Float32, self.accerror_cb)
 
     def wheel_angle_cb(self, msg):
         self.steer = msg.data
@@ -41,6 +44,9 @@ class ControlMaster:
             else:
                 self.can_cmd[cmd] = False
 
+    def accerror_cb(self, msg):
+        self.accerror = msg.data
+
     def update(self):
         car_control = self.CC._asdict()
         car_control_cancmd = car_control["canCmd"]._asdict()
@@ -53,4 +59,9 @@ class ControlMaster:
         car_control_actuators["accel"] = self.accel
         car_control["actuators"] = self.CC.actuators._make(
             car_control_actuators.values())
+        car_control_cruisecontrol = car_control["cruiseControl"]._asdict()
+        car_control_cruisecontrol["accerror"] = self.accerror
+        car_control["cruiseControl"] = self.CC.cruiseControl._make(
+            car_control_cruisecontrol.values())
+        
         self.CC = self.CC._make(car_control.values())

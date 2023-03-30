@@ -7,7 +7,7 @@ from scipy.spatial import KDTree
 
 import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -326,13 +326,27 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(forward_curvature, ref_v, min_v):
+def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     threshold = 200
     return_v = ref_v
+
+    # Determine the multiplier based on cur_v
+    if 0*KPH_TO_MPS <= cur_v < 10*KPH_TO_MPS:
+        coeffect = 0.0
+    elif 10*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
+        coeffect = 0.05
+    elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
+        coeffect = 0.15
+    elif 30*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
+        coeffect = 0.2
+    else:
+        coeffect = 0.25
+
     if forward_curvature < threshold:
-        return_v = ref_v - (abs(threshold-forward_curvature)*0.2)
+        return_v = ref_v - (abs(threshold - forward_curvature) * coeffect)
         return_v = return_v if return_v > min_v else min_v
-    return return_v*KPH_TO_MPS
+
+    return return_v * KPH_TO_MPS
 
 
 def get_a_b_for_curv(min, ignore):
@@ -381,9 +395,16 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
     x = np.array([(v-x[0]) for v in x])
     y = np.array([(v-y[0]) for v in y])
 
+    # For Trajectory plotting
+    origin_plot = np.vstack((x, y))
+    rotation_radians = math.radians(-yawRate) + math.pi/2
+    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
+                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
+    rot_x, rot_y = list(rotation_mat@origin_plot)
+    
     # Calculate curvature by trajectory
     if len(x) > 2:
-        cr = np.polyfit(x, y, 2)
+        cr = np.polyfit(rot_y, rot_x, 2)
         if cr[0] != 0:
             curvature = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
         else:
@@ -394,13 +415,6 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
     if blinker > 0:
         # print(blinker)
         curvature = 1000
-    # For Trajectory plotting
-    origin_plot = np.vstack((x, y))
-    rotation_radians = math.radians(-yawRate) + math.pi/2
-    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
-                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
-    rot_x, rot_y = list(rotation_mat@origin_plot)
-
     return curvature, rot_x, rot_y, trajectory, blinker
 
 

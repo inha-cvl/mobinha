@@ -11,7 +11,7 @@ class CruiseControl(NamedTuple):
     cancel: bool = False
     resume: bool = False
     override: bool = False
-
+    accerror: float = 0.0
 
 class CANCmd(NamedTuple):
     disable: bool = False

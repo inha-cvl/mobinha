@@ -9,7 +9,7 @@ from geometry_msgs.msg import PoseStamped, PoseArray, Pose
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 
 
 class PathPlanner:

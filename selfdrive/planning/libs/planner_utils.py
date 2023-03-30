@@ -388,9 +388,16 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
     x = np.array([(v-x[0]) for v in x])
     y = np.array([(v-y[0]) for v in y])
 
+    # For Trajectory plotting
+    origin_plot = np.vstack((x, y))
+    rotation_radians = math.radians(-yawRate) + math.pi/2
+    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
+                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
+    rot_x, rot_y = list(rotation_mat@origin_plot)
+    
     # Calculate curvature by trajectory
     if len(x) > 2:
-        cr = np.polyfit(x, y, 2)
+        cr = np.polyfit(rot_y, rot_x, 2)
         if cr[0] != 0:
             curvature = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
         else:
@@ -401,13 +408,7 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
     if blinker > 0:
         # print(blinker)
         curvature = 1000
-    # For Trajectory plotting
-    origin_plot = np.vstack((x, y))
-    rotation_radians = math.radians(-yawRate) + math.pi/2
-    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
-                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
-    rot_x, rot_y = list(rotation_mat@origin_plot)
-
+    print(curvature)
     return curvature, rot_x, rot_y, trajectory, blinker
 
 

@@ -14,12 +14,18 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 def ObjectsViz(objects):
     array = MarkerArray()
-    for n, pt in enumerate(objects):
-        quaternion = tf.transformations.quaternion_from_euler(
-            0.0, 0.0, math.radians(pt[2]))
-        marker = Cube('obstacle', n, 1, quaternion, (1.0, 1.0, 0.0, 1.0))
-        marker.pose.position = Point(x=pt[0], y=pt[1], z=0.0)
+    if len(objects) == 0:
+        marker = Marker()
+        marker.action = Marker.DELETEALL
+        marker.ns = 'obstacle'
         array.markers.append(marker)
+    else:
+        for n, pt in enumerate(objects):
+            quaternion = tf.transformations.quaternion_from_euler(
+                0.0, 0.0, math.radians(pt[2]))
+            marker = Cube('obstacle', n, 1, quaternion, (1.0, 1.0, 0.0, 1.0))
+            marker.pose.position = Point(x=pt[0], y=pt[1], z=0.0)
+            array.markers.append(marker)
     return array
 
 

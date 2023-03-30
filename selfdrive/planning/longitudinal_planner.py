@@ -210,7 +210,7 @@ class LongitudinalPlanner:
             write_to_csv(data_to_save)
         else:
             gain = self.get_dynamic_gain(self.follow_error)
-            print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
             if self.follow_error < 0: # MINUS is ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
             else: # PLUS is DECEL

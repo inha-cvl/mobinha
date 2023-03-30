@@ -82,7 +82,7 @@ class IoniqTransceiver():
 
     def accel_brake_cmd(self, msg): # PID output is accel_brake_cmd function input
         th_a = 4
-        th_b = 9
+        th_b = 12
         val_data = max(-th_b, min(th_a, msg.data))
         gain = 5
 
@@ -95,7 +95,7 @@ class IoniqTransceiver():
             #     self.brake_val = 0
             # else:
             #     self.brake_val = ((-val_data/th_b)-0.05)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1) else 45
-            self.brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1) else 45
+            self.brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1/3.6) else 25
 
 
     # def set_actuators(self, actuators):

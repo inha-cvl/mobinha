@@ -100,18 +100,18 @@ class LongitudinalPlanner:
     def sigmoid_logit_function(self, s):
         return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=3):
         v_lead = max(0, v_lead) # Sumption : back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=2, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_dynamic_gain(self, error, kp=0.15/HZ, ki=0.0/HZ, kd=0.03/HZ):
+    def get_dynamic_gain(self, error, kp=0.21/HZ, ki=0.0/HZ, kd=0.037/HZ):
         self.integral += error*(1/HZ)
         if self.integral > 6:
             self.integral = 6
@@ -123,11 +123,11 @@ class LongitudinalPlanner:
             return max(0/HZ, min(5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
-    def get_static_gain(self, error, gain=0.4/HZ):
+    def get_static_gain(self, error, gain=0.1/HZ):
         if error < 0:
             return 2.5 / HZ
         else:
-            return max(2.5/HZ, min(7/HZ, error*gain))
+            return max(2.5/HZ, min(5/HZ, error*gain))
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     

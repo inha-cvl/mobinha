@@ -104,13 +104,14 @@ class LongitudinalPlanner:
         v_lead = max(0, v_lead) # Sumption : back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=2.5, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=2, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
+        # return desired_ttc * v_ego + offset
     
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return max(0, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
+        return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_dynamic_gain(self, error, kp=0.15/HZ, ki=0.01/HZ, kd=0.03/HZ):
+    def get_dynamic_gain(self, error, kp=0.15/HZ, ki=0.0/HZ, kd=0.03/HZ):
         self.integral += error*(1/HZ)
         if self.integral > 6:
             self.integral = 6
@@ -119,7 +120,7 @@ class LongitudinalPlanner:
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            return max(0/HZ, min(5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
     def get_static_gain(self, error, gain=0.4/HZ):
@@ -210,7 +211,7 @@ class LongitudinalPlanner:
             write_to_csv(data_to_save)
         else:
             gain = self.get_dynamic_gain(self.follow_error)
-            # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
             if self.follow_error < 0: # MINUS is ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
             else: # PLUS is DECEL

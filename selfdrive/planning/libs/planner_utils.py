@@ -324,16 +324,22 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     return_v = ref_v
 
     # Determine the multiplier based on cur_v
-    if 0*KPH_TO_MPS <= cur_v < 10*KPH_TO_MPS:
+    if 0*KPH_TO_MPS <= cur_v < 15*KPH_TO_MPS:
         coeffect = 0.0
-    elif 10*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
-        coeffect = 0.05
-    elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
+    elif 15*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
+        coeffect = 0.1
+    elif 20*KPH_TO_MPS <= cur_v < 25*KPH_TO_MPS:
         coeffect = 0.15
-    elif 30*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
+    elif 25*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
+        coeffect = 0.18
+    elif 30*KPH_TO_MPS <= cur_v < 35*KPH_TO_MPS:
         coeffect = 0.2
-    else:
+    elif 35*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
         coeffect = 0.25
+    elif 40*KPH_TO_MPS <= cur_v < 45*KPH_TO_MPS:
+        coeffect = 0.25
+    else:
+        coeffect = 0.3
 
     if forward_curvature < threshold:
         return_v = ref_v - (abs(threshold - forward_curvature) * coeffect)
@@ -408,7 +414,7 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
     if blinker > 0:
         # print(blinker)
         curvature = 1000
-    print(curvature)
+    # print(curvature)
     return curvature, rot_x, rot_y, trajectory, blinker
 
 

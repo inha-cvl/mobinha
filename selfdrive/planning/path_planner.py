@@ -4,7 +4,7 @@ import rospy
 import time
 from scipy.spatial import KDTree
 from std_msgs.msg import Int8, Float32
-from geometry_msgs.msg import PoseStamped, PoseArray, Pose
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -19,6 +19,8 @@ class PathPlanner:
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
         self.precision = CP.mapParam.precision
+        self.M_TO_IDX = 1/CP.mapParam.precision
+        self.IDX_TO_M = CP.mapParam.precision
 
         self.temp_pt = None
         self.global_path = None
@@ -38,6 +40,7 @@ class PathPlanner:
         self.last_s = 99999
 
         self.lidar_obstacle = []
+        self.lidar_bsd = []
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
 
@@ -74,6 +77,7 @@ class PathPlanner:
                          PoseArray, self.scenario_goal_cb)
         rospy.Subscriber(
             '/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
+        rospy.Subscriber('/mobinha/perception/lidar_bsd', Point, self.lidar_bsd_cb)
         rospy.Subscriber(
             '/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
 
@@ -91,6 +95,9 @@ class PathPlanner:
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z)
                                for pose in msg.poses]
+    
+    def lidar_bsd_cb(self, msg):
+        self.lidar_bsd = [msg.x, msg.y] #left, right
 
     def nearest_obstacle_distance_cb(self, msg):
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
@@ -296,8 +303,22 @@ class PathPlanner:
                 cw_s = get_nearest_crosswalk(
                     self.lmap.lanelets, self.now_head_lane_id, local_point)
 
-                forward_curvature, rot_x, rot_y, trajectory, blinker = get_forward_curvature(
-                    self.l_idx, self.local_path, self.lmap.lanelets, self.local_id, self.next_head_lane_id, CS.yawRate, CS.vEgo)
+                blinker = get_blinker(self.l_idx, self.local_path,self.lmap.lanelets, self.local_id, CS.vEgo)
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker)
+                    
+                if blinker != 0:
+                    lane_change_point = get_lane_change_point(self.local_id, self.l_idx, self.lmap.lanelets)
+                    if len(self.lidar_bsd) > 0: 
+                        if (blinker == 1 and self.lidar_bsd[0]) or (blinker == 2 and self.lidar_bsd[1]):
+                            #Have to Renew Path
+                            renew_path = get_renew_path(blinker, lane_change_point, self.lmap.lanelets, self.local_path[self.l_idx:], self.local_id, self.l_idx)
+                            if renew_path != None:
+                                for i, renew_pt in enumerate(renew_path):
+                                    self.local_path[self.l_idx+i-2]=renew_pt
+                            else:
+                                print("Take Over Request")
+                                pp = 4
+                                return pp
 
                 # TODO: Avoidance Path
                 #

@@ -81,8 +81,8 @@ class IoniqTransceiver():
         self.target_steer = msg.data * self.CP.steerRatio
 
     def accel_brake_cmd(self, msg): # PID output is accel_brake_cmd function input
-        th_a = 4
-        th_b = 12
+        th_a = 5 # 0~20 * gain -> 0~100 accel
+        th_b = 12 # 0~20 * gain -> 0~100 brake
         val_data = max(-th_b, min(th_a, msg.data))
         gain = 5
 

@@ -166,7 +166,7 @@ class LongitudinalPlanner:
         return target_v, min_s 
     
     def static_velocity_plan(self, cur_v, max_v, static_d):
-        target_v, follow_distance, min_s = self.get_params(max_v, static_d)
+        target_v, min_s = self.get_params(max_v, static_d)
         follow_distance = self.desired_follow_distance(cur_v)
         self.follow_error = follow_distance-min_s
         self.last_s = None
@@ -177,7 +177,7 @@ class LongitudinalPlanner:
         return target_v
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d):
-        target_v, follow_distance, min_s = self.get_params(max_v, dynamic_d)
+        target_v, min_s = self.get_params(max_v, dynamic_d)
         follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v)
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error)

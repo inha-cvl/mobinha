@@ -290,7 +290,6 @@ class PathPlanner:
                 if abs(l_idx-self.l_idx) <= 50:
                     self.l_idx = l_idx
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
-
                 forward_direction = get_forward_direction(
                     self.lmap.lanelets, self.next_head_lane_id)
 

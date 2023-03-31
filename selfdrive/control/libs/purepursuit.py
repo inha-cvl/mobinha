@@ -21,6 +21,7 @@ class PurePursuit:
         rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
 
         self.k = CP.lateralTuning.lqr.k
+        self.wheel_base = CP.wheelbase
         self.Lfc = CP.lateralTuning.lqr.l
         self.k_curva = 20.0
 

@@ -27,30 +27,20 @@ class ObstacleDetector:
         self.morai_ego_v = 0.0
         self.traffic_ligth_timer = time.time()
 
-        rospy.Subscriber(
-            '/mobinha/planning/local_path', Marker, self.local_path_cb)
+        rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
-        rospy.Subscriber(
-            '/mobinha/perception/lidar/track_box', BoundingBoxArray, self.lidar_cluster_box_cb)
-        rospy.Subscriber('/mobinha/perception/camera/bounding_box',
-                         PoseArray, self.camera_bounding_box_cb)
+        rospy.Subscriber('/mobinha/perception/lidar/track_box', BoundingBoxArray, self.lidar_cluster_box_cb)
+        rospy.Subscriber('/mobinha/perception/camera/bounding_box',PoseArray, self.camera_bounding_box_cb)
         # MORAI
-        rospy.Subscriber(
-            '/morai/object_list', PoseArray, self.morai_object_list_cb)
-        rospy.Subscriber(
-            '/morai/ego_topic', Pose, self.morai_ego_topic_cb)
-        rospy.Subscriber('/morai/traffic_light', PoseArray,
-                         self.morai_traffic_light_cb)
+        rospy.Subscriber('/morai/object_list', PoseArray, self.morai_object_list_cb)
+        rospy.Subscriber('/morai/ego_topic', Pose, self.morai_ego_topic_cb)
+        rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
 
-        self.pub_object_marker = rospy.Publisher(
-            '/mobinha/perception/object_marker', MarkerArray, queue_size=1)
+        self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
 
-        self.pub_lidar_obstacle = rospy.Publisher(
-            '/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
-        self.pub_obstacle_distance = rospy.Publisher(
-            '/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
-        self.pub_traffic_light_obstacle = rospy.Publisher(
-            '/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
+        self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
+        self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
+        self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -70,7 +60,8 @@ class ObstacleDetector:
         traffic_light_object = []
         for pose in msg.poses:
             cls, size, prob = pose.position.x, pose.position.y, pose.position.z
-            traffic_light_object.append([cls, size, prob])
+            if cls != 0:
+                traffic_light_object.append([cls, size, prob])
         self.traffic_light_object = traffic_light_object
         self.traffic_ligth_timer = time.time()
 

@@ -1,0 +1,1096 @@
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:14,-1,0,3,150,-147,2.5,0.25,0.0
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:14,-1,0,3,150,-147,2.5,0.5,0.0
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:14,-1,0,3.2,150,-146.758,2.5,0.75,0.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:14,-1,0,3.7,150,-146.309,2.5,1.0,0.23
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:14,-1,0,4.3,150,-145.698,2.5,1.25,0.42
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:14,-1,0,5.0,150,-144.954,2.5,1.5,0.66
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,5.6,150,-144.368,2.5,1.75,0.84
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,6.4,150,-143.635,2.5,2.0,1.06
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,7.2,150,-142.785,2.5,2.25,1.31
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,9.0,150,-141.024,2.5,2.5,1.81
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,9.9,150,-140.112,2.5,2.75,2.06
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,10.8,150,-139.18,2.5,3.0,2.31
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,11.8,150,-138.227,2.5,3.25,2.56
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,12.7,150,-137.253,2.5,3.5,2.81
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:15,-1,0,13.4,150,-136.557,2.5,3.75,2.99
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,14.2,150,-135.76,2.5,4.0,3.18
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,16.0,150,-133.951,2.5,4.25,3.62
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,17.0,150,-132.967,2.5,4.5,3.85
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,18.1,150,-131.941,2.5,4.75,4.09
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,19.1,150,-130.879,2.5,5.0,4.33
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,19.9,150,-130.122,2.5,5.25,4.5
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,21.7,150,-128.279,2.5,5.5,4.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:16,-1,0,22.8,150,-127.242,2.5,5.75,5.13
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,23.9,150,-126.148,2.5,6.0,5.36
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,25.0,150,-125.008,2.5,6.25,5.59
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,26.2,150,-123.83,2.5,6.5,5.83
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,27.4,150,-122.617,2.5,6.75,6.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,28.6,150,-121.375,2.5,7.0,6.32
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,29.9,150,-120.105,2.5,7.25,6.57
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,31.2,150,-118.809,2.5,7.5,6.82
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,32.5,150,-117.49,2.5,7.75,7.06
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:17,-1,0,33.4,150,-116.551,2.5,8.0,7.24
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,34.5,150,-115.479,2.5,8.25,7.44
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,36.9,150,-113.056,2.5,8.5,7.87
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,38.3,150,-111.744,2.5,8.75,8.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,39.6,150,-110.383,2.5,9.0,8.34
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,41.0,150,-108.98,2.5,9.25,8.58
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,42.5,150,-107.543,2.5,9.5,8.83
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,43.5,150,-106.522,2.5,9.75,9.0
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,44.7,150,-105.348,2.5,10.0,9.19
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:18,-1,0,45.9,150,-104.061,2.5,10.25,9.4
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,47.3,150,-102.686,2.5,10.5,9.62
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,48.8,150,-101.245,2.5,10.75,9.86
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,50.3,150,-99.749,2.5,11.0,10.09
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,53.4,150,-96.63,2.5,11.25,10.58
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,55.0,150,-95.019,2.5,11.5,10.82
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,56.6,150,-93.379,2.5,11.75,11.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,58.3,150,-91.711,2.5,12.0,11.32
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,59.5,150,-90.529,2.5,12.25,11.49
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:19,-1,0,62.3,150,-87.707,2.5,12.5,11.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,63.9,150,-86.14,2.5,12.75,12.12
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,65.5,150,-84.502,2.5,13.0,12.35
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,67.2,150,-82.805,2.5,13.25,12.59
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,68.9,150,-81.062,2.5,13.5,12.83
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,70.7,150,-79.279,2.5,13.75,13.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,72.5,150,-77.462,2.5,13.89,13.32
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,74.4,150,-75.616,2.5,13.89,13.57
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,75.7,150,-74.307,2.5,13.89,13.74
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:20,-1,0,77.8,150,-72.196,2.5,13.89,14.02
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.4,150,-71.606,2.5,13.89,14.09
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.7,150,-71.252,2.5,13.89,14.14
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.9,150,-71.096,2.5,13.89,14.16
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.9,150,-71.082,2.5,13.89,14.16
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.8,150,-71.174,2.5,13.89,14.15
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.7,150,-71.334,2.5,13.89,14.13
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.5,150,-71.534,2.5,13.89,14.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,78.2,150,-71.754,2.5,13.89,14.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:21,-1,0,77.8,150,-72.189,2.5,13.89,14.02
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,77.6,150,-72.386,2.5,13.89,13.99
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,77.4,150,-72.563,2.5,13.89,13.97
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,77.3,150,-72.716,2.5,13.89,13.95
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,77.2,150,-72.845,2.5,13.89,13.93
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,77.0,150,-72.952,2.5,13.89,13.92
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,77.0,150,-73.039,2.5,13.89,13.91
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,76.9,150,-73.106,2.5,13.89,13.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,76.8,150,-73.157,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:22,-1,0,76.8,150,-73.194,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.219,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.235,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.244,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.247,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.243,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.238,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.233,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.227,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:23,-1,0,76.8,150,-73.22,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.214,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.208,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.203,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.198,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.194,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.188,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.186,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.184,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:24,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.181,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.181,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.181,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.181,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:25,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:26,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:27,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:28,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:29,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:30,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:31,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:32,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:33,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:34,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:35,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:36,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:37,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:38,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:39,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:40,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:41,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:42,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:43,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:44,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:45,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:46,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:47,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:48,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:49,-1,0,76.8,150,-73.183,2.5,13.64,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,76.8,150,-73.183,2.5,13.39,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,76.8,150,-73.183,2.5,13.14,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,76.2,150,-73.841,2.5,12.89,13.8
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,75.0,150,-75.014,2.5,12.64,13.65
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,73.4,150,-76.573,2.5,12.39,13.44
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,71.6,150,-78.405,2.5,12.14,13.19
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,67.6,150,-82.432,2.5,11.89,12.64
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,65.6,150,-84.362,2.5,11.64,12.37
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:50,-1,0,63.8,150,-86.227,2.5,11.39,12.11
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,62.0,150,-88.041,2.5,11.14,11.85
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,60.2,150,-89.814,2.5,10.89,11.59
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,59.0,150,-91.045,2.5,10.64,11.41
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,57.6,150,-92.406,2.5,10.39,11.21
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,56.1,150,-93.851,2.5,10.14,11.0
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,54.7,150,-95.348,2.5,9.89,10.77
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,53.1,150,-96.874,2.5,9.64,10.54
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,50.0,150,-99.96,2.5,9.39,10.06
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:51,-1,0,48.5,150,-101.501,2.5,9.14,9.81
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,47.0,150,-103.033,2.5,8.89,9.57
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,45.4,150,-104.553,2.5,8.64,9.32
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,43.9,150,-106.057,2.5,8.39,9.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,42.5,150,-107.544,2.5,8.14,8.83
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,41.0,150,-109.013,2.5,7.89,8.58
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,39.5,150,-110.463,2.5,7.64,8.33
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,38.1,150,-111.894,2.5,7.39,8.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,36.7,150,-113.305,2.5,7.14,7.83
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:52,-1,0,35.7,150,-114.283,2.5,6.89,7.65
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,34.6,150,-115.373,2.5,6.64,7.45
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,32.3,150,-117.74,2.5,6.89,7.02
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,31.0,150,-118.968,2.5,7.14,6.79
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,30.6,150,-119.419,2.5,7.39,6.7
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,30.7,150,-119.266,2.5,7.64,6.73
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,30.9,150,-119.056,2.5,7.39,6.77
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,31.6,150,-118.358,2.5,7.14,6.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,32.7,150,-117.279,2.5,6.89,7.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:53,-1,0,33.2,150,-116.843,2.5,6.64,7.18
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,32.5,150,-117.462,2.5,6.39,7.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,31.7,150,-118.294,2.5,6.23,6.91
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,30.6,150,-119.365,2.5,6.23,6.71
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,29.5,150,-120.46,2.5,6.27,6.5
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,28.7,150,-121.286,2.5,6.24,6.34
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,28.1,150,-121.887,2.5,6.29,6.22
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,27.5,150,-122.484,2.5,6.29,6.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:54,-1,0,27.5,150,-122.546,2.5,6.2,6.09
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,27.5,150,-122.54,2.5,6.16,6.09
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,27.3,150,-122.656,2.5,6.08,6.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,27.2,150,-122.778,2.5,6.01,6.04
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,27.0,150,-122.956,2.5,5.97,6.01
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,26.8,150,-123.178,2.5,5.97,5.96
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,26.6,150,-123.384,2.5,5.99,5.92
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,26.5,150,-123.516,2.5,5.81,5.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,26.4,150,-123.6,2.5,5.81,5.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:55,-1,0,26.1,150,-123.874,2.5,5.76,5.82
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.9,150,-124.068,2.5,5.76,5.78
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.7,150,-124.278,2.5,5.72,5.74
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.6,150,-124.425,2.5,5.68,5.71
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.4,150,-124.592,2.5,5.68,5.68
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.3,150,-124.703,2.5,5.72,5.66
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.2,150,-124.825,2.5,5.88,5.63
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.1,150,-124.898,2.5,6.13,5.62
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,25.1,150,-124.875,2.5,6.38,5.62
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:56,-1,0,26.1,150,-123.899,2.5,6.63,5.82
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,27.0,150,-122.955,2.5,6.88,6.01
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,28.2,150,-121.788,2.5,7.13,6.24
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,29.6,150,-120.448,2.5,6.88,6.5
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,31.0,150,-118.977,2.5,6.63,6.78
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,31.7,150,-118.268,2.5,6.38,6.92
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,31.8,150,-118.205,2.5,6.13,6.93
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,31.3,150,-118.662,2.5,5.9,6.84
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,30.5,150,-119.519,2.5,5.85,6.68
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:57,-1,0,29.7,150,-120.251,2.5,5.85,6.54
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,27.8,150,-122.158,2.5,5.6,6.17
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,27.1,150,-122.855,2.5,5.35,6.03
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,26.2,150,-123.782,2.5,5.1,5.84
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,25.1,150,-124.875,2.5,4.85,5.62
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,23.9,150,-126.081,2.5,5.1,5.37
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,22.6,150,-127.355,2.5,5.35,5.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,22.1,150,-127.913,2.5,5.6,4.98
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,21.7,150,-128.276,2.5,5.85,4.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:58,-1,0,22.5,150,-127.458,2.5,6.1,5.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,23.5,150,-126.486,2.5,6.35,5.29
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,24.7,150,-125.277,2.5,6.6,5.54
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,26.1,150,-123.887,2.5,6.35,5.82
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,27.6,150,-122.365,2.5,6.1,6.13
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,28.4,150,-121.573,2.5,5.85,6.28
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,29.0,150,-121.003,2.5,5.6,6.39
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,29.0,150,-121.042,2.5,5.35,6.39
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,28.4,150,-121.581,2.5,5.1,6.28
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:22:59,-1,0,26.3,150,-123.672,2.5,4.85,5.86
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,25.0,150,-124.999,2.5,4.6,5.59
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,23.6,150,-126.413,2.5,4.85,5.3
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,22.1,150,-127.865,2.5,5.1,4.99
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,21.4,150,-128.581,2.5,5.35,4.84
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,20.9,150,-129.076,2.5,5.6,4.73
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,21.0,150,-129.001,2.5,5.85,4.75
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,22.4,150,-127.588,2.5,6.1,5.05
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,23.5,150,-126.453,2.5,6.35,5.29
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:00,-1,0,24.9,150,-125.127,2.5,6.1,5.57
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,26.3,150,-123.659,2.5,5.85,5.87
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,27.1,150,-122.898,2.5,5.6,6.02
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,27.3,150,-122.745,2.5,5.35,6.05
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,26.9,150,-123.088,2.5,5.1,5.98
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,26.2,150,-123.817,2.5,4.85,5.84
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,25.2,150,-124.83,2.5,4.6,5.63
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,24.3,150,-125.655,2.5,4.85,5.46
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:01,-1,0,23.3,150,-126.721,2.5,5.1,5.24
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,21.5,150,-128.481,2.5,5.35,4.86
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,21.5,150,-128.483,2.5,5.6,4.86
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,21.6,150,-128.432,2.5,5.85,4.87
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,22.1,150,-127.944,2.5,6.1,4.98
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,24.0,150,-126.031,2.5,6.35,5.38
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,25.2,150,-124.763,2.5,6.1,5.64
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,26.6,150,-123.353,2.5,5.85,5.93
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,27.4,150,-122.65,2.5,5.6,6.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:02,-1,0,27.9,150,-122.145,2.5,5.35,6.17
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,27.8,150,-122.243,2.5,5.1,6.15
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,27.2,150,-122.818,2.5,4.85,6.04
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,25.1,150,-124.937,2.5,5.1,5.61
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,23.7,150,-126.287,2.5,5.35,5.33
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,23.1,150,-126.919,2.5,5.6,5.19
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,23.0,150,-126.973,2.5,5.85,5.18
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,23.0,150,-126.991,2.5,6.1,5.18
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,23.4,150,-126.556,2.5,6.35,5.27
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:03,-1,0,24.3,150,-125.749,2.5,6.6,5.44
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,25.3,150,-124.66,2.5,6.85,5.66
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,26.6,150,-123.355,2.5,7.1,5.93
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,28.1,150,-121.885,2.5,7.35,6.22
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,29.7,150,-120.313,2.5,7.6,6.53
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,32.7,150,-117.321,2.5,7.85,7.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,34.1,150,-115.862,2.5,8.1,7.37
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,35.6,150,-114.411,2.5,8.35,7.63
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:04,-1,0,37.0,150,-112.96,2.5,8.6,7.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,38.1,150,-111.929,2.5,8.85,8.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,39.2,150,-110.77,2.5,9.1,8.27
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,41.8,150,-108.185,2.5,9.35,8.72
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,43.2,150,-106.797,2.5,9.6,8.95
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,44.6,150,-105.36,2.5,9.85,9.19
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,46.1,150,-103.884,2.5,10.1,9.43
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,47.6,150,-102.373,2.5,10.35,9.68
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,48.7,150,-101.3,2.5,10.6,9.85
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:05,-1,0,49.9,150,-100.07,2.5,10.85,10.04
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,52.7,150,-97.283,2.5,11.1,10.48
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,54.2,150,-95.775,2.5,11.35,10.71
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,55.8,150,-94.211,2.5,11.6,10.94
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,57.4,150,-92.602,2.5,11.85,11.18
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,59.0,150,-90.954,2.5,12.1,11.43
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,60.7,150,-89.273,2.5,12.35,11.67
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,62.4,150,-87.563,2.5,12.6,11.92
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,64.2,150,-85.825,2.5,12.85,12.17
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:06,-1,0,65.9,150,-84.062,2.5,13.1,12.42
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,67.2,150,-82.813,2.5,13.35,12.59
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,68.6,150,-81.389,2.5,13.6,12.79
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,70.2,150,-79.837,2.5,13.85,13.0
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,71.8,150,-78.187,2.5,13.89,13.22
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,75.3,150,-74.678,2.5,13.89,13.69
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,76.7,150,-73.329,2.5,13.89,13.87
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,77.6,150,-72.376,2.5,13.89,13.99
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,78.3,150,-71.742,2.5,13.89,14.08
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:07,-1,0,78.6,150,-71.365,2.5,13.89,14.13
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,78.8,150,-71.187,2.5,13.89,14.15
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,78.8,150,-71.157,2.5,13.89,14.15
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,78.8,150,-71.234,2.5,13.89,14.14
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,78.4,150,-71.57,2.5,13.89,14.1
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,78.2,150,-71.779,2.5,13.89,14.07
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,78.0,150,-71.993,2.5,13.89,14.04
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,77.8,150,-72.172,2.5,13.89,14.02
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,77.7,150,-72.35,2.5,13.89,14.0
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:08,-1,0,77.5,150,-72.514,2.5,13.89,13.98
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,77.3,150,-72.661,2.5,13.89,13.96
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,77.2,150,-72.789,2.5,13.89,13.94
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,77.0,150,-72.988,2.5,13.89,13.91
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,76.9,150,-73.06,2.5,13.89,13.91
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,76.9,150,-73.117,2.5,13.89,13.9
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,76.8,150,-73.16,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,76.8,150,-73.191,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,76.8,150,-73.212,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:09,-1,0,76.8,150,-73.226,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.234,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.237,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.236,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.233,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.224,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.218,2.5,13.89,13.88
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.212,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.207,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:10,-1,0,76.8,150,-73.202,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.198,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.195,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.192,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.189,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.187,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.185,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.184,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:11,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:12,-1,0,76.8,150,-73.182,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:13,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:14,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:15,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:15,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:15,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:15,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:15,-1,0,76.8,150,-73.183,2.5,13.89,13.89
+timestamp,near_obj_id,v_lead(km/h),desired_follow_d(m),front_car_d(-10)(m),error,acc(m/s^2),target_v,cur_v
+2023-03-31 14:23:15,-1,0,76.8,150,-73.183,2.5,13.89,13.89

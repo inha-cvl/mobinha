@@ -94,17 +94,20 @@ def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
     crosswalk = []
     for id_, data in lanelets.items():
         if id_ == now_lane_id:
-            # if len(data['crosswalk']) > 0:
-            crosswalks = data['crosswalk']
-                # for arr in crosswalks:
-                    # crosswalk.extend(arr)
+            if len(data['crosswalk']) > 0:
+                crosswalks = data['crosswalk'][0]
+                if isinstance(crosswalks[0], list):
+                    for arr in crosswalks:
+                        crosswalk.extend(arr)
+                else:
+                    crosswalk.append(crosswalks)
+
     now_cw_idx = math.inf
 
-    if len(crosswalks) > 0:
-        idx = local_point.query(crosswalks[0], 1)[1]
+    for cw_wp in crosswalk:
+        idx = local_point.query(cw_wp, 1)[1]
         if idx < now_cw_idx:
             now_cw_idx = idx
-
     return now_cw_idx
 
 
@@ -163,8 +166,12 @@ def ref_interpolate(points, precision):
 
 def id_interpolate(non_intp, intp, non_intp_id):
     itp_ids = []
+    non_intp_idx = 0
     for wp in intp:
-        n_id = non_intp_id[calc_idx(non_intp, wp)]
+        calc_non_intp_idx = calc_idx(non_intp, wp)
+        if calc_non_intp_idx > non_intp_idx:
+            non_intp_idx = calc_non_intp_idx
+        n_id = non_intp_id[non_intp_idx]
         itp_ids.append(n_id)
     return itp_ids
 
@@ -382,8 +389,8 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, now_id, yawRate, vE
     now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
     now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
     # for id in id_list:
-        # if blinker != 0:
-            # break
+    # if blinker != 0:
+    # break
     if (next_id == now_l_id and blinker == 0) or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
         blinker = 1
     elif next_id == now_r_id and blinker == 0:

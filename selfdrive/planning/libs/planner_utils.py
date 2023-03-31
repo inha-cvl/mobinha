@@ -329,14 +329,12 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     elif 15*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
         coeffect = 0.1
     elif 20*KPH_TO_MPS <= cur_v < 25*KPH_TO_MPS:
-        coeffect = 0.15
+        coeffect = 0.16
     elif 25*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
         coeffect = 0.18
     elif 30*KPH_TO_MPS <= cur_v < 35*KPH_TO_MPS:
         coeffect = 0.2
     elif 35*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
-        coeffect = 0.25
-    elif 40*KPH_TO_MPS <= cur_v < 45*KPH_TO_MPS:
         coeffect = 0.25
     else:
         coeffect = 0.3
@@ -354,7 +352,7 @@ def get_a_b_for_curv(min, ignore):
     return a, b
 
 
-def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
+def get_forward_curvature(idx, path, lanelets, ids, next_id, now_id, yawRate, vEgo):
     ws = int(70+(1.5*vEgo))
     a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
@@ -415,6 +413,10 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, yawRate, vEgo):
         # print(blinker)
         curvature = 1000
     # print(curvature)
+
+    if lanelets[now_id]['uTurn'] == True:
+        curvature = -10
+        
     return curvature, rot_x, rot_y, trajectory, blinker
 
 

@@ -19,11 +19,13 @@ HZ = 10
 
 current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 file_name = f'acc_test_data_{current_time}.csv'
-
+directory = "data"
 def write_to_csv(data):
-    # file_name = 'variables.csv'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-    is_new_file = not os.path.exists(file_name)
+    file_path = os.path.join(directory, file_name)
+    is_new_file = not os.path.exists(file_path)
 
     with open(file_name, mode='a') as csvfile:
         writer = csv.writer(csvfile)
@@ -57,6 +59,9 @@ class LongitudinalPlanner:
         self.follow_error = 0
         self.integral = 0
         self.rel_v = 0
+        self.prev_rel_v = None
+        self.consecutive_outliers = 0
+        self.outlier_threshold = 3  # 연속 이상치 허용 횟수
         self.distance_queue = deque(maxlen=5)
 
         rospy.Subscriber(
@@ -100,8 +105,8 @@ class LongitudinalPlanner:
     def sigmoid_logit_function(self, s):
         return ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1)
 
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=3):
-        v_lead = max(0, v_lead) # Sumption : back moving car is zero 
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
+        v_lead = max(0, v_lead) # assumption: back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
     def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
@@ -112,6 +117,8 @@ class LongitudinalPlanner:
         return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
     def get_dynamic_gain(self, error, kp=0.21/HZ, ki=0.0/HZ, kd=0.037/HZ):
+        if -5 < error < 5:
+            error = 0
         self.integral += error*(1/HZ)
         if self.integral > 6:
             self.integral = 6
@@ -123,11 +130,13 @@ class LongitudinalPlanner:
             return max(0/HZ, min(5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+        
     def get_static_gain(self, error, gain=0.1/HZ):
         if error < 0:
             return 2.5 / HZ
         else:
             return max(2.5/HZ, min(5/HZ, error*gain))
+        
     def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
         return base_range + (0.267*(max_v)**1.902)
     
@@ -138,14 +147,28 @@ class LongitudinalPlanner:
         else:
             ds = s - self.last_s
             self.distance_queue.append(ds)
-            if len(self.distance_queue) == 5: # 큐에 5개 이상의 거리 차이가 쌓였을 때
-                self.rel_v = sum(self.distance_queue) / len(self.distance_queue) * HZ # 거리 차이의 평균을 이용하여 속도 계산
+            if len(self.distance_queue) == 5: 
+                self.rel_v = sum(self.distance_queue) / len(self.distance_queue) * HZ 
                 self.distance_queue.popleft()
             else:
                 self.last_s = s
                 return -cur_v
             self.last_s = s
             return self.rel_v
+
+    def tracking_outlier_del(self, d, rel_v):
+        if self.prev_rel_v is not None:
+            if abs(rel_v - self.prev_rel_v) > 10*KPH_TO_MPS:
+                self.consecutive_outliers += 1
+                if self.consecutive_outliers <= self.outlier_threshold:
+                    rel_v = self.prev_rel_v
+                else:
+                    self.consecutive_outliers = 0  # 카운터를 초기화
+            else:
+                self.consecutive_outliers = 0  # 이상치가 아닌 경우 카운터를 초기화
+        self.prev_rel_v = rel_v
+        return rel_v
+
     
     def simple_velocity_plan(self, cur_v, max_v,  local_s, object_list):
         pi = 1
@@ -172,7 +195,8 @@ class LongitudinalPlanner:
                 # planning tracking mode
                 # self.rel_v = self.planning_tracking(min_s, cur_v)
                 # lidar clustering tracking mode
-                self.rel_v = obj[3]
+                # self.rel_v = obj[3]
+                self.rel_v = self.tracking_outlier_del(min_s, obj[3])
 
         if 0 < min_obs_s < 1:
             pi = self.sigmoid_logit_function(min_obs_s)
@@ -204,14 +228,14 @@ class LongitudinalPlanner:
             round(follow_distance,1),
             round(min_s,1),
             round(self.follow_error,3),
-            round(gain*10,2),
+            round(gain*HZ,2), #m/s^2
             round(target_v,2),
             round(cur_v,2)
             ]
             write_to_csv(data_to_save)
         else:
             gain = self.get_dynamic_gain(self.follow_error)
-            print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+            # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
             if self.follow_error < 0: # MINUS is ACCEL
                 target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
             else: # PLUS is DECEL
@@ -222,7 +246,7 @@ class LongitudinalPlanner:
             round(follow_distance,1),
             round(min_s,1),
             round(self.follow_error,3),
-            round(gain*10,2),
+            round(gain*HZ,2), #m/s^2
             round(target_v,2),
             round(cur_v,2)
             ]

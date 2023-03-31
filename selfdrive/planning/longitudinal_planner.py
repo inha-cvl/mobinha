@@ -107,7 +107,7 @@ class LongitudinalPlanner:
         return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
     def get_dynamic_gain(self, error, kp=0.21/HZ, ki=0.0/HZ, kd=0.037/HZ):
-        if -5 < error < 5:
+        if -1 < error < 1:
             error = 0
         self.integral += error*(1/HZ)
         self.integral = max(-6, min(self.integral, 6))
@@ -185,7 +185,7 @@ class LongitudinalPlanner:
             target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v + gain)
-        # print(near_obj_id,"lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+        print("lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
         write_to_csv([0,round((self.rel_v + cur_v) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
 
         return target_v

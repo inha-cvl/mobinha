@@ -202,8 +202,21 @@ class LongitudinalPlanner:
             target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v + gain)
-        print("lead v:", round((self.rel_v + cur_v)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
-        write_to_csv([0,round((self.rel_v + cur_v) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
+
+        v_lead = self.rel_v + cur_v
+        if v_lead <= 9 * KPH_TO_MPS:
+            v_lead = 0
+        elif 9 * KPH_TO_MPS < v_lead <= 19 * KPH_TO_MPS:
+            v_lead = 10 * KPH_TO_MPS
+        elif 19 * KPH_TO_MPS < v_lead <= 29 * KPH_TO_MPS:
+            v_lead = 20 * KPH_TO_MPS
+        elif 29 * KPH_TO_MPS < v_lead <= 39 * KPH_TO_MPS:
+            v_lead = 30 * KPH_TO_MPS
+        else:
+            v_lead = 40 * KPH_TO_MPS
+            
+        print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+        write_to_csv([0,round((v_lead) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
 
         return target_v
 

@@ -50,10 +50,12 @@ class ObstacleDetector:
         for obj in msg.boxes:
             x, y = obj.pose.position.x, obj.pose.position.y
             v_rel = obj.value
+            track_id = obj.label # uint type 0:clustering 1~: tracking
             if self.CS is not None:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
-                objects.append([nx, ny, 0, v_rel])  # [2] heading [3] relative velocity
+                objects.append([nx, ny, 0, v_rel, track_id])  # [2] heading [3] relative velocity [4] id
+
         self.lidar_object = objects
 
     def camera_bounding_box_cb(self, msg):
@@ -68,7 +70,7 @@ class ObstacleDetector:
     def morai_object_list_cb(self, msg):
         objects = []
         for obj in msg.poses:
-            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v))
+            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v, 1))
         self.lidar_object = objects
 
     def morai_traffic_light_cb(self, msg):
@@ -97,7 +99,7 @@ class ObstacleDetector:
                 obj_s, obj_d = ObstacleUtils.object2frenet(
                     local_point, self.local_path, (obj[0]+dx, obj[1]+dy))
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3.5 and obj_d < 3.5:
-                    obstacle_sd.append((obj_s, obj_d, obj[3]))
+                    obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2]))
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
@@ -132,6 +134,7 @@ class ObstacleDetector:
                 pose.position.y = sd[0]
                 pose.position.z = sd[1]
                 pose.orientation.w = sd[2]# relative velocity
+                pose.orientation.z = sd[3]
                 lidar_obstacle.poses.append(pose)
             obstacle_distance = (
                 obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1

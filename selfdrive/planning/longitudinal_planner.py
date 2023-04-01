@@ -65,6 +65,9 @@ class LongitudinalPlanner:
         self.outlier_threshold = 3  # 연속 이상치 허용 횟수
         self.distance_queue = deque(maxlen=5)
 
+        self.closest_tracked = None
+        self.closest_untracked = None
+
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
@@ -74,7 +77,7 @@ class LongitudinalPlanner:
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
-        self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w)for pose in msg.poses]
+        self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
 
     def traffic_light_obstacle_cb(self, msg):
         self.traffic_light_obstacle = [(pose.position.x, pose.position.y, pose.position.z)for pose in msg.poses]
@@ -96,7 +99,17 @@ class LongitudinalPlanner:
         return out
 
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
-        v_lead = max(0, v_lead) # assumption: back moving car is zero 
+        if v_lead <= 9 * KPH_TO_MPS:
+            v_lead = 0
+        elif 9 * KPH_TO_MPS < v_lead <= 19 * KPH_TO_MPS:
+            v_lead = 10 * KPH_TO_MPS
+        elif 19 * KPH_TO_MPS < v_lead <= 29 * KPH_TO_MPS:
+            v_lead = 20 * KPH_TO_MPS
+        elif 29 * KPH_TO_MPS < v_lead <= 39 * KPH_TO_MPS:
+            v_lead = 30 * KPH_TO_MPS
+        else:
+            v_lead = 40 * KPH_TO_MPS
+        # v_lead = max(0, v_lead) # assumption: back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
     def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
@@ -107,14 +120,18 @@ class LongitudinalPlanner:
         return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
     def get_dynamic_gain(self, error, kp=0.21/HZ, ki=0.0/HZ, kd=0.037/HZ):
-        if -1 < error < 1:
+        if -3 < error < 3:
             error = 0
+        elif error < -3:
+            error = error + 3
+        elif error > 3:
+            error = error -3
         self.integral += error*(1/HZ)
         self.integral = max(-6, min(self.integral, 6))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            return max(0/HZ, min(5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         
@@ -173,7 +190,7 @@ class LongitudinalPlanner:
         gain = self.get_static_gain(self.follow_error)
         target_v = max(self.target_v - gain, min(target_v, self.target_v + gain))
 
-        write_to_csv([1,0,round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
+        # write_to_csv([1,0,round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
         return target_v
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d):
@@ -206,13 +223,30 @@ class LongitudinalPlanner:
 
     def check_dynamic_objects(self, cur_v, local_s):
         offset = 10*self.M_TO_IDX
-        dynamic_d = 150
-        self.rel_v = cur_v
+        dynamic_d = 150*self.M_TO_IDX
+        self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
                 if lobs[2] >= -1.5 and lobs[2] <= 1.5:  # object in my lane
-                    dynamic_d = lobs[1]-offset-local_s
-                    self.rel_v = self.tracking_outlier_del(dynamic_d, lobs[3])
+                    print(lobs)
+                    if lobs[4] >= 1:
+                            self.closest_tracked = lobs
+                    # only cluster is track_id = 0
+                    else:
+                            self.closest_untracked = lobs
+                else:
+                    self.closest_tracked = None
+                    self.closest_untracked = None
+        else:
+            self.closest_tracked = None
+            self.closest_untracked = None
+
+        target_object = self.closest_tracked if self.closest_tracked else self.closest_untracked
+        if target_object is not None:
+            dynamic_d = target_object[1]-offset-local_s
+            self.rel_v = self.tracking_outlier_del(dynamic_d, target_object[3])
+        else:
+            dynamic_d = 150*self.M_TO_IDX
         return dynamic_d
     
     def check_static_object(self, local_path, local_s):

@@ -355,28 +355,34 @@ def get_a_b_for_curv(min, ignore):
 
 def get_a_b_for_blinker(min, ignore):
     a = -40/(min-ignore)
-    b = 60-(ignore*a)
+    b = 70-(ignore*a)
     return a,b
 
-def get_blinker(idx, path, lanelets, ids, vEgo):
+def get_blinker(idx, lanelets, ids, vEgo):
+    ws = int(30+(1.5*vEgo))
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+20)))
+    lf = int(min(idx+70, max(idx+(a*vEgo+b), idx+30)))
     if lf < 0:
         lf = 0
-    elif lf > len(path)-1:
+    elif lf > len(ids)-1:
         lf = idx
     
-    blinker = 0
-    next_id = ids[lf].split('_')[0]
     now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
     now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
 
-    if (next_id == now_l_id and blinker == 0) or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
-        blinker = 1
-    elif next_id == now_r_id and blinker == 0:
-        blinker = 2
-    
-    return blinker
+    cut_ids = []
+    if lf+ws <len(ids):
+        cut_ids = [v for v in ids[lf:lf+ws]]
+    else:
+        cut_ids = [v for v in ids[lf:]]
+    for i in cut_ids:
+        next_id = i.split('_')[0]
+        if next_id == now_l_id or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+            return 1
+        elif next_id == now_r_id:
+            return 2
+        
+    return 0
 
 def get_forward_curvature(idx, path, yawRate, vEgo, blinker):
     ws = int(70+(1.5*vEgo))
@@ -449,29 +455,38 @@ def get_lane_change_point(ids, idx, lanelets):
             return idx+i
     return 999999
      
-def get_renew_path(change_direction, lane_change_idx, lanelets, local_path_from_now, ids, idx):
+def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_from_now, local_path_before_now):
     target_lane_id = None
     renew_path = None
+    renew_id = None
     #check renew possibility
     if change_direction == 1 : #Left
         target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentRight']
         if target_lane_id == None:
-            return None
+            return None,None
     elif change_direction == 2 :
-        target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentRight']
+        target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentLeft']
         if target_lane_id == None:
-            return None
+            return None,None
     else:
-        return None
+        return None,None
     
+    before_ids = []
+    renew_ids = []
     if target_lane_id != None:
-        local_path_from_now = local_path_from_now[:idx+5]
+        #local_path_from_now = local_path_from_now[:idx+2]
+        before_lane_id = ids[lane_change_idx-15].split('_')[0]
+        before_path = exchange_waypoint(lanelets[before_lane_id]['waypoints'], local_path_before_now)
+        for _ in range(len(before_path)):
+            before_ids.append(before_lane_id)
         renew_path = exchange_waypoint(lanelets[target_lane_id]['waypoints'], local_path_from_now)
-    else:
-        return None
-    
-    return renew_path
+        for _ in range(len(renew_path)):
+            renew_ids.append(target_lane_id)
 
+    else:
+        return None,None
+    
+    return before_path+renew_path, before_ids+renew_ids
 
 def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn

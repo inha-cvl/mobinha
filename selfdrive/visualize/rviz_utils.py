@@ -2,6 +2,7 @@ import os
 import tf
 import math
 import numpy as np
+import time
 
 import rospy
 from geometry_msgs.msg import Point
@@ -15,9 +16,10 @@ def ObjectsViz(objects):
     array = MarkerArray()
     # Add the DELETEALL marker to clear all previous markers
     marker = Marker()
-    marker.action = Marker.DELETEALL
-    marker.ns = 'obstacle'
-    array.markers.append(marker)
+    if time.time() % 1 < 0.1:
+        marker.action = Marker.DELETEALL
+        marker.ns = 'obstacle'
+        array.markers.append(marker)
     for n, pt in enumerate(objects):
         quaternion = tf.transformations.quaternion_from_euler(
             0.0, 0.0, math.radians(pt[2]))

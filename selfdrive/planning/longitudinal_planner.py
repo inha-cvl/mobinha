@@ -98,40 +98,44 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
-        if v_lead <= 9 * KPH_TO_MPS:
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=5):
+        if v_lead <= 10 * KPH_TO_MPS:
             v_lead = 0
-        elif 9 * KPH_TO_MPS < v_lead <= 19 * KPH_TO_MPS:
-            v_lead = 10 * KPH_TO_MPS
-        elif 19 * KPH_TO_MPS < v_lead <= 29 * KPH_TO_MPS:
-            v_lead = 20 * KPH_TO_MPS
-        elif 29 * KPH_TO_MPS < v_lead <= 39 * KPH_TO_MPS:
-            v_lead = 30 * KPH_TO_MPS
+        # # elif 5 * KPH_TO_MPS < v_lead <= 15 * KPH_TO_MPS:
+        # #     v_lead = 10 * KPH_TO_MPS
+        # # elif 15 * KPH_TO_MPS < v_lead <= 25 * KPH_TO_MPS:
+        # #     v_lead = 25 * KPH_TO_MPS
+        # elif v_lead <= 30 * KPH_TO_MPS:
+        #     v_lead = 20 * KPH_TO_MPS
+        # else:
+        #     v_lead = 40 * KPH_TO_MPS
+        # elif 25 * KPH_TO_MPS < v_lead <= 35 * KPH_TO_MPS:
+        #     v_lead = 30 * KPH_TO_MPS
         else:
-            v_lead = 40 * KPH_TO_MPS
+            v_lead = 30 * KPH_TO_MPS
         # v_lead = max(0, v_lead) # assumption: back moving car is zero 
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=6, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_dynamic_gain(self, error, kp=0.21/HZ, ki=0.0/HZ, kd=0.037/HZ):
-        if -3 < error < 3:
-            error = 0
-        elif error < -3:
-            error = error + 3
-        elif error > 3:
-            error = error -3
+    def get_dynamic_gain(self, error, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):
+        # if -1 < error < 1:
+        #     error = 0
+        # elif error < -1:
+        #     error = error + 1
+        # elif error > 1:
+        #     error = error - 1
         self.integral += error*(1/HZ)
         self.integral = max(-6, min(self.integral, 6))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            return max(0/HZ, min(3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         
@@ -204,16 +208,16 @@ class LongitudinalPlanner:
             target_v = max(0, self.target_v + gain)
 
         v_lead = self.rel_v + cur_v
-        if v_lead <= 9 * KPH_TO_MPS:
+        if v_lead <= 10 * KPH_TO_MPS:
             v_lead = 0
-        elif 9 * KPH_TO_MPS < v_lead <= 19 * KPH_TO_MPS:
-            v_lead = 10 * KPH_TO_MPS
-        elif 19 * KPH_TO_MPS < v_lead <= 29 * KPH_TO_MPS:
-            v_lead = 20 * KPH_TO_MPS
-        elif 29 * KPH_TO_MPS < v_lead <= 39 * KPH_TO_MPS:
-            v_lead = 30 * KPH_TO_MPS
+        # elif 5 * KPH_TO_MPS < v_lead <= 15 * KPH_TO_MPS:
+        #     v_lead = 10 * KPH_TO_MPS
+        # elif 15 * KPH_TO_MPS < v_lead <= 25 * KPH_TO_MPS:
+        #     v_lead = 25 * KPH_TO_MPS
+        # elif v_lead <= 35 * KPH_TO_MPS:
+        #     v_lead = 25 * KPH_TO_MPS
         else:
-            v_lead = 40 * KPH_TO_MPS
+            v_lead = 30 * KPH_TO_MPS
             
         print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
         write_to_csv([0,round((v_lead) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
@@ -241,12 +245,18 @@ class LongitudinalPlanner:
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
                 if lobs[2] >= -1.5 and lobs[2] <= 1.5:  # object in my lane
-                    print(lobs)
                     if lobs[4] >= 1:
-                            self.closest_tracked = lobs
+                            # print(lobs)
+                        # self.closest_tracked = lobs
+                        dynamic_d = lobs[1]-offset-local_s
+                        self.rel_v = self.tracking_outlier_del(dynamic_d, lobs[3])
+                        return dynamic_d
                     # only cluster is track_id = 0
                     else:
-                            self.closest_untracked = lobs
+                        # self.closest_untracked = lobs
+                        dynamic_d = lobs[1]-offset-local_s
+                        self.rel_v = self.tracking_outlier_del(dynamic_d, lobs[3])
+                        return dynamic_d
                 else:
                     self.closest_tracked = None
                     self.closest_untracked = None
@@ -254,12 +264,12 @@ class LongitudinalPlanner:
             self.closest_tracked = None
             self.closest_untracked = None
 
-        target_object = self.closest_tracked if self.closest_tracked else self.closest_untracked
-        if target_object is not None:
-            dynamic_d = target_object[1]-offset-local_s
-            self.rel_v = self.tracking_outlier_del(dynamic_d, target_object[3])
-        else:
-            dynamic_d = 150*self.M_TO_IDX
+        # target_object = self.closest_tracked if self.closest_tracked else self.closest_untracked
+        # if target_object is not None:
+            # dynamic_d = target_object[1]-offset-local_s
+            # self.rel_v = self.tracking_outlier_del(dynamic_d, target_object[3])
+        # else:
+            # dynamic_d = 150*self.M_TO_IDX
         return dynamic_d
     
     def check_static_object(self, local_path, local_s):

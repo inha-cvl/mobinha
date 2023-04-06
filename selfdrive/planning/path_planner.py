@@ -238,16 +238,13 @@ class PathPlanner:
                 local_path = []
                 local_id = []
 
-                print(len(self.erase_global_path),"-", eg_idx, self.l_cut)
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
-                        print("case 1")
                         #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
                         #local_id = self.erase_global_id[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
                     else:
-                        print("case 2")
                         local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                         local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
                 else:
@@ -278,7 +275,7 @@ class PathPlanner:
                     
                 if blinker != 0:
                     lane_change_point = get_lane_change_point(self.local_id, self.l_idx, self.lmap.lanelets)
-                    if len(self.lidar_bsd) > 0: 
+                    if len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
                         if (blinker == 1 and self.lidar_bsd[0]) or (blinker == 2 and self.lidar_bsd[1]):
                             renew_path, renew_ids = get_renew_path( self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+30],self.local_path[lane_change_point-15:lane_change_point])
                             if renew_path != None:

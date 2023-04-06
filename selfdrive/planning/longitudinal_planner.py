@@ -310,10 +310,12 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None and CS.cruiseState == 1:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
+            #local_curv_v= self.ref_v*KPH_TO_MPS
             static_d = self.check_static_object(local_path, local_idx)
             dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx)
             target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
             target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d)
+            print("static:", target_v_static, "dynamic:", target_v_dynamic)
             self.target_v = min(target_v_static, target_v_dynamic)
 
             if pp == 2:

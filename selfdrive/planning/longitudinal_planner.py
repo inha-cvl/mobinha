@@ -28,7 +28,7 @@ def write_to_csv(data):
     file_path = os.path.join(directory, file_name)
     is_new_file = not os.path.exists(file_path)
 
-    with open(file_name, mode='a') as csvfile:
+    with open(file_path, mode='a') as csvfile:
         writer = csv.writer(csvfile)
         if is_new_file:
             header = ['timestamp', 'near_obj_id', 'v_lead(km/h)','desired_follow_d(m)', 'front_car_d(-10)(m)', 'error', 'acc(m/s^2)','target_v','cur_v']
@@ -145,8 +145,8 @@ class LongitudinalPlanner:
         else:
             return max(2.5/HZ, min(5/HZ, error*gain))
         
-    def dynamic_consider_range(self, max_v, base_range=100):  # input max_v unit (m/s)
-        return base_range + (0.267*(max_v)**1.902)
+    def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)
+        return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX
     
     def planning_tracking(self, s, cur_v):
         if self.last_s == None:
@@ -181,7 +181,7 @@ class LongitudinalPlanner:
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
         norm_s = distance/consider_distance if 0 < distance < consider_distance else 0
         min_s = distance*self.IDX_TO_M
-        pi = self.sigmoid_logit_function(norm_s)  if 0<norm_s<1 else 1
+        pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
         ##
         target_v = max_v * pi
         return target_v, min_s 
@@ -189,10 +189,16 @@ class LongitudinalPlanner:
     def static_velocity_plan(self, cur_v, max_v, static_d):
         target_v, min_s = self.get_params(max_v, static_d)
         follow_distance = self.desired_follow_distance(cur_v)
-        self.follow_error = follow_distance-min_s
+        self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
         self.last_s = None
         gain = self.get_static_gain(self.follow_error)
-        target_v = max(self.target_v - gain, min(target_v, self.target_v + gain))
+        if self.follow_error < 0: # MINUS is ACCEL
+            target_v = min(max_v, self.target_v + gain)
+        else: # PLUS is DECEL
+            target_v = max(0, self.target_v - gain)
+        # target_v = max(self.target_v - gain, min(target_v, self.target_v + gain))
+
+        # print(min_s, follow_distance,self.follow_error, gain)
 
         # write_to_csv([1,0,round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
         return target_v
@@ -203,7 +209,7 @@ class LongitudinalPlanner:
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error)
         if self.follow_error < 0: # MINUS is ACCEL
-            target_v = min(self.ref_v*KPH_TO_MPS, self.target_v + gain)
+            target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v + gain)
 
@@ -219,7 +225,7 @@ class LongitudinalPlanner:
         else:
             v_lead = 30 * KPH_TO_MPS
             
-        print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
+        # print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
         write_to_csv([0,round((v_lead) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
 
         return target_v
@@ -276,7 +282,7 @@ class LongitudinalPlanner:
         local_len = len(local_path)
         goal_offset = 5*self.M_TO_IDX
         tl_offset = 9*self.M_TO_IDX
-        static_d1, static_d2 = 150, 150
+        static_d1, static_d2 = 150*self.M_TO_IDX, 150*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:
             left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX

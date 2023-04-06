@@ -10,7 +10,7 @@ import pymap3d
 from collections import deque
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray
-from geometry_msgs.msg import PoseStamped, Pose, PoseArray
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -64,6 +64,7 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/trajectory',PoseArray, self.trajectory_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
+        rospy.Subscriber('/mobinha/perception/lidar_bsd', Point, self.lidar_bsd_cb)
         rospy.Subscriber('/gmsl_camera/dev/video0/compressed',CompressedImage, self.compressed_image_cb, 1)
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
@@ -407,6 +408,17 @@ class MainWindow(QMainWindow, form_class):
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
             self.info_curvature_label.setText(f"{msg.poses[0].position.z} m")
+    
+    def lidar_bsd_cb(self, msg):
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+            if msg.x == 1:
+                self.bsd_l_label.setText("❗️")
+            else:
+                self.bsd_l_label.setText(" ")
+            if msg.y == 1:
+                self.bsd_r_label.setText("❗️")
+            else:
+                self.bsd_r_label.setText(" ")
 
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:

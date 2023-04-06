@@ -50,7 +50,6 @@ def lanelet_matching(tile, tile_size, t_pt):
 
 def exchange_waypoint(target, now):
     exchange_waypoints = []
-
     for n_pt in now:
         min_dist = float('inf')
         change_pt = []
@@ -358,8 +357,38 @@ def get_a_b_for_curv(min, ignore):
     b = 60-(ignore*a)
     return a, b
 
+def get_a_b_for_blinker(min, ignore):
+    a = -40/(min-ignore)
+    b = 70-(ignore*a)
+    return a,b
 
-def get_forward_curvature(idx, path, lanelets, ids, next_id, now_id, yawRate, vEgo):
+def get_blinker(idx, lanelets, ids, vEgo):
+    ws = int(30+(1.5*vEgo))
+    a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
+    lf = int(min(idx+70, max(idx+(a*vEgo+b), idx+30)))
+    if lf < 0:
+        lf = 0
+    elif lf > len(ids)-1:
+        lf = idx
+    
+    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
+    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
+
+    cut_ids = []
+    if lf+ws <len(ids):
+        cut_ids = [v for v in ids[lf:lf+ws]]
+    else:
+        cut_ids = [v for v in ids[lf:]]
+    for i in cut_ids:
+        next_id = i.split('_')[0]
+        if next_id == now_l_id or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+            return 1
+        elif next_id == now_r_id:
+            return 2
+        
+    return 0
+
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
     ws = int(70+(1.5*vEgo))
     a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
@@ -377,24 +406,11 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, now_id, yawRate, vE
         x = [v[0] for v in path[lf:lf+ws]]
         y = [v[1] for v in path[lf:lf+ws]]
         trajectory = path[lf:lf+ws]
-        id_list = [sid.split('_')[0] for sid in ids[lf:lf+ws]]
 
     else:
         x = [v[0] for v in path[lf:]]
         y = [v[1] for v in path[lf:]]
         trajectory = path[lf:]
-        id_list = [sid.split('_')[0] for sid in ids[lf:]]
-
-    blinker = 0
-    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
-    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
-    # for id in id_list:
-    # if blinker != 0:
-    # break
-    if (next_id == now_l_id and blinker == 0) or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
-        blinker = 1
-    elif next_id == now_r_id and blinker == 0:
-        blinker = 2
 
     x = np.array([(v-x[0]) for v in x])
     y = np.array([(v-y[0]) for v in y])
@@ -417,15 +433,67 @@ def get_forward_curvature(idx, path, lanelets, ids, next_id, now_id, yawRate, vE
         curvature = 1000
 
     if blinker > 0:
-        # print(blinker)
         curvature = 1000
-    # print(curvature)
 
     if lanelets[now_id]['uTurn'] == True:
-        curvature = -10
+        curvature = -20
         
-    return curvature, rot_x, rot_y, trajectory, blinker
+    return curvature, rot_x, rot_y, trajectory
 
+def check_lane_change_type(idx, lanelets, ids, change_idx):
+    next_id = ids[change_idx+1].split('_')[0]
+    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
+    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
+    
+    lane_change = 0
+    if (next_id == now_l_id and lane_change == 0) or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        lane_change = 1
+    elif next_id == now_r_id and lane_change == 0:
+        lane_change = 2
+
+    return lane_change
+
+def get_lane_change_point(ids, idx, lanelets):
+    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
+    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
+
+    for i, id in enumerate(ids[idx:]):
+        if id.split('_')[0] == now_l_id or id.split('_')[0] == now_r_id :
+            return idx+i
+    return 999999
+     
+def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_from_now, local_path_before_now):
+    target_lane_id = None
+    renew_path = None
+    renew_id = None
+    #check renew possibility
+    if change_direction == 1 : #Left
+        target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentRight']
+        if target_lane_id == None:
+            return None,None
+    elif change_direction == 2 :
+        target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentLeft']
+        if target_lane_id == None:
+            return None,None
+    else:
+        return None,None
+    
+    before_ids = []
+    renew_ids = []
+    if target_lane_id != None:
+        #local_path_from_now = local_path_from_now[:idx+2]
+        before_lane_id = ids[lane_change_idx-15].split('_')[0]
+        before_path = exchange_waypoint(lanelets[before_lane_id]['waypoints'], local_path_before_now)
+        for _ in range(len(before_path)):
+            before_ids.append(before_lane_id)
+        renew_path = exchange_waypoint(lanelets[target_lane_id]['waypoints'], local_path_from_now)
+        for _ in range(len(renew_path)):
+            renew_ids.append(target_lane_id)
+
+    else:
+        return None,None
+    
+    return before_path+renew_path, before_ids+renew_ids
 
 def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn

@@ -145,7 +145,7 @@ class LongitudinalPlanner:
         else:
             return max(2.5/HZ, min(5/HZ, error*gain))
         
-    def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=60):  # input max_v unit (m/s)
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX
     
     def planning_tracking(self, s, cur_v):
@@ -184,7 +184,7 @@ class LongitudinalPlanner:
         pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
         ##
         target_v = max_v * pi
-        return target_v, min_s 
+        return target_v, min_s
     
     def static_velocity_plan(self, cur_v, max_v, static_d):
         target_v, min_s = self.get_params(max_v, static_d)

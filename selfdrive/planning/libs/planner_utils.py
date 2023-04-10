@@ -326,24 +326,16 @@ def ref_to_csp(ref_path):
 
 
 def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
-    threshold = 200
+    threshold = 160
     return_v = ref_v
 
     # Determine the multiplier based on cur_v
-    if 0*KPH_TO_MPS <= cur_v < 13*KPH_TO_MPS:
+    if 0*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
         coeffect = 0.0
-    elif 13*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
-        coeffect = 0.1
-    elif 20*KPH_TO_MPS <= cur_v < 25*KPH_TO_MPS:
-        coeffect = 0.16
-    elif 25*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
-        coeffect = 0.18
-    elif 30*KPH_TO_MPS <= cur_v < 35*KPH_TO_MPS:
-        coeffect = 0.2
-    elif 35*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
-        coeffect = 0.25
+    elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
+        coeffect = 0.075
     else:
-        coeffect = 0.3
+        coeffect = 0.15
 
     if forward_curvature < threshold:
         return_v = ref_v - (abs(threshold - forward_curvature) * coeffect)
@@ -351,10 +343,28 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     return return_v * KPH_TO_MPS
 
+def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
+    max_curvature = 160
+    min_curvature = 0
+    if forward_curvature < min_curvature:
+        forward_curvature = min_curvature
+    elif forward_curvature > max_curvature:
+        forward_curvature = max_curvature
+    
+    normalized_curvature = (forward_curvature - min_curvature) / (max_curvature - min_curvature)
+
+    decel = -min_v + (ref_v - min_v) * (1 - normalized_curvature)
+    return_v = ref_v - decel
+
+    if return_v > ref_v*MPS_TO_KPH:
+        return_v = ref_v*MPS_TO_KPH
+
+    return return_v*KPH_TO_MPS
+
 
 def get_a_b_for_curv(min, ignore):
-    a = -90 / (min-ignore)
-    b = 60-(ignore*a)
+    a = -100 / (min-ignore)
+    b = 70-(ignore*a)
     return a, b
 
 def get_a_b_for_blinker(min, ignore):
@@ -363,7 +373,7 @@ def get_a_b_for_blinker(min, ignore):
     return a,b
 
 def get_blinker(idx, lanelets, ids, vEgo):
-    ws = int(30+(1.5*vEgo))
+    ws = int(70+(1.5*vEgo))
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+70, max(idx+(a*vEgo+b), idx+30)))
     if lf < 0:
@@ -396,7 +406,7 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
     trajectory = []
     id_list = None
 
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx-30)))
+    lf = int(min(idx+70, max(idx+(a*vEgo+b), idx-30)))
     if lf < 0:
         lf = 0
     elif lf > len(path)-1:

@@ -161,7 +161,8 @@ class IoniqTransceiver():
 
     def ioniq_control(self):
         signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_steer,
-                   'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.brake_val, 'Target_Accel': self.accel_val, 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
+                   'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.brake_val, 
+                   'Target_Accel': self.accel_val, 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
         self.reset = 0

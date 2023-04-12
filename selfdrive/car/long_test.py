@@ -54,8 +54,9 @@ class IONIQ:
                     self.enable = 1
                 elif self.enable == 1:
                     self.enable = 0
+                    
             elif cmd == 1001:
-                self.reset = 1 
+                self.reset = 1
             elif cmd == 1000:
                 exit(0)
 

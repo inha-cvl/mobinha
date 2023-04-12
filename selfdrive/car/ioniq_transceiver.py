@@ -63,13 +63,10 @@ class IoniqTransceiver():
             self.reset = 1
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
-            self.reset = 1
         elif canCmd.latActive:  # Only Lateral
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
-            self.reset = 1
         elif canCmd.longActive:  # Only Longitudinal
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
-            self.reset = 1
         self.control_state = state
         
         mode = 0

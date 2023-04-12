@@ -331,9 +331,9 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     # Determine the multiplier based on cur_v
     if 0*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
-        coeffect = 0.0
+        coeffect = 0.05
     elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
-        coeffect = 0.075
+        coeffect = 0.08
     else:
         coeffect = 0.15
 
@@ -363,19 +363,19 @@ def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
 
 def get_a_b_for_curv(min, ignore):
-    a = -100 / (min-ignore)
-    b = 70-(ignore*a)
+    a = -90 / (min-ignore)
+    b = 60-(ignore*a)
     return a, b
 
 def get_a_b_for_blinker(min, ignore):
-    a = -40/(min-ignore)
-    b = 70-(ignore*a)
+    a = -30/(min-ignore)
+    b = 60-(ignore*a)
     return a,b
 
 def get_blinker(idx, lanelets, ids, vEgo):
-    ws = int(70+(1.5*vEgo))
+    ws = int(50+(1.5*vEgo))
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+70, max(idx+(a*vEgo+b), idx+30)))
+    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+30)))
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
@@ -398,6 +398,15 @@ def get_blinker(idx, lanelets, ids, vEgo):
         
     return 0
 
+def compare_id(lh_id, now_idx, lanelets, ids):
+    now_l_id = lanelets[ids[now_idx].split('_')[0]]['adjacentLeft']
+    now_r_id = lanelets[ids[now_idx].split('_')[0]]['adjacentRight']
+
+    if lh_id == now_l_id or lh_id == now_r_id:
+        return False
+    else:
+        return True
+
 def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
     ws = int(70+(1.5*vEgo))
     a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
@@ -406,7 +415,7 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
     trajectory = []
     id_list = None
 
-    lf = int(min(idx+70, max(idx+(a*vEgo+b), idx-30)))
+    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx-30)))
     if lf < 0:
         lf = 0
     elif lf > len(path)-1:

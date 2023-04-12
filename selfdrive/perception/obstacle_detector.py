@@ -107,9 +107,9 @@ class ObstacleDetector:
                 
                 #From -50m~30m left bsd : -5.0~-1.0, right bsd : 1.0~4.5
                 if (-40*(1/self.CP.mapParam.precision)) < (obj_s-car_idx) < (30*(1/self.CP.mapParam.precision)):
-                    if -5.0<obj_d<-1.0:
+                    if -4.5<obj_d<-1.0:
                         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif 1.0<obj_d<5:
+                    elif 1.0<obj_d<4.5:
                         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
 
         # sorting by s

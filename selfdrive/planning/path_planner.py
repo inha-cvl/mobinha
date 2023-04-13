@@ -241,13 +241,11 @@ class PathPlanner:
                 print(len(self.erase_global_path),"-", eg_idx, self.l_cut)
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
-                        print("case 1")
                         #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
                         #local_id = self.erase_global_id[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
                     else:
-                        print("case 2")
                         local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                         local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
                 else:

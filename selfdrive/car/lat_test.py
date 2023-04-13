@@ -16,11 +16,14 @@ class IONIQ:
         self.steering_overide = 0
         self.safety_status = 0
         self.enable = 0
-        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
+        self.Gway_Steering_Tq = None
+        self.Gway_Steering_Status = None
+        self.gway_stat = None
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05:0}
 
     def reset_trigger(self):
         self.reset = 1
-        time.sleep(1.5)
+        time.sleep(0.1)
         self.reset = 0
         # if self.reset:
         #     self.reset = 0
@@ -56,6 +59,7 @@ class IONIQ:
                    'LON_Enable': 0, 'Target_Brake': 50, 'Target_Accel': 0, 
                    'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
+        # self.reset = 0
         self.sender(0x210, msg)
 
     def wheel_ang_rcv(self):
@@ -67,9 +71,14 @@ class IONIQ:
             res = self.db.decode_message(784, data.data)
             self.steering_overide = res['Steering_Overide']
             self.safety_status = res['Safety_Status']
+        if data.arbitration_id == 3221225472:
+            res = self.db.decode_message(3221225472, data.data)
+            self.Gway_Steering_Tq = res['Gway_Steering_Tq']
+            self.Gway_Steering_Status = res['Gway_Steering_Status']
+            self.gway_stat = res['gway_stat']
         if self.timer(1):
-            print(self.temp_wheel, " | ovr:", self.steering_overide, " | reset:", self.reset, " | cnt:", self.alv_cnt)
-               
+            print(self.temp_wheel, " | ovr:", self.steering_overide, " | reset:", self.reset)
+            # print("stat:", self.gway_stat," | Tq:", self.Gway_Steering_Tq, " | steer status:", self.Gway_Steering_Status)
 
     def sender(self, arb_id, msg):
         can_msg = can.Message(arbitration_id=arb_id,
@@ -95,9 +104,9 @@ class IONIQ:
                 self.mover()
             elif cmd == 99:
                 if self.enable == 0:
-                    self.wheel_ang = 0
+                    # self.wheel_ang = 0
                     self.enable = 1
-                    self.reset = 0
+                    # self.reset = 0
                 elif self.enable == 1:
                     self.enable = 0
 

@@ -10,24 +10,26 @@ class IONIQ:
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
         self.accel = 0
         self.enable = 0
-        self.brake = 50
+        self.brake = 0
+        self.temp_wheel = 0
         self.alv_cnt = 0
         self.reset = 0
         self.time = time.time()
-        self.acc_override = 0
-        self.brk_override = 0
-        self.safety_status = 0
+        self.acc_override = None
+        self.brk_override = None
+        self.steering_overide = 0
+        self.safety_status = None
 
-        self.Gway_Accel_Pedal_Position = 0
-        self.Gway_GearSelDisp = 0
-        self.Gway_Brake_Active = 0
-        self.Gway_Brake_Cylinder_Pressure = 0
+        self.Gway_Accel_Pedal_Position = None
+        self.Gway_GearSelDisp = None
+        self.Gway_Brake_Active = None
+        self.Gway_Brake_Cylinder_Pressure = None
         
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
 
     def reset_trigger(self):
         self.reset = 1
-        time.sleep(1.5)
+        time.sleep(0.1)
         self.reset = 0
 
     def timer(self, sec):
@@ -50,7 +52,7 @@ class IONIQ:
     
     def longitudinal_cmd(self):
         self.alv_cnt = self.alive_counter(self.alv_cnt)
-        signals = {'PA_Enable': 0, 'PA_StrAngCmd': 0,
+        signals = {'PA_Enable': self.enable, 'PA_StrAngCmd': 0,
                    'LON_Enable': self.enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
                    'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
@@ -72,12 +74,17 @@ class IONIQ:
         if data.arbitration_id == 784:
             res = self.db.decode_message(784, data.data)
             self.acc_override = res['Accel_Override']
-            self.brk_override = res['Brake_Override']
+            self.brk_override = res['Break_Override']
+            self.steering_overide = res['Steering_Overide']
             self.safety_status = res['Safety_Status']
+        if data.arbitration_id == 656:
+            res = self.db.decode_message(656, data.data)
+            self.temp_wheel = res['Gway_Steering_Angle']
         if self.timer(1):
-            print("gear:", self.Gway_GearSelDisp, " | brake_active:", self.Gway_Brake_Active)
+            # print("input acl:", self.accel, " | input brake:", self.brake)  
+            print("safety:", self.safety_status, " | brake_active:", self.Gway_Brake_Active)
             print("acc:", self.Gway_Accel_Pedal_Position, " | brk:", self.Gway_Brake_Cylinder_Pressure)
-            print("ovr(acl,brk):", self.acc_override, " | ", self.brk_override, " | reset:", self.reset)
+            print("ovr(acl,brk,str):", self.acc_override, "|", self.brk_override, "|", self.steering_overide," | reset:", self.reset)
 
     def sender(self, arb_id, msg):
         can_msg = can.Message(arbitration_id=arb_id,
@@ -90,9 +97,9 @@ class IONIQ:
                 print("ENABLE")
             else:
                 print("DISABLE")
-            cmd = input('99 == enable/disable 1001=reset\naccel:1~5, brake:-1~-20\n')
+            cmd = input('99 == enable/disable 1001=reset\naccel:0~6, brake:-1~-20\n')
             cmd = int(cmd)
-            if 1 <= cmd <= 5:
+            if 0 <= cmd <= 6:
                 self.accel = float(cmd)*5
                 self.brake = 0
             elif -20 <= cmd <= -1:
@@ -100,12 +107,10 @@ class IONIQ:
                 self.accel = 0
             elif cmd == 99:
                 if self.enable == 0:
-                    self.accel = 0
-                    self.brake = 50
                     self.enable = 1
                 elif self.enable == 1:
                     self.enable = 0
-                    self.reset_trigger()     
+                    # self.reset_trigger()     
             elif cmd == 1001:
                 self.reset_trigger()
             elif cmd == 1000:

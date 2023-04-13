@@ -55,6 +55,8 @@ class MainWindow(QMainWindow, form_class):
         self.rosbag_proc = None
 
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
+        
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
         rospy.Subscriber('/mobinha/planning/target_v',Float32, self.target_v_cb)
@@ -83,6 +85,13 @@ class MainWindow(QMainWindow, form_class):
         self.initialize()
         self.connection_setting()
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+    
     def setting_topic_list_toggled(self):
         simple_writer = SimpleWriter(self.record_list_file, self)
         simple_writer.show()
@@ -151,24 +160,25 @@ class MainWindow(QMainWindow, form_class):
 
     def visualize_update(self):
         while self.system_state:
-            self.pub_state.publish(String(self.state))
-            self.pub_can_cmd.publish(Int8(self.can_cmd))
-            if self.state == 'START':
-                if self.goal_update and self.scenario != 0:
-                    scenario_goal = self.get_scenario_goal_msg()
-                    self.pub_scenario_goal.publish(scenario_goal)
-                self.sm.update()
-                self.cm.update()
-                self.CS = self.sm.CS
-                self.CC = self.cm.CC
-                self.display()
-            elif self.state == 'OVER':
-                self.over_cnt += 1
-                if(self.over_cnt == 30):
-                    print("[Visualize] Over")
-                    sys.exit(0)
-            time.sleep(0.1)
-            QCoreApplication.processEvents()
+            if self.timer(0.1):
+                self.pub_state.publish(String(self.state))
+                self.pub_can_cmd.publish(Int8(self.can_cmd))
+                if self.state == 'START':
+                    if self.goal_update and self.scenario != 0:
+                        scenario_goal = self.get_scenario_goal_msg()
+                        self.pub_scenario_goal.publish(scenario_goal)
+                    self.sm.update()
+                    self.cm.update()
+                    self.CS = self.sm.CS
+                    self.CC = self.cm.CC
+                    self.display()
+                elif self.state == 'OVER':
+                    self.over_cnt += 1
+                    if(self.over_cnt == 30):
+                        print("[Visualize] Over")
+                        sys.exit(0)
+                
+                QCoreApplication.processEvents()
 
     def rviz_frame(self, type):
         rviz_frame = rviz.VisualizationFrame()

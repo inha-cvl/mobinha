@@ -25,7 +25,6 @@ class IoniqTransceiver():
         self.CP = CP
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
-        self.target_steer = 0.
         self.reset = 0
         self.db = cantools.database.load_file(CP.dbc)
 
@@ -45,33 +44,48 @@ class IoniqTransceiver():
 
         self.accel_val = 0
         self.brake_val = 0
+        self.target_steer = 0.
         self.wheel_angle = 0
         self.rcv_velocity = 0
         self.target_v = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
         self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 8}
 
+        self.Accel_Override = 0
+        self.Break_Override = 0
+        self.Steer_Override = 0
+
         rospy.on_shutdown(self.cleanup)
 
     def target_v_cb(self, msg):
         self.target_v = msg.data
+    
+    def reset_trigger(self):
+        self.reset = 1
+        self.accel_val = 0
+        self.brake_val = 0
+        self.target_steer = 0.
 
     def can_cmd(self, canCmd):
         state = self.control_state
         if canCmd.disable:  # Full disable
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-            self.reset = 1
+            self.reset_trigger()
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
+            self.reset = 0
         elif canCmd.latActive:  # Only Lateral
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
         elif canCmd.longActive:  # Only Longitudinal
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
-        self.control_state = state
-        
+        self.control_state = state 
         mode = 0
         if canCmd.enable:
             mode = 1
+        if self.Accel_Override or self.Break_Override or self.Steer_Override:
+            mode = 0
+            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+            self.reset_trigger()
         self.pub_mode.publish(Int8(mode))
 
     def wheel_angle_cmd(self, msg):
@@ -79,7 +93,7 @@ class IoniqTransceiver():
 
     def accel_brake_cmd(self, msg): # PID output is accel_brake_cmd function input
         th_a = 6 # 0~20 * gain -> 0~100 accel
-        th_b = 12 # 0~20 * gain -> 0~100 brake
+        th_b = 13 # 0~20 * gain -> 0~100 brake
         val_data = max(-th_b, min(th_a, msg.data))
         gain = 5
 
@@ -105,7 +119,7 @@ class IoniqTransceiver():
     def receiver(self):
         data = self.bus.recv()
         try:
-            if (data.arbitration_id == 0x130):
+            if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 #'%.4f' % res['Gway_Lateral_Accel_Speed']
                 self.temp_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
@@ -123,27 +137,26 @@ class IoniqTransceiver():
                 self.velocity_FL = res['Gway_Wheel_Velocity_FL']
                 self.rcv_velocity = (self.velocity_RR + self.velocity_RL)/7.2
                 self.pub_velocity.publish(Float32(self.rcv_velocity))
-            if (data.arbitration_id == 0x170):
+            if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 gear_sel_disp = res['Gway_GearSelDisp']                 # use
-                if gear_sel_disp == 7:  # R
+                if gear_sel_disp == "R":  # R
                     gear_sel_disp = 1
-                elif gear_sel_disp == 6:  # N
+                elif gear_sel_disp == "N":  # N
                     gear_sel_disp = 2
-                elif gear_sel_disp == 5:  # D
+                elif gear_sel_disp == "D":  # D
                     gear_sel_disp = 3
                 else:  # P
                     gear_sel_disp = 0
                 self.pub_gear.publish(Int8(gear_sel_disp))
-            if (data.arbitration_id == 0x210):
-                res = self.db.decode_message(data.arbitration_id, data.data)
-                mode = 0
-                if res['PA_Enable'] and res['LON_Enable']:
-                    mode = 1
-                
-            if (data.arbitration_id == 641):
-                res = self.db.decode_message(data.arbitration_id, data.data)
-                plsRR = res['WHL_PlsRRVal']
+            # if (data.arbitration_id == 0x210):
+            #     res = self.db.decode_message(data.arbitration_id, data.data)
+            #     mode = 0
+            #     if res['PA_Enable'] and res['LON_Enable']:
+            #         mode = 1
+            # if (data.arbitration_id == 641):
+            #     res = self.db.decode_message(data.arbitration_id, data.data)
+            #     plsRR = res['WHL_PlsRRVal']
             if(data.arbitration_id == 656):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.temp_actuators['steer'] = res['Gway_Steering_Angle']
@@ -152,6 +165,11 @@ class IoniqTransceiver():
                 pose.position.y = self.temp_actuators['steer']
                 pose.position.z = self.temp_actuators['accel']
                 self.pub_temp_actuators.publish(pose)
+            if (data.arbitration_id == 784):
+                res = self.db.decode_message(data.arbitration_id, data.data)
+                self.Accel_Override = res['Accel_Override']
+                self.Break_Override = res['Break_Override']
+                self.Steering_Overide = res['Steering_Overide']
 
         except Exception as e:
             print(e)
@@ -162,7 +180,6 @@ class IoniqTransceiver():
                    'Target_Accel': self.accel_val, 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
-        self.reset = 0
 
     def sender(self, arb_id, msg):
         can_msg = can.Message(arbitration_id=arb_id,

@@ -13,9 +13,17 @@ class Perception:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+        
     def perception(self):
         sm = None
         obstacle_detector = None
@@ -24,10 +32,10 @@ class Perception:
                 if self.need_init:
                     sm, obstacle_detector = self.init()
             elif self.state == 'START':
-                self.need_init = True
-                sm.update()
-                obstacle_detector.run(sm.CS)
-                time.sleep(0.1)
+                if self.timer(0.1):
+                    self.need_init = True
+                    sm.update()
+                    obstacle_detector.run(sm.CS)
             elif self.state == 'OVER':
                 return 1
             else:

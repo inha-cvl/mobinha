@@ -14,9 +14,17 @@ class Control:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+        
     def control(self):
         sm = None
         localizer = None
@@ -26,11 +34,11 @@ class Control:
                 if self.need_init:
                     sm, localizer, controller = self.init()
             elif self.state == 'START':
-                self.need_init = True
-                sm.update()
-                localizer.run(sm)
-                controller.run(sm)
-                time.sleep(0.1)  # 20Hz
+                if self.timer(0.1):
+                    self.need_init = True
+                    sm.update()
+                    localizer.run(sm)
+                    controller.run(sm)
             elif self.state == 'OVER':
                 return 1
             else:

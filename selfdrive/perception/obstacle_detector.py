@@ -37,7 +37,6 @@ class ObstacleDetector:
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
 
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
-
         self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/perception/lidar_bsd', Point, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
@@ -52,10 +51,12 @@ class ObstacleDetector:
             x, y = obj.pose.position.x, obj.pose.position.y
             v_rel = obj.value
             track_id = obj.label # uint type 0:clustering 1~: tracking
+            w = obj.pose.orientation.z
+            sx, sy, sz = obj.pose.dimension.x, obj.pose.dimension.y, obj.pose.dimension.z
             if self.CS is not None:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
-                objects.append([nx, ny, 0, v_rel, track_id])  # [2] heading [3] relative velocity [4] id
+                objects.append([nx, ny, w, v_rel, track_id, sx, sy, sz])  # [2] heading [3] relative velocity [4] id
 
         self.lidar_object = objects
 
@@ -71,7 +72,7 @@ class ObstacleDetector:
     def morai_object_list_cb(self, msg):
         objects = []
         for obj in msg.poses:
-            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v, 1))
+            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v, 1, 1,1,1))
         self.lidar_object = objects
 
     def morai_traffic_light_cb(self, msg):
@@ -103,7 +104,7 @@ class ObstacleDetector:
                     local_point, self.local_path, (obj[0]+dx, obj[1]+dy))
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3.5 and obj_d < 3.5:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
-                    viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2]))
+                    viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6]))
                 
                 #From -50m~30m left bsd : -5.0~-1.0, right bsd : 1.0~4.5
                 if (-40*(1/self.CP.mapParam.precision)) < (obj_s-car_idx) < (30*(1/self.CP.mapParam.precision)):

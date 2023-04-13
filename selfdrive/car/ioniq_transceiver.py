@@ -6,7 +6,7 @@ import time
 
 import rospy
 from std_msgs.msg import Float32, Int8
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Vector3
 
 
 class IoniqTransceiver():
@@ -16,50 +16,28 @@ class IoniqTransceiver():
             'steer_en': 0x0,       # ON:0x1   OFF:0x0
             'acc_en': 0x0,         # ON:0x1   OFF:0x0
         }
-        self.temp_actuators = {
-            'steer': 0,
-            'accel': 0,
-            'brake': 0,
-        }
+        self.ego_actuactors = {'steer': 0,'accel': 0,'brake': 0}
+        self.target_actuactors = {'steer': 0,'accel': 0,'brake': 0}
 
         self.CP = CP
-        self.bus = can.ThreadSafeBus(
-            interface='socketcan', channel='can0', bitrate=500000)
+        self.bus = can.ThreadSafeBus(interface='socketcan', channel='can0', bitrate=500000)
         self.reset = 0
         self.db = cantools.database.load_file(CP.dbc)
 
-        self.pub_velocity = rospy.Publisher(
-            '/mobinha/car/velocity', Float32, queue_size=1)
-        self.pub_gear = rospy.Publisher(
-            '/mobinha/car/gear', Int8, queue_size=1)
-        self.pub_mode = rospy.Publisher(
-            '/mobinha/car/mode', Int8, queue_size=1)
-        self.pub_temp_actuators = rospy.Publisher('/mobinha/car/temp_actuators', Pose, queue_size=1)
-        rospy.Subscriber(
-            '/mobinha/control/wheel_angle', Float32, self.wheel_angle_cmd)
-        rospy.Subscriber(
-            '/mobinha/control/accel_brake', Float32, self.accel_brake_cmd)
-        rospy.Subscriber(
-            '/mobinha/planning/target_v', Float32, self.target_v_cb)
+        self.pub_velocity = rospy.Publisher('/mobinha/car/velocity', Float32, queue_size=1)
+        self.pub_gear = rospy.Publisher('/mobinha/car/gear', Int8, queue_size=1)
+        self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
+        self.pub_ego_actuactors = rospy.Publisher('/mobinha/car/ego_actuactors', Vector3, queue_size=1)
+        rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
-        self.accel_val = 0
-        self.brake_val = 0
-        self.target_steer = 0.
-        self.wheel_angle = 0
         self.rcv_velocity = 0
-        self.target_v = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
-        self.wheel = {'enable': False, 'current': 0, 'busy': False, 'step': 8}
-
         self.Accel_Override = 0
         self.Break_Override = 0
         self.Steer_Override = 0
 
         rospy.on_shutdown(self.cleanup)
 
-    def target_v_cb(self, msg):
-        self.target_v = msg.data
-    
     def reset_trigger(self):
         self.reset = 1
         self.accel_val = 0
@@ -68,8 +46,7 @@ class IoniqTransceiver():
 
     def can_cmd(self, canCmd):
         state = self.control_state
-        if canCmd.disable:  # Full disable
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+        if canCmd.disable:  # Full disablestate = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
@@ -83,38 +60,20 @@ class IoniqTransceiver():
         if canCmd.enable:
             mode = 1
         if self.Accel_Override or self.Break_Override or self.Steer_Override:
-            mode = 0
+            mode = 2
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
         self.pub_mode.publish(Int8(mode))
 
-    def wheel_angle_cmd(self, msg):
-        self.target_steer = msg.data * self.CP.steerRatio
-
-    def accel_brake_cmd(self, msg): # PID output is accel_brake_cmd function input
-        th_a = 6 # 0~20 * gain -> 0~100 accel
-        th_b = 13 # 0~20 * gain -> 0~100 brake
-        val_data = max(-th_b, min(th_a, msg.data))
-        gain = 5
-
-        if val_data > 0.:
-            self.accel_val = val_data*gain
-            self.brake_val = 0.0
-        elif val_data <= 0.:
-            self.accel_val = 0.0
-            # if 0 < (-val_data/th_b) < 0.05:
-            #     self.brake_val = 0
-            # else:
-            #     self.brake_val = ((-val_data/th_b)-0.05)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1) else 45
-            self.brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0.0 and self.rcv_velocity >= 1/3.6) else 25
-
+    def target_actuators_cb(self, msg):
+        self.target_actuators['steer'] = msg.x
+        self.target_actuators['accel'] = msg.y
+        self.target_actuators['brake'] = msg.z
 
     # def set_actuators(self, actuators):
-    #     gain = 3
-    #     self.target_steer = actuators.steer
-    #     self.accel_val = min(5, actuators.accel) * gain
-    #     self.brake_val = min(5, actuators.brake) if (
-    #         self.target_v > 0 and self.rcv_velocity >= 1) else 20
+        # self.target_actuators['steer'] = actuators.steer
+        # self.target_actuators['accel'] = actuators.accel
+        # self.target_actuators['brake'] = actuators.brake
         
     def receiver(self):
         data = self.bus.recv()
@@ -122,9 +81,8 @@ class IoniqTransceiver():
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 #'%.4f' % res['Gway_Lateral_Accel_Speed']
-                self.temp_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
-                self.temp_actuators['accel'] = res['Gway_Longitudinal_Accel_Speed']
-
+                self.ego_actuactors['brake'] = res['Gway_Brake_Cylinder_Pressure']
+                
             if (data.arbitration_id == 0x280):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 # use
@@ -137,8 +95,11 @@ class IoniqTransceiver():
                 self.velocity_FL = res['Gway_Wheel_Velocity_FL']
                 self.rcv_velocity = (self.velocity_RR + self.velocity_RL)/7.2
                 self.pub_velocity.publish(Float32(self.rcv_velocity))
+
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
+                self.ego_actuactors['accel'] = res['Gway_Accel_Pedal_Position']
+
                 gear_sel_disp = res['Gway_GearSelDisp']                 # use
                 if gear_sel_disp == "R":  # R
                     gear_sel_disp = 1
@@ -149,6 +110,7 @@ class IoniqTransceiver():
                 else:  # P
                     gear_sel_disp = 0
                 self.pub_gear.publish(Int8(gear_sel_disp))
+
             # if (data.arbitration_id == 0x210):
             #     res = self.db.decode_message(data.arbitration_id, data.data)
             #     mode = 0
@@ -159,12 +121,13 @@ class IoniqTransceiver():
             #     plsRR = res['WHL_PlsRRVal']
             if(data.arbitration_id == 656):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                self.temp_actuators['steer'] = res['Gway_Steering_Angle']
-                pose = Pose()
-                pose.position.x = self.temp_actuators['brake']
-                pose.position.y = self.temp_actuators['steer']
-                pose.position.z = self.temp_actuators['accel']
-                self.pub_temp_actuators.publish(pose)
+                self.ego_actuactors['steer'] = res['Gway_Steering_Angle']
+                vector3 = Vector3()
+                vector3.x = self.ego_actuactors['steer']
+                vector3.y = self.ego_actuactors['accel']
+                vector3.z = self.ego_actuactors['brake']
+                self.pub_ego_actuactors.publish(vector3)
+                
             if (data.arbitration_id == 784):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.Accel_Override = res['Accel_Override']
@@ -175,9 +138,9 @@ class IoniqTransceiver():
             print(e)
 
     def ioniq_control(self):
-        signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_steer,
-                   'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.brake_val, 
-                   'Target_Accel': self.accel_val, 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
+        signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_actuators['steer'],
+                   'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.target_actuators['brake'], 
+                   'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 

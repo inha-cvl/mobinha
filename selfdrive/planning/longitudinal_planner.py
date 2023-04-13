@@ -315,7 +315,6 @@ class LongitudinalPlanner:
             dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx)
             target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
             target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d)
-            print("static:", target_v_static, "dynamic:", target_v_dynamic)
             self.target_v = min(target_v_static, target_v_dynamic)
 
             if pp == 2:

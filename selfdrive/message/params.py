@@ -90,7 +90,7 @@ class SIMULATOR:
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
-        car_param_dict["steerRatio"] = 13.73
+        car_param_dict["steerRatio"] = 1
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )

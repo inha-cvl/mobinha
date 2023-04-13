@@ -10,7 +10,7 @@ import pymap3d
 from collections import deque
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray
-from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Vector3
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -46,6 +46,7 @@ class MainWindow(QMainWindow, form_class):
         self.system_state = False
         self.over_cnt = 0
         self.can_cmd = 0
+        self.mode = 0
         self.scenario = 0
         self.goal_update = True
         self.moving_start = False
@@ -227,7 +228,7 @@ class MainWindow(QMainWindow, form_class):
         self.graph_steer_data = {'x': deque([0]), 'ye': deque([0]), 'yt': deque([0])}
 
         self.graph_velocity_widget = self.create_graph_widget("Velocity", 0, 10, 0, 60)
-        self.graph_acceleration_widget = self.create_graph_widget("Acceleration",0, 10, -20, 20)
+        self.graph_acceleration_widget = self.create_graph_widget("Ego Acceleration",0, 10, -20, 20)
         self.graph_steer_widget = self.create_graph_widget("Steer", 0, 10, -35, 35)
 
         self.graph_velocity_widget.setLabel('left', 'v', units='km/h')
@@ -318,8 +319,8 @@ class MainWindow(QMainWindow, form_class):
             self.graph_velocity_data['yt'].append(self.target_v)
             self.graph_velocity_data['ye'].append(self.CS.vEgo*MPH_TO_KPH)
             self.graph_acceleration_data['x'].append(self.graph_time)
-            self.graph_acceleration_data['ya'].append(round(self.CC.actuators.accel, 3))
-            self.graph_acceleration_data['yb'].append(-round(self.CC.actuators.brake, 3))
+            self.graph_acceleration_data['ya'].append(round(self.CS.actuators.accel, 3))
+            self.graph_acceleration_data['yb'].append(-round(self.CS.actuators.brake, 3))
             self.graph_steer_data['x'].append(self.graph_time)
             self.graph_steer_data['yt'].append(0)
                 #round(self.CC.actuators.steer*self.CP.steerRatio, 3))
@@ -417,7 +418,7 @@ class MainWindow(QMainWindow, form_class):
 
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
-            self.info_curvature_label.setText(f"{msg.poses[0].position.z} m")
+            self.info_curvature_label.setText(f"{msg.poses[0].position.z:.1f} m")
     
     def lidar_bsd_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
@@ -532,10 +533,26 @@ class MainWindow(QMainWindow, form_class):
         if self.map_view_manager is not None:
             self.map_view_manager.setCurrentFrom(self.map_view_manager.getViewAt(idx))
 
+    def get_mode_label(self, mode):
+        if mode == 1:
+            return "Auto"
+        elif mode == 2:
+            return "Override"
+        else:
+            return "Manual"
+    
+    def check_mode(self, mode):
+        if self.mode != mode:
+            self.mode = mode
+            if mode == 2:
+                self.cmd_button_clicked(0) #act like click disable button
+
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
         self.label_vehicle_yaw.setText(f"{self.CS.yawRate:.5f} deg")
         self.label_target_yaw.setText(f"{(float(self.CC.actuators.steer*self.CP.steerRatio)+self.CS.yawRate):.5f} deg")
+        self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
+        self.check_mode(self.CS.cruiseState)
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
 
@@ -551,8 +568,8 @@ class MainWindow(QMainWindow, form_class):
             self.imu_angle_label_3.setText(f"R: {self.CS.rollRate}")
             self.car_velocity_label.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
 
-            self.target_mode_label.setText("Manual" if self.can_cmd != 1 else "Auto")
-            self.car_mode_label.setText("Manual" if self.CS.cruiseState != 1 else "Auto")
+            self.target_mode_label.setText(self.get_mode_label(self.can_cmd))
+            self.car_mode_label.setText(self.get_mode_label(self.CS.cruiseState))
             self.car_steer_angle_label.setText(str(self.CS.actuators.steer))
             self.car_accel_label.setText(str(self.CS.actuators.accel))
             self.car_brake_label.setText(str(self.CS.actuators.brake))
@@ -562,7 +579,7 @@ class MainWindow(QMainWindow, form_class):
             self.target_brake_label.setText(str(self.CC.actuators.brake))
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            self.info_mode_label.setText("Manual Mode" if self.CS.cruiseState != 1 else "Auto Mode")
+            self.info_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
             self.info_velocity_label.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
             self.info_car_lat_label.setText(f"lat : {self.CS.position.latitude:.4f}")
             self.info_car_lng_label.setText(f"lng : {self.CS.position.longitude:.4f}")

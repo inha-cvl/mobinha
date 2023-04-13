@@ -20,7 +20,7 @@ class IONIQ:
 
     def reset_trigger(self):
         self.reset = 1
-        time.sleep(2)
+        time.sleep(1.5)
         self.reset = 0
         # if self.reset:
         #     self.reset = 0
@@ -53,10 +53,10 @@ class IONIQ:
     def wheel_ang_cmd(self):
         self.alv_cnt = self.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.enable, 'PA_StrAngCmd': self.wheel_ang,
-                   'LON_Enable': 0, 'Target_Brake': 1, 'Target_Accel': 0, 'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset}
+                   'LON_Enable': 0, 'Target_Brake': 50, 'Target_Accel': 0, 
+                   'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
-        # self.reset = 1
 
     def wheel_ang_rcv(self):
         data = self.bus.recv()

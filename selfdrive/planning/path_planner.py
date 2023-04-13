@@ -294,7 +294,7 @@ class PathPlanner:
                                 for i, renew_pt in enumerate(renew_path):
                                     self.local_path[lane_change_point-15+i]=renew_pt
                                     self.local_id[lane_change_point-15+i]=renew_ids[i]
-                                if  lane_change_point+45 < len(self.local_path):
+                                if  lane_change_point+65 < len(self.local_path)+1:
                                     force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point+20], self.local_path[lane_change_point+45]], self.precision)
                                     for i, force_pt in enumerate(force_interpolate_path):
                                         self.local_path[lane_change_point+20+i]=force_pt

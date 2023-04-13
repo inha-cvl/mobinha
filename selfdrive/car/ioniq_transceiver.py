@@ -16,37 +16,37 @@ class IoniqTransceiver():
             'steer_en': 0x0,       # ON:0x1   OFF:0x0
             'acc_en': 0x0,         # ON:0x1   OFF:0x0
         }
-        self.ego_actuactors = {'steer': 0,'accel': 0,'brake': 0}
-        self.target_actuactors = {'steer': 0,'accel': 0,'brake': 0}
+        self.ego_actuators = {'steer': 0,'accel': 0,'brake': 0}
+        self.target_actuators = {'steer': 0,'accel': 0,'brake': 0}
 
         self.CP = CP
         self.bus = can.ThreadSafeBus(interface='socketcan', channel='can0', bitrate=500000)
+        self.mode = 0
         self.reset = 0
         self.db = cantools.database.load_file(CP.dbc)
 
         self.pub_velocity = rospy.Publisher('/mobinha/car/velocity', Float32, queue_size=1)
         self.pub_gear = rospy.Publisher('/mobinha/car/gear', Int8, queue_size=1)
         self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
-        self.pub_ego_actuactors = rospy.Publisher('/mobinha/car/ego_actuactors', Vector3, queue_size=1)
-        rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
+        self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
+        #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
         self.rcv_velocity = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
         self.Accel_Override = 0
         self.Break_Override = 0
-        self.Steer_Override = 0
+        self.Steering_Overide = 0
 
         rospy.on_shutdown(self.cleanup)
 
     def reset_trigger(self):
         self.reset = 1
-        self.accel_val = 0
-        self.brake_val = 0
-        self.target_steer = 0.
+        self.init_target_actuator()
 
     def can_cmd(self, canCmd):
         state = self.control_state
-        if canCmd.disable:  # Full disablestate = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+        if canCmd.disable:  # Full disable
+            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
@@ -55,33 +55,42 @@ class IoniqTransceiver():
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
         elif canCmd.longActive:  # Only Longitudinal
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
-        self.control_state = state 
-        mode = 0
+        self.mode = 0
         if canCmd.enable:
-            mode = 1
-        if self.Accel_Override or self.Break_Override or self.Steer_Override:
-            mode = 2
+            self.mode = 1
+        if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+            self.mode = 2
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
-        self.pub_mode.publish(Int8(mode))
+        
+        self.control_state = state 
+        self.pub_mode.publish(Int8(self.mode))
 
     def target_actuators_cb(self, msg):
         self.target_actuators['steer'] = msg.x
         self.target_actuators['accel'] = msg.y
         self.target_actuators['brake'] = msg.z
 
-    # def set_actuators(self, actuators):
-        # self.target_actuators['steer'] = actuators.steer
-        # self.target_actuators['accel'] = actuators.accel
-        # self.target_actuators['brake'] = actuators.brake
+    def init_target_actuator(self):
+        self.target_actuators['steer'] = 0
+        self.target_actuators['accel'] = 0
+        self.target_actuators['brake'] = 0
         
+    def set_actuators(self, actuators):
+        if self.mode == 1:
+            self.target_actuators['steer'] = actuators.steer
+            self.target_actuators['accel'] = actuators.accel
+            self.target_actuators['brake'] = actuators.brake
+        else:
+            self.init_target_actuator()
+
     def receiver(self):
         data = self.bus.recv()
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 #'%.4f' % res['Gway_Lateral_Accel_Speed']
-                self.ego_actuactors['brake'] = res['Gway_Brake_Cylinder_Pressure']
+                self.ego_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
                 
             if (data.arbitration_id == 0x280):
                 res = self.db.decode_message(data.arbitration_id, data.data)
@@ -98,7 +107,7 @@ class IoniqTransceiver():
 
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                self.ego_actuactors['accel'] = res['Gway_Accel_Pedal_Position']
+                self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
 
                 gear_sel_disp = res['Gway_GearSelDisp']                 # use
                 if gear_sel_disp == "R":  # R
@@ -121,12 +130,12 @@ class IoniqTransceiver():
             #     plsRR = res['WHL_PlsRRVal']
             if(data.arbitration_id == 656):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                self.ego_actuactors['steer'] = res['Gway_Steering_Angle']
+                self.ego_actuators['steer'] = res['Gway_Steering_Angle']
                 vector3 = Vector3()
-                vector3.x = self.ego_actuactors['steer']
-                vector3.y = self.ego_actuactors['accel']
-                vector3.z = self.ego_actuactors['brake']
-                self.pub_ego_actuactors.publish(vector3)
+                vector3.x = self.ego_actuators['steer']
+                vector3.y = self.ego_actuators['accel']
+                vector3.z = self.ego_actuators['brake']
+                self.pub_ego_actuators.publish(vector3)
                 
             if (data.arbitration_id == 784):
                 res = self.db.decode_message(data.arbitration_id, data.data)
@@ -163,7 +172,7 @@ class IoniqTransceiver():
         self.can_cmd(CM.CC.canCmd)
 
         # TODO : Need Test
-        # self.set_actuators(CM.CC.acuators)
+        self.set_actuators(CM.CC.actuators)
 
         if self.timer(0.02):
             self.ioniq_control()

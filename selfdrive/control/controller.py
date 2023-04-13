@@ -37,7 +37,7 @@ class Controller:
         self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v):
-        th_a = 6 # 0~20 * gain -> 0~100 accel
+        th_a = 5 # 0~20 * gain -> 0~100 accel
         th_b = 13 # 0~20 * gain -> 0~100 brake
         val_data = max(-th_b, min(th_a, pid))
         gain = 5

@@ -52,7 +52,7 @@ class ObstacleDetector:
             v_rel = obj.value
             track_id = obj.label # uint type 0:clustering 1~: tracking
             w = obj.pose.orientation.z
-            sx, sy, sz = obj.pose.dimension.x, obj.pose.dimension.y, obj.pose.dimension.z
+            sx, sy, sz = obj.dimensions.x, obj.dimensions.y, obj.dimensions.z
             if self.CS is not None:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
@@ -107,10 +107,10 @@ class ObstacleDetector:
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6]))
                 
                 #From -50m~30m left bsd : -5.0~-1.0, right bsd : 1.0~4.5
-                if (-40*(1/self.CP.mapParam.precision)) < (obj_s-car_idx) < (30*(1/self.CP.mapParam.precision)):
-                    if -4.5<obj_d<-1.0:
+                if (-40*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (30*(1/self.CP.mapParam.precision)):
+                    if 4.5>obj[1]>1.0:
                         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif 1.0<obj_d<4.5:
+                    elif -1.0>obj[1]>-4.5:
                         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
 
         # sorting by s

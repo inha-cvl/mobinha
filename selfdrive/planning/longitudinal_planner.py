@@ -145,7 +145,7 @@ class LongitudinalPlanner:
         else:
             return max(2.5/HZ, min(5/HZ, error*gain))
         
-    def dynamic_consider_range(self, max_v, base_range=60):  # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=80):  # input max_v unit (m/s)
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX
     
     def planning_tracking(self, s, cur_v):
@@ -321,8 +321,6 @@ class LongitudinalPlanner:
                 self.target_v = 0.0
                 if CS.vEgo <= 0.001:
                     lgp = 2
-            elif pp == 4:
-                self.target_v = 0.0
             else:
                 lgp = 1
 

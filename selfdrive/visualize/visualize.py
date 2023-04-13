@@ -463,6 +463,7 @@ class MainWindow(QMainWindow, form_class):
 
         elif msg.data[0] == 2 and msg.data[1] == 2:
             self.status_label.setText("Arrived")
+            self.cmd_button_clicked(0)
             self.pause_button.setDisabled(True)
             self.start_button.setEnabled(True)
             self.initialize_button.setEnabled(True)
@@ -476,6 +477,7 @@ class MainWindow(QMainWindow, form_class):
         elif msg.data[0] == 4:
             self.state == 'TOR'
             self.status_label.setText("Take Over Request")
+            self.cmd_button_clicked(0)
             self.start_button.setDisabled(True)
             self.initialize_button.setEnabled(True)
             self.pause_button.setDisabled(True)

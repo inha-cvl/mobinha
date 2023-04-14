@@ -10,10 +10,10 @@ import pymap3d
 from collections import deque
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray
-from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Vector3
-
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import *
 from PyQt5 import uic
 import pyqtgraph as pg
@@ -54,7 +54,7 @@ class MainWindow(QMainWindow, form_class):
         self.lidar_view_manager = None
         self.record_list_file = "{}/record_list.txt".format(dir_path)
         self.rosbag_proc = None
-
+        self.media_thread = None
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
         
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
@@ -150,6 +150,9 @@ class MainWindow(QMainWindow, form_class):
         self.view_top_button.clicked.connect(lambda state, idx=1: self.view_button_clicked(idx))
         self.view_xy_top_button.clicked.connect(lambda state, idx=2: self.view_button_clicked(idx))
 
+        self.media_thread = MediaThread()
+        self.media_thread.start()
+
     def get_scenario_goal_msg(self):
         scenario_goal = PoseArray() 
         for goal in self.scenario_goal:
@@ -168,14 +171,18 @@ class MainWindow(QMainWindow, form_class):
                     if self.goal_update and self.scenario != 0:
                         scenario_goal = self.get_scenario_goal_msg()
                         self.pub_scenario_goal.publish(scenario_goal)
+                        
                     self.sm.update()
                     self.cm.update()
                     self.CS = self.sm.CS
                     self.CC = self.cm.CC
                     self.display()
                 elif self.state == 'OVER':
+                    self.media_thread.status = False
                     self.over_cnt += 1
                     if(self.over_cnt == 30):
+                        self.media_thread.quit()
+                        self.media_thread.wait()
                         print("[Visualize] Over")
                         sys.exit(0)
                 
@@ -430,6 +437,12 @@ class MainWindow(QMainWindow, form_class):
                 self.bsd_r_label.setText("❗️")
             else:
                 self.bsd_r_label.setText(" ")
+                
+        elif self.state != 'OVER':
+            if msg.x == 1:
+                self.media_thread.get_mode = 3
+            if msg.y == 1:
+                self.media_thread.get_mode = 4
 
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
@@ -542,12 +555,16 @@ class MainWindow(QMainWindow, form_class):
             return "Override"
         else:
             return "Manual"
-    
+
+
     def check_mode(self, mode):
         if self.mode != mode:
             self.mode = mode
+            if self.media_thread != None:
+                self.media_thread.get_mode = mode
             if mode == 2:
                 self.cmd_button_clicked(0) #act like click disable button
+
 
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
@@ -615,6 +632,32 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
+class MediaThread(QThread):
+    def __init__(self):
+        super().__init__()
+        self.status = True
+        self.mode = 0
+        self.get_mode = 0
+    
+    def run(self):
+        player = QMediaPlayer()
+        while self.status:
+            if self.mode != self.get_mode:
+                if self.get_mode == 1:
+                    url = dir_path+"/sounds/on.wav"
+                    self.mode = self.get_mode
+                elif self.get_mode == 3 or self.get_mode == 4:
+                    url = dir_path+"/sounds/bsd.wav"
+                    self.get_mode = self.mode
+                else:
+                    url = dir_path+"/sounds/off.wav"
+                    self.mode = self.get_mode
+                media = QMediaContent(QUrl.fromLocalFile(url))
+                player.setMedia(media)
+                player.play()
+                
+            time.sleep(1)
+
 def main():
     signal.signal(signal.SIGINT, signal_handler)
     print("[Visualize] Created")
@@ -639,7 +682,6 @@ def main():
         mainWindow.close()
         app.quit()
         sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

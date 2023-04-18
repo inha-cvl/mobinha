@@ -17,7 +17,7 @@ class IONIQ:
         self.time = time.time()
         self.acc_override = None
         self.brk_override = None
-        self.steering_overide = 0
+        self.steering_overide = None
         self.safety_status = None
 
         self.Gway_Accel_Pedal_Position = None
@@ -28,10 +28,7 @@ class IONIQ:
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
 
     def reset_trigger(self):
-        if self.acc_override or self.brk_override or self.steering_overide:
-            self.reset = 1
-        elif self.reset and self.override == 0:
-            self.reset = 0
+        self.reset = 1
 
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
@@ -43,7 +40,11 @@ class IONIQ:
     def daemon(self):
         while 1:
             self.longitudinal_cmd()
-            self.longitudinal_rcv()
+            self.longitudinal_rcv()   
+            if self.acc_override or self.brk_override or self.steering_overide:
+                print("OVERRIDE")
+                # self.enable = 0
+                # self.reset_trigger()
 
     def alive_counter(self, alv_cnt):
         alv_cnt += 1
@@ -57,7 +58,6 @@ class IONIQ:
                    'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
-        self.reset_trigger()
 
     def longitudinal_rcv(self):
         data = self.bus.recv()
@@ -81,11 +81,15 @@ class IONIQ:
             res = self.db.decode_message(656, data.data)
             self.temp_wheel = res['Gway_Steering_Angle']
         if self.timer(1):
+            print("=================================================")
             # print("input acl:", self.accel, " | input brake:", self.brake)  
-            print("safety:", self.safety_status, " | brake_active:", self.Gway_Brake_Active)
+            # print("safety:", self.safety_status, " | brake_active:", self.Gway_Brake_Active)
             print("acc:", self.Gway_Accel_Pedal_Position, " | brk:", self.Gway_Brake_Cylinder_Pressure)
             print("ovr(acl,brk,str):", self.acc_override, "|", self.brk_override, "|", self.steering_overide," | reset:", self.reset)
-
+            if self.enable:
+                    print("ENABLE")
+            else:
+                print("DISABLE")
     def sender(self, arb_id, msg):
         can_msg = can.Message(arbitration_id=arb_id,
                               data=msg, is_extended_id=False)
@@ -93,10 +97,6 @@ class IONIQ:
 
     def controller(self):
         while 1:
-            if self.enable:
-                print("ENABLE")
-            else:
-                print("DISABLE")
             cmd = input('99: enable|88: disable|1001: reset\naccel:0~6|brake:-1~-20\n')
             cmd = int(cmd)
             if 0 <= cmd <= 6:
@@ -107,16 +107,17 @@ class IONIQ:
                 self.accel = 0
             elif cmd == 99: #enable
                 self.enable = 1
+                self.brake = 0
+                self.accel = 0
+                self.reset = 0
             elif cmd == 88: #disable
                 self.enable = 0
+                # self.reset_trigger()
             elif cmd == 1001:
-                self.reset = 0
+                self.reset_trigger()
             elif cmd == 1000:
                 exit(0)
-            if self.acc_override or self.brk_override or self.steering_overide:
-                print("OVERRIDE")
-                self.enable = 0
-                self.reset_trigger()
+            
 
 if __name__ == '__main__':
     IONIQ = IONIQ()

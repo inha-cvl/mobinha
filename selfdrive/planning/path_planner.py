@@ -272,21 +272,22 @@ class PathPlanner:
                 if abs(l_idx-self.l_idx) <= 50:
                     self.l_idx = l_idx
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
+                my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.next_head_lane_id)
 
                 cw_s = get_nearest_crosswalk(self.lmap.lanelets, self.now_head_lane_id, local_point)
 
-                blinker = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, CS.vEgo)
+                blinker = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo)
                 forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id)
-
-                # look a head's idx's id == lane id => stop looking BSD
-                look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
-                look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
-
-                get_look_a_head_id = compare_id(look_a_head_id, l_idx, self.lmap.lanelets, self.local_id)
+                lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
 
                 if blinker != 0:
-                    lane_change_point = get_lane_change_point(self.local_id, self.l_idx, self.lmap.lanelets)
+                    # look a head's idx's id == lane id => stop looking BSD
+                    look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
+                    look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
+                    get_look_a_head_id = compare_id(look_a_head_id, my_neighbor_id)
+                    
+                    
                     if get_look_a_head_id and len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
                         if (blinker == 1 and self.lidar_bsd[0]) or (blinker == 2 and self.lidar_bsd[1]):
                             renew_path, renew_ids = get_renew_path( self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+30],self.local_path[lane_change_point-15:lane_change_point])
@@ -331,6 +332,8 @@ class PathPlanner:
                 pose.position.z = cw_s
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
+                pose.orientation.z = lane_change_point
+                
                 self.pub_lane_information.publish(pose)
 
                 poseArray = PoseArray()

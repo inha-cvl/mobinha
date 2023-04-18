@@ -31,11 +31,12 @@ class ObstacleDetector:
         # /mobinha/perception
         rospy.Subscriber('/mobinha/perception/lidar/track_box', BoundingBoxArray, self.lidar_cluster_box_cb)
         rospy.Subscriber('/mobinha/perception/camera/bounding_box',PoseArray, self.camera_bounding_box_cb)
+        rospy.Subscriber('/mobinha/planning/lane_information', Pose, self.lane_information_cb)
         # MORAI
         rospy.Subscriber('/morai/object_list', PoseArray, self.morai_object_list_cb)
         rospy.Subscriber('/morai/ego_topic', Pose, self.morai_ego_topic_cb)
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
-
+    
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
         self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/perception/lidar_bsd', Point, queue_size=1)
@@ -44,6 +45,9 @@ class ObstacleDetector:
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
+
+    def lane_information_cb(self, msg):
+        self.lane_change_point = msg.orientation.z
 
     def lidar_cluster_box_cb(self, msg):
         objects = []
@@ -100,20 +104,26 @@ class ObstacleDetector:
         right_bsd_obstacle_sd = []
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
-                obj_s, obj_d = ObstacleUtils.object2frenet(
-                    local_point, self.local_path, (obj[0]+dx, obj[1]+dy))
+                obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3.5 and obj_d < 3.5:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6]))
                 
-                #From -50m~30m left bsd : -5.0~-1.0, right bsd : 1.0~4.5
-                if (-35*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (15*(1/self.CP.mapParam.precision)):
-                    print(obj_d)
-                    if 4.5>obj_d>1.0:
+                #BSD1 : Ego Position Based Method
+                '''
+                if (-35*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (10*(1/self.CP.mapParam.precision)):
+                    #print(obj_s-car_idx, obj_d)
+                    if -4.5<obj_d<1.5:
                         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif -1.0>obj_d>-4.5:
+                    elif 1.5<obj_d<4.5:
                         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-
+                '''
+                #BSD2 : Lange Change Point Based Method
+                if self.lane_change_point-(20*(1/self.CP.mapParam.precision))<obj_s<self.lane_change_point+(5*(1/self.CP.mapParam.precision)):
+                    if -4.5<obj_d<1.5:
+                        left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                    elif 1.5<obj_d<4.5:
+                        right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
         left_bsd_obstacle_sd = sorted(left_bsd_obstacle_sd, key=lambda sd: sd[0])

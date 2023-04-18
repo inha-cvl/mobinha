@@ -1,3 +1,0 @@
-<launch>
-	<node pkg="relays" type="v2x_intersections.py" name="relay" output="screen"/>
-</launch>

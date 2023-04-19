@@ -40,18 +40,19 @@ class IoniqTransceiver():
         rospy.on_shutdown(self.cleanup)
 
     def reset_trigger(self):
+        self.init_target_actuator()
         if self.Accel_Override or self.Break_Override or self.Steering_Overide:
             self.reset = 1
         elif self.reset and (self.Accel_Override and self.Break_Override and self.Steering_Overide)== 0:
             self.reset = 0
-        self.init_target_actuator()
 
     def can_cmd(self, canCmd):
         state = self.control_state
         if canCmd.disable:  # Full disable
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
+            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
         elif canCmd.enable:  # Full
+            self.init_target_actuator()
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
         elif canCmd.latActive:  # Only Lateral
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
@@ -160,6 +161,8 @@ class IoniqTransceiver():
         # TODO : Need Test
         self.set_actuators(CM.CC.actuators)
 
-        if self.timer(0.02):
-            self.ioniq_control()
+        # if self.timer(0.02):
+        self.ioniq_control()
+        # print(self.target_actuators['brake'], self.target_actuators['accel'])
+            # print(self.Accel_Override, self.Break_Override, self.reset)
         self.receiver()

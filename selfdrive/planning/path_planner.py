@@ -296,8 +296,8 @@ class PathPlanner:
                     look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
                     get_look_a_head_id = compare_id(look_a_head_id, my_neighbor_id)
                     
-                    
-                    if get_look_a_head_id and len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
+                       # get_look_a_head_id and
+                    if len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
                         if (self.blinker == 1 and self.lidar_bsd[0]) or (self.blinker == 2 and self.lidar_bsd[1]):
                             renew_path, renew_ids = get_renew_path( self.local_id, self.blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10],self.local_path[lane_change_point-15:lane_change_point])
                             if renew_path != None:

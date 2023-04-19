@@ -37,6 +37,8 @@ class IoniqTransceiver():
         self.Break_Override = 0
         self.Steering_Overide = 0
 
+        self.prev_control_state = self.control_state.copy()
+
         rospy.on_shutdown(self.cleanup)
 
     def reset_trigger(self):
@@ -158,11 +160,14 @@ class IoniqTransceiver():
     def run(self, CM):
         self.can_cmd(CM.CC.canCmd)
 
+
+
         # TODO : Need Test
         self.set_actuators(CM.CC.actuators)
 
-        # if self.timer(0.02):
-        self.ioniq_control()
-        # print(self.target_actuators['brake'], self.target_actuators['accel'])
-            # print(self.Accel_Override, self.Break_Override, self.reset)
+        if self.timer(0.02):
+            if self.prev_control_state != self.control_state:
+                self.init_target_actuator()
+                self.prev_control_state = self.control_state.copy()
+            self.ioniq_control()
         self.receiver()

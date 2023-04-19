@@ -39,6 +39,8 @@ class PathPlanner:
         self.erase_global_path = []
         self.erase_global_id = []
         self.last_s = 99999
+        self.blinker = 0
+        self.blinker_target_id = None
 
         self.lidar_obstacle = []
         self.lidar_bsd = []
@@ -277,11 +279,18 @@ class PathPlanner:
 
                 cw_s = get_nearest_crosswalk(self.lmap.lanelets, self.now_head_lane_id, local_point)
 
-                blinker = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo)
-                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id)
+                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo)
+                if blinker != 0 and self.blinker_target_id == None:
+                    self.blinker_target_id = target_id
+                    self.blinker = blinker
+                elif splited_local_id == self.blinker_target_id:
+                    self.blinker_target_id = None
+                    self.blinker = 0
+                
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, self.blinker, self.lmap.lanelets, self.now_head_lane_id)
                 lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
 
-                if blinker != 0:
+                if self.blinker != 0:
                     # look a head's idx's id == lane id => stop looking BSD
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
                     look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
@@ -289,16 +298,16 @@ class PathPlanner:
                     
                     
                     if get_look_a_head_id and len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
-                        if (blinker == 1 and self.lidar_bsd[0]) or (blinker == 2 and self.lidar_bsd[1]):
-                            renew_path, renew_ids = get_renew_path( self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+30],self.local_path[lane_change_point-15:lane_change_point])
+                        if (self.blinker == 1 and self.lidar_bsd[0]) or (self.blinker == 2 and self.lidar_bsd[1]):
+                            renew_path, renew_ids = get_renew_path( self.local_id, self.blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10],self.local_path[lane_change_point-15:lane_change_point])
                             if renew_path != None:
                                 for i, renew_pt in enumerate(renew_path):
                                     self.local_path[lane_change_point-15+i]=renew_pt
                                     self.local_id[lane_change_point-15+i]=renew_ids[i]
-                                if  lane_change_point+65 < len(self.local_path)+1:
-                                    force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point+20], self.local_path[lane_change_point+45]], self.precision)
+                                if  lane_change_point+25 < len(self.local_path)+1:
+                                    force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-5], self.local_path[lane_change_point+20]], self.precision)
                                     for i, force_pt in enumerate(force_interpolate_path):
-                                        self.local_path[lane_change_point+20+i]=force_pt
+                                        self.local_path[lane_change_point-5+i]=force_pt
                                 else:
                                     pass
                             else:

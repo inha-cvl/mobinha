@@ -50,10 +50,17 @@ def lanelet_matching(tile, tile_size, t_pt):
 
 def get_my_neighbor(lanelets, my_id):
     l_id = lanelets[my_id]['adjacentLeft']
+    if l_id != None:
+        l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    else:
+        l_front_id = None
     #TODO: have to look left_front, right_front
-    #lanelets[l_id]['successor'][0 ]
+    #lanelets[l_id]['successor']
     r_id = lanelets[my_id]['adjacentRight']
-    return (l_id, r_id)
+    if r_id != None:
+        r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    return ((l_id,l_front_id),(r_id,r_front_id))
+
 
 def exchange_waypoint(target, now):
     exchange_waypoints = []
@@ -375,35 +382,29 @@ def get_a_b_for_curv(min, ignore):
     return a, b
 
 def get_a_b_for_blinker(min, ignore):
-    a = -30/(min-ignore)
+    a = -40/(min-ignore)
     b = 60-(ignore*a)
     return a,b
 
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
-    ws = int(60+(1.5*vEgo))
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+30)))
+    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+20)))
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
-        lf = idx
-
-    cut_ids = []
-    if lf+ws <len(ids):
-        cut_ids = [v for v in ids[lf:lf+ws]]
-    else:
-        cut_ids = [v for v in ids[lf:]]
-    for i in cut_ids:
-        next_id = i.split('_')[0]
-        if next_id == my_neighbor_id[0] or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
-            return 1
-        elif next_id == my_neighbor_id[1]:
-            return 2
+        lf = len(ids)-1
+    
+    next_id = ids[lf].split('_')[0]
+    if next_id in my_neighbor_id[0] or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        return 1, next_id
+    elif next_id in my_neighbor_id[1]:
+        return 2, next_id
         
-    return 0
+    return 0, None
+
 
 def compare_id(lh_id, my_neighbor_id):
-    if lh_id == my_neighbor_id[0] or lh_id == my_neighbor_id[1]:
+    if lh_id in my_neighbor_id[0] or lh_id in my_neighbor_id[1]:
         return False
     else:
         return True
@@ -462,7 +463,7 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
 
 def get_lane_change_point(ids, idx, my_neighbor_id):
     for i, id in enumerate(ids[idx:]):
-        if id.split('_')[0] == my_neighbor_id[0] or id.split('_')[0] == my_neighbor_id[1]:
+        if id.split('_')[0] in my_neighbor_id[0] or id.split('_')[0] in my_neighbor_id[1]:
             return idx+i
     return 999999
      

@@ -5,7 +5,7 @@ import rospy
 from novatel_oem7_msgs.msg import INSPVA
 import math
 from std_msgs.msg import Int8, Float32
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Imu, NavSatFix
 
 from selfdrive.message.car_message import car_state
@@ -19,8 +19,7 @@ class StateMaster:
     def __init__(self, CP):
 
         self.CS = CS
-        self.base_lla = [CP.mapParam.baseLatitude,
-                         CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
+        self.base_lla = [CP.mapParam.baseLatitude,CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
         self.v = 0.0
         self.pitch = 0.0
@@ -35,9 +34,7 @@ class StateMaster:
         self.gear = 0
         self.mode = 0
         self.blinker = 0
-        self.brake = 0
-        self.steer = 0
-        self.accel = 0
+        self.ego_actuators = {"steer":0.0, "accel":0.0, "brake":0.0}
 
         if NOVATEL_OK:
             rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
@@ -49,8 +46,7 @@ class StateMaster:
         rospy.Subscriber('/mobinha/car/gear', Int8, self.gear_cb)
         rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
-        rospy.Subscriber('/mobinha/car/temp_actuators',
-                         Pose, self.temp_actuators_cb)
+        rospy.Subscriber('/mobinha/car/ego_actuators',Vector3, self.ego_actuators_cb)
 
     def imu_cb(self, msg):
         orientation = msg.orientation
@@ -91,10 +87,10 @@ class StateMaster:
     def blinker_cb(self, msg):
         self.blinker = msg.data  # 0:stay 1:left 2:right
 
-    def temp_actuators_cb(self, msg):
-        self.brake = msg.position.x
-        self.steer = msg.position.y
-        self.accel = msg.position.z
+    def ego_actuators_cb(self, msg):
+        self.ego_actuators["steer"] = msg.x
+        self.ego_actuators["accel"] = msg.y
+        self.ego_actuators["brake"] = msg.z
 
     def update(self):
         car_state = self.CS._asdict()
@@ -112,12 +108,8 @@ class StateMaster:
         car_state["yawRate"] = self.yaw
         car_state["pitchRate"] = self.pitch
         car_state["rollRate"] = self.roll
-        car_state_actuators = car_state["actuators"]._asdict()
-        car_state_actuators["brake"] = self.brake
-        car_state_actuators["steer"] = self.steer
-        car_state_actuators["accel"] = self.accel
         car_state["actuators"] = self.CS.actuators._make(
-            car_state_actuators.values())
+            self.ego_actuators.values())
         car_state["gearShifter"] = self.gear
         car_state["cruiseState"] = self.mode
         car_state_button_event = car_state["buttonEvent"]._asdict()

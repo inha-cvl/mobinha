@@ -19,12 +19,9 @@ class MoraiTransceiver:
         self.pitch = 0.0
         self.yaw = 0.0
 
-        self.pub_novatel = rospy.Publisher(
-            '/novatel/oem7/inspva', INSPVA, queue_size=1)
-        self.pub_velocity = rospy.Publisher(
-            '/mobinha/car/velocity', Float32, queue_size=1)
-        self.pub_mode = rospy.Publisher(
-            '/mobinha/car/mode', Int8, queue_size=1)
+        self.pub_novatel = rospy.Publisher('/novatel/oem7/inspva', INSPVA, queue_size=1)
+        self.pub_velocity = rospy.Publisher('/mobinha/car/velocity', Float32, queue_size=1)
+        self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
         #From MORAI
         rospy.Subscriber("/gps", GPSMessage, self.gps_cb)
         rospy.Subscriber("/imu", Imu, self.imu_cb)

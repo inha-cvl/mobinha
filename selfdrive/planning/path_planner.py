@@ -5,6 +5,7 @@ import time
 from scipy.spatial import KDTree
 from std_msgs.msg import Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
+from visualization_msgs.msg import Marker
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -41,6 +42,7 @@ class PathPlanner:
 
         self.lidar_obstacle = []
         self.lidar_bsd = []
+        self.look_a_head_pos = [0,0]
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
 
@@ -66,6 +68,7 @@ class PathPlanner:
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/lidar_bsd', Point, self.lidar_bsd_cb)
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
+        rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
 
     def single_goal_cb(self, msg):
         self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
@@ -86,6 +89,9 @@ class PathPlanner:
 
     def nearest_obstacle_distance_cb(self, msg):
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
+    
+    def look_a_head_cb(self, msg):
+        self.look_a_head_pos = [msg.pose.position.x, msg.pose.position.y]
 
     def returnAppendedNonIntpPath(self):
         appended_non_intp_path = []
@@ -176,8 +182,8 @@ class PathPlanner:
             self.local_id = None
             self.temp_global_idx = 0
             self.l_idx = 0
-            self.l_cut = 500
-            self.l_nitt = 200
+            self.l_cut = 600
+            self.l_nitt = 250
             self.l_tail = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
@@ -238,7 +244,6 @@ class PathPlanner:
                 local_path = []
                 local_id = []
 
-                print(len(self.erase_global_path),"-", eg_idx, self.l_cut)
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
                         #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
@@ -267,25 +272,35 @@ class PathPlanner:
                 if abs(l_idx-self.l_idx) <= 50:
                     self.l_idx = l_idx
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
+                my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.next_head_lane_id)
 
                 cw_s = get_nearest_crosswalk(self.lmap.lanelets, self.now_head_lane_id, local_point)
 
-                blinker = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, CS.vEgo)
-                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker)
-                    
+                blinker = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo)
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id)
+                lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
+
                 if blinker != 0:
-                    lane_change_point = get_lane_change_point(self.local_id, self.l_idx, self.lmap.lanelets)
-                    if len(self.lidar_bsd) > 0: 
+                    # look a head's idx's id == lane id => stop looking BSD
+                    look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
+                    look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
+                    get_look_a_head_id = compare_id(look_a_head_id, my_neighbor_id)
+                    
+                    
+                    if get_look_a_head_id and len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
                         if (blinker == 1 and self.lidar_bsd[0]) or (blinker == 2 and self.lidar_bsd[1]):
                             renew_path, renew_ids = get_renew_path( self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+30],self.local_path[lane_change_point-15:lane_change_point])
                             if renew_path != None:
                                 for i, renew_pt in enumerate(renew_path):
                                     self.local_path[lane_change_point-15+i]=renew_pt
                                     self.local_id[lane_change_point-15+i]=renew_ids[i]
-                                force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point+20], self.local_path[lane_change_point+45]], self.precision)
-                                for i, force_pt in enumerate(force_interpolate_path):
-                                    self.local_path[lane_change_point+20+i]=force_pt
+                                if  lane_change_point+65 < len(self.local_path)+1:
+                                    force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point+20], self.local_path[lane_change_point+45]], self.precision)
+                                    for i, force_pt in enumerate(force_interpolate_path):
+                                        self.local_path[lane_change_point+20+i]=force_pt
+                                else:
+                                    pass
                             else:
                                 print("Take Over Request")
                                 pp = 4
@@ -317,6 +332,8 @@ class PathPlanner:
                 pose.position.z = cw_s
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
+                pose.orientation.z = lane_change_point
+                
                 self.pub_lane_information.publish(pose)
 
                 poseArray = PoseArray()

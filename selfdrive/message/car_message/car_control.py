@@ -2,9 +2,9 @@ from typing import NamedTuple
 
 
 class Actuators(NamedTuple):
-    brake: float = 0.0
     steer: float = 0.0
     accel: float = 0.0
+    brake: float = 0.0
 
 
 class CruiseControl(NamedTuple):

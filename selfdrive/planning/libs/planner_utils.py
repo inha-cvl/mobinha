@@ -48,6 +48,13 @@ def lanelet_matching(tile, tile_size, t_pt):
         return None
 
 
+def get_my_neighbor(lanelets, my_id):
+    l_id = lanelets[my_id]['adjacentLeft']
+    #TODO: have to look left_front, right_front
+    #lanelets[l_id]['successor'][0 ]
+    r_id = lanelets[my_id]['adjacentRight']
+    return (l_id, r_id)
+
 def exchange_waypoint(target, now):
     exchange_waypoints = []
     for n_pt in now:
@@ -326,26 +333,40 @@ def ref_to_csp(ref_path):
 
 
 def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
-    threshold = 200
+    threshold = 160
     return_v = ref_v
 
     # Determine the multiplier based on cur_v
-    if 0*KPH_TO_MPS <= cur_v < 10*KPH_TO_MPS:
-        coeffect = 0.0
-    elif 10*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
+    if 0*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
         coeffect = 0.05
     elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
-        coeffect = 0.15
-    elif 30*KPH_TO_MPS <= cur_v < 40*KPH_TO_MPS:
-        coeffect = 0.2
+        coeffect = 0.08
     else:
-        coeffect = 0.25
+        coeffect = 0.15
 
     if forward_curvature < threshold:
         return_v = ref_v - (abs(threshold - forward_curvature) * coeffect)
         return_v = return_v if return_v > min_v else min_v
 
     return return_v * KPH_TO_MPS
+
+def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
+    max_curvature = 160
+    min_curvature = 0
+    if forward_curvature < min_curvature:
+        forward_curvature = min_curvature
+    elif forward_curvature > max_curvature:
+        forward_curvature = max_curvature
+    
+    normalized_curvature = (forward_curvature - min_curvature) / (max_curvature - min_curvature)
+
+    decel = -min_v + (ref_v - min_v) * (1 - normalized_curvature)
+    return_v = ref_v - decel
+
+    if return_v > ref_v*MPS_TO_KPH:
+        return_v = ref_v*MPS_TO_KPH
+
+    return return_v*KPH_TO_MPS
 
 
 def get_a_b_for_curv(min, ignore):
@@ -354,21 +375,18 @@ def get_a_b_for_curv(min, ignore):
     return a, b
 
 def get_a_b_for_blinker(min, ignore):
-    a = -40/(min-ignore)
-    b = 70-(ignore*a)
+    a = -30/(min-ignore)
+    b = 60-(ignore*a)
     return a,b
 
-def get_blinker(idx, lanelets, ids, vEgo):
-    ws = int(30+(1.5*vEgo))
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
+    ws = int(60+(1.5*vEgo))
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+70, max(idx+(a*vEgo+b), idx+30)))
+    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+30)))
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
         lf = idx
-    
-    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
-    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
 
     cut_ids = []
     if lf+ws <len(ids):
@@ -377,14 +395,20 @@ def get_blinker(idx, lanelets, ids, vEgo):
         cut_ids = [v for v in ids[lf:]]
     for i in cut_ids:
         next_id = i.split('_')[0]
-        if next_id == now_l_id or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        if next_id == my_neighbor_id[0] or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
             return 1
-        elif next_id == now_r_id:
+        elif next_id == my_neighbor_id[1]:
             return 2
         
     return 0
 
-def get_forward_curvature(idx, path, yawRate, vEgo, blinker):
+def compare_id(lh_id, my_neighbor_id):
+    if lh_id == my_neighbor_id[0] or lh_id == my_neighbor_id[1]:
+        return False
+    else:
+        return True
+
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
     ws = int(70+(1.5*vEgo))
     a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
@@ -429,29 +453,16 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker):
         curvature = 1000
 
     if blinker > 0:
-        # print(blinker)
         curvature = 1000
+
+    if lanelets[now_id]['uTurn'] == True:
+        curvature = -20
+        
     return curvature, rot_x, rot_y, trajectory
 
-def check_lane_change_type(idx, lanelets, ids, change_idx):
-    next_id = ids[change_idx+1].split('_')[0]
-    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
-    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
-    
-    lane_change = 0
-    if (next_id == now_l_id and lane_change == 0) or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
-        lane_change = 1
-    elif next_id == now_r_id and lane_change == 0:
-        lane_change = 2
-
-    return lane_change
-
-def get_lane_change_point(ids, idx, lanelets):
-    now_l_id = lanelets[ids[idx].split('_')[0]]['adjacentLeft']
-    now_r_id = lanelets[ids[idx].split('_')[0]]['adjacentRight']
-
+def get_lane_change_point(ids, idx, my_neighbor_id):
     for i, id in enumerate(ids[idx:]):
-        if id.split('_')[0] == now_l_id or id.split('_')[0] == now_r_id :
+        if id.split('_')[0] == my_neighbor_id[0] or id.split('_')[0] == my_neighbor_id[1]:
             return idx+i
     return 999999
      

@@ -23,11 +23,19 @@ class Planning:
         self.planning_state = 'GOOD'
         self.morai_use = False
         self.need_init = True
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
         self.pub_planning_State = rospy.Publisher(
             '/mobinha/planning_state', Int16MultiArray, queue_size=1)
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+        
     def planning(self):
         pp = 0
         lgp = 0
@@ -43,12 +51,11 @@ class Planning:
                     pp = 0
                     lgp = 0
             elif self.state == 'START':
-                self.need_init = True
-                sm.update()
-                pp, local_path = path_planner.run(sm)
-                lgp = longitudinal_planner.run(sm, pp, local_path)
-                time.sleep(0.1)  # 10Hz
-
+                if self.timer(0.1):
+                    self.need_init = True
+                    sm.update()
+                    pp, local_path = path_planner.run(sm)
+                    lgp = longitudinal_planner.run(sm, pp, local_path)
                 if pp == 2 and lgp == 2:
                     time.sleep(1)
                     #print("[{}] For Restart, please initialize".format(self.__class__.__name__))

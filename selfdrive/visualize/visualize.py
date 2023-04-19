@@ -11,9 +11,9 @@ from collections import deque
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point
-
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import *
 from PyQt5 import uic
 import pyqtgraph as pg
@@ -46,6 +46,7 @@ class MainWindow(QMainWindow, form_class):
         self.system_state = False
         self.over_cnt = 0
         self.can_cmd = 0
+        self.mode = 0
         self.scenario = 0
         self.goal_update = True
         self.moving_start = False
@@ -53,8 +54,10 @@ class MainWindow(QMainWindow, form_class):
         self.lidar_view_manager = None
         self.record_list_file = "{}/record_list.txt".format(dir_path)
         self.rosbag_proc = None
-
+        self.media_thread = None
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
+        
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
         rospy.Subscriber('/mobinha/planning/target_v',Float32, self.target_v_cb)
@@ -83,6 +86,13 @@ class MainWindow(QMainWindow, form_class):
         self.initialize()
         self.connection_setting()
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+    
     def setting_topic_list_toggled(self):
         simple_writer = SimpleWriter(self.record_list_file, self)
         simple_writer.show()
@@ -140,6 +150,9 @@ class MainWindow(QMainWindow, form_class):
         self.view_top_button.clicked.connect(lambda state, idx=1: self.view_button_clicked(idx))
         self.view_xy_top_button.clicked.connect(lambda state, idx=2: self.view_button_clicked(idx))
 
+        self.media_thread = MediaThread()
+        self.media_thread.start()
+
     def get_scenario_goal_msg(self):
         scenario_goal = PoseArray() 
         for goal in self.scenario_goal:
@@ -151,24 +164,29 @@ class MainWindow(QMainWindow, form_class):
 
     def visualize_update(self):
         while self.system_state:
-            self.pub_state.publish(String(self.state))
-            self.pub_can_cmd.publish(Int8(self.can_cmd))
-            if self.state == 'START':
-                if self.goal_update and self.scenario != 0:
-                    scenario_goal = self.get_scenario_goal_msg()
-                    self.pub_scenario_goal.publish(scenario_goal)
-                self.sm.update()
-                self.cm.update()
-                self.CS = self.sm.CS
-                self.CC = self.cm.CC
-                self.display()
-            elif self.state == 'OVER':
-                self.over_cnt += 1
-                if(self.over_cnt == 30):
-                    print("[Visualize] Over")
-                    sys.exit(0)
-            time.sleep(0.1)
-            QCoreApplication.processEvents()
+            if self.timer(0.1):
+                self.pub_state.publish(String(self.state))
+                self.pub_can_cmd.publish(Int8(self.can_cmd))
+                if self.state == 'START':
+                    if self.goal_update and self.scenario != 0:
+                        scenario_goal = self.get_scenario_goal_msg()
+                        self.pub_scenario_goal.publish(scenario_goal)
+                        
+                    self.sm.update()
+                    self.cm.update()
+                    self.CS = self.sm.CS
+                    self.CC = self.cm.CC
+                    self.display()
+                elif self.state == 'OVER':
+                    self.media_thread.status = False
+                    self.over_cnt += 1
+                    if(self.over_cnt == 30):
+                        self.media_thread.quit()
+                        self.media_thread.wait()
+                        print("[Visualize] Over")
+                        sys.exit(0)
+                
+                QCoreApplication.processEvents()
 
     def rviz_frame(self, type):
         rviz_frame = rviz.VisualizationFrame()
@@ -217,7 +235,7 @@ class MainWindow(QMainWindow, form_class):
         self.graph_steer_data = {'x': deque([0]), 'ye': deque([0]), 'yt': deque([0])}
 
         self.graph_velocity_widget = self.create_graph_widget("Velocity", 0, 10, 0, 60)
-        self.graph_acceleration_widget = self.create_graph_widget("Acceleration",0, 10, -20, 20)
+        self.graph_acceleration_widget = self.create_graph_widget("Ego Acceleration",0, 10, -20, 20)
         self.graph_steer_widget = self.create_graph_widget("Steer", 0, 10, -35, 35)
 
         self.graph_velocity_widget.setLabel('left', 'v', units='km/h')
@@ -308,8 +326,8 @@ class MainWindow(QMainWindow, form_class):
             self.graph_velocity_data['yt'].append(self.target_v)
             self.graph_velocity_data['ye'].append(self.CS.vEgo*MPH_TO_KPH)
             self.graph_acceleration_data['x'].append(self.graph_time)
-            self.graph_acceleration_data['ya'].append(round(self.CC.actuators.accel, 3))
-            self.graph_acceleration_data['yb'].append(-round(self.CC.actuators.brake, 3))
+            self.graph_acceleration_data['ya'].append(round(self.CS.actuators.accel, 3))
+            self.graph_acceleration_data['yb'].append(-round(self.CS.actuators.brake, 3))
             self.graph_steer_data['x'].append(self.graph_time)
             self.graph_steer_data['yt'].append(0)
                 #round(self.CC.actuators.steer*self.CP.steerRatio, 3))
@@ -407,7 +425,7 @@ class MainWindow(QMainWindow, form_class):
 
             self.trajectory_plot.clear()
             self.trajectory_plot.setData(x=x, y=y)
-            self.info_curvature_label.setText(f"{msg.poses[0].position.z} m")
+            self.info_curvature_label.setText(f"{msg.poses[0].position.z:.1f} m")
     
     def lidar_bsd_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
@@ -419,6 +437,12 @@ class MainWindow(QMainWindow, form_class):
                 self.bsd_r_label.setText("❗️")
             else:
                 self.bsd_r_label.setText(" ")
+                
+        elif self.state != 'OVER':
+            if msg.x == 1 and self.CS.buttonEvent.leftBlinker == 1:
+                self.media_thread.get_mode = 3
+            if msg.y == 1 and self.CS.buttonEvent.rightBlinker == 1:
+                self.media_thread.get_mode = 4
 
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
@@ -452,6 +476,7 @@ class MainWindow(QMainWindow, form_class):
 
         elif msg.data[0] == 2 and msg.data[1] == 2:
             self.status_label.setText("Arrived")
+            self.cmd_button_clicked(0)
             self.pause_button.setDisabled(True)
             self.start_button.setEnabled(True)
             self.initialize_button.setEnabled(True)
@@ -465,6 +490,7 @@ class MainWindow(QMainWindow, form_class):
         elif msg.data[0] == 4:
             self.state == 'TOR'
             self.status_label.setText("Take Over Request")
+            self.cmd_button_clicked(0)
             self.start_button.setDisabled(True)
             self.initialize_button.setEnabled(True)
             self.pause_button.setDisabled(True)
@@ -522,10 +548,30 @@ class MainWindow(QMainWindow, form_class):
         if self.map_view_manager is not None:
             self.map_view_manager.setCurrentFrom(self.map_view_manager.getViewAt(idx))
 
+    def get_mode_label(self, mode):
+        if mode == 1:
+            return "Auto"
+        elif mode == 2:
+            return "Override"
+        else:
+            return "Manual"
+
+
+    def check_mode(self, mode):
+        if self.mode != mode:
+            self.mode = mode
+            if self.media_thread != None:
+                self.media_thread.get_mode = mode
+            if mode == 2:
+                self.cmd_button_clicked(0) #act like click disable button
+
+
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
         self.label_vehicle_yaw.setText(f"{self.CS.yawRate:.5f} deg")
         self.label_target_yaw.setText(f"{(float(self.CC.actuators.steer*self.CP.steerRatio)+self.CS.yawRate):.5f} deg")
+        self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
+        self.check_mode(self.CS.cruiseState)
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
 
@@ -541,8 +587,8 @@ class MainWindow(QMainWindow, form_class):
             self.imu_angle_label_3.setText(f"R: {self.CS.rollRate}")
             self.car_velocity_label.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
 
-            self.target_mode_label.setText("Manual" if self.can_cmd != 1 else "Auto")
-            self.car_mode_label.setText("Manual" if self.CS.cruiseState != 1 else "Auto")
+            self.target_mode_label.setText(self.get_mode_label(self.can_cmd))
+            self.car_mode_label.setText(self.get_mode_label(self.CS.cruiseState))
             self.car_steer_angle_label.setText(str(self.CS.actuators.steer))
             self.car_accel_label.setText(str(self.CS.actuators.accel))
             self.car_brake_label.setText(str(self.CS.actuators.brake))
@@ -552,7 +598,7 @@ class MainWindow(QMainWindow, form_class):
             self.target_brake_label.setText(str(self.CC.actuators.brake))
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            self.info_mode_label.setText("Manual Mode" if self.CS.cruiseState != 1 else "Auto Mode")
+            self.info_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
             self.info_velocity_label.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
             self.info_car_lat_label.setText(f"lat : {self.CS.position.latitude:.4f}")
             self.info_car_lng_label.setText(f"lng : {self.CS.position.longitude:.4f}")
@@ -586,6 +632,32 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
+class MediaThread(QThread):
+    def __init__(self):
+        super().__init__()
+        self.status = True
+        self.mode = 0
+        self.get_mode = 0
+    
+    def run(self):
+        player = QMediaPlayer()
+        while self.status:
+            if self.mode != self.get_mode:
+                if self.get_mode == 1:
+                    url = dir_path+"/sounds/on.wav"
+                    self.mode = self.get_mode
+                elif self.get_mode == 3 or self.get_mode == 4:
+                    url = dir_path+"/sounds/bsd.wav"
+                    self.get_mode = self.mode
+                else:
+                    url = dir_path+"/sounds/off.wav"
+                    self.mode = self.get_mode
+                media = QMediaContent(QUrl.fromLocalFile(url))
+                player.setMedia(media)
+                player.play()
+                
+            time.sleep(1)
+
 def main():
     signal.signal(signal.SIGINT, signal_handler)
     print("[Visualize] Created")
@@ -610,7 +682,6 @@ def main():
         mainWindow.close()
         app.quit()
         sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

@@ -439,9 +439,9 @@ class MainWindow(QMainWindow, form_class):
                 self.bsd_r_label.setText(" ")
                 
         elif self.state != 'OVER':
-            if msg.x == 1:
+            if msg.x == 1 and self.CS.buttonEvent.leftBlinker == 1:
                 self.media_thread.get_mode = 3
-            if msg.y == 1:
+            if msg.y == 1 and self.CS.buttonEvent.rightBlinker == 1:
                 self.media_thread.get_mode = 4
 
     def lane_information_cb(self, msg):

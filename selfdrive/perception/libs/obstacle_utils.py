@@ -34,15 +34,13 @@ class ObstacleUtils:
             proj_norm = 0
         proj_x = proj_norm*n_x
         proj_y = proj_norm*n_y
-
+        
+        frenet_s = point
         frenet_d = ObstacleUtils.distance(x_x, x_y, proj_x, proj_y)
 
-        center_x = 900 - wp[point-1][0]
-        center_y = -100 - wp[point-1][1]
-        distToPos = ObstacleUtils.distance(center_x, center_y, x_x, x_y)
-        distToRef = ObstacleUtils.distance(center_x, center_y, proj_x, proj_y)
-
-        if(distToPos > distToRef):
+        normal_x, normal_y = n_y, -n_x
+        dot_product = normal_x * x_x + normal_y * x_y
+        if dot_product < 0:
             frenet_d *= -1
 
-        return point, frenet_d
+        return frenet_s, frenet_d

@@ -297,7 +297,7 @@ class LongitudinalPlanner:
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
                     can_go = True
             if not can_go:
-                if self.lane_information[2] <= math.inf:
+                if -10 * self.M_TO_IDX < self.lane_information[2] < math.inf:
                     static_d2 = self.lane_information[2]-tl_offset-local_s
 
         return min(static_d1, static_d2)

@@ -255,7 +255,7 @@ class PathPlanner:
                     else:
                         local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                         local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
-                elif len(self.global_path ) < self.l_cut:
+                elif len(self.global_path) < self.l_cut:
                     local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                     local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
                 else:

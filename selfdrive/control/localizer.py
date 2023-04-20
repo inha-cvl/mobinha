@@ -13,7 +13,7 @@ class Localizer:
         self.br = tf.TransformBroadcaster()
 
         self.pub_ego_car = rospy.Publisher('/mobinha/control/ego_car', Marker, queue_size=1)
-        self.pub_enu_pose = rospy.Publisher('/enu_pose', Pose2D, queue_size=1)
+        # self.pub_enu_pose = rospy.Publisher('/enu_pose', Pose2D, queue_size=1)
 
     def run(self, sm):
         CS = sm.CS
@@ -28,4 +28,4 @@ class Localizer:
             'world'
         )
         self.pub_ego_car.publish(self.ego_car)
-        self.pub_enu_pose.publish(CS.position.x, CS.position.y, CS.yawRate)
+        # self.pub_enu_pose.publish(CS.position.x, CS.position.y, CS.yawRate)

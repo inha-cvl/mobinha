@@ -40,7 +40,6 @@ def write_to_csv(data):
 
 class LongitudinalPlanner:
     def __init__(self, CP):
-
         self.lidar_obstacle = None
         self.traffic_light_obstacle = None
         self.can_go_check_tick = -1
@@ -146,7 +145,8 @@ class LongitudinalPlanner:
             return max(2.5/HZ, min(5/HZ, error*gain))
         
     def dynamic_consider_range(self, max_v, base_range=80):  # input max_v unit (m/s)
-        return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX
+        #TODO: need to be tunning for M_TO_IDX removed
+        return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
     
     def planning_tracking(self, s, cur_v):
         if self.last_s == None:
@@ -177,18 +177,17 @@ class LongitudinalPlanner:
         self.prev_rel_v = rel_v
         return rel_v
 
-    def get_params(self, max_v, distance):
-        consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS)
-        norm_s = distance/consider_distance if 0 < distance < consider_distance else 0
+    def get_params(self, max_v, distance):# input distance unit (idx)
+        consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS) # consider_distance unit (m) #TODO:change distance unit -> idx
+        norm_s = distance/consider_distance if 0 < distance < consider_distance else 0 # wrong! idx/m
         min_s = distance*self.IDX_TO_M
         pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
-        ##
         target_v = max_v * pi
         return target_v, min_s
     
     def static_velocity_plan(self, cur_v, max_v, static_d):
-        target_v, min_s = self.get_params(max_v, static_d)
-        follow_distance = self.desired_follow_distance(cur_v)
+        target_v, min_s = self.get_params(max_v, static_d) # input static d unit (idx), output min_s unit (m)
+        follow_distance = self.desired_follow_distance(cur_v) #output follow_distance unit (m)
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
         self.last_s = None
         gain = self.get_static_gain(self.follow_error)
@@ -197,15 +196,13 @@ class LongitudinalPlanner:
         else: # PLUS is DECEL
             target_v = max(0, self.target_v - gain)
         # target_v = max(self.target_v - gain, min(target_v, self.target_v + gain))
-
         # print(min_s, follow_distance,self.follow_error, gain)
-
         # write_to_csv([1,0,round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
         return target_v
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d):
-        target_v, min_s = self.get_params(max_v, dynamic_d)
-        follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v)
+        target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
+        follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error)
         if self.follow_error < 0: # MINUS is ACCEL
@@ -301,7 +298,7 @@ class LongitudinalPlanner:
                     static_d2 = self.lane_information[2]-tl_offset-local_s
                     if static_d2 < -13*self.M_TO_IDX:
                         static_d2 = 150*self.M_TO_IDX
-        print("stop line idx: ", static_d2)
+        # print("stop line idx: ", static_d2)
         return min(static_d1, static_d2)
 
     def run(self, sm, pp=0, local_path=None):
@@ -313,8 +310,8 @@ class LongitudinalPlanner:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
             #local_curv_v= self.ref_v*KPH_TO_MPS
-            static_d = self.check_static_object(local_path, local_idx)
-            dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx)
+            static_d = self.check_static_object(local_path, local_idx) # output unit: idx
+            dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx
             target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
             target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d)
             self.target_v = min(target_v_static, target_v_dynamic)

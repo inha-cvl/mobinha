@@ -12,7 +12,6 @@ from geometry_msgs.msg import Vector3
 class IoniqTransceiver():
     def __init__(self, CP):
         self.control_state = {
-            'gear_en': 0x0,        # ON:0x1   OFF:0x0
             'steer_en': 0x0,       # ON:0x1   OFF:0x0
             'acc_en': 0x0,         # ON:0x1   OFF:0x0
         }
@@ -130,6 +129,10 @@ class IoniqTransceiver():
                 self.Accel_Override = res['Accel_Override']
                 self.Break_Override = res['Break_Override']
                 self.Steering_Overide = res['Steering_Overide']
+                if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+                    self.target_actuators['steer'] = self.ego_actuators['steer']
+                    self.target_actuators['accel'] = self.ego_actuators['accel']
+                    self.target_actuators['brake'] = self.ego_actuators['brake']
         except Exception as e:
             print(e)
 
@@ -157,15 +160,11 @@ class IoniqTransceiver():
 
     def run(self, CM):
         self.can_cmd(CM.CC.canCmd)
-
-
-
-        # TODO : Need Test
         self.set_actuators(CM.CC.actuators)
 
         if self.timer(0.02):
-            if self.prev_control_state != self.control_state:
-                self.init_target_actuator()
-                self.prev_control_state = self.control_state.copy()
+            # if self.prev_control_state != self.control_state:
+            #     self.init_target_actuator()
+            #     self.prev_control_state = self.control_state.copy()
             self.ioniq_control()
         self.receiver()

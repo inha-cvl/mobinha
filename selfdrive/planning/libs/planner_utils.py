@@ -50,15 +50,15 @@ def lanelet_matching(tile, tile_size, t_pt):
 
 def get_my_neighbor(lanelets, my_id):
     l_id = lanelets[my_id]['adjacentLeft']
-    if l_id != None:
-        l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    if l_id != None and lanelets[l_id]['successor'] is not None:
+        l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
     else:
         l_front_id = None
     #TODO: have to look left_front, right_front
     #lanelets[l_id]['successor']
     r_id = lanelets[my_id]['adjacentRight']
-    if r_id != None:
-        r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    if r_id != None and lanelets[r_id]['successor'] is not None:
+        r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
     else:
         r_front_id = None
     return ((l_id,l_front_id),(r_id,r_front_id))

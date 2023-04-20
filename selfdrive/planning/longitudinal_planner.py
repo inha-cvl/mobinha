@@ -243,7 +243,7 @@ class LongitudinalPlanner:
 
     def check_dynamic_objects(self, cur_v, local_s):
         offset = 10*self.M_TO_IDX
-        dynamic_d = 150*self.M_TO_IDX
+        dynamic_d = 150*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
@@ -306,19 +306,22 @@ class LongitudinalPlanner:
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
         self.pub_accerror.publish(Float32(self.follow_error))
-        if local_path != None and self.lane_information != None and CS.cruiseState == 1:
+        if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
-            local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
-            #local_curv_v= self.ref_v*KPH_TO_MPS
-            static_d = self.check_static_object(local_path, local_idx) # output unit: idx
-            dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx
-            target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
-            target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d)
-            self.target_v = min(target_v_static, target_v_dynamic)
+            if CS.cruiseState == 1:
+                local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
+                #local_curv_v= self.ref_v*KPH_TO_MPS
+                static_d = self.check_static_object(local_path, local_idx) # output unit: idx
+                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx
+                target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
+                target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d)
+                self.target_v = min(target_v_static, target_v_dynamic)
+            else:
+                self.target_v = CS.vEgo
 
             if pp == 2:
                 self.target_v = 0.0
-                if CS.vEgo <= 0.001:
+                if CS.vEgo <= 0.01:
                     lgp = 2
             else:
                 lgp = 1

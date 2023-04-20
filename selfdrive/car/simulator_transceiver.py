@@ -5,7 +5,7 @@ import pymap3d
 
 import rospy
 from std_msgs.msg import Float32, Int8
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, Vector3
 from novatel_oem7_msgs.msg import INSPVA
 
 
@@ -26,6 +26,7 @@ class Vehicle:
         self.yaw += self.v * dt * math.tan(wheel_angle) / self.L
         self.yaw = (self.yaw + math.pi) % (2 * math.pi) - math.pi
         tar_v = self.v
+
         if accel > 0 and brake == 0:
             tar_v += accel * dt
         elif accel == 0 and brake >= 0:
@@ -36,28 +37,24 @@ class Vehicle:
 
 class SimulatorTransceiver:
     def __init__(self, CP):
-        self.base_lla = [CP.mapParam.baseLatitude,
-                         CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
+        self.base_lla = [CP.mapParam.baseLatitude, CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
         self.wheel_angle = 0.0
         self.accel_brake = 0.0
         self.gear = 0
 
         # posco 957.413, -851.312, terminal -1601.567, 2375.599
-        self.ego = Vehicle(0.0, 0.0, math.radians(180), 0.0, 2.65)
+        #self.ego = Vehicle(165.861, 305.707, math.radians(142), 0.0, 2.65)
+        self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
-        self.mode = 0
 
-        self.pub_novatel = rospy.Publisher(
-            '/novatel/oem7/inspva', INSPVA, queue_size=1)
-        self.pub_velocity = rospy.Publisher(
-            '/mobinha/car/velocity', Float32, queue_size=1)
-        self.pub_gear = rospy.Publisher(
-            '/mobinha/car/gear', Int8, queue_size=1)
-
-        rospy.Subscriber(
-            '/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
+        self.pub_novatel = rospy.Publisher('/novatel/oem7/inspva', INSPVA, queue_size=1)
+        self.pub_velocity = rospy.Publisher('/mobinha/car/velocity', Float32, queue_size=1)
+        self.pub_gear = rospy.Publisher('/mobinha/car/gear', Int8, queue_size=1)
+        self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
+        self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
+        rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
 
     def init_pose_cb(self, msg):
         x = msg.pose.pose.position.x
@@ -69,9 +66,16 @@ class SimulatorTransceiver:
             quaternion)
         self.ego.set(x, y, yaw)
 
+    def can_cmd(self, canCmd):
+        mode = 0
+        if canCmd.enable:
+            mode = 1
+        self.pub_mode.publish(Int8(mode))
+
     def run(self, CM):
         CC = CM.CC
         self.pub_gear.publish(self.gear)
+        self.can_cmd(CM.CC.canCmd)
 
         dt = 0.1
         if not CC.canCmd.disable:
@@ -80,14 +84,10 @@ class SimulatorTransceiver:
         else:
             x, y, yaw, v = self.ego.x, self.ego.y, self.ego.yaw, self.ego.v
 
-        if v > 0:
-            self.gear = 3
-        else:
-            self.gear = 0
+        self.gear = 3 if v>0 else 0
 
         inspva = INSPVA()
-        lat, lon, alt = pymap3d.enu2geodetic(
-            x, y, 0, self.base_lla[0], self.base_lla[1], self.base_lla[2])
+        lat, lon, alt = pymap3d.enu2geodetic(x, y, 0, self.base_lla[0], self.base_lla[1], self.base_lla[2])
         inspva.latitude = lat
         inspva.longitude = lon
         inspva.height = alt
@@ -95,5 +95,11 @@ class SimulatorTransceiver:
         inspva.pitch = self.pitch
         inspva.azimuth = -(math.degrees(yaw)+270)
 
+        vector3 = Vector3()
+        vector3.x = CC.actuators.steer
+        vector3.y = CC.actuators.accel
+        vector3.z = CC.actuators.brake
+        self.pub_ego_actuators.publish(vector3)
+        
         self.pub_novatel.publish(inspva)
         self.pub_velocity.publish(Float32(v))

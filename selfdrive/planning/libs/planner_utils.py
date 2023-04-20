@@ -7,12 +7,10 @@ from scipy.spatial import KDTree
 
 import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
-from selfdrive.visualize.viz_utils import *
+from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-IDX_TO_M = 0.5
-M_TO_IDX = 2
 
 
 def euc_distance(pt1, pt2):
@@ -50,9 +48,24 @@ def lanelet_matching(tile, tile_size, t_pt):
         return None
 
 
+def get_my_neighbor(lanelets, my_id):
+    l_id = lanelets[my_id]['adjacentLeft']
+    if l_id != None:
+        l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    else:
+        l_front_id = None
+    #TODO: have to look left_front, right_front
+    #lanelets[l_id]['successor']
+    r_id = lanelets[my_id]['adjacentRight']
+    if r_id != None:
+        r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    else:
+        r_front_id = None
+    return ((l_id,l_front_id),(r_id,r_front_id))
+
+
 def exchange_waypoint(target, now):
     exchange_waypoints = []
-
     for n_pt in now:
         min_dist = float('inf')
         change_pt = []
@@ -72,8 +85,8 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     right_id = lanelets[now_lane_id]['adjacentRight']
 
     if left_id is not None or right_id is not None:
-        obs_idx = obs_len*M_TO_IDX if obs_len * \
-            M_TO_IDX < len(local_path_from_now) else len(local_path_from_now)-1
+        obs_idx = obs_len if obs_len < len(
+            local_path_from_now) else len(local_path_from_now)-1
         local_path_from_now = local_path_from_now[:obs_idx+1]
 
     else:
@@ -97,31 +110,36 @@ def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
     for id_, data in lanelets.items():
         if id_ == now_lane_id:
             if len(data['crosswalk']) > 0:
-                crosswalks = data['crosswalk']
-                for arr in crosswalks:
-                    crosswalk.extend(arr)
+                crosswalks = data['crosswalk'][0]
+                if isinstance(crosswalks[0], list):
+                    for arr in crosswalks:
+                        crosswalk.extend(arr)
+                else:
+                    crosswalk.append(crosswalks)
+
     now_cw_idx = math.inf
 
     for cw_wp in crosswalk:
         idx = local_point.query(cw_wp, 1)[1]
         if idx < now_cw_idx:
             now_cw_idx = idx
-
     return now_cw_idx
 
 
+def filter_same_points(points):
+    filtered_points = []
+    pre_pt = None
+
+    for pt in points:
+        if pre_pt is None or pt != pre_pt:
+            filtered_points.append(pt)
+
+        pre_pt = pt
+
+    return filtered_points
+
+
 def interpolate(points, precision):
-    def filter_same_points(points):
-        filtered_points = []
-        pre_pt = None
-
-        for pt in points:
-            if pre_pt is None or pt != pre_pt:
-                filtered_points.append(pt)
-
-            pre_pt = pt
-
-        return filtered_points
 
     points = filter_same_points(points)
     if len(points) < 2:
@@ -149,15 +167,28 @@ def interpolate(points, precision):
     return itp_points, s, yaw, k
 
 
-def ref_interpolate(points, precision, min_v, ref_v):
+def ref_interpolate(points, precision):
+    points = filter_same_points(points)
     wx, wy = zip(*points)
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
-    for n, ds in enumerate(np.arange(0.0, itp.s[-1], precision)):
+    for ds in np.arange(0.0, itp.s[-1], precision):
         x, y = itp.calc_position(ds)
         itp_points.append((float(x), float(y)))
 
     return itp_points, itp.s[-1]
+
+
+def id_interpolate(non_intp, intp, non_intp_id):
+    itp_ids = []
+    non_intp_idx = 0
+    for wp in intp:
+        calc_non_intp_idx = calc_idx(non_intp, wp)
+        if calc_non_intp_idx > non_intp_idx:
+            non_intp_idx = calc_non_intp_idx
+        n_id = non_intp_id[non_intp_idx]
+        itp_ids.append(n_id)
+    return itp_ids
 
 
 def node_matching(lanelet, l_id, l_idx):
@@ -249,10 +280,8 @@ def node_to_waypoints2(lanelet, shortest_path):
             s_idx, e_idx = (lanelet[split_id[0]]['cut_idx'][int(split_id[1])])
             alpha_path.append(lanelet[split_id[0]]
                               ['waypoints'][int((s_idx+e_idx)//2)])
-            for i in range(len(alpha_path)):
-                final_id_path.append(str("{}{}".format(id, i)))
+            final_id_path.append(str(id))
             final_path.extend(alpha_path)
-
         else:
             alpha_path.extend(lanelet[split_id[0]]['waypoints'])
             for i in range(len(alpha_path)):
@@ -300,10 +329,8 @@ def calc_idx(pts, pt):
 
     if min_idx == len(pts) - 1:
         pt1 = pts[min_idx-1]
-        pt2 = pts[min_idx]
     else:
         pt1 = pts[min_idx]
-        pt2 = pts[min_idx+1]
 
     return min_idx
 
@@ -314,53 +341,176 @@ def ref_to_csp(ref_path):
     return csp
 
 
-def max_v_by_curvature(path, i, ref_v, yawRate, ws=50, curv_threshold=200):
-    i += 5
+def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
+    threshold = 160
     return_v = ref_v
+
+    # Determine the multiplier based on cur_v
+    if 0*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
+        coeffect = 0.05
+    elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
+        coeffect = 0.08
+    else:
+        coeffect = 0.15
+
+    if forward_curvature < threshold:
+        return_v = ref_v - (abs(threshold - forward_curvature) * coeffect)
+        return_v = return_v if return_v > min_v else min_v
+
+    return return_v * KPH_TO_MPS
+
+def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
+    max_curvature = 160
+    min_curvature = 0
+    if forward_curvature < min_curvature:
+        forward_curvature = min_curvature
+    elif forward_curvature > max_curvature:
+        forward_curvature = max_curvature
+    
+    normalized_curvature = (forward_curvature - min_curvature) / (max_curvature - min_curvature)
+
+    decel = -min_v + (ref_v - min_v) * (1 - normalized_curvature)
+    return_v = ref_v - decel
+
+    if return_v > ref_v*MPS_TO_KPH:
+        return_v = ref_v*MPS_TO_KPH
+
+    return return_v*KPH_TO_MPS
+
+
+def get_a_b_for_curv(min, ignore):
+    a = -90 / (min-ignore)
+    b = 60-(ignore*a)
+    return a, b
+
+def get_a_b_for_blinker(min, ignore):
+    a = -40/(min-ignore)
+    b = 60-(ignore*a)
+    return a,b
+
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
+    a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
+    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+20)))
+    if lf < 0:
+        lf = 0
+    elif lf > len(ids)-1:
+        lf = len(ids)-1
+    
+    next_id = ids[lf].split('_')[0]
+    if next_id in my_neighbor_id[0] or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        return 1, next_id
+    elif next_id in my_neighbor_id[1]:
+        return 2, next_id
+        
+    return 0, None
+
+
+def compare_id(lh_id, my_neighbor_id):
+    if lh_id in my_neighbor_id[0] or lh_id in my_neighbor_id[1]:
+        return False
+    else:
+        return True
+
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
+    ws = int(70+(1.5*vEgo))
+    a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
     y = []
-    curvated = 1000
-    if i < len(path)-1:
-        if i+ws < len(path):
-            x = [v[0] for v in path[i:i+ws]]
-            y = [v[1] for v in path[i:i+ws]]
+    trajectory = []
+    id_list = None
+
+    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx-30)))
+    if lf < 0:
+        lf = 0
+    elif lf > len(path)-1:
+        lf = idx
+
+    if lf+ws < len(path):
+        x = [v[0] for v in path[lf:lf+ws]]
+        y = [v[1] for v in path[lf:lf+ws]]
+        trajectory = path[lf:lf+ws]
+
+    else:
+        x = [v[0] for v in path[lf:]]
+        y = [v[1] for v in path[lf:]]
+        trajectory = path[lf:]
+
+    x = np.array([(v-x[0]) for v in x])
+    y = np.array([(v-y[0]) for v in y])
+
+    # For Trajectory plotting
+    origin_plot = np.vstack((x, y))
+    rotation_radians = math.radians(-yawRate) + math.pi/2
+    rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
+                             [math.sin(rotation_radians), math.cos(rotation_radians)]])
+    rot_x, rot_y = list(rotation_mat@origin_plot)
+    
+    # Calculate curvature by trajectory
+    if len(x) > 2:
+        cr = np.polyfit(rot_y, rot_x, 2)
+        if cr[0] != 0:
+            curvature = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
         else:
-            x = [v[0] for v in path[i:]]
-            y = [v[1] for v in path[i:]]
+            curvature = 1000
+    else:
+        curvature = 1000
 
-        x = np.array([(v-x[0]) for v in x])
-        y = np.array([(v-y[0]) for v in y])
+    if blinker > 0:
+        curvature = 1000
 
-        origin_plot = np.vstack((x, y))
-        rotation_radians = math.radians(-yawRate) + math.pi/2
-        rotation_mat = np.array([[math.cos(rotation_radians), -math.sin(rotation_radians)],
-                                 [math.sin(rotation_radians), math.cos(rotation_radians)]])
-        rotation_plot = rotation_mat@origin_plot
-        x, y = rotation_plot
+    if lanelets[now_id]['uTurn'] == True:
+        curvature = -20
+        
+    return curvature, rot_x, rot_y, trajectory
 
-        if len(x) > 2:
-            cr = np.polyfit(x, y, 2)
-            if cr[0] != 0:
-                curvated = ((1+(2*cr[0]+cr[1])**2) ** 1.5)/np.absolute(2*cr[0])
-            else:
-                curvated = curv_threshold
-        else:
-            curvated = curv_threshold+1
+def get_lane_change_point(ids, idx, my_neighbor_id):
+    for i, id in enumerate(ids[idx:]):
+        if id.split('_')[0] in my_neighbor_id[0] or id.split('_')[0] in my_neighbor_id[1]:
+            return idx+i
+    return 999999
+     
+def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_from_now, local_path_before_now):
+    target_lane_id = None
+    renew_path = None
+    renew_id = None
+    #check renew possibility
+    if change_direction == 1 : #Left
+        target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentRight']
+        if target_lane_id == None:
+            return None,None
+    elif change_direction == 2 :
+        target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentLeft']
+        if target_lane_id == None:
+            return None,None
+    else:
+        return None,None
+    
+    before_ids = []
+    renew_ids = []
+    if target_lane_id != None:
+        #local_path_from_now = local_path_from_now[:idx+2]
+        before_lane_id = ids[lane_change_idx-15].split('_')[0]
+        before_path = exchange_waypoint(lanelets[before_lane_id]['waypoints'], local_path_before_now)
+        for _ in range(len(before_path)):
+            before_ids.append(before_lane_id)
+        renew_path = exchange_waypoint(lanelets[target_lane_id]['waypoints'], local_path_from_now)
+        for _ in range(len(renew_path)):
+            renew_ids.append(target_lane_id)
 
-        if curvated < curv_threshold:
-            return_v = ref_v - (abs(curv_threshold-curvated)*0.2)
-            return_v = return_v if return_v > 0 else 7
-
-    return return_v*KPH_TO_MPS, curvated, x, y
-
+    else:
+        return None,None
+    
+    return before_path+renew_path, before_ids+renew_ids
 
 def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
     link = lanelets[next_id]
-    p = (link['waypoints'][0][0], link['waypoints'][0][1])
+    p = (link['waypoints'][len(link['waypoints'])//5][0],
+         link['waypoints'][len(link['waypoints'])//5][1])
     q = (link['waypoints'][len(link['waypoints'])//2][0],
          link['waypoints'][len(link['waypoints'])//2][1])
-    r = (link['waypoints'][-1][0], link['waypoints'][-1][1])
+    r = (link['waypoints'][len(link['waypoints'])//5*4][0],
+         link['waypoints'][len(link['waypoints'])//5*4][1])
 
     val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
 
@@ -370,36 +520,13 @@ def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
         return 'R'
     if link['leftTurn']:
         return 'L'
-    threshold = 100
+    threshold = 10
     if -threshold < val < threshold:
         return 'S'  # collinear
     elif val <= -threshold:
         return 'L'  # left turn
     elif val >= threshold:
         return 'R'  # right turn
-
-
-def get_blinker(lanelets, ids, ego_idx, look_forward=40):
-    look_forward *= M_TO_IDX
-    blinker = 0
-
-    now_id = ids[ego_idx].split('_')[0]
-
-    left_id = lanelets[now_id]['adjacentLeft']
-    right_id = lanelets[now_id]['adjacentRight']
-
-    try:
-        forward_ids = np.array([fid.split('_')[0]
-                               for fid in ids[ego_idx:ego_idx+look_forward]])
-        if np.any(forward_ids == left_id):
-            blinker = 1
-        elif np.any(forward_ids == right_id):
-            blinker = 2
-        else:
-            blinker = 0
-        return blinker
-    except IndexError:
-        return blinker
 
 
 def set_lane_ids(lst):

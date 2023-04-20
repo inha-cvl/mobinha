@@ -19,11 +19,9 @@ class STParam(NamedTuple):
     dtExp: float = 1.0
 
 
-class CCParam(NamedTuple):
-    vGain: float = 0.5
-    dGain: float = 1.0
-    tGap: float = 0.8
-
+class SLParam(NamedTuple): #Sigmoid Logit Probability function params
+    mu: float = 0.5
+    v: float = 1.6
 
 class LongitudinalTuning(NamedTuple):
     kpBP: float = 0.0
@@ -96,7 +94,7 @@ class CarParam(NamedTuple):
     mapParam: MapParam = MapParam()
 
     stParam: STParam = STParam()
-    ccParam: CCParam = CCParam()
+    slParam: SLParam = SLParam()
 
     minEnableSpeed: float = 0.0
     maxEnableSpeed: float = 0.0

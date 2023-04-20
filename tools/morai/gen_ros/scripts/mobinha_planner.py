@@ -6,11 +6,11 @@ import signal
 import time
 
 from std_msgs.msg import String
-from morai_msgs.msg import EgoVehicleStatus, ObjectStatusList, CtrlCmd, GetTrafficLightStatus
+from morai_msgs.msg import EgoVehicleStatus, ObjectStatusList, CtrlCmd, GetTrafficLightStatus, Lamps
 import tf
 from math import pi, radians
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Int8
 from geometry_msgs.msg import Pose, PoseArray
 
 
@@ -22,29 +22,27 @@ class MoraiPlanner():
     def __init__(self):
         self.state = 'WAITING'
         self.CM = None
-        #publisher
+        # publisher
         self.ctrl_pub = rospy.Publisher(
             '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
+        self.lamp_pub = rospy.Publisher('/lamps', Lamps, queue_size=1)
         self.obj_list_pub = rospy.Publisher(
             '/morai/object_list', PoseArray, queue_size=1)
         self.traffic_light_pub = rospy.Publisher(
             '/morai/traffic_light', PoseArray, queue_size=1)
         self.ego_topic_pub = rospy.Publisher(
             '/morai/ego_topic', Pose, queue_size=1)
-        #subscriber
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
-        # rospy.Subscriber('/mobinha/control/wheel_angle',
-        #                  Float32, self.wheel_angle_cb)
-        # rospy.Subscriber('/mobinha/control/accel_brake',
-        #                  Float32, self.accel_brake_cb)
         rospy.Subscriber("/Ego_topic", EgoVehicleStatus,
-                         self.statusCB)  # Vehicle Status Subscriber
+                         self.statusCB)
         rospy.Subscriber("/Object_topic", ObjectStatusList,
                          self.object_topic_cb)
         rospy.Subscriber("/GetTrafficLightStatus",
                          GetTrafficLightStatus, self.get_traffic_light_status_cb)
+        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
         self.ctrl_msg = CtrlCmd()
+        self.lamps = Lamps()
 
     def planning(self, CM):
         self.wheel_angle = 0
@@ -61,7 +59,6 @@ class MoraiPlanner():
             elif self.state == 'INITIALIZE':
                 self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
                 self.ctrl_pub.publish(self.ctrl_msg)
-
             elif self.state == 'OVER':
                 self.ctrl_msg = self.init_ctrl_cmd(self.ctrl_msg)
                 self.ctrl_pub.publish(self.ctrl_msg)
@@ -76,27 +73,25 @@ class MoraiPlanner():
         ctrl_cmd.brake = 1.0
         return ctrl_cmd
 
+    def blinker_cb(self, msg):
+        self.lamps.turnSignal = msg.data
+        self.lamp_pub.publish(self.lamps)
+
+    def clip(self, x, lo, hi):
+        return max(lo, min(hi, x))
+
+    def rmin(self, x, hi):
+        return min(hi, x)
+
     def set_ctrl_cmd(self, ctrl_cmd):
-        ctrl_cmd.steering = radians(self.CM.CC.actuators.steer*13.75)
-        ctrl_cmd.accel = self.CM.CC.actuators.accel * \
-            3 if self.CM.CC.actuators.accel*3 < 4 else 4
-        ctrl_cmd.brake = self.CM.CC.actuators.brake * \
-            3 if self.CM.CC.actuators.brake*3 < 4 else 4
+        ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
+        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel, 10)/10 * 0.65 # 2.5m/s^2
+        # ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake, 10)/10 * 0.11 # 7m/s^2
+        if 0 < self.CM.CC.actuators.brake/10*0.11 < 0.01:
+            ctrl_cmd.brake = 0.003
+        else:
+            ctrl_cmd.brake = self.rmin(1.1*(self.CM.CC.actuators.brake/10*0.11)-0.011, 0.11)
         return ctrl_cmd
-
-    # def wheel_angle_cb(self, msg):
-    #     if msg.data != 0:
-    #         self.ctrl_msg.steering = radians(msg.data)
-
-    # def accel_brake_cb(self, msg):
-    #     if msg.data != 0:
-    #         accel_brake = msg.data
-    #         if accel_brake > 0:
-    #             self.ctrl_msg.accel = accel_brake
-    #             self.ctrl_msg.brake = 0
-    #         else:
-    #             self.ctrl_msg.accel = 0
-    #             self.ctrl_msg.brake = -1 * accel_brake
 
     def statusCB(self, data):  # Vehicle Status Subscriber
         self.status_msg = data
@@ -104,6 +99,7 @@ class MoraiPlanner():
         pose.position.x = data.position.x
         pose.position.y = data.position.y
         pose.position.z = data.position.z
+        pose.orientation.w = data.velocity.x
         self.ego_topic_pub.publish(pose)
         self.velocity = data.velocity.x
         self.heading = data.heading
@@ -116,18 +112,21 @@ class MoraiPlanner():
             pose.position.x = obj.position.x
             pose.position.y = obj.position.y
             pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         for obj in data.obstacle_list:
             pose = Pose()
             pose.position.x = obj.position.x
             pose.position.y = obj.position.y
             pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         for obj in data.pedestrian_list:
             pose = Pose()
             pose.position.x = obj.position.x
             pose.position.y = obj.position.y
             pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         self.obj_list_pub.publish(object_list)
 
@@ -156,9 +155,10 @@ class MoraiPlanner():
         elif st == 5:  # Red with YUellow
             stt = 13
 
+        #cls, size, prob
         pose.position.x = stt
-        pose.position.y = 0.8
-        pose.position.z = 0.3
+        pose.position.y = 0.3
+        pose.position.z = 0.8
         traffic_light_list.poses.append(pose)
         self.traffic_light_pub.publish(traffic_light_list)
 

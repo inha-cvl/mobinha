@@ -12,6 +12,12 @@ def getBaseLLA(map_path):
         return base[0], base[1], base[2]
 
 
+def getPrecision(map_name):
+    precision = 0.5
+    if map_name == 'KCity':
+        precision = 0.5
+    return precision
+
 class IONIQ:
     def __init__(self, map_name='KCity'):
         self.CP = car_param.CarParam()
@@ -29,8 +35,8 @@ class IONIQ:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 7  # min_v
-        car_param_dict["maxEnableSpeed"] = 30  # ref_v
+        car_param_dict["minEnableSpeed"] = 15  #15 # min_v
+        car_param_dict["maxEnableSpeed"] = 46  #50 # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 3.00  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
@@ -48,7 +54,7 @@ class IONIQ:
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
         car_param_lateral_tuning_lqr["l"] = 3.0  # Lfc, look-ahead distance
-        car_param_lateral_tuning_lqr["k"] = 1.5  # k, look forward gain
+        car_param_lateral_tuning_lqr["k"] = 1.6 # origin 1.5 lane change good is 2  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
@@ -79,25 +85,26 @@ class SIMULATOR:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 7  # min_v
-        car_param_dict["maxEnableSpeed"] = 20  # ref_v
+        car_param_dict["maxEnableSpeed"] = 50  # ref_v
+
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
-        car_param_dict["steerRatio"] = 13.73
+        car_param_dict["steerRatio"] = 1
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 0.75  # K_P
-        car_param_longitudinal_tuning["kiV"] = 0.15  # K_I
-        car_param_longitudinal_tuning["kf"] = 0.06  # K_D
+        car_param_longitudinal_tuning["kpV"] = 2.98   # K_P
+        car_param_longitudinal_tuning["kiV"] = 2.38  # K_I
+        car_param_longitudinal_tuning["kf"] = 0.0  # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 
         car_param_lateral_tuning = car_param_dict["lateralTuning"]._asdict()
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
-        car_param_lateral_tuning_lqr["l"] = 3.0  # Lfc, look-ahead distance
-        car_param_lateral_tuning_lqr["k"] = 0.85  # k, look forward gain
+        car_param_lateral_tuning_lqr["l"] = 1.5  # Lfc, look-ahead distance
+        car_param_lateral_tuning_lqr["k"] = 1.0  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
@@ -119,7 +126,7 @@ class MORAI:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-
+        car_param_map_param["precision"] = getPrecision(map_name)
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng
@@ -127,18 +134,18 @@ class MORAI:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 10  # min_v
-        car_param_dict["maxEnableSpeed"] = 60  # ref_v
+        car_param_dict["minEnableSpeed"] = 15  # min_v
+        car_param_dict["maxEnableSpeed"] = 50  # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.8  # L, vehicle length
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
-        car_param_dict["steerRatio"] = 13.73
+        car_param_dict["steerRatio"] = 1
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 2.98   # K_P
-        car_param_longitudinal_tuning["kiV"] = 2.38  # K_I
-        car_param_longitudinal_tuning["kf"] = 0.0  # K_D
+        car_param_longitudinal_tuning["kpV"] = 10.0   # K_P
+        car_param_longitudinal_tuning["kiV"] = 0.1  # K_I
+        car_param_longitudinal_tuning["kf"] = 1.0 # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 

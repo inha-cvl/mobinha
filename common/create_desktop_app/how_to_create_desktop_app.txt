@@ -1,0 +1,4 @@
+sudo cp ./mobinha.desktop /usr/share/applications/
+cd /usr/share/applizations
+sudo chmod +x mobinha.desktop
+Add favorite

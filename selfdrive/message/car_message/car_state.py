@@ -19,9 +19,9 @@ class WheelSpeeds(NamedTuple):
 
 
 class Actuators(NamedTuple):
-    brake: float = 0.0
     steer: float = 0.0
     accel: float = 0.0
+    brake: float = 0.0
 
 class ButtonEvent(NamedTuple):
     leftBlinker: int = 0

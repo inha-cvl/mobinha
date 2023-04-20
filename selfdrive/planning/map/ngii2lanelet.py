@@ -187,7 +187,7 @@ class NGII2LANELET:
                 return right_ids
             
         def pre_link_stop_point(id_,stop_point, sum_link_length):
-            while sum_link_length < 80:
+            while sum_link_length < 120:
                 pre_ids = lanelets[id_]['predecessor']
                 if len(pre_ids) != 0:
                     for i in pre_ids:
@@ -611,7 +611,7 @@ class NGII2LANELET:
         for id_, data in lanelets.items():
             if data['length'] < 35.0:
                 yaw_err = get_yaw_error(data['yaw'][0], data['yaw'][-1])
-                if abs(math.degrees(yaw_err)) > 160:
+                if abs(math.degrees(yaw_err)) > 150:
                     data['uTurn'] = True
         
         for id_, data in lanelets.items():

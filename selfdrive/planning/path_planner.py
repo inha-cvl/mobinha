@@ -241,11 +241,11 @@ class PathPlanner:
                     self.head_lane_ids = self.head_lane_ids[1:]
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.l_nitt) and len(self.erase_global_path) > self.l_cut):
-                
+    
                 eg_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 local_id = []
-
+                print(len(self.erase_global_path), eg_idx, self.l_cut)
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
                         #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
@@ -255,6 +255,9 @@ class PathPlanner:
                     else:
                         local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                         local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
+                elif len(self.global_path ) < self.l_cut:
+                    local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
+                    local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
                 else:
                     #local_path = self.erase_global_path[eg_idx -self.l_tail:]
                     local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:]

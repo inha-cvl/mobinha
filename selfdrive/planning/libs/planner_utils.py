@@ -59,6 +59,8 @@ def get_my_neighbor(lanelets, my_id):
     r_id = lanelets[my_id]['adjacentRight']
     if r_id != None:
         r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
+    else:
+        r_front_id = None
     return ((l_id,l_front_id),(r_id,r_front_id))
 
 

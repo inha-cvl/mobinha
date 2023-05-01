@@ -347,9 +347,9 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     # Determine the multiplier based on cur_v
     if 0*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
-        coeffect = 0.05
+        coeffect = 0.09
     elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
-        coeffect = 0.08
+        coeffect = 0.11
     else:
         coeffect = 0.15
 
@@ -361,7 +361,7 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
 def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     max_curvature = 160
-    min_curvature = 0
+    min_curvature = -40
     if forward_curvature < min_curvature:
         forward_curvature = min_curvature
     elif forward_curvature > max_curvature:
@@ -369,12 +369,12 @@ def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     
     normalized_curvature = (forward_curvature - min_curvature) / (max_curvature - min_curvature)
 
-    decel = -min_v + (ref_v - min_v) * (1 - normalized_curvature)
+    decel = (ref_v - min_v) * (1 - normalized_curvature)
     return_v = ref_v - decel
-
-    if return_v > ref_v*MPS_TO_KPH:
-        return_v = ref_v*MPS_TO_KPH
-
+    
+    if return_v > ref_v:
+        return_v = ref_v
+    print(decel, return_v)
     return return_v*KPH_TO_MPS
 
 
@@ -459,7 +459,7 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
         curvature = 1000
 
     if lanelets[now_id]['uTurn'] == True:
-        curvature = -20
+        curvature = -40
         
     return curvature, rot_x, rot_y, trajectory
 

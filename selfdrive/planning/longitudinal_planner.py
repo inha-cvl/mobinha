@@ -219,8 +219,10 @@ class LongitudinalPlanner:
         #     v_lead = 25 * KPH_TO_MPS
         # elif v_lead <= 35 * KPH_TO_MPS:
         #     v_lead = 25 * KPH_TO_MPS
-        else:
+        elif 10 * KPH_TO_MPS < v_lead <= 45 * KPH_TO_MPS:
             v_lead = 30 * KPH_TO_MPS
+        else:
+            v_lead = v_lead
             
         # print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
         # write_to_csv([0,round((v_lead) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
@@ -309,7 +311,7 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
+                local_curv_v = calculate_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
                 #local_curv_v= self.ref_v*KPH_TO_MPS
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx

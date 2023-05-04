@@ -11,6 +11,8 @@ from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
+M_TO_IDX = 2
+IDX_TO_M = 0.5
 
 
 def euc_distance(pt1, pt2):
@@ -374,28 +376,31 @@ def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
     
     if return_v > ref_v:
         return_v = ref_v
-    print(decel, return_v)
+    # print(decel, return_v)
     return return_v*KPH_TO_MPS
 
 
 def get_a_b_for_curv(min, ignore):
-    a = -90 / (min-ignore)
-    b = 60-(ignore*a)
+    # a = -90 / (min-ignore)
+    # b = 60-(ignore*a)
+    a = 4.05
+    b = -26.25
     return a, b
 
 def get_a_b_for_blinker(min, ignore):
-    a = -40/(min-ignore)
-    b = 60-(ignore*a)
+    # a = -40/(min-ignore)
+    # b = 60-(ignore*a)
+    a = 4.05
+    b = 1.25
     return a,b
 
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+20)))
+    lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 10m ~ 55m
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
         lf = len(ids)-1
-    
     next_id = ids[lf].split('_')[0]
     if next_id in my_neighbor_id[0] or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
         return 1, next_id
@@ -412,14 +417,14 @@ def compare_id(lh_id, my_neighbor_id):
         return True
 
 def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
-    ws = int(70+(1.5*vEgo))
+    ws = int((1.5*vEgo)+70)
     a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
     y = []
     trajectory = []
     id_list = None
 
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx-30)))
+    lf = int(min(idx+60, max(idx+(a*vEgo+b)*M_TO_IDX, idx-30))) # -15m~30m
     if lf < 0:
         lf = 0
     elif lf > len(path)-1:
@@ -476,13 +481,16 @@ def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_
     #check renew possibility
     if change_direction == 1 : #Left
         target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentRight']
+        print("target_lane_id", target_lane_id)
         if target_lane_id == None:
             return None,None
     elif change_direction == 2 :
         target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentLeft']
+        print("target_lane_id", target_lane_id)
         if target_lane_id == None:
             return None,None
     else:
+        print('else TOR')
         return None,None
     
     before_ids = []

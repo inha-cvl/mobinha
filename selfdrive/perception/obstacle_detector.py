@@ -42,6 +42,7 @@ class ObstacleDetector:
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/perception/lidar_bsd', Point, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
+        self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -102,6 +103,7 @@ class ObstacleDetector:
         obstacle_sd = []
         left_bsd_obstacle_sd = []
         right_bsd_obstacle_sd = []
+        around_obstacle_sd = []
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
@@ -110,25 +112,30 @@ class ObstacleDetector:
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6]))
                 
                 #BSD1 : Ego Position Based Method
-                '''
+                
                 if (-35*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (10*(1/self.CP.mapParam.precision)):
                     #print(obj_s-car_idx, obj_d)
-                    if -4.5<obj_d<1.5:
+                    if -4<obj_d<-1:
+                        left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                    elif 1<obj_d<4:
+                        right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                
+                #BSD2 : Lange Change Point Based Method
+                '''
+                if self.lane_change_point-(20*(1/self.CP.mapParam.precision))<obj_s<self.lane_change_point+(5*(1/self.CP.mapParam.precision)):
+                    if -4.5<obj_d<-1.5:
                         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
                     elif 1.5<obj_d<4.5:
                         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 '''
-                #BSD2 : Lange Change Point Based Method
-                if self.lane_change_point-(20*(1/self.CP.mapParam.precision))<obj_s<self.lane_change_point+(5*(1/self.CP.mapParam.precision)):
-                    if -4.5<obj_d<1.5:
-                        left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif 1.5<obj_d<4.5:
-                        right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                #BSD3 : Time Based Method
+                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -5 and obj_d < 5:
+                        around_obstacle_sd.append((obj_s, obj_d, obj[3]))
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
         left_bsd_obstacle_sd = sorted(left_bsd_obstacle_sd, key=lambda sd: sd[0])
         right_bsd_obstacle_sd = sorted(right_bsd_obstacle_sd, key=lambda sd: sd[0])
-        return obstacle_sd, viz_obstacle, left_bsd_obstacle_sd, right_bsd_obstacle_sd 
+        return obstacle_sd, viz_obstacle, left_bsd_obstacle_sd, right_bsd_obstacle_sd, around_obstacle_sd
             
     def get_traffic_light_objects(self):
         traffic_light_obs = []
@@ -149,7 +156,7 @@ class ObstacleDetector:
             car_idx = local_point.query(
                 (self.CS.position.x, self.CS.position.y), 1)[1]
 
-            obstacle_sd, viz_obstacle, left_bsd_obstacle_sd, right_bsd_obstacle_sd = self.get_lidar_objects(
+            obstacle_sd, viz_obstacle, left_bsd_obstacle_sd, right_bsd_obstacle_sd, around_obstacle_sd = self.get_lidar_objects(
                 local_point, car_idx)
 
             lidar_obstacle = PoseArray()
@@ -159,7 +166,7 @@ class ObstacleDetector:
                 pose.position.y = sd[0]
                 pose.position.z = sd[1]
                 pose.orientation.w = sd[2]# relative velocity
-                pose.orientation.z = sd[3]
+                pose.orientation.z = sd[3] # track id
                 lidar_obstacle.poses.append(pose)
             obstacle_distance = (
                 obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1
@@ -168,6 +175,15 @@ class ObstacleDetector:
             bsd.x = int(bool(left_bsd_obstacle_sd)) #function converts the list to a boolean value (True if the list is not empty, False if it is)
             bsd.y = int(bool(right_bsd_obstacle_sd))
 
+            around_obstacle = PoseArray()
+            for sd in around_obstacle_sd:
+                pose = Pose()
+                pose.position.x = 0  # 0:dynamic
+                pose.position.y = sd[0]
+                pose.position.z = sd[1]
+                pose.orientation.w = sd[2]# relative velocity
+                around_obstacle.poses.append(pose)
+                
             # TODO: Traffic Light
             traffic_light_obs = self.get_traffic_light_objects()
             traffic_light_obstacle = PoseArray()
@@ -181,6 +197,7 @@ class ObstacleDetector:
             self.pub_obstacle_distance.publish(Float32(obstacle_distance))
             self.pub_lidar_obstacle.publish(lidar_obstacle)
             self.pub_lidar_bsd.publish(bsd)
+            self.pub_around_obstacle.publish(around_obstacle)
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)

@@ -43,6 +43,8 @@ class PathPlanner:
         self.blinker_target_id = None
         self.renewal_path_in_progress = False
         self.renewal_path_timer = 0
+        self.turnsignal = 0
+        self.turnsignal_state = False
 
         self.lidar_obstacle = []
         self.lidar_bsd = []
@@ -75,6 +77,10 @@ class PathPlanner:
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
         rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
         rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb)
+        rospy.Subscriber('/turnsignal', Int8, self.blinker_cb)
+
+    def blinker_cb(self, msg):
+        self.turnsignal = msg.data
 
     def single_goal_cb(self, msg):
         self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
@@ -290,6 +296,30 @@ class PathPlanner:
 
                 cw_s = get_nearest_crosswalk(self.lmap.lanelets, self.now_head_lane_id, local_point)
 
+                ## Lane Change Local Signal Ver.
+                if self.turnsignal != 0 and not self.turnsignal_state:
+                    renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, self.local_path[self.l_idx+100:self.l_idx+200])
+                    if renew_path != None:
+                        for i, renew_pt in enumerate(renew_path):
+                            self.local_path[self.l_idx+100+i]=renew_pt
+                            self.local_id[self.l_idx+100+i]=renew_ids[i]
+                        if  self.l_idx+200+20 < len(self.local_path)+1:
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+100-5], self.local_path[self.l_idx+100+20]], self.precision)
+                            for i, force_pt in enumerate(force_interpolate_path):
+                                self.local_path[self.l_idx+100-5+i]=force_pt                  
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+200-5], self.local_path[self.l_idx+200+20]], self.precision)
+                            for i, force_pt in enumerate(force_interpolate_path):
+                                self.local_path[self.l_idx+200-5+i]=force_pt
+                        else:
+                            print("lane change path is too short")
+                            pass
+                    else:
+                        print("lane change path is too long")
+                        pass
+                    self.turnsignal_state = True
+                elif self.turnsignal == 0:
+                    self.turnsignal_state = False
+                
                 blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo)
                 if blinker != 0 and self.blinker_target_id == None:
                     self.blinker_target_id = target_id
@@ -303,7 +333,6 @@ class PathPlanner:
                 ## Lane Change Local Path Planning
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo
-                print(self.around_obstacle)
                 if self.blinker != 0 and not self.renewal_path_in_progress:
                     # look a head's idx's id == lane id => stop looking BSD
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]

@@ -481,16 +481,13 @@ def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_
     #check renew possibility
     if change_direction == 1 : #Left
         target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentRight']
-        print("target_lane_id", target_lane_id)
         if target_lane_id == None:
             return None,None
     elif change_direction == 2 :
         target_lane_id = lanelets[ids[lane_change_idx].split('_')[0]]['adjacentLeft']
-        print("target_lane_id", target_lane_id)
         if target_lane_id == None:
             return None,None
     else:
-        print('else TOR')
         return None,None
     
     before_ids = []
@@ -509,6 +506,38 @@ def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_
         return None,None
     
     return before_path+renew_path, before_ids+renew_ids
+
+def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_point2point):
+    target_lane_id = None
+    renew_path = None
+    # renew_id = None
+    #get 50m front target lane id 
+    if change_direction == 1 : #Left
+        target_lane_id = lanelets[ids[l_idx+100].split('_')[0]]['adjacentLeft']
+        if target_lane_id == None:
+            return None,None
+    elif change_direction == 2 :
+        target_lane_id = lanelets[ids[l_idx+100].split('_')[0]]['adjacentRight']
+        if target_lane_id == None:
+            return None,None
+    else:
+        return None,None
+    
+    # before_ids = []
+    renew_ids = []
+    if target_lane_id != None:
+        #local_path_point2point = local_path_point2point[:idx+2]
+        # before_lane_id = ids[l_idx+100-15].split('_')[0]
+        # before_path = exchange_waypoint(lanelets[before_lane_id]['waypoints'], local_path_before_now)
+        # for _ in range(len(before_path)):
+        #     before_ids.append(before_lane_id)
+        renew_path = exchange_waypoint(lanelets[target_lane_id]['waypoints'], local_path_point2point)
+        for _ in range(len(renew_path)):
+            renew_ids.append(target_lane_id)
+    else:
+        return None,None
+    
+    return renew_path, renew_ids
 
 def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn

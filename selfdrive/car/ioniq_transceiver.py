@@ -161,7 +161,7 @@ class IoniqTransceiver():
     def run(self, CM):
         self.can_cmd(CM.CC.canCmd)
         self.set_actuators(CM.CC.actuators)
-
+        print(self.Accel_Override, self.Break_Override, self.Steering_Overide)
         if self.timer(0.02):
             # if self.prev_control_state != self.control_state:
             #     self.init_target_actuator()

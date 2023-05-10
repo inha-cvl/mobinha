@@ -14,15 +14,12 @@ MPS_TO_KPH = 3.6
 M_TO_IDX = 2
 IDX_TO_M = 0.5
 
-
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
-
 
 def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
-
 
 def lanelet_matching(tile, tile_size, t_pt):
     row = int(t_pt[0] // tile_size)
@@ -33,7 +30,6 @@ def lanelet_matching(tile, tile_size, t_pt):
 
     for i in range(-1, 2):
         for j in range(-1, 2):
-
             selected_tile = tile.get((row+i, col+j))
             if selected_tile is not None:
                 for id_, data in selected_tile.items():
@@ -43,12 +39,10 @@ def lanelet_matching(tile, tile_size, t_pt):
                             min_dist = dist
                             l_id = id_
                             l_idx = data['idx'][idx]
-
     if l_id is not None:
         return (l_id, l_idx)
     else:
         return None
-
 
 def get_my_neighbor(lanelets, my_id):
     l_id = lanelets[my_id]['adjacentLeft']
@@ -65,7 +59,6 @@ def get_my_neighbor(lanelets, my_id):
         r_front_id = None
     return ((l_id,l_front_id),(r_id,r_front_id))
 
-
 def exchange_waypoint(target, now):
     exchange_waypoints = []
     for n_pt in now:
@@ -79,7 +72,6 @@ def exchange_waypoint(target, now):
         exchange_waypoints.append(change_pt)
 
     return exchange_waypoints
-
 
 def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
 

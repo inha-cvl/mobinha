@@ -29,10 +29,11 @@ class Controller:
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
 
     def limit_steer_change(self, steer):
-        steer_diff = steer - self.prev_steer
-        if abs(steer_diff) > 10:
-            steer = self.prev_steer + (10 if steer_diff > 0 else -10)
-        self.prev_steer = steer
+        #TODO:limit logic error need modified 
+        # steer_diff = steer - self.prev_steer
+        # if abs(steer_diff) > 10:
+        #     steer = self.prev_steer + (10 if steer_diff > 0 else -10)
+        # self.prev_steer = steer
         return steer
     
     def local_path_cb(self, msg):
@@ -56,7 +57,7 @@ class Controller:
         elif val_data <= 0.:
             accel_val = 0.0
             #self.target_v>0 and 
-            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v >0 and cur_v >= 3/3.6) else 32
+            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v >0 and cur_v >= 3/3.6) else 33
         
         return accel_val, brake_val
     
@@ -74,7 +75,9 @@ class Controller:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             steer = wheel_angle*self.steer_ratio
+            print("origin steer:",steer)
             steer = self.limit_steer_change(steer)
+            print("limit steer:",steer)
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100

@@ -341,7 +341,7 @@ class PathPlanner:
                         
                     for obs in self.around_obstacle:
                         # if -4.5<obs[2]<-1.5  and lanechangepoint prev or -1.5<obs[2]<1.5 and lanechangepoint next:
-                        if get_look_a_head_id and -3.5<obs[2]<-1.5 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
+                        if blinker == 1 and get_look_a_head_id and -3.5<obs[2]<-1.5 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
@@ -367,7 +367,7 @@ class PathPlanner:
                                     print("Take Over Request")
                                     pp = 4
                                     return pp, self.local_path
-                        elif get_look_a_head_id and 1.5<obs[2]<3.5 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
+                        elif blinker == 2 and get_look_a_head_id and 1.5<obs[2]<3.5 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 

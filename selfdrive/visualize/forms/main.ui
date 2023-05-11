@@ -145,12 +145,12 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
-          <string>songdo</string>
+          <string>songdo-site</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>songdo-site</string>
+          <string>songdo</string>
          </property>
         </item>
         <item>

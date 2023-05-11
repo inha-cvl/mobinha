@@ -30,11 +30,11 @@ class Controller:
 
     def limit_steer_change(self, steer):
         #TODO:limit logic error need modified 
-        steer_diff = steer - self.prev_steer
-        if abs(steer_diff) > 10:
-            steer = self.prev_steer + (10 if steer_diff > 0 else -10)
-        else:
-            self.prev_steer = steer
+        # steer_diff = steer - self.prev_steer
+        # if abs(steer_diff) > 10:
+        #     steer = self.prev_steer + (10 if steer_diff > 0 else -10)
+        # else:
+        #     self.prev_steer = steer
         # self.prev_steer = steer
         return steer
     

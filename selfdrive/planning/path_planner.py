@@ -259,7 +259,6 @@ class PathPlanner:
                 eg_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 local_id = []
-                # print(len(self.erase_global_path), eg_idx, self.l_cut)
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
                         #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
@@ -298,18 +297,19 @@ class PathPlanner:
 
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
-                    renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, self.local_path[self.l_idx+100:self.l_idx+200])
+                    renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, 
+                                                                 self.local_path[self.l_idx+90:self.l_idx+250])
                     if renew_path != None:
                         for i, renew_pt in enumerate(renew_path):
-                            self.local_path[self.l_idx+100+i]=renew_pt
-                            self.local_id[self.l_idx+100+i]=renew_ids[i]
-                        if  self.l_idx+200+20 < len(self.local_path)+1:
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+100-5], self.local_path[self.l_idx+100+20]], self.precision)
+                            self.local_path[self.l_idx+90+i]=renew_pt
+                            self.local_id[self.l_idx+90+i]=renew_ids[i]
+                        if  self.l_idx+250+20 < len(self.local_path)+1:
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+90-5], self.local_path[self.l_idx+90+20]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+100-5+i]=force_pt                  
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+200-5], self.local_path[self.l_idx+200+20]], self.precision)
+                                self.local_path[self.l_idx+90-5+i]=force_pt                  
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+250-5], self.local_path[self.l_idx+250+20]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+200-5+i]=force_pt
+                                self.local_path[self.l_idx+250-5+i]=force_pt
                         else:
                             print("lane change path is too short")
                             pass
@@ -328,12 +328,12 @@ class PathPlanner:
                     self.blinker_target_id = None
                     self.blinker = 0
                 
-                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, self.blinker, self.lmap.lanelets, self.now_head_lane_id)
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id)
                 lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
                 ## Lane Change Local Path Planning
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo
-                if self.blinker != 0 and not self.renewal_path_in_progress:
+                if blinker != 0 and not self.renewal_path_in_progress:
                     # look a head's idx's id == lane id => stop looking BSD
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
                     look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
@@ -349,7 +349,7 @@ class PathPlanner:
                                 safedistance = 10 # 5 * 2 : front and back 
                             if targetcarmovingdistance - (safedistance/2)<d<targetcarmovingdistance + (safedistance/2):
                                 #get renewable local path
-                                renew_path, renew_ids = get_renew_path(self.local_id, self.blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
+                                renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
                                         self.local_path[lane_change_point-15+i]=renew_pt
@@ -375,7 +375,7 @@ class PathPlanner:
                                 safedistance = 10 # 5 * 2 : front and back 
                             if targetcarmovingdistance - (safedistance/2)<d<targetcarmovingdistance + (safedistance/2):
                                 #get renewable local path
-                                renew_path, renew_ids = get_renew_path(self.local_id, self.blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
+                                renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
                                         self.local_path[lane_change_point-15+i]=renew_pt

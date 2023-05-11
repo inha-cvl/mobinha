@@ -311,7 +311,8 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
+                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo)
+                #local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
                 #local_curv_v= self.ref_v*KPH_TO_MPS
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx

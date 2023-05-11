@@ -30,9 +30,11 @@ class Controller:
 
     def limit_steer_change(self, steer):
         #TODO:limit logic error need modified 
-        # steer_diff = steer - self.prev_steer
-        # if abs(steer_diff) > 10:
-        #     steer = self.prev_steer + (10 if steer_diff > 0 else -10)
+        steer_diff = steer - self.prev_steer
+        if abs(steer_diff) > 10:
+            steer = self.prev_steer + (10 if steer_diff > 0 else -10)
+        else:
+            self.prev_steer = steer
         # self.prev_steer = steer
         return steer
     
@@ -75,9 +77,9 @@ class Controller:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             steer = wheel_angle*self.steer_ratio
-            print("origin steer:",steer)
+            # print("origin steer:",steer)
             steer = self.limit_steer_change(steer)
-            print("limit steer:",steer)
+            # print("limit steer:",steer)
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100

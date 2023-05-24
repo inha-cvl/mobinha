@@ -341,13 +341,13 @@ class PathPlanner:
                         
                     for obs in self.around_obstacle:
                         # if -4.5<obs[2]<-1.5  and lanechangepoint prev or -1.5<obs[2]<1.5 and lanechangepoint next:
-                        if blinker == 1 and get_look_a_head_id and -3.5<obs[2]<-1.5 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
+                        if blinker == 1 and get_look_a_head_id and -4.2<obs[2]<-1.7 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
                             if safedistance < 10:
                                 safedistance = 10 # 5 * 2 : front and back 
-                            if targetcarmovingdistance - (safedistance/2)<d<targetcarmovingdistance + (safedistance/2):
+                            if targetcarmovingdistance - (safedistance/4)<d<targetcarmovingdistance + (safedistance*3/4):
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
                                 if renew_path != None:
@@ -367,13 +367,13 @@ class PathPlanner:
                                     print("Take Over Request")
                                     pp = 4
                                     return pp, self.local_path
-                        elif blinker == 2 and get_look_a_head_id and 1.5<obs[2]<3.5 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
+                        elif blinker == 2 and get_look_a_head_id and 1.7<obs[2]<4.2 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
                             if safedistance < 10:
                                 safedistance = 10 # 5 * 2 : front and back 
-                            if targetcarmovingdistance - (safedistance/2)<d<targetcarmovingdistance + (safedistance/2):
+                            if targetcarmovingdistance - (safedistance/4)<d<targetcarmovingdistance + (safedistance*3/4):
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
                                 if renew_path != None:

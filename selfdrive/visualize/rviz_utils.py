@@ -12,7 +12,7 @@ from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplin
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-def ObjectsViz(objects):
+def ObjectsViz(objects, x, y):
     array = MarkerArray()
     # Add the DELETEALL marker to clear all previous markers
     marker = Marker()
@@ -23,7 +23,14 @@ def ObjectsViz(objects):
     for n, pt in enumerate(objects):
         quaternion = tf.transformations.quaternion_from_euler(
             0.0, 0.0, math.radians(pt[2]))
-        marker = Cube('obstacle', n, 1, quaternion, (1.0, 1.0, 0.0, 1.0))
+        print(pt[1], pt[1]-y)
+        if (pt[0]-x) > 0 and -1.5<(pt[1]-y)<1.5:
+            color = (1.0, 0.0, 0.0, 1.0)
+        elif -50 < (pt[0]-x) < 50 and (-4.2 < (pt[1]-y) < -1.7 or 1.7 < (pt[1]-y) < 4.2):
+            color = (1.0, 1.0, 0.0, 1.0)
+        else:
+            color = (0.0, 1.0, 0.0, 1.0)
+        marker = Cube('obstacle', n, 1, quaternion, color)
         marker.pose.position = Point(x=pt[0], y=pt[1], z=0.0)
         array.markers.append(marker)
     return array
@@ -455,9 +462,9 @@ def Cube(ns, id_, scale, quaternion, color):
     marker.ns = ns
     marker.id = id_
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = scale
-    marker.scale.y = scale*2.5
-    marker.scale.z = scale
+    marker.scale.x = scale*1.5
+    marker.scale.y = scale*1.5
+    marker.scale.z = scale*1.5
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]
     marker.pose.orientation.z = quaternion[2]

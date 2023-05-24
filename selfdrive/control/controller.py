@@ -52,14 +52,14 @@ class Controller:
         th_b = 13 # 0~20 * gain -> 0~100 brake
         val_data = max(-th_b, min(th_a, pid))
         gain = 5
-
+        print("V_ego(m/s): ",cur_v)
         if val_data > 0.:
             accel_val = val_data*gain
             brake_val = 0.0
         elif val_data <= 0.:
             accel_val = 0.0
             #self.target_v>0 and 
-            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v >0 and cur_v >= 3/3.6) else 33
+            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 3/3.6) else 34
         
         return accel_val, brake_val
     

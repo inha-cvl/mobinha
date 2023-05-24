@@ -85,7 +85,7 @@ class SIMULATOR:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 15  # min_v
-        car_param_dict["maxEnableSpeed"] = 45  # ref_v
+        car_param_dict["maxEnableSpeed"] = 55  # ref_v
 
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L

@@ -367,8 +367,8 @@ def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v):
     decel = (ref_v - min_v) * (1 - normalized_curvature)
     return_v = ref_v - decel
     # print("return-v:", return_v, "cur_v:",cur_v)
-    if cur_v - return_v*KPH_TO_MPS > 6*0.1:
-        return_v = cur_v*MPS_TO_KPH - (6*0.1*MPS_TO_KPH)
+    if cur_v - return_v*KPH_TO_MPS > 7*0.1:
+        return_v = cur_v*MPS_TO_KPH - (7*0.1*MPS_TO_KPH)
         # print("!!!!!!!return-v:", return_v, "cur_v:",cur_v)
 
     if return_v > ref_v:

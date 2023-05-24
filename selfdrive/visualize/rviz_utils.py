@@ -23,7 +23,6 @@ def ObjectsViz(objects, x, y):
     for n, pt in enumerate(objects):
         quaternion = tf.transformations.quaternion_from_euler(
             0.0, 0.0, math.radians(pt[2]))
-        print(pt[1], pt[1]-y)
         if (pt[0]-x) > 0 and -1.5<(pt[1]-y)<1.5:
             color = (1.0, 0.0, 0.0, 1.0)
         elif -50 < (pt[0]-x) < 50 and (-4.2 < (pt[1]-y) < -1.7 or 1.7 < (pt[1]-y) < 4.2):

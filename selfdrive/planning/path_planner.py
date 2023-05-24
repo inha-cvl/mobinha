@@ -345,9 +345,13 @@ class PathPlanner:
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
+                            print("d: ", d)
+                            print("targetmove: ", targetcarmovingdistance)
+                            print(safedistance)
+                            print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
                             if safedistance < 10:
                                 safedistance = 10 # 5 * 2 : front and back 
-                            if targetcarmovingdistance - (safedistance/4)<d<targetcarmovingdistance + (safedistance*3/4):
+                            if targetcarmovingdistance - (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M<d<targetcarmovingdistance + (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M:
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
                                 if renew_path != None:
@@ -371,9 +375,14 @@ class PathPlanner:
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
+                            print("d: ", d)
+                            print("targetmove: ", targetcarmovingdistance)
+                            print(safedistance)
+                            print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
                             if safedistance < 10:
                                 safedistance = 10 # 5 * 2 : front and back 
-                            if targetcarmovingdistance - (safedistance/4)<d<targetcarmovingdistance + (safedistance*3/4):
+                            if targetcarmovingdistance - (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M<d<targetcarmovingdistance + (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M:
+                                
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
                                 if renew_path != None:

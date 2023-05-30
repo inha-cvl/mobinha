@@ -138,9 +138,9 @@ class LongitudinalPlanner:
     def dynamic_consider_range(self, max_v, base_range=80):  # input max_v unit (m/s)
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
 
-    def get_params(self, max_v, distance):# input distance unit (idx)
+    def get_params(self, max_v, distance):# input distance unit (idx) # TODO: distance unit (m)
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS) # consider_distance unit (m) 
-        norm_s = distance/consider_distance if 0 < distance < consider_distance else 0
+        norm_s = distance*self.IDX_TO_M/consider_distance if 0 < distance*self.IDX_TO_M < consider_distance else 0
         min_s = distance*self.IDX_TO_M
         pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
         target_v = max_v * pi
@@ -169,14 +169,13 @@ class LongitudinalPlanner:
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v + gain)
-
-        v_lead = self.rel_v + cur_v
-        if v_lead <= 10 * KPH_TO_MPS:
-            v_lead = 0
-        elif 10 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
-            v_lead = 30 * KPH_TO_MPS
-        else:
-            v_lead = v_lead     
+        # v_lead = self.rel_v + cur_v
+        # if v_lead <= 10 * KPH_TO_MPS:
+        #     v_lead = 0
+        # elif 10 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
+        #     v_lead = 30 * KPH_TO_MPS
+        # else:
+        #     v_lead = v_lead     
         # print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
         # write_to_csv([0,round((v_lead) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
 

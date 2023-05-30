@@ -139,8 +139,8 @@ class LongitudinalPlanner:
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
 
     def get_params(self, max_v, distance):# input distance unit (idx) # TODO: distance unit (m)
-        consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS) # consider_distance unit (m) 
-        norm_s = distance*self.IDX_TO_M/consider_distance if 0 < distance*self.IDX_TO_M < consider_distance else 0
+        consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS) # consider_distance unit (idx) 
+        norm_s = distance/consider_distance if 0 < distance < consider_distance else 0
         min_s = distance*self.IDX_TO_M
         pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
         target_v = max_v * pi

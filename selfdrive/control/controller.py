@@ -58,8 +58,7 @@ class Controller:
             brake_val = 0.0
         elif val_data <= 0.:
             accel_val = 0.0
-            #self.target_v>0 and 
-            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 4/3.6) else 35
+            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 5*KPH_TO_MPS) else 35
         
         return accel_val, brake_val
     
@@ -67,7 +66,7 @@ class Controller:
         vector3 = Vector3()
         vector3.x = 0 #steer
         vector3.y = 0 #accel
-        vector3.z = 32 #brakx
+        vector3.z = 35 #brakx
         return vector3 
     
     def run(self, sm):

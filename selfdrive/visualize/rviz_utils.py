@@ -12,7 +12,7 @@ from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplin
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-def ObjectsViz(objects, x, y):
+def ObjectsViz(objects):
     array = MarkerArray()
     # Add the DELETEALL marker to clear all previous markers
     marker = Marker()
@@ -23,11 +23,9 @@ def ObjectsViz(objects, x, y):
     for n, pt in enumerate(objects):
         quaternion = tf.transformations.quaternion_from_euler(
             0.0, 0.0, math.radians(pt[2]))
-        #TODO: now x ,y -> car idx, d // x,y, pt[0], pt[1] is enu coordinate problem -> change s,d visualize problem.
-        # if (pt[0]-x) > 0 and -1.5<(pt[1]-y)<1.5:
-        if -1.5<(pt[1]-y)<1.5:
+        if 0 < pt[6] < 200 and -1.5<pt[7]<1.5:
             color = (1.0, 0.0, 0.0, 1.0)
-        elif -50 < (pt[0]-x) < 50 and (-4.2 < (pt[1]-y) < -1.7 or 1.7 < (pt[1]-y) < 4.2):
+        elif -100 < pt[6] < 100 and (-4.2 < pt[7] < -1.7 or 1.7 < pt[7] < 4.2):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 0.0, 1.0)

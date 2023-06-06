@@ -108,7 +108,8 @@ class ObstacleDetector:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 if obj_d > -4.5 and obj_d < 4.5:
-                    viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6]))
+                    #[0] x [1] y [6] s [7] d
+                    viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6], obj_s-car_idx, obj_d))
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -4.5 and obj_d < 4.5:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 
@@ -199,7 +200,7 @@ class ObstacleDetector:
             self.pub_lidar_obstacle.publish(lidar_obstacle)
             self.pub_lidar_bsd.publish(bsd)
             self.pub_around_obstacle.publish(around_obstacle)
-            objects_viz = ObjectsViz(viz_obstacle,self.CS.position.x, self.CS.position.y)
+            objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
             

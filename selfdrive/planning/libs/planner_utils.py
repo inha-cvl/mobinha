@@ -402,6 +402,7 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
         lf = len(ids)-1
     next_id = ids[lf].split('_')[0]
     if next_id in my_neighbor_id[0]:# or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        print("left blinker")
         return 1, next_id
     elif next_id in my_neighbor_id[1]:
         return 2, next_id

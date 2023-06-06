@@ -97,7 +97,7 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=3):
         if v_lead <= 10 * KPH_TO_MPS:
             v_lead = 0
         elif 10 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
@@ -106,12 +106,12 @@ class LongitudinalPlanner:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=2.5, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3.5, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return max(3, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
+        return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
     def get_dynamic_gain(self, error, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):
         # if -1 < error < 1:
@@ -125,7 +125,7 @@ class LongitudinalPlanner:
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            return max(0/HZ, min(3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         
@@ -196,7 +196,7 @@ class LongitudinalPlanner:
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
-        offset = 9*self.M_TO_IDX
+        offset = 8*self.M_TO_IDX
         dynamic_d = 150*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
@@ -215,7 +215,7 @@ class LongitudinalPlanner:
     def check_static_object(self, local_path, local_s):
         local_len = len(local_path)
         goal_offset = 3*self.M_TO_IDX
-        tl_offset = 6*self.M_TO_IDX
+        tl_offset = 6.5*self.M_TO_IDX
         static_d1, static_d2 = 150*self.M_TO_IDX, 150*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:

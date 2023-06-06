@@ -145,22 +145,22 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
-          <string>songdo-site</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
           <string>songdo</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>campus</string>
+          <string>songdo-site</string>
          </property>
         </item>
         <item>
          <property name="text">
           <string>KCity</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>campus</string>
          </property>
         </item>
         <item>

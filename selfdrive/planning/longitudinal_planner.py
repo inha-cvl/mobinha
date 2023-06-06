@@ -97,7 +97,7 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=5):
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2.5):
         if v_lead <= 10 * KPH_TO_MPS:
             v_lead = 0
         elif 10 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
@@ -106,7 +106,7 @@ class LongitudinalPlanner:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=6, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=2.5, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
@@ -214,8 +214,8 @@ class LongitudinalPlanner:
     
     def check_static_object(self, local_path, local_s):
         local_len = len(local_path)
-        goal_offset = 5*self.M_TO_IDX
-        tl_offset = 8*self.M_TO_IDX
+        goal_offset = 3*self.M_TO_IDX
+        tl_offset = 7*self.M_TO_IDX
         static_d1, static_d2 = 150*self.M_TO_IDX, 150*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:

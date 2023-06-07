@@ -113,7 +113,7 @@ class LongitudinalPlanner:
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
 
-    def get_dynamic_gain(self, error, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):
+    def get_dynamic_gain(self, error, ttc, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):
         # if -1 < error < 1:
         #     error = 0
         # elif error < -1:
@@ -124,23 +124,34 @@ class LongitudinalPlanner:
         self.integral = max(-6, min(self.integral, 6))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
+        print(ttc)
         if error < 0:
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
-        else:
+        elif 0 < ttc < -2.5:
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+        else:
+            return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+        # TODO: error part 0~-7 0~-3
         
-    def get_static_gain(self, error, gain=0.05/HZ):
+    def get_static_gain(self, error, ttc, gain=0.05/HZ):
         if error < 0:
             return 2.5 / HZ
+        elif 0 < ttc < -2.5:
+            return max(2.5/HZ, min(7/HZ, error*gain))
         else:
-            return max(2.5/HZ, min(5/HZ, error*gain))
+            return max(2.5/HZ, min(3/HZ, error*gain))
         
-    def dynamic_consider_range(self, max_v, base_range=80):  # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
 
     def get_params(self, max_v, distance):# input distance unit (idx) # TODO: distance unit (m)
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS) # consider_distance unit (idx) 
-        norm_s = distance/consider_distance if 0 < distance < consider_distance else 0
+        if 0 < distance < consider_distance:
+            norm_s = distance/consider_distance
+        elif distance >= consider_distance:
+            norm_s = 1
+        else:
+            norm_s = 0
         min_s = distance*self.IDX_TO_M
         pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
         target_v = max_v * pi
@@ -149,8 +160,9 @@ class LongitudinalPlanner:
     def static_velocity_plan(self, cur_v, max_v, static_d):
         target_v, min_s = self.get_params(max_v, static_d) # input static d unit (idx), output min_s unit (m)
         follow_distance = self.desired_follow_distance(cur_v) #output follow_distance unit (m)
+        ttc = min_s / -cur_v
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
-        gain = self.get_static_gain(self.follow_error)
+        gain = self.get_static_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
@@ -163,8 +175,9 @@ class LongitudinalPlanner:
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d):
         target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
         follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
+        ttc = min_s / self.rel_v # minus value is collision case
         self.follow_error = follow_distance-min_s
-        gain = self.get_dynamic_gain(self.follow_error)
+        gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
@@ -197,7 +210,7 @@ class LongitudinalPlanner:
 
     def check_dynamic_objects(self, cur_v, local_s):
         offset = 8*self.M_TO_IDX
-        dynamic_d = 150*self.M_TO_IDX 
+        dynamic_d = 80*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
@@ -216,12 +229,13 @@ class LongitudinalPlanner:
         local_len = len(local_path)
         goal_offset = 3*self.M_TO_IDX
         tl_offset = 6.5*self.M_TO_IDX
-        static_d1, static_d2 = 150*self.M_TO_IDX, 150*self.M_TO_IDX
+        static_d1, static_d2 = 80*self.M_TO_IDX, 80*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:
             left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX
             if left <= local_len:
-                static_d1 = left-goal_offset
+                if left-goal_offset < 80*self.M_TO_IDX:
+                    static_d1 = left-goal_offset
 
         # [2] = Traffic Light
         if self.traffic_light_obstacle is not None:
@@ -232,9 +246,10 @@ class LongitudinalPlanner:
                     can_go = True
             if not can_go:
                 if self.lane_information[2] < math.inf:
-                    static_d2 = self.lane_information[2]-tl_offset-local_s
+                    if self.lane_information[2]-tl_offset-local_s < 80*self.M_TO_IDX:
+                        static_d2 = self.lane_information[2]-tl_offset-local_s
                     if static_d2 < -13*self.M_TO_IDX: # passed traffic light is not considered
-                        static_d2 = 150*self.M_TO_IDX
+                        static_d2 = 80*self.M_TO_IDX
         # print("stop line idx: ", static_d2)
         return min(static_d1, static_d2)
 

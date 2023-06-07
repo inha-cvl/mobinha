@@ -226,7 +226,6 @@ class PathPlanner:
                 else:
                     self.next_head_lane_id = None
                     self.now_head_lane_id = None
-
                 self.erase_global_path = global_path
                 self.erase_global_id = global_id
                 global_path_viz = FinalPathViz(self.global_path)

@@ -47,14 +47,20 @@ def lanelet_matching(tile, tile_size, t_pt):
 def get_my_neighbor(lanelets, my_id):
     l_id = lanelets[my_id]['adjacentLeft']
     if l_id != None and lanelets[l_id]['successor'] is not None:
-        l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
+        if set(lanelets[l_id]['successor']) & set(lanelets[my_id]['successor']):
+            l_front_id = None
+        else: 
+            l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
     else:
         l_front_id = None
     #TODO: have to look left_front, right_front
     #lanelets[l_id]['successor']
     r_id = lanelets[my_id]['adjacentRight']
     if r_id != None and lanelets[r_id]['successor'] is not None:
-        r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
+        if set(lanelets[r_id]['successor']) & set(lanelets[my_id]['successor']):
+            r_front_id = None
+        else:
+            r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
     else:
         r_front_id = None
     return ((l_id,l_front_id),(r_id,r_front_id))
@@ -402,7 +408,6 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
         lf = len(ids)-1
     next_id = ids[lf].split('_')[0]
     if next_id in my_neighbor_id[0]:# or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
-        print("left blinker")
         return 1, next_id
     elif next_id in my_neighbor_id[1]:
         return 2, next_id

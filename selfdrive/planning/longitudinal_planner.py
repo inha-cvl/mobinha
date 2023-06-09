@@ -124,7 +124,7 @@ class LongitudinalPlanner:
         self.integral = max(-6, min(self.integral, 6))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
-        print(ttc)
+        # print(ttc)
         if error < 0:
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 < ttc < -2.5:
@@ -133,13 +133,15 @@ class LongitudinalPlanner:
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
-    def get_static_gain(self, error, ttc, gain=0.05/HZ):
+    def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
             return 2.5 / HZ
-        elif 0 < ttc < -2.5:
-            return max(2.5/HZ, min(7/HZ, error*gain))
+        elif 0 < ttc < 2.5:
+            # print("collision warning!!", "decel: ", max(0/HZ, min(7/HZ, error*gain))*10)
+            return max(0/HZ, min(7/HZ, error*gain))
         else:
-            return max(2.5/HZ, min(3/HZ, error*gain))
+            # print("decel: ", max(0/HZ, min(3/HZ, error*gain))*10)
+            return max(0/HZ, min(3/HZ, error*gain))
         
     def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
@@ -160,7 +162,7 @@ class LongitudinalPlanner:
     def static_velocity_plan(self, cur_v, max_v, static_d):
         target_v, min_s = self.get_params(max_v, static_d) # input static d unit (idx), output min_s unit (m)
         follow_distance = self.desired_follow_distance(cur_v) #output follow_distance unit (m)
-        ttc = min_s / -cur_v
+        ttc = min_s / cur_v if cur_v != 0 else min_s
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
         gain = self.get_static_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
@@ -175,7 +177,7 @@ class LongitudinalPlanner:
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d):
         target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
         follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
-        ttc = min_s / self.rel_v # minus value is collision case
+        ttc = min_s / self.rel_v if self.rel_v != 0 else min_s# minus value is collision case
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
@@ -227,7 +229,7 @@ class LongitudinalPlanner:
     
     def check_static_object(self, local_path, local_s):
         local_len = len(local_path)
-        goal_offset = 3*self.M_TO_IDX
+        goal_offset = 2*self.M_TO_IDX
         tl_offset = 6.5*self.M_TO_IDX
         static_d1, static_d2 = 80*self.M_TO_IDX, 80*self.M_TO_IDX
         # [1] = Goal Object

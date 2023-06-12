@@ -160,6 +160,11 @@ border-color: rgb(71,181,255);</string>
         </item>
         <item>
          <property name="text">
+          <string>fmtc</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>campus</string>
          </property>
         </item>

@@ -180,6 +180,17 @@ class PathPlanner:
 
         return appended_non_intp_path, appended_non_intp_id, appended_head_lane_ids
 
+    def delete_node_for_smooth_path(self, non_intp_path, non_intp_id, head_lane_ids):
+            before_n = non_intp_id[0].split('_')[0]
+            for i, n in enumerate(non_intp_id):
+                splited_id = n.split('_')[0]
+                if splited_id != before_n :
+                    my_neighbor_id = get_my_neighbor(self.lmap.lanelets, before_n)
+                    if not compare_id(splited_id, my_neighbor_id):
+                        del non_intp_path[i]
+                        del non_intp_id[i]
+                    before_n = splited_id
+
     def run(self, sm):
         CS = sm.CS
         pp = 0
@@ -206,6 +217,7 @@ class PathPlanner:
             non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath()
             if non_intp_path == None and non_intp_id == None:
                 pass
+            self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids)
             if non_intp_path is not None:
                 self.state = 'MOVE'
 

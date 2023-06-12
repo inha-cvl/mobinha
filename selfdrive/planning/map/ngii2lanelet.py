@@ -187,7 +187,7 @@ class NGII2LANELET:
                 return right_ids
             
         def pre_link_stop_point(id_,stop_point, sum_link_length):
-            while sum_link_length < 120:
+            while sum_link_length < 100:
                 pre_ids = lanelets[id_]['predecessor']
                 if len(pre_ids) != 0:
                     for i in pre_ids:

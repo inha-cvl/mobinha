@@ -395,13 +395,13 @@ def get_a_b_for_curv(min, ignore):
 def get_a_b_for_blinker(min, ignore):
     # a = -40/(min-ignore)
     # b = 60-(ignore*a)
-    a = 4.05
-    b = 1.25
+    a = 3.957
+    b = 10
     return a,b
 
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 10m ~ 55m
+    lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
@@ -421,9 +421,10 @@ def compare_id(lh_id, my_neighbor_id):
     else:
         return True
 
-def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id, next_id):
     # ws = int((1.5*vEgo)+70)
-    ws = int(14.4*vEgo+80)
+    # ws = int(14.4*vEgo+80)
+    ws = int(1.014*vEgo**2 - 0.776*vEgo + 95)
     # a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
     y = []
@@ -471,10 +472,9 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
         curvature = 1000
 
     if lanelets[now_id]['uTurn'] == True:
-        curvature = -40
-    # if lanelets[now_id]['intersection'] == True:
-    #     curvature = curvature * 1.5
-    # print("curvature : ", curvature)
+        curvature = 0
+    # if (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+    #     curvature = 500
     return curvature, rot_x, rot_y, trajectory
 
 def get_lane_change_point(ids, idx, my_neighbor_id):

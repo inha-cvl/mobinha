@@ -401,16 +401,16 @@ class PathPlanner:
                                 
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
-                                                                       self.local_path[lane_change_point:lane_change_point+10+80], self.local_path[lane_change_point-15:lane_change_point])
+                                                                       self.local_path[lane_change_point:lane_change_point+10+90], self.local_path[lane_change_point-15:lane_change_point+30])
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
-                                        self.local_path[lane_change_point-15+i]=renew_pt
-                                        self.local_id[lane_change_point-15+i]=renew_ids[i]
-                                    if  lane_change_point+25+80 < len(self.local_path)+1:
-                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-5+80], self.local_path[lane_change_point+20+80]], self.precision)
+                                        self.local_path[lane_change_point-45+i]=renew_pt
+                                        self.local_id[lane_change_point-45+i]=renew_ids[i]
+                                    if  lane_change_point+55+90 < len(self.local_path)+1:
+                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-35+90], self.local_path[lane_change_point+50+90]], self.precision)
                                         print("right:", len(self.local_path))
                                         for i, force_pt in enumerate(force_interpolate_path):
-                                            self.local_path[lane_change_point-5+80+i]=force_pt
+                                            self.local_path[lane_change_point-35+90+i]=force_pt
                                         self.renewal_path_in_progress = True
                                         self.renewal_path_timer = time.time()
                                         break

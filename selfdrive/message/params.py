@@ -35,7 +35,7 @@ class IONIQ:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 21  # songdo demo site: 21, test site: 15 # min_v
+        car_param_dict["minEnableSpeed"] = 13  # songdo demo site: 21, test site: 15 # min_v
         car_param_dict["maxEnableSpeed"] = 43  #45 # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 3.00  # L

@@ -311,18 +311,18 @@ class PathPlanner:
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
                     renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, 
-                                                                 self.local_path[self.l_idx+90:self.l_idx+250])
+                                                                 self.local_path[self.l_idx+130:self.l_idx+240])
                     if renew_path != None:
                         for i, renew_pt in enumerate(renew_path):
-                            self.local_path[self.l_idx+90+i]=renew_pt
-                            self.local_id[self.l_idx+90+i]=renew_ids[i]
-                        if  self.l_idx+250+20 < len(self.local_path)+1:
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+90-5], self.local_path[self.l_idx+90+20]], self.precision)
+                            self.local_path[self.l_idx+130+i]=renew_pt
+                            self.local_id[self.l_idx+130+i]=renew_ids[i]
+                        if  self.l_idx+240+30 < len(self.local_path)+1:
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+130-30], self.local_path[self.l_idx+130+30]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+90-5+i]=force_pt                  
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+250-5], self.local_path[self.l_idx+250+20]], self.precision)
+                                self.local_path[self.l_idx+130-30+i]=force_pt                  
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+240-30], self.local_path[self.l_idx+240+30]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+250-5+i]=force_pt
+                                self.local_path[self.l_idx+240-30+i]=force_pt
                         else:
                             print("lane change path is too short")
                             pass

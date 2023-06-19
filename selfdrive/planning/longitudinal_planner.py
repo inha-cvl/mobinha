@@ -127,21 +127,23 @@ class LongitudinalPlanner:
         # print(ttc)
         if error < 0:
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
-        elif 0 < ttc < -2.5:
+        elif 0 < ttc < -3:
+            print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative))))
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            print("decel: ", min(0/HZ, max(-4/HZ, -(kp*error + ki*self.integral + kd*derivative))))
+            return min(0/HZ, max(-4/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
     def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
             return 2.5 / HZ
-        elif 0 < ttc < 2.5:
-            # print("collision warning!!", "decel: ", max(0/HZ, min(7/HZ, error*gain))*10)
+        elif 0 < ttc < 3:
+            print("collision warning!!", "decel: ", max(0/HZ, min(7/HZ, error*gain))*10)
             return max(0/HZ, min(7/HZ, error*gain))
         else:
-            # print("decel: ", max(0/HZ, min(3/HZ, error*gain))*10)
-            return max(0/HZ, min(3/HZ, error*gain))
+            print("decel: ", max(0/HZ, min(4/HZ, error*gain))*10)
+            return max(0/HZ, min(4/HZ, error*gain))
         
     def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
@@ -211,7 +213,7 @@ class LongitudinalPlanner:
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
-        offset = 8*self.M_TO_IDX
+        offset = 8.5*self.M_TO_IDX
         dynamic_d = 80*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
@@ -220,17 +222,20 @@ class LongitudinalPlanner:
                     if lobs[4] >= 1: # tracking
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]
+                        print("track car:",dynamic_d*self.IDX_TO_M,"m")
                         return dynamic_d
                     else: # only cluster is track_id = 0
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = 0 # TODO: track and cluster box color modify
+                        print("cluster car:",dynamic_d*self.IDX_TO_M,"m")
                         return dynamic_d
+            
         return dynamic_d
     
     def check_static_object(self, local_path, local_s):
         local_len = len(local_path)
-        goal_offset = 2*self.M_TO_IDX
-        tl_offset = 6.5*self.M_TO_IDX
+        goal_offset = 1.5*self.M_TO_IDX
+        tl_offset = 7*self.M_TO_IDX
         static_d1, static_d2 = 80*self.M_TO_IDX, 80*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:
@@ -252,7 +257,7 @@ class LongitudinalPlanner:
                         static_d2 = self.lane_information[2]-tl_offset-local_s
                     if static_d2 < -13*self.M_TO_IDX: # passed traffic light is not considered
                         static_d2 = 80*self.M_TO_IDX
-        # print("stop line idx: ", static_d2)
+                print("stop line: ", static_d2*self.IDX_TO_M,"m")
         return min(static_d1, static_d2)
 
     def run(self, sm, pp=0, local_path=None):

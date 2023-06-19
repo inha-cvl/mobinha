@@ -13,6 +13,7 @@ KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 M_TO_IDX = 2
 IDX_TO_M = 0.5
+HZ = 10
 
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
@@ -373,15 +374,17 @@ def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v):
     decel = (ref_v - min_v) * (1 - normalized_curvature)
     return_v = ref_v - decel
     # print("return-v:", return_v, "cur_v:",cur_v)
-    if cur_v - return_v*KPH_TO_MPS > 8*0.1:
-        return_v = cur_v*MPS_TO_KPH - (8*0.1*MPS_TO_KPH)
-        # print("!!!!!!!return-v:", return_v, "cur_v:",cur_v)
-
+    if cur_v - return_v*KPH_TO_MPS > 2.5/HZ: # smooth deceleration
+        return_v = cur_v*MPS_TO_KPH - (2.5/HZ*MPS_TO_KPH)
+        # print("decel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+    elif return_v*KPH_TO_MPS - cur_v > 2.5/HZ: # smooth acceleration
+        return_v = cur_v*MPS_TO_KPH + (2.5/HZ*MPS_TO_KPH)
+        # print("accel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
     if return_v > ref_v:
         return_v = ref_v
-    # print(decel, return_v)
-    if lane_information[1]==1:
-        return_v = min(return_v, max(return_v, 25))    
+
+    # if lane_information[1]==1:
+    #     return_v = min(return_v, max(return_v, 25))    
     return return_v*KPH_TO_MPS
 
 
@@ -522,11 +525,11 @@ def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_poin
     # renew_id = None
     #get 50m front target lane id 
     if change_direction == 1 : #Left
-        target_lane_id = lanelets[ids[l_idx+100].split('_')[0]]['adjacentLeft']
+        target_lane_id = lanelets[ids[l_idx+130].split('_')[0]]['adjacentLeft']
         if target_lane_id == None:
             return None,None
     elif change_direction == 2 :
-        target_lane_id = lanelets[ids[l_idx+100].split('_')[0]]['adjacentRight']
+        target_lane_id = lanelets[ids[l_idx+130].split('_')[0]]['adjacentRight']
         if target_lane_id == None:
             return None,None
     else:
@@ -536,7 +539,7 @@ def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_poin
     renew_ids = []
     if target_lane_id != None:
         #local_path_point2point = local_path_point2point[:idx+2]
-        # before_lane_id = ids[l_idx+100-15].split('_')[0]
+        # before_lane_id = ids[l_idx+130-15].split('_')[0]
         # before_path = exchange_waypoint(lanelets[before_lane_id]['waypoints'], local_path_before_now)
         # for _ in range(len(before_path)):
         #     before_ids.append(before_lane_id)

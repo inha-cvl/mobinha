@@ -299,7 +299,7 @@ class PathPlanner:
             if self.local_path is not None:
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
-                if abs(l_idx-self.l_idx) <= 80:
+                if abs(l_idx-self.l_idx) <= 100:
                     self.l_idx = l_idx
                 # print(l_idx, self.l_idx)
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
@@ -324,10 +324,10 @@ class PathPlanner:
                             for i, force_pt in enumerate(force_interpolate_path):
                                 self.local_path[self.l_idx+240-30+i]=force_pt
                         else:
-                            print("lane change path is too short")
+                            print("remaining local pass is too short.")
                             pass
                     else:
-                        print("lane change path is too long")
+                        print("The link to change lanes does not exist.")
                         pass
                     self.turnsignal_state = True
                 elif self.turnsignal == 0:

@@ -45,6 +45,7 @@ class PathPlanner:
         self.renewal_path_timer = 0
         self.turnsignal = 0
         self.turnsignal_state = False
+        self.renewal_path_cnt = 0
 
         self.lidar_obstacle = []
         self.lidar_bsd = []
@@ -295,7 +296,7 @@ class PathPlanner:
                 # print("update:", len(self.local_path), self.l_idx, self.l_nitt, len(self.erase_global_path), self.l_cut)
                 self.local_id = local_id
                 self.l_idx = self.l_tail
- 
+                print("localid",self.local_id)
             if self.local_path is not None:
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
@@ -375,10 +376,11 @@ class PathPlanner:
                                         self.local_id[lane_change_point-45+i]=renew_ids[i]
                                     if  lane_change_point+55+90 < len(self.local_path)+1:
                                         force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-35+90], self.local_path[lane_change_point+50+90]], self.precision)
-                                        print("left:", len(self.local_path))
+                                        print("left:")
                                         for i, force_pt in enumerate(force_interpolate_path):
                                             self.local_path[lane_change_point-35+90+i]=force_pt
                                         self.renewal_path_in_progress = True
+                                        self.renewal_path_cnt += 1
                                         self.renewal_path_timer = time.time()
                                         break # multi obstacle passing
                                     else:
@@ -408,10 +410,11 @@ class PathPlanner:
                                         self.local_id[lane_change_point-45+i]=renew_ids[i]
                                     if  lane_change_point+55+90 < len(self.local_path)+1:
                                         force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-35+90], self.local_path[lane_change_point+50+90]], self.precision)
-                                        print("right:", len(self.local_path))
+                                        print("right:")
                                         for i, force_pt in enumerate(force_interpolate_path):
                                             self.local_path[lane_change_point-35+90+i]=force_pt
                                         self.renewal_path_in_progress = True
+                                        self.renewal_path_cnt += 1
                                         self.renewal_path_timer = time.time()
                                         break
                                     else:
@@ -420,9 +423,13 @@ class PathPlanner:
                                     print("Take Over Request")
                                     pp = 4
                                     return pp, self.local_path
+                elif self.renewal_path_cnt >= 4:
+                    print("Take Over Request")
+                    pp = 4
+                    return pp, self.local_path
+
                 elif time.time() - self.renewal_path_timer > 3:
                     self.renewal_path_in_progress = False
-                            
                     '''
                        # get_look_a_head_id and
                     if len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 

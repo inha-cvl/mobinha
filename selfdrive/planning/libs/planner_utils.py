@@ -51,7 +51,20 @@ def get_my_neighbor(lanelets, my_id):
         if set(lanelets[l_id]['successor']) & set(lanelets[my_id]['successor']):
             l_front_id = None
         else: 
-            l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
+            #TODO: not 100% [0] is not left...
+            #l id successor is 2 over -> my id successor adjacentleft and l id successor is same
+            #l id successor ~ lane no see . 
+            lanelets[my_id]['successor'][0]
+            if len(lanelets[l_id]['successor']) == 1:
+                l_front_id = lanelets[l_id]['successor'][0]
+            elif len(lanelets[l_id]['successor']) > 1:
+                for id in lanelets[l_id]['successor']:
+                    if lanelets[id]['laneNo'] == lanelets[l_id]['laneNo']:
+                        l_front_id = id
+                        break
+            else:
+                l_front_id = None
+            # l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
     else:
         l_front_id = None
     #TODO: have to look left_front, right_front
@@ -61,7 +74,16 @@ def get_my_neighbor(lanelets, my_id):
         if set(lanelets[r_id]['successor']) & set(lanelets[my_id]['successor']):
             r_front_id = None
         else:
-            r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
+            if len(lanelets[r_id]['successor']) == 1:
+                r_front_id = lanelets[r_id]['successor'][0]
+            elif len(lanelets[r_id]['successor']) > 1:
+                for id in lanelets[r_id]['successor']:
+                    if lanelets[id]['laneNo'] == lanelets[r_id]['laneNo']:
+                        r_front_id = id
+                        break
+            else:
+                r_front_id = None
+            # r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
     else:
         r_front_id = None
     return ((l_id,l_front_id),(r_id,r_front_id))

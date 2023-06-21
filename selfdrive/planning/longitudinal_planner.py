@@ -100,13 +100,19 @@ class LongitudinalPlanner:
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=3):
         if v_lead <= 10 * KPH_TO_MPS:
             v_lead = 0
-        elif 10 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
-            v_lead = 30 * KPH_TO_MPS
+        # elif 10 * KPH_TO_MPS < v_lead <= 20 * KPH_TO_MPS:
+        #     v_lead = 12 * KPH_TO_MPS
+        # elif 20 * KPH_TO_MPS < v_lead <= 30 * KPH_TO_MPS:
+        #     v_lead = 22 * KPH_TO_MPS
+        # elif 30 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
+        #     v_lead = 32 * KPH_TO_MPS
+        # elif 40 * KPH_TO_MPS < v_lead <= 45 * KPH_TO_MPS:
+        #     v_lead = 42 * KPH_TO_MPS
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3.5, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
@@ -131,8 +137,8 @@ class LongitudinalPlanner:
             print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative))))
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            print("decel: ", min(0/HZ, max(-4/HZ, -(kp*error + ki*self.integral + kd*derivative))))
-            return min(0/HZ, max(-4/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            print("decel: ", min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative))))
+            return min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
     def get_static_gain(self, error, ttc, gain=0.1/HZ):

@@ -97,8 +97,15 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
+    def get_safe_obs_distance_s(self, v_ego, desired_ttc=3, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+        return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
+        # return desired_ttc * v_ego + offset
+    
+    def desired_follow_distance_s(self, v_ego):
+        return max(5, self.get_safe_obs_distance_s(v_ego))
+    
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=3):
-        if v_lead <= 10 * KPH_TO_MPS:
+        if v_lead <= 5 * KPH_TO_MPS:
             v_lead = 0
         # elif 10 * KPH_TO_MPS < v_lead <= 20 * KPH_TO_MPS:
         #     v_lead = 12 * KPH_TO_MPS
@@ -112,12 +119,12 @@ class LongitudinalPlanner:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead))
+        return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
     def get_dynamic_gain(self, error, ttc, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):
         # if -1 < error < 1:
@@ -169,7 +176,7 @@ class LongitudinalPlanner:
     
     def static_velocity_plan(self, cur_v, max_v, static_d):
         target_v, min_s = self.get_params(max_v, static_d) # input static d unit (idx), output min_s unit (m)
-        follow_distance = self.desired_follow_distance(cur_v) #output follow_distance unit (m)
+        follow_distance = self.desired_follow_distance_s(cur_v) #output follow_distance unit (m)
         ttc = min_s / cur_v if cur_v != 0 else min_s
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
         gain = self.get_static_gain(self.follow_error, ttc)

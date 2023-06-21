@@ -296,7 +296,6 @@ class PathPlanner:
                 # print("update:", len(self.local_path), self.l_idx, self.l_nitt, len(self.erase_global_path), self.l_cut)
                 self.local_id = local_id
                 self.l_idx = self.l_tail
-                print("localid",self.local_id)
             if self.local_path is not None:
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]

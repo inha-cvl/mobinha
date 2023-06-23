@@ -191,6 +191,8 @@ class MainWindow(QMainWindow, form_class):
                         self.media_thread.wait()
                         print("[Visualize] Over")
                         sys.exit(0)
+                # elif self.state == 'TOR':
+
                 
                 QCoreApplication.processEvents()
 
@@ -473,6 +475,7 @@ class MainWindow(QMainWindow, form_class):
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
+            # self.state = 'START'
             self.status_label.setText("Moving")
             self.moving_start = True
             self.goal_update = False
@@ -494,12 +497,15 @@ class MainWindow(QMainWindow, form_class):
             self.scenario3_button.setEnabled(True)
 
         elif msg.data[0] == 4:
-            self.state == 'TOR'
+            # self.state = 'TOR'
             self.status_label.setText("Take Over Request")
             self.cmd_button_clicked(0)
+            # self.start_button.setDisabled(True)
+            # self.initialize_button.setEnabled(True)
+            # self.pause_button.setDisabled(True)
             self.start_button.setDisabled(True)
-            self.initialize_button.setEnabled(True)
-            self.pause_button.setDisabled(True)
+            self.initialize_button.setDisabled(True)
+            self.pause_button.setEnabled(True)
 
     def start_button_clicked(self):
         self.state = 'START'

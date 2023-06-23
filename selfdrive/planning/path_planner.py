@@ -46,6 +46,8 @@ class PathPlanner:
         self.turnsignal = 0
         self.turnsignal_state = False
         self.renewal_path_cnt = 0
+        self.lanechange_target_id = None
+        # self.change_lane_flag = False
 
         self.lidar_obstacle = []
         self.lidar_bsd = []
@@ -223,6 +225,7 @@ class PathPlanner:
                 self.state = 'MOVE'
 
                 global_path, self.last_s = ref_interpolate(non_intp_path, self.precision)
+                # print("nonintppath:", non_intp_path, "globalpath:", global_path, "nonintpid:", non_intp_id)
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
                 self.global_path = global_path
                 self.global_id = global_id
@@ -296,30 +299,30 @@ class PathPlanner:
                 # print("update:", len(self.local_path), self.l_idx, self.l_nitt, len(self.erase_global_path), self.l_cut)
                 self.local_id = local_id
                 self.l_idx = self.l_tail
+
             if self.local_path is not None:
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
                 if abs(l_idx-self.l_idx) <= 100:
                     self.l_idx = l_idx
-                # print(l_idx, self.l_idx)
+
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.next_head_lane_id)
-
                 cw_s = get_nearest_crosswalk(self.lmap.lanelets, self.now_head_lane_id, local_point)
 
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
                     renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, 
-                                                                 self.local_path[self.l_idx+130:self.l_idx+240])
+                                                                 self.local_path[self.l_idx+120:self.l_idx+240])
                     if renew_path != None:
                         for i, renew_pt in enumerate(renew_path):
-                            self.local_path[self.l_idx+130+i]=renew_pt
-                            self.local_id[self.l_idx+130+i]=renew_ids[i]
-                        if  self.l_idx+240+30 < len(self.local_path)+1:
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+130-30], self.local_path[self.l_idx+130+30]], self.precision)
+                            self.local_path[self.l_idx+120+i]=renew_pt
+                            self.local_id[self.l_idx+120+i]=renew_ids[i]
+                        if  self.l_idx+240+30+10 < len(self.local_path)+1:
+                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+120-30], self.local_path[self.l_idx+120+30]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+130-30+i]=force_pt                  
+                                self.local_path[self.l_idx+120-30+i]=force_pt                  
                             force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+240-30], self.local_path[self.l_idx+240+30]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
                                 self.local_path[self.l_idx+240-30+i]=force_pt
@@ -332,18 +335,26 @@ class PathPlanner:
                     self.turnsignal_state = True
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
-                
-                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo)
+
+                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo) 
+                                                                        #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
+
                 if blinker != 0 and self.blinker_target_id == None:
                     self.blinker_target_id = target_id
                     self.blinker = blinker
                 elif splited_local_id == self.blinker_target_id:
                     self.blinker_target_id = None
                     self.blinker = 0
-                
+
+                if target_id != None:
+                    self.lanechange_target_id = target_id
+                    # self.change_lane_flag = True
+                if self.lanechange_target_id == splited_local_id:
+                    # self.change_lane_flag = False
+                    self.renewal_path_cnt = 0
+
                 forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id)
                 lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
-
                 ## Lane Change Local Path Planning
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
@@ -352,7 +363,8 @@ class PathPlanner:
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
                     look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
                     get_look_a_head_id = compare_id(look_a_head_id, my_neighbor_id)
-                        
+                    renew_a = 30 # uniti: idx
+                    renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
                         # if -4.5<obs[2]<-1.5  and lanechangepoint prev or -1.5<obs[2]<1.5 and lanechangepoint next:
                         if blinker == 1 and get_look_a_head_id and -4.1<obs[2]<-1.7 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
@@ -365,19 +377,20 @@ class PathPlanner:
                             # print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
                             if safedistance < 10:
                                 safedistance = 10 # 5 * 2 : front and back 
-                            if targetcarmovingdistance - (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M<d<targetcarmovingdistance + (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M:
+                            safe_space = (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M
+                            if targetcarmovingdistance - safe_space < d < targetcarmovingdistance + safe_space:
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
-                                                                       self.local_path[lane_change_point:lane_change_point+10+90], self.local_path[lane_change_point-15:lane_change_point+30])
+                                                                       self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
-                                        self.local_path[lane_change_point-45+i]=renew_pt
-                                        self.local_id[lane_change_point-45+i]=renew_ids[i]
-                                    if  lane_change_point+55+90 < len(self.local_path)+1:
-                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-35+90], self.local_path[lane_change_point+50+90]], self.precision)
-                                        print("left:")
+                                        self.local_path[lane_change_point-renew_a+i]=renew_pt
+                                        self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
+                                    if  lane_change_point+renew_a+renew_b+10 < len(self.local_path)+1:
+                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
+                                        print("left BSD")
                                         for i, force_pt in enumerate(force_interpolate_path):
-                                            self.local_path[lane_change_point-35+90+i]=force_pt
+                                            self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
                                         self.renewal_path_in_progress = True
                                         self.renewal_path_cnt += 1
                                         self.renewal_path_timer = time.time()
@@ -387,6 +400,10 @@ class PathPlanner:
                                 else:
                                     print("Take Over Request")
                                     pp = 4
+                                    if pp == 4:
+                                        self.renewal_path_cnt += 1
+                                    if self.renewal_path_cnt > 30:
+                                        self.renewal_path_cnt = 0
                                     return pp, self.local_path
                         elif blinker == 2 and get_look_a_head_id and 1.7<obs[2]<4.1 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
@@ -398,20 +415,22 @@ class PathPlanner:
                             # print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
                             if safedistance < 10:
                                 safedistance = 10 # 5 * 2 : front and back 
-                            if targetcarmovingdistance - (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M<d<targetcarmovingdistance + (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M:
+                            safe_space = (safedistance/2)+(obs[1] - self.l_idx)*self.IDX_TO_M
+                            if targetcarmovingdistance - safe_space < d < targetcarmovingdistance + safe_space:
                                 
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
-                                                                       self.local_path[lane_change_point:lane_change_point+10+90], self.local_path[lane_change_point-15:lane_change_point+30])
+                                                                       self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
+                                # print(renew_ids)
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
-                                        self.local_path[lane_change_point-45+i]=renew_pt
-                                        self.local_id[lane_change_point-45+i]=renew_ids[i]
-                                    if  lane_change_point+55+90 < len(self.local_path)+1:
-                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-35+90], self.local_path[lane_change_point+50+90]], self.precision)
-                                        print("right:")
+                                        self.local_path[lane_change_point-renew_a+i]=renew_pt
+                                        self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
+                                    if  lane_change_point+renew_a+renew_b+10 < len(self.local_path)+1:
+                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
+                                        print("right BSD")
                                         for i, force_pt in enumerate(force_interpolate_path):
-                                            self.local_path[lane_change_point-35+90+i]=force_pt
+                                            self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
                                         self.renewal_path_in_progress = True
                                         self.renewal_path_cnt += 1
                                         self.renewal_path_timer = time.time()
@@ -421,13 +440,21 @@ class PathPlanner:
                                 else:
                                     print("Take Over Request")
                                     pp = 4
+                                    if pp == 4:
+                                        self.renewal_path_cnt += 1
+                                    if self.renewal_path_cnt > 30:
+                                        self.renewal_path_cnt = 0
                                     return pp, self.local_path
                 elif self.renewal_path_cnt >= 4:
-                    print("Take Over Request")
+                    print("Take Over Request(continuos 4 times)")
                     pp = 4
+                    if pp == 4:
+                        self.renewal_path_cnt += 1
+                    if self.renewal_path_cnt > 30:
+                        self.renewal_path_cnt = 0
                     return pp, self.local_path
 
-                elif time.time() - self.renewal_path_timer > 3:
+                elif time.time() - self.renewal_path_timer > 1.5:
                     self.renewal_path_in_progress = False
                     '''
                        # get_look_a_head_id and

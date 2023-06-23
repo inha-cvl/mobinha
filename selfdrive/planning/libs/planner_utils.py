@@ -54,7 +54,6 @@ def get_my_neighbor(lanelets, my_id):
             #TODO: not 100% [0] is not left...
             #l id successor is 2 over -> my id successor adjacentleft and l id successor is same
             #l id successor ~ lane no see . 
-            lanelets[my_id]['successor'][0]
             if len(lanelets[l_id]['successor']) == 1:
                 l_front_id = lanelets[l_id]['successor'][0]
             elif len(lanelets[l_id]['successor']) > 1:
@@ -205,10 +204,17 @@ def ref_interpolate(points, precision):
 def id_interpolate(non_intp, intp, non_intp_id):
     itp_ids = []
     non_intp_idx = 0
+    tmp_non_intp_idx = 0
     for wp in intp:
         calc_non_intp_idx = calc_idx(non_intp, wp)
-        if calc_non_intp_idx > non_intp_idx:
+
+        if abs(calc_non_intp_idx - tmp_non_intp_idx) < 50:
             non_intp_idx = calc_non_intp_idx
+            tmp_non_intp_idx = non_intp_idx
+            
+        # if calc_non_intp_idx > non_intp_idx:
+            # non_intp_idx = calc_non_intp_idx
+
         n_id = non_intp_id[non_intp_idx]
         itp_ids.append(n_id)
     return itp_ids
@@ -425,7 +431,8 @@ def get_a_b_for_blinker(min, ignore):
     b = 10
     return a,b
 
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):#, local_id, change_target_id, change_lane_flag): 
+    #TODO: CHECK FLAG     
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
     if lf < 0:
@@ -433,11 +440,19 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
     elif lf > len(ids)-1:
         lf = len(ids)-1
     next_id = ids[lf].split('_')[0]
-    if next_id in my_neighbor_id[0]:# or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+
+    if next_id in my_neighbor_id[0]:
+        # or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
         return 1, next_id
     elif next_id in my_neighbor_id[1]:
         return 2, next_id
-        
+    
+    # if change_lane_flag:  # if flag is True, keep the blinker on
+    #     if change_target_id in my_neighbor_id[0]:
+    #         return 1 , change_target_id
+    #     elif change_target_id in my_neighbor_id[1]:
+    #         return 2, change_target_id
+
     return 0, None
 
 
@@ -546,13 +561,13 @@ def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_poin
     target_lane_id = None
     renew_path = None
     # renew_id = None
-    #get 50m front target lane id 
+    lanechange_point_idx = (30+30)*2
     if change_direction == 1 : #Left
-        target_lane_id = lanelets[ids[l_idx+130].split('_')[0]]['adjacentLeft']
+        target_lane_id = lanelets[ids[l_idx+lanechange_point_idx].split('_')[0]]['adjacentLeft']
         if target_lane_id == None:
             return None,None
     elif change_direction == 2 :
-        target_lane_id = lanelets[ids[l_idx+130].split('_')[0]]['adjacentRight']
+        target_lane_id = lanelets[ids[l_idx+lanechange_point_idx].split('_')[0]]['adjacentRight']
         if target_lane_id == None:
             return None,None
     else:

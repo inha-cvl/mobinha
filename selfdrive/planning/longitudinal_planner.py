@@ -270,7 +270,7 @@ class LongitudinalPlanner:
                         static_d2 = self.lane_information[2]-tl_offset-local_s
                     if static_d2 < -13*self.M_TO_IDX: # passed traffic light is not considered
                         static_d2 = 80*self.M_TO_IDX
-                print("stop line: ", static_d2*self.IDX_TO_M,"m")
+                # print("stop line: ", static_d2*self.IDX_TO_M,"m")
         return min(static_d1, static_d2)
 
     def run(self, sm, pp=0, local_path=None):

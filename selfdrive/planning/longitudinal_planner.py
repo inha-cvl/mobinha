@@ -126,7 +126,7 @@ class LongitudinalPlanner:
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
-    def get_dynamic_gain(self, error, ttc, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):
+    def get_dynamic_gain(self, error, ttc, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):#TODO:gain check
         # if -1 < error < 1:
         #     error = 0
         # elif error < -1:
@@ -148,7 +148,7 @@ class LongitudinalPlanner:
             return min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
-    def get_static_gain(self, error, ttc, gain=0.1/HZ):
+    def get_static_gain(self, error, ttc, gain=0.1/HZ):#TODO:gain check
         if error < 0:
             return 2.5 / HZ
         elif 0 < ttc < 3:
@@ -158,7 +158,7 @@ class LongitudinalPlanner:
             print("decel: ", max(0/HZ, min(4/HZ, error*gain))*10)
             return max(0/HZ, min(4/HZ, error*gain))
         
-    def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)
+    def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)#TODO:range ignore check
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
 
     def get_params(self, max_v, distance):# input distance unit (idx) # TODO: distance unit (m)

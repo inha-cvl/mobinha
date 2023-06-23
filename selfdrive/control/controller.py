@@ -48,17 +48,26 @@ class Controller:
         self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v):
+        # th_a = 4 # 0~20 * gain -> 0~100 accel
+        # th_b = 13 # 0~20 * gain -> 0~100 brake
+        # val_data = max(-th_b, min(th_a, pid))
+        # gain = 5
+        # if val_data > 0.:
+        #     accel_val = val_data*gain
+        #     brake_val = 0.0
+        # elif val_data <= 0.:
+        #     accel_val = 0.0
+        #     brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
         th_a = 4 # 0~20 * gain -> 0~100 accel
         th_b = 13 # 0~20 * gain -> 0~100 brake
-        val_data = max(-th_b, min(th_a, pid))
         gain = 5
-        # print("V_ego(m/s): ",cur_v)
+        val_data = max(-th_b*gain, min(th_a*gain, pid))
         if val_data > 0.:
-            accel_val = val_data*gain
+            accel_val = val_data
             brake_val = 0.0
         elif val_data <= 0.:
             accel_val = 0.0
-            brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
+            brake_val = -val_data if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
         
         return accel_val, brake_val
     

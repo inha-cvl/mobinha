@@ -54,7 +54,7 @@ class IONIQ:
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
         car_param_lateral_tuning_lqr["l"] = 1.0  # Lfc, look-ahead distance
-        car_param_lateral_tuning_lqr["k"] = 1.6 # origin 1.5 lane change good is 2  # k, look forward gain
+        car_param_lateral_tuning_lqr["k"] = 1.5 # origin 1.5 lane change good is 2  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
@@ -103,7 +103,7 @@ class SIMULATOR:
         car_param_lateral_tuning = car_param_dict["lateralTuning"]._asdict()
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
-        car_param_lateral_tuning_lqr["l"] = 1.0  # Lfc, look-ahead distance
+        car_param_lateral_tuning_lqr["l"] = 1.5  # Lfc, look-ahead distance
         car_param_lateral_tuning_lqr["k"] = 1.5  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
@@ -116,7 +116,7 @@ class SIMULATOR:
         self.CP = self.CP._make(car_param_dict.values())
 
 
-class MORAI:
+class MORAI: # HYUNDAI NEXO
     def __init__(self, map_name='KCity'):
         self.CP = car_param.CarParam()
         car_param_dict = self.CP._asdict()
@@ -136,16 +136,16 @@ class MORAI:
 
         car_param_dict["minEnableSpeed"] = 15  # min_v
         car_param_dict["maxEnableSpeed"] = 50  # ref_v
-        car_param_dict["mass"] = 1737.0 + 136.0
-        car_param_dict["wheelbase"] = 2.8  # L, vehicle length
+        car_param_dict["mass"] = 1840 + 140 # unladen weight + 1 driver and 1 passenger 
+        car_param_dict["wheelbase"] = 2.79  # L, vehicle length 
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
         car_param_dict["steerRatio"] = 1
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 10.0   # K_P
-        car_param_longitudinal_tuning["kiV"] = 0.1  # K_I
-        car_param_longitudinal_tuning["kf"] = 1.0 # K_D
+        car_param_longitudinal_tuning["kpV"] = 8.5   # K_P
+        car_param_longitudinal_tuning["kiV"] = 6.0  # K_I
+        car_param_longitudinal_tuning["kf"] = 2.25 # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 

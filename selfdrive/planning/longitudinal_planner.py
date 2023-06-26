@@ -43,6 +43,7 @@ class LongitudinalPlanner:
         self.lidar_obstacle = None
         self.traffic_light_obstacle = None
         self.can_go_check_tick = -1
+        self.can_not_go_check_tick = -1
         self.lane_information = None
         self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
@@ -97,14 +98,14 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
-    def get_safe_obs_distance_s(self, v_ego, desired_ttc=3, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance_s(self, v_ego, desired_ttc=2, comfort_decel=1.95, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
     def desired_follow_distance_s(self, v_ego):
         return max(5, self.get_safe_obs_distance_s(v_ego))
     
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=3):
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=1.95):
         if v_lead <= 5 * KPH_TO_MPS:
             v_lead = 0
         # elif 10 * KPH_TO_MPS < v_lead <= 20 * KPH_TO_MPS:
@@ -126,7 +127,7 @@ class LongitudinalPlanner:
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
-    def get_dynamic_gain(self, error, ttc, kp=0.2/HZ, ki=0.0/HZ, kd=0.08/HZ):#TODO:gain check
+    def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):#TODO:gain check
         # if -1 < error < 1:
         #     error = 0
         # elif error < -1:
@@ -134,17 +135,17 @@ class LongitudinalPlanner:
         # elif error > 1:
         #     error = error - 1
         self.integral += error*(1/HZ)
-        self.integral = max(-6, min(self.integral, 6))
+        self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         # print(ttc)
         if error < 0:
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 < ttc < -3:
-            print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative))))
+            print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            print("decel: ", min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative))))
+            print("decel: ", min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
             return min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
@@ -152,10 +153,10 @@ class LongitudinalPlanner:
         if error < 0:
             return 2.5 / HZ
         elif 0 < ttc < 3:
-            print("collision warning!!", "decel: ", max(0/HZ, min(7/HZ, error*gain))*10)
+            print("collision warning!!", "decel: ", max(0/HZ, min(7/HZ, error*gain))*HZ)
             return max(0/HZ, min(7/HZ, error*gain))
         else:
-            print("decel: ", max(0/HZ, min(4/HZ, error*gain))*10)
+            print("decel: ", max(0/HZ, min(4/HZ, error*gain))*HZ)
             return max(0/HZ, min(4/HZ, error*gain))
         
     def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)#TODO:range ignore check
@@ -212,17 +213,25 @@ class LongitudinalPlanner:
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
-        # TODO: consideration filtering
         stop_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
             6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
-        if traffic_light in stop_list[forward_direction]:
-            self.can_go_check_tick = -1
+        if traffic_light in stop_list[forward_direction]:  # Stop Sign
+            if self.can_not_go_check_tick < 3:
+                self.can_not_go_check_tick += 1
+                print("keep go")
+                return True
+            else:
+                self.can_go_check_tick = -1
+                print("can not go")
             return False
-        else:
-            if self.can_go_check_tick < 4:
+        else: # Go sign
+            if self.can_go_check_tick < 3:
                 self.can_go_check_tick += 1
+                print("not yet go")
                 return False
             else:
+                self.can_not_go_check_tick = -1
+                print("can go")
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):

@@ -144,10 +144,10 @@ class ObstacleDetector:
 
         if len(self.traffic_light_object) > 0:
             for traffic_light in self.traffic_light_object:
-                if traffic_light[2] > 0.5:  # if probability exceed 50%
+                if traffic_light[2] > 0.2:  # if probability exceed 50%
                     traffic_light_obs.append(traffic_light)
         # sorting by size
-        traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1])
+        traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1], reverse=True)
         return traffic_light_obs
 
     def run(self, CS):

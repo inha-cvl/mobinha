@@ -144,8 +144,8 @@ class LongitudinalPlanner:
             print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            print("decel: ", min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
-            return min(0/HZ, max(-3.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            print("decel: ", min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
+            return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
     def get_static_gain(self, error, ttc, gain=0.1/HZ):#TODO:gain check
@@ -241,7 +241,7 @@ class LongitudinalPlanner:
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
-                if lobs[2] >= -1.5 and lobs[2] <= 1.5:  # object in my lane
+                if lobs[2] >= -1.6 and lobs[2] <= 1.6:  # object in my lane
                     if lobs[4] >= 1: # tracking
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]

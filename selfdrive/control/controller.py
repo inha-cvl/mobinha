@@ -61,13 +61,13 @@ class Controller:
         th_a = 4 # 0~20 * gain -> 0~100 accel
         th_b = 13 # 0~20 * gain -> 0~100 brake
         gain = 5
-        val_data = max(-th_b*gain, min(th_a*gain, pid))
+        val_data = max(-th_b, min(th_a, pid))
         if val_data > 0.:
-            accel_val = val_data
+            accel_val = val_data*gain
             brake_val = 0.0
         elif val_data <= 0.:
             accel_val = 0.0
-            brake_val = -val_data if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
+            brake_val = -val_data*gain if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
         
         return accel_val, brake_val
     

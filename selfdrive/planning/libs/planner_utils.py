@@ -388,7 +388,7 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     return return_v * KPH_TO_MPS
 
-def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v):
+def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph, kph, mps
     #lane information -> [1]:forward direction, [3]:curvature
     max_curvature = 600
     min_curvature = 0

@@ -120,7 +120,7 @@ class LongitudinalPlanner:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
         # return desired_ttc * v_ego + offset
     
@@ -138,10 +138,9 @@ class LongitudinalPlanner:
         self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
-        # print(ttc)
         if error < 0:
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
-        elif 0 < ttc < -3:
+        elif 0 > ttc > -3:
             print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
@@ -181,6 +180,8 @@ class LongitudinalPlanner:
         ttc = min_s / cur_v if cur_v != 0 else min_s
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
         gain = self.get_static_gain(self.follow_error, ttc)
+        # if max_v > target_v:
+        #     max_v = target_v
         if self.follow_error < 0: # MINUS is ACCEL
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
@@ -236,7 +237,7 @@ class LongitudinalPlanner:
 
     def check_dynamic_objects(self, cur_v, local_s):
         offset = 8.5*self.M_TO_IDX
-        dynamic_d = 80*self.M_TO_IDX 
+        dynamic_d = 90*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
@@ -258,12 +259,12 @@ class LongitudinalPlanner:
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
         tl_offset = 7*self.M_TO_IDX
-        static_d1, static_d2 = 80*self.M_TO_IDX, 80*self.M_TO_IDX
+        static_d1, static_d2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:
             left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX
             if left <= local_len:
-                if left-goal_offset < 80*self.M_TO_IDX:
+                if left-goal_offset < 90*self.M_TO_IDX:
                     static_d1 = left-goal_offset
 
         # [2] = Traffic Light
@@ -275,10 +276,10 @@ class LongitudinalPlanner:
                     can_go = True
             if not can_go:
                 if self.lane_information[2] < math.inf:
-                    if self.lane_information[2]-tl_offset-local_s < 80*self.M_TO_IDX:
+                    if self.lane_information[2]-tl_offset-local_s < 90*self.M_TO_IDX:
                         static_d2 = self.lane_information[2]-tl_offset-local_s
                     if static_d2 < -13*self.M_TO_IDX: # passed traffic light is not considered
-                        static_d2 = 80*self.M_TO_IDX
+                        static_d2 = 90*self.M_TO_IDX
                 # print("stop line: ", static_d2*self.IDX_TO_M,"m")
         return min(static_d1, static_d2)
 
@@ -290,9 +291,8 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo)
+                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
                 #local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
-                #local_curv_v= self.ref_v*KPH_TO_MPS
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)

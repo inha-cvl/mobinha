@@ -44,6 +44,8 @@ class LongitudinalPlanner:
         self.traffic_light_obstacle = None
         self.can_go_check_tick = -1
         self.can_not_go_check_tick = -1
+        self.can_go_timer_start = None
+        self.can_go_stored = False
         self.lane_information = None
         self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
@@ -106,16 +108,8 @@ class LongitudinalPlanner:
         return max(5, self.get_safe_obs_distance_s(v_ego))
     
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=1.95):
-        if v_lead <= 5 * KPH_TO_MPS:
+        if v_lead <= 2 * KPH_TO_MPS:
             v_lead = 0
-        # elif 10 * KPH_TO_MPS < v_lead <= 20 * KPH_TO_MPS:
-        #     v_lead = 12 * KPH_TO_MPS
-        # elif 20 * KPH_TO_MPS < v_lead <= 30 * KPH_TO_MPS:
-        #     v_lead = 22 * KPH_TO_MPS
-        # elif 30 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
-        #     v_lead = 32 * KPH_TO_MPS
-        # elif 40 * KPH_TO_MPS < v_lead <= 45 * KPH_TO_MPS:
-        #     v_lead = 42 * KPH_TO_MPS
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
@@ -127,7 +121,7 @@ class LongitudinalPlanner:
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
-    def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):#TODO:gain check
+    def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
         # if -1 < error < 1:
         #     error = 0
         # elif error < -1:
@@ -148,7 +142,7 @@ class LongitudinalPlanner:
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
-    def get_static_gain(self, error, ttc, gain=0.1/HZ):#TODO:gain check
+    def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
             return 2.5 / HZ
         elif 0 < ttc < 3:
@@ -161,7 +155,7 @@ class LongitudinalPlanner:
     def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)#TODO:range ignore check
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
 
-    def get_params(self, max_v, distance):# input distance unit (idx) # TODO: distance unit (m)
+    def get_params(self, max_v, distance):# input distance unit (idx) 
         consider_distance = self.dynamic_consider_range(self.ref_v*KPH_TO_MPS) # consider_distance unit (idx) 
         if 0 < distance < consider_distance:
             norm_s = distance/consider_distance
@@ -186,9 +180,6 @@ class LongitudinalPlanner:
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v - gain)
-        # target_v = max(self.target_v - gain, min(target_v, self.target_v + gain))
-        # print(min_s, follow_distance,self.follow_error, gain)
-        # write_to_csv([1,0,round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
         return target_v
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d):
@@ -201,16 +192,6 @@ class LongitudinalPlanner:
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v + gain)
-        # v_lead = self.rel_v + cur_v
-        # if v_lead <= 10 * KPH_TO_MPS:
-        #     v_lead = 0
-        # elif 10 * KPH_TO_MPS < v_lead <= 40 * KPH_TO_MPS:
-        #     v_lead = 30 * KPH_TO_MPS
-        # else:
-        #     v_lead = v_lead     
-        # print("lead v:", round((v_lead)*MPS_TO_KPH,1) ,"flw d:", round(follow_distance), "obs d:", round(min_s), "err(0):",round(self.follow_error,2), "gain:",round(gain,3))
-        # write_to_csv([0,round((v_lead) * MPS_TO_KPH, 1),round(follow_distance,1),round(min_s,1),round(self.follow_error,3),round(gain*HZ,2),round(target_v,2),round(cur_v,2)])
-
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
@@ -270,17 +251,24 @@ class LongitudinalPlanner:
         # [2] = Traffic Light
         if self.traffic_light_obstacle is not None:
             can_go = False
+            no_light = True
             if len(self.traffic_light_obstacle) > 0:
+                no_light = False
                 tlobs = self.traffic_light_obstacle[0]
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
                     can_go = True
+                    self.can_go_timer_start = time.time()
+                    self.can_go_stored = True
+            if no_light: # Only check the timer if no light is detected
+                # if more than 2.5 seconds have passed since the light was green
+                if self.can_go_timer_start is not None and time.time() - self.can_go_timer_start < 2.5:
+                    can_go = self.can_go_stored
             if not can_go:
                 if self.lane_information[2] < math.inf:
                     if self.lane_information[2]-tl_offset-local_s < 90*self.M_TO_IDX:
                         static_d2 = self.lane_information[2]-tl_offset-local_s
-                    if static_d2 < -13*self.M_TO_IDX: # passed traffic light is not considered
+                    if static_d2 < -12*self.M_TO_IDX: # passed traffic light is not considered
                         static_d2 = 90*self.M_TO_IDX
-                # print("stop line: ", static_d2*self.IDX_TO_M,"m")
         return min(static_d1, static_d2)
 
     def run(self, sm, pp=0, local_path=None):

@@ -155,12 +155,17 @@ border-color: rgb(71,181,255);</string>
         </item>
         <item>
          <property name="text">
-          <string>campus</string>
+          <string>KCity</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>KCity</string>
+          <string>fmtc</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>campus</string>
          </property>
         </item>
         <item>
@@ -4321,6 +4326,7 @@ color:rgb(0,10,20);</string>
     </property>
     <addaction name="actionTopic_List"/>
     <addaction name="actionTraffic_Light_Simulator"/>
+    <addaction name="actionBlinker_Simulator"/>
    </widget>
    <addaction name="menuMonitoring"/>
   </widget>
@@ -4367,6 +4373,11 @@ color:rgb(0,10,20);</string>
   <action name="actionTraffic_Light_Simulator">
    <property name="text">
     <string>Traffic Light Simulator</string>
+   </property>
+  </action>
+  <action name="actionBlinker_Simulator">
+   <property name="text">
+    <string>Blinker Simulator</string>
    </property>
   </action>
  </widget>

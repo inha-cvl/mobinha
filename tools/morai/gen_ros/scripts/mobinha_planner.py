@@ -6,11 +6,11 @@ import signal
 import time
 
 from std_msgs.msg import String
-from morai_msgs.msg import EgoVehicleStatus, ObjectStatusList, CtrlCmd, GetTrafficLightStatus
+from morai_msgs.msg import EgoVehicleStatus, ObjectStatusList, CtrlCmd, GetTrafficLightStatus, Lamps
 import tf
 from math import pi, radians
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Int8
 from geometry_msgs.msg import Pose, PoseArray
 
 
@@ -25,6 +25,7 @@ class MoraiPlanner():
         # publisher
         self.ctrl_pub = rospy.Publisher(
             '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
+        self.lamp_pub = rospy.Publisher('/lamps', Lamps, queue_size=1)
         self.obj_list_pub = rospy.Publisher(
             '/morai/object_list', PoseArray, queue_size=1)
         self.traffic_light_pub = rospy.Publisher(
@@ -39,7 +40,9 @@ class MoraiPlanner():
                          self.object_topic_cb)
         rospy.Subscriber("/GetTrafficLightStatus",
                          GetTrafficLightStatus, self.get_traffic_light_status_cb)
+        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
         self.ctrl_msg = CtrlCmd()
+        self.lamps = Lamps()
 
     def planning(self, CM):
         self.wheel_angle = 0
@@ -70,6 +73,10 @@ class MoraiPlanner():
         ctrl_cmd.brake = 1.0
         return ctrl_cmd
 
+    def blinker_cb(self, msg):
+        self.lamps.turnSignal = msg.data
+        self.lamp_pub.publish(self.lamps)
+
     def clip(self, x, lo, hi):
         return max(lo, min(hi, x))
 
@@ -78,12 +85,12 @@ class MoraiPlanner():
 
     def set_ctrl_cmd(self, ctrl_cmd):
         ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
-        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel, 10)/10 * 0.65 # 2.5m/s^2
-        # ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake, 10)/10 * 0.11 # 7m/s^2
-        if 0 < self.CM.CC.actuators.brake/10*0.11 < 0.01:
-            ctrl_cmd.brake = 0.003
-        else:
-            ctrl_cmd.brake = self.rmin(1.1*(self.CM.CC.actuators.brake/10*0.11)-0.011, 0.11)
+        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel*5, 100)*0.01
+        ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake*80/65, 100)*0.01
+        # if 0 < self.CM.CC.actuators.brake/10*0.11 < 0.01:
+        #     ctrl_cmd.brake = 0.003
+        # else:
+        #     ctrl_cmd.brake = self.rmin(1.1*(self.CM.CC.actuators.brake/10*0.11)-0.011, 0.11)
         return ctrl_cmd
 
     def statusCB(self, data):  # Vehicle Status Subscriber

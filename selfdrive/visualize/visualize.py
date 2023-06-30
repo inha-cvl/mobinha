@@ -25,6 +25,7 @@ from sensor_msgs.msg import CompressedImage
 import selfdrive.visualize.libs.imugl as imugl
 from simple_writer import SimpleWriter
 from tl_simulator import TLSimulator
+from blinker_simulator import BlinkerSimulator
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
@@ -104,6 +105,10 @@ class MainWindow(QMainWindow, form_class):
         tl_simulator = TLSimulator(self)
         tl_simulator.show()
 
+    def blinker_simulator_toggled(self):
+        blinker_simulator = BlinkerSimulator(self)
+        blinker_simulator.show()
+
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
         rospy.set_param('map_name', self.map_name)
@@ -131,6 +136,7 @@ class MainWindow(QMainWindow, form_class):
     def connection_setting(self):
         self.actionTopic_List.triggered.connect(self.setting_topic_list_toggled)
         self.actionTraffic_Light_Simulator.triggered.connect(self.tl_simulator_toggled)
+        self.actionBlinker_Simulator.triggered.connect(self.blinker_simulator_toggled)
         self.initialize_button.clicked.connect(self.initialize_button_clicked)
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)
@@ -185,6 +191,8 @@ class MainWindow(QMainWindow, form_class):
                         self.media_thread.wait()
                         print("[Visualize] Over")
                         sys.exit(0)
+                # elif self.state == 'TOR':
+
                 
                 QCoreApplication.processEvents()
 
@@ -467,6 +475,7 @@ class MainWindow(QMainWindow, form_class):
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
+            # self.state = 'START'
             self.status_label.setText("Moving")
             self.moving_start = True
             self.goal_update = False
@@ -488,12 +497,15 @@ class MainWindow(QMainWindow, form_class):
             self.scenario3_button.setEnabled(True)
 
         elif msg.data[0] == 4:
-            self.state == 'TOR'
+            # self.state = 'TOR'
             self.status_label.setText("Take Over Request")
             self.cmd_button_clicked(0)
+            # self.start_button.setDisabled(True)
+            # self.initialize_button.setEnabled(True)
+            # self.pause_button.setDisabled(True)
             self.start_button.setDisabled(True)
-            self.initialize_button.setEnabled(True)
-            self.pause_button.setDisabled(True)
+            self.initialize_button.setDisabled(True)
+            self.pause_button.setEnabled(True)
 
     def start_button_clicked(self):
         self.state = 'START'

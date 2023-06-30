@@ -12,7 +12,6 @@ from geometry_msgs.msg import Vector3
 class IoniqTransceiver():
     def __init__(self, CP):
         self.control_state = {
-            'gear_en': 0x0,        # ON:0x1   OFF:0x0
             'steer_en': 0x0,       # ON:0x1   OFF:0x0
             'acc_en': 0x0,         # ON:0x1   OFF:0x0
         }
@@ -37,20 +36,23 @@ class IoniqTransceiver():
         self.Break_Override = 0
         self.Steering_Overide = 0
 
+        self.prev_control_state = self.control_state.copy()
+
         rospy.on_shutdown(self.cleanup)
 
     def reset_trigger(self):
-        self.reset = 1
-        self.init_target_actuator()
+        if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+            self.reset = 1
+        elif self.reset and (self.Accel_Override and self.Break_Override and self.Steering_Overide)== 0:
+            self.reset = 0
 
     def can_cmd(self, canCmd):
         state = self.control_state
         if canCmd.disable:  # Full disable
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
+            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
         elif canCmd.enable:  # Full
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
-            self.reset = 0
         elif canCmd.latActive:  # Only Lateral
             state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
         elif canCmd.longActive:  # Only Longitudinal
@@ -59,7 +61,7 @@ class IoniqTransceiver():
         if canCmd.enable:
             self.mode = 1
         if self.Accel_Override or self.Break_Override or self.Steering_Overide:
-            self.mode = 2
+            self.mode = 2 # override mode
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
         
@@ -94,13 +96,9 @@ class IoniqTransceiver():
                 
             if (data.arbitration_id == 0x280):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                # use
                 self.velocity_FR = res['Gway_Wheel_Velocity_FR']
-                # use
                 self.velocity_RL = res['Gway_Wheel_Velocity_RL']
-                # use
                 self.velocity_RR = res['Gway_Wheel_Velocity_RR']
-                # use
                 self.velocity_FL = res['Gway_Wheel_Velocity_FL']
                 self.rcv_velocity = (self.velocity_RR + self.velocity_RL)/7.2
                 self.pub_velocity.publish(Float32(self.rcv_velocity))
@@ -108,8 +106,7 @@ class IoniqTransceiver():
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
-
-                gear_sel_disp = res['Gway_GearSelDisp']                 # use
+                gear_sel_disp = res['Gway_GearSelDisp'] 
                 if gear_sel_disp == "R":  # R
                     gear_sel_disp = 1
                 elif gear_sel_disp == "N":  # N
@@ -119,15 +116,6 @@ class IoniqTransceiver():
                 else:  # P
                     gear_sel_disp = 0
                 self.pub_gear.publish(Int8(gear_sel_disp))
-
-            # if (data.arbitration_id == 0x210):
-            #     res = self.db.decode_message(data.arbitration_id, data.data)
-            #     mode = 0
-            #     if res['PA_Enable'] and res['LON_Enable']:
-            #         mode = 1
-            # if (data.arbitration_id == 641):
-            #     res = self.db.decode_message(data.arbitration_id, data.data)
-            #     plsRR = res['WHL_PlsRRVal']
             if(data.arbitration_id == 656):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['steer'] = res['Gway_Steering_Angle']
@@ -136,13 +124,15 @@ class IoniqTransceiver():
                 vector3.y = self.ego_actuators['accel']
                 vector3.z = self.ego_actuators['brake']
                 self.pub_ego_actuators.publish(vector3)
-                
             if (data.arbitration_id == 784):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.Accel_Override = res['Accel_Override']
                 self.Break_Override = res['Break_Override']
                 self.Steering_Overide = res['Steering_Overide']
-
+                if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+                    self.target_actuators['steer'] = self.ego_actuators['steer']
+                    self.target_actuators['accel'] = self.ego_actuators['accel']
+                    self.target_actuators['brake'] = self.ego_actuators['brake']
         except Exception as e:
             print(e)
 
@@ -170,10 +160,11 @@ class IoniqTransceiver():
 
     def run(self, CM):
         self.can_cmd(CM.CC.canCmd)
-
-        # TODO : Need Test
         self.set_actuators(CM.CC.actuators)
-
+        # print(self.Accel_Override, self.Break_Override, self.Steering_Overide)
         if self.timer(0.02):
+            # if self.prev_control_state != self.control_state:
+            #     self.init_target_actuator()
+            #     self.prev_control_state = self.control_state.copy()
             self.ioniq_control()
         self.receiver()

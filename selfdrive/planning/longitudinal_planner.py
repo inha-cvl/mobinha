@@ -8,35 +8,9 @@ from geometry_msgs.msg import PoseArray, Pose
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
 
-from collections import deque
-
-import csv
-import datetime
-import os
-
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
-
-current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-file_name = f'acc_test_data_{current_time}.csv'
-directory = "data"
-def write_to_csv(data):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    file_path = os.path.join(directory, file_name)
-    is_new_file = not os.path.exists(file_path)
-
-    with open(file_path, mode='a') as csvfile:
-        writer = csv.writer(csvfile)
-        if is_new_file:
-            header = ['timestamp', 'near_obj_id', 'v_lead(km/h)','desired_follow_d(m)', 'front_car_d(-10)(m)', 'error', 'acc(m/s^2)','target_v','cur_v']
-            writer.writerow(header)
-
-        current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        data.insert(0, current_timestamp)
-        writer.writerow(data)
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -58,14 +32,9 @@ class LongitudinalPlanner:
         self.sl_param = CP.slParam._asdict()
 
         self.last_error = 0
-        self.last_s = None
         self.follow_error = 0
         self.integral = 0
         self.rel_v = 0
-        self.prev_rel_v = None
-        self.consecutive_outliers = 0
-        self.outlier_threshold = 3  # 연속 이상치 허용 횟수
-        self.distance_queue = deque(maxlen=5)
 
         self.closest_tracked = None
         self.closest_untracked = None
@@ -102,32 +71,24 @@ class LongitudinalPlanner:
 
     def get_safe_obs_distance_s(self, v_ego, desired_ttc=2, comfort_decel=1.95, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
-        # return desired_ttc * v_ego + offset
     
     def desired_follow_distance_s(self, v_ego):
         return max(5, self.get_safe_obs_distance_s(v_ego))
     
     def get_stoped_equivalence_factor(self, v_lead, comfort_decel=1.95):
-        if v_lead <= 2 * KPH_TO_MPS:
+        if v_lead <= 1 * KPH_TO_MPS:
             v_lead = 0
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=3): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=1): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
-        # return desired_ttc * v_ego + offset
     
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
     def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
-        # if -1 < error < 1:
-        #     error = 0
-        # elif error < -1:
-        #     error = error + 1
-        # elif error > 1:
-        #     error = error - 1
         self.integral += error*(1/HZ)
         self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
@@ -135,10 +96,8 @@ class LongitudinalPlanner:
         if error < 0:
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 > ttc > -3:
-            print("collision warning!!", "decel: ", min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            print("decel: ", min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))*HZ)
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
@@ -146,10 +105,8 @@ class LongitudinalPlanner:
         if error < 0:
             return 2.5 / HZ
         elif 0 < ttc < 3:
-            print("collision warning!!", "decel: ", max(0/HZ, min(7/HZ, error*gain))*HZ)
             return max(0/HZ, min(7/HZ, error*gain))
         else:
-            print("decel: ", max(0/HZ, min(4/HZ, error*gain))*HZ)
             return max(0/HZ, min(4/HZ, error*gain))
         
     def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)#TODO:range ignore check
@@ -174,8 +131,6 @@ class LongitudinalPlanner:
         ttc = min_s / cur_v if cur_v != 0 else min_s
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
         gain = self.get_static_gain(self.follow_error, ttc)
-        # if max_v > target_v:
-        #     max_v = target_v
         if self.follow_error < 0: # MINUS is ACCEL
             target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
@@ -200,20 +155,16 @@ class LongitudinalPlanner:
         if traffic_light in stop_list[forward_direction]:  # Stop Sign
             if self.can_not_go_check_tick < 3:
                 self.can_not_go_check_tick += 1
-                print("keep go")
                 return True
             else:
                 self.can_go_check_tick = -1
-                print("can not go")
             return False
         else: # Go sign
             if self.can_go_check_tick < 3:
                 self.can_go_check_tick += 1
-                print("not yet go")
                 return False
             else:
                 self.can_not_go_check_tick = -1
-                print("can go")
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
@@ -231,7 +182,6 @@ class LongitudinalPlanner:
                     else: # only cluster is track_id = 0
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = 0 # TODO: track and cluster box color modify
-                        print("cluster car:",dynamic_d*self.IDX_TO_M,"m")
                         return dynamic_d
             
         return dynamic_d
@@ -280,7 +230,6 @@ class LongitudinalPlanner:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
                 local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
-                #local_curv_v = max_v_by_curvature(self.lane_information[3], self.ref_v, self.min_v, CS.vEgo)
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)

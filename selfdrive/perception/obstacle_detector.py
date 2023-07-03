@@ -117,7 +117,7 @@ class ObstacleDetector:
                     #[0] x [1] y [6] s [7] d
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6], obj_s-car_idx, obj_d))
                 #Forward Collision Warning
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -4.5 and obj_d < 4.5:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.6 and obj_d < 1.6:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
                 if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.5 and obj_d < 4.5:
@@ -212,13 +212,8 @@ class ObstacleDetector:
                 pose.orientation.z = sd[3] # track id
                 lidar_obstacle.poses.append(pose)
             # only my front near obstacle distance
-            if len(obstacle_sd) > 0:
-                if obstacle_sd[0][0]-car_idx < 100*(1/self.CP.mapParam.precision) and -1.6 < obstacle_sd[0][1] < 1.6:
-                    obstacle_distance = (obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision
-                else:
-                    obstacle_distance = -1
-            else:
-                obstacle_distance = -1
+            obstacle_distance = (
+                obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1
 
             # bsd = Point()
             # bsd.x = int(bool(left_bsd_obstacle_sd)) #function converts the list to a boolean value (True if the list is not empty, False if it is)

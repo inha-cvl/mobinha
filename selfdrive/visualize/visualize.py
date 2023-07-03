@@ -68,7 +68,7 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/trajectory',PoseArray, self.trajectory_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
-        rospy.Subscriber('/mobinha/perception/lidar_bsd', Point, self.lidar_bsd_cb)
+        rospy.Subscriber('/mobinha/planning/lidar_bsd', Point, self.lidar_bsd_cb)
         rospy.Subscriber('/gmsl_camera/dev/video0/compressed',CompressedImage, self.compressed_image_cb, 1)
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)

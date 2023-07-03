@@ -25,8 +25,13 @@ class ObstacleDetector:
 
         self.is_morai = False
         self.morai_ego_v = 0.0
-        self.traffic_ligth_timer = time.time()
+        self.traffic_light_timer = time.time()
 
+        self.prev_light = None
+        self.light_counter = 0
+        self.green_light_timer = None
+        self.last_green_light = None
+        
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
         rospy.Subscriber('/mobinha/perception/lidar/track_box', BoundingBoxArray, self.lidar_cluster_box_cb)
@@ -39,7 +44,7 @@ class ObstacleDetector:
     
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
         self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
-        self.pub_lidar_bsd = rospy.Publisher('/mobinha/perception/lidar_bsd', Point, queue_size=1)
+        # self.pub_lidar_bsd = rospy.Publisher('/mobinha/perception/lidar_bsd', Point, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
         self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
@@ -72,7 +77,7 @@ class ObstacleDetector:
             if cls != 0:
                 traffic_light_object.append([cls, size, prob])
         self.traffic_light_object = traffic_light_object
-        self.traffic_ligth_timer = time.time()
+        self.traffic_light_timer = time.time()
 
     def morai_object_list_cb(self, msg):
         objects = []
@@ -86,7 +91,7 @@ class ObstacleDetector:
             traffic_lights.append(
                 (tl.position.x, tl.position.y, tl.position.z))
         self.traffic_light_object = traffic_lights
-        self.traffic_ligth_timer = time.time()
+        self.traffic_light_timer = time.time()
 
     def morai_ego_topic_cb(self, msg):
         self.is_morai = True
@@ -101,8 +106,8 @@ class ObstacleDetector:
 
         viz_obstacle = []
         obstacle_sd = []
-        left_bsd_obstacle_sd = []
-        right_bsd_obstacle_sd = []
+        # left_bsd_obstacle_sd = []
+        # right_bsd_obstacle_sd = []
         around_obstacle_sd = []
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
@@ -110,17 +115,20 @@ class ObstacleDetector:
                 if obj_d > -4.5 and obj_d < 4.5:
                     #[0] x [1] y [6] s [7] d
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6], obj_s-car_idx, obj_d))
+                #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -4.5 and obj_d < 4.5:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
-                
+                #BSD3 : Time Based Method
+                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.5 and obj_d < 4.5:
+                        around_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 #BSD1 : Ego Position Based Method
                 
-                if (-35*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (10*(1/self.CP.mapParam.precision)):
-                    #print(obj_s-car_idx, obj_d)
-                    if -4<obj_d<-1:
-                        left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif 1<obj_d<4:
-                        right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                # if (-35*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (10*(1/self.CP.mapParam.precision)):
+                #     #print(obj_s-car_idx, obj_d)
+                #     if -4<obj_d<-1:
+                #         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                #     elif 1<obj_d<4:
+                #         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 
                 #BSD2 : Lange Change Point Based Method
                 '''
@@ -130,24 +138,71 @@ class ObstacleDetector:
                     elif 1.5<obj_d<4.5:
                         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 '''
-                #BSD3 : Time Based Method
-                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.5 and obj_d < 4.5:
-                        around_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
-        left_bsd_obstacle_sd = sorted(left_bsd_obstacle_sd, key=lambda sd: sd[0])
-        right_bsd_obstacle_sd = sorted(right_bsd_obstacle_sd, key=lambda sd: sd[0])
-        return obstacle_sd, viz_obstacle, left_bsd_obstacle_sd, right_bsd_obstacle_sd, around_obstacle_sd
-            
+        # left_bsd_obstacle_sd = sorted(left_bsd_obstacle_sd, key=lambda sd: sd[0])
+        # right_bsd_obstacle_sd = sorted(right_bsd_obstacle_sd, key=lambda sd: sd[0])
+        return obstacle_sd, viz_obstacle, around_obstacle_sd
+
+    def process_traffic_lights(self, traffic_light_obs):
+        # if there's no recognized signal, consider it as an unrecognized frame
+        if len(traffic_light_obs) == 0:
+            # self.unrecognized_counter += 1
+            if self.green_light_timer is not None:
+                elapsed_time = time.time() - self.green_light_timer
+                if elapsed_time < 2:  # 2 seconds
+                    return self.last_green_light if self.last_green_light is not None else []
+            self.light_counter = 0
+            return []
+
+        current_light = traffic_light_obs[0][0]  # Get the class of the traffic light
+
+        if self.prev_light is None:
+            self.prev_light = current_light
+            self.light_counter = 1
+            return []
+            # if current_light in [4, 9, 12, 14, 17]: # go
+            #     self.green_light_timer = time.time()
+            #     self.last_green_light = [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
+        else:
+            if current_light == self.prev_light:
+                self.light_counter += 1
+                # self.unrecognized_counter = 0
+            else:
+                self.light_counter = 1
+
+            if self.light_counter >= 3:
+                self.prev_light = current_light
+
+                if current_light in [4, 9, 12, 14, 17]:
+                    self.green_light_timer = time.time()
+                    self.last_green_light = [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
+                    return self.last_green_light
+                else:
+                    self.green_light_timer = None
+                    return [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
+            else:
+                return []
+                # if self.prev_light in [4, 9, 12, 14, 17] and self.green_light_timer is not None and current_light not in [4, 9, 12, 14, 17]:
+                #     elapsed_time = time.time() - self.green_light_timer
+
+                #     if elapsed_time < 2:  # 2 seconds
+                #         current_light = self.last_green_light[0]  # Assume that the traffic light remains green
+        # return [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
+
     def get_traffic_light_objects(self):
         traffic_light_obs = []
 
         if len(self.traffic_light_object) > 0:
             for traffic_light in self.traffic_light_object:
-                if traffic_light[2] > 0.2:  # if probability exceed 50%
+                if traffic_light[2] > 0.2:  # if probability exceed 20%
                     traffic_light_obs.append(traffic_light)
         # sorting by size
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1], reverse=True)
+        
+        traffic_light_obs = self.process_traffic_lights(traffic_light_obs)
+
         return traffic_light_obs
 
     def run(self, CS):
@@ -158,7 +213,7 @@ class ObstacleDetector:
             car_idx = local_point.query(
                 (self.CS.position.x, self.CS.position.y), 1)[1]
 
-            obstacle_sd, viz_obstacle, left_bsd_obstacle_sd, right_bsd_obstacle_sd, around_obstacle_sd = self.get_lidar_objects(
+            obstacle_sd, viz_obstacle, around_obstacle_sd = self.get_lidar_objects(
                 local_point, car_idx)
 
             lidar_obstacle = PoseArray()
@@ -170,12 +225,18 @@ class ObstacleDetector:
                 pose.orientation.w = sd[2]# relative velocity
                 pose.orientation.z = sd[3] # track id
                 lidar_obstacle.poses.append(pose)
-            obstacle_distance = (
-                obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1
+            # only my front near obstacle distance
+            if len(obstacle_sd) > 0:
+                if obstacle_sd[0][0]-car_idx < 100*(1/self.CP.mapParam.precision) and -1.6 < obstacle_sd[0][1] < 1.6:
+                    obstacle_distance = (obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision
+                else:
+                    obstacle_distance = -1
+            else:
+                obstacle_distance = -1
 
-            bsd = Point()
-            bsd.x = int(bool(left_bsd_obstacle_sd)) #function converts the list to a boolean value (True if the list is not empty, False if it is)
-            bsd.y = int(bool(right_bsd_obstacle_sd))
+            # bsd = Point()
+            # bsd.x = int(bool(left_bsd_obstacle_sd)) #function converts the list to a boolean value (True if the list is not empty, False if it is)
+            # bsd.y = int(bool(right_bsd_obstacle_sd))
 
             around_obstacle = PoseArray()
             for sd in around_obstacle_sd:
@@ -198,7 +259,7 @@ class ObstacleDetector:
 
             self.pub_obstacle_distance.publish(Float32(obstacle_distance))
             self.pub_lidar_obstacle.publish(lidar_obstacle)
-            self.pub_lidar_bsd.publish(bsd)
+            # self.pub_lidar_bsd.publish(bsd)
             self.pub_around_obstacle.publish(around_obstacle)
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
@@ -207,7 +268,7 @@ class ObstacleDetector:
 
             # self.lidar_object = []
             viz_obstacle = []
-            if time.time()-self.traffic_ligth_timer > 5:
+            if time.time()-self.traffic_light_timer > 3:
                 self.traffic_light_object = []
 
 

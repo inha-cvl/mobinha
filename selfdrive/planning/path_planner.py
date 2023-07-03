@@ -65,6 +65,7 @@ class PathPlanner:
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
+        self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -76,7 +77,6 @@ class PathPlanner:
         rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
         rospy.Subscriber('/mobinha/visualize/scenario_goal',PoseArray, self.scenario_goal_cb)
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
-        rospy.Subscriber('/mobinha/perception/lidar_bsd', Point, self.lidar_bsd_cb)
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
         rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
         rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb)
@@ -98,9 +98,8 @@ class PathPlanner:
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
-    
-    def lidar_bsd_cb(self, msg):
-        self.lidar_bsd = [msg.x, msg.y] #left, right
+
+        # self.lidar_bsd = [msg.x, msg.y] #left, right
 
     def nearest_obstacle_distance_cb(self, msg):
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
@@ -383,6 +382,7 @@ class PathPlanner:
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
                                                                        self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
+                                self.lidar_bsd = [1, 0]
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
                                         self.local_path[lane_change_point-renew_a+i]=renew_pt
@@ -406,6 +406,8 @@ class PathPlanner:
                                     if self.renewal_path_cnt > 30:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
+                            else:
+                                self.lidar_bsd = [0, 0]
                         elif blinker == 2 and get_look_a_head_id and 1.7<obs[2]<4.0 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
@@ -423,7 +425,7 @@ class PathPlanner:
                                 #get renewable local path
                                 renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
                                                                        self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
-                                # print(renew_ids)
+                                self.lidar_bsd = [0, 1]
                                 if renew_path != None:
                                     for i, renew_pt in enumerate(renew_path):
                                         self.local_path[lane_change_point-renew_a+i]=renew_pt
@@ -447,6 +449,8 @@ class PathPlanner:
                                     if self.renewal_path_cnt > 30:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
+                            else:
+                                self.lidar_bsd = [0, 0]
                 elif self.renewal_path_cnt >= 4:
                     print("Take Over Request(continuos 4 times)")
                     pp = 4
@@ -458,26 +462,7 @@ class PathPlanner:
 
                 elif time.time() - self.renewal_path_timer > 1.5:
                     self.renewal_path_in_progress = False
-                    '''
-                       # get_look_a_head_id and
-                    if len(self.lidar_bsd) > 0 and lane_change_point<(len(self.local_path)-1): 
-                        if (self.blinker == 1 and self.lidar_bsd[0]) or (self.blinker == 2 and self.lidar_bsd[1]):
-                            renew_path, renew_ids = get_renew_path(self.local_id, self.blinker, lane_change_point, self.lmap.lanelets, self.local_path[lane_change_point:lane_change_point+10],self.local_path[lane_change_point-15:lane_change_point])
-                            if renew_path != None:
-                                for i, renew_pt in enumerate(renew_path):
-                                    self.local_path[lane_change_point-15+i]=renew_pt
-                                    self.local_id[lane_change_point-15+i]=renew_ids[i]
-                                if  lane_change_point+25 < len(self.local_path)+1:
-                                    force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-5], self.local_path[lane_change_point+20]], self.precision)
-                                    for i, force_pt in enumerate(force_interpolate_path):
-                                        self.local_path[lane_change_point-5+i]=force_pt
-                                else:
-                                    pass
-                            else:
-                                print("Take Over Request")
-                                pp = 4
-                                return pp, self.local_path
-                    '''     
+
                 # TODO: Avoidance Path
                 #
                 # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
@@ -516,6 +501,11 @@ class PathPlanner:
                     pose.position.z = forward_curvature
                     poseArray.poses.append(pose)
                 self.pub_trajectory.publish(poseArray)
+
+                bsd = Point()
+                bsd.x = self.lidar_bsd[0]
+                bsd.y = self.lidar_bsd[1]
+                self.pub_lidar_bsd.publish(bsd)
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)

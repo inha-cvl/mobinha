@@ -153,18 +153,18 @@ class LongitudinalPlanner:
         stop_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
             6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
         if traffic_light in stop_list[forward_direction]:  # Stop Sign
-            if self.can_not_go_check_tick < 3:
-                self.can_not_go_check_tick += 1
-                return True
-            else:
-                self.can_go_check_tick = -1
+            # if self.can_not_go_check_tick < 3:
+            #     self.can_not_go_check_tick += 1
+            #     return True
+            # else:
+            #     self.can_go_check_tick = -1
             return False
         else: # Go sign
-            if self.can_go_check_tick < 3:
-                self.can_go_check_tick += 1
-                return False
-            else:
-                self.can_not_go_check_tick = -1
+            # if self.can_go_check_tick < 3:
+            #     self.can_go_check_tick += 1
+            #     return False
+            # else:
+            #     self.can_not_go_check_tick = -1
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
@@ -201,18 +201,18 @@ class LongitudinalPlanner:
         # [2] = Traffic Light
         if self.traffic_light_obstacle is not None:
             can_go = False
-            no_light = True
+            # no_light = True
             if len(self.traffic_light_obstacle) > 0:
-                no_light = False
+                # no_light = False
                 tlobs = self.traffic_light_obstacle[0]
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
                     can_go = True
-                    self.can_go_timer_start = time.time()
-                    self.can_go_stored = True
-            if no_light: # Only check the timer if no light is detected
-                # if more than 2.5 seconds have passed since the light was green
-                if self.can_go_timer_start is not None and time.time() - self.can_go_timer_start < 2.5:
-                    can_go = self.can_go_stored
+                    # self.can_go_timer_start = time.time()
+                    # self.can_go_stored = True
+            # if no_light: # Only check the timer if no light is detected
+            #     # if more than 2.5 seconds have passed since the light was green
+            #     if self.can_go_timer_start is not None and time.time() - self.can_go_timer_start < 2.5:
+            #         can_go = self.can_go_stored
             if not can_go:
                 if self.lane_information[2] < math.inf:
                     if self.lane_information[2]-tl_offset-local_s < 90*self.M_TO_IDX:

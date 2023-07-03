@@ -357,6 +357,7 @@ class PathPlanner:
                 ## Lane Change Local Path Planning
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
+                self.lidar_bsd = [0, 0]
                 if blinker != 0 and not self.renewal_path_in_progress:
                     # look a head's idx's id == lane id => stop looking BSD
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
@@ -406,8 +407,6 @@ class PathPlanner:
                                     if self.renewal_path_cnt > 30:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
-                            else:
-                                self.lidar_bsd = [0, 0]
                         elif blinker == 2 and get_look_a_head_id and 1.7<obs[2]<4.0 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
@@ -449,8 +448,6 @@ class PathPlanner:
                                     if self.renewal_path_cnt > 30:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
-                            else:
-                                self.lidar_bsd = [0, 0]
                 elif self.renewal_path_cnt >= 4:
                     print("Take Over Request(continuos 4 times)")
                     pp = 4

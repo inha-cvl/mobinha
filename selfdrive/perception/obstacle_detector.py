@@ -184,13 +184,11 @@ class ObstacleDetector:
                     self.green_light_timer = None
                     return [[current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]]
             else:
+                if self.prev_light in [4, 9, 12, 14, 17] and self.green_light_timer is not None and current_light not in [4, 9, 12, 14, 17]:
+                    elapsed_time = time.time() - self.green_light_timer
+                    if elapsed_time < 2:  # 2 seconds
+                        return self.last_green_light if self.last_green_light is not None else []
                 return []
-                # if self.prev_light in [4, 9, 12, 14, 17] and self.green_light_timer is not None and current_light not in [4, 9, 12, 14, 17]:
-                #     elapsed_time = time.time() - self.green_light_timer
-
-                #     if elapsed_time < 2:  # 2 seconds
-                #         current_light = self.last_green_light[0]  # Assume that the traffic light remains green
-        # return [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
 
     def get_traffic_light_objects(self):
         traffic_light_obs = []

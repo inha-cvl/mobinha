@@ -50,7 +50,7 @@ class PathPlanner:
         # self.change_lane_flag = False
 
         self.lidar_obstacle = []
-        self.lidar_bsd = []
+        self.lidar_bsd = [0,0]
         self.around_obstacle = []
         self.look_a_head_pos = [0,0]
         self.obstacle_detect_timer = 0

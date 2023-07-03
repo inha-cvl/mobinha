@@ -151,7 +151,7 @@ class ObstacleDetector:
             # self.unrecognized_counter += 1
             if self.green_light_timer is not None:
                 elapsed_time = time.time() - self.green_light_timer
-                if elapsed_time < 2:  # 2 seconds
+                if elapsed_time < 1.5:  # 2 seconds
                     return self.last_green_light if self.last_green_light is not None else []
             self.light_counter = 0
             return []
@@ -170,6 +170,7 @@ class ObstacleDetector:
                 self.light_counter += 1
                 # self.unrecognized_counter = 0
             else:
+                self.prev_light = current_light
                 self.light_counter = 1
 
             if self.light_counter >= 3:
@@ -177,11 +178,11 @@ class ObstacleDetector:
 
                 if current_light in [4, 9, 12, 14, 17]:
                     self.green_light_timer = time.time()
-                    self.last_green_light = [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
+                    self.last_green_light = [[current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]]
                     return self.last_green_light
                 else:
                     self.green_light_timer = None
-                    return [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
+                    return [[current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]]
             else:
                 return []
                 # if self.prev_light in [4, 9, 12, 14, 17] and self.green_light_timer is not None and current_light not in [4, 9, 12, 14, 17]:
@@ -202,7 +203,6 @@ class ObstacleDetector:
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1], reverse=True)
         
         traffic_light_obs = self.process_traffic_lights(traffic_light_obs)
-
         return traffic_light_obs
 
     def run(self, CS):

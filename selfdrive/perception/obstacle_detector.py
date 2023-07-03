@@ -225,7 +225,7 @@ class ObstacleDetector:
                 lidar_obstacle.poses.append(pose)
             # only my front near obstacle distance
             if len(obstacle_sd) > 0:
-                if obstacle_sd[0][0]-car_idx < 100*(1/self.CP.mapParam.precision) and -1.6 < obstacle_sd[0][1] < 1.6:
+                if 0 < obstacle_sd[0][0]-car_idx < 100*(1/self.CP.mapParam.precision) and -1.6 < obstacle_sd[0][1] < 1.6:
                     obstacle_distance = (obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision
                 else:
                     obstacle_distance = -1

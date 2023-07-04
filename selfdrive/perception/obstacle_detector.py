@@ -27,10 +27,11 @@ class ObstacleDetector:
         self.morai_ego_v = 0.0
         self.traffic_light_timer = time.time()
 
-        self.prev_light = None
-        self.light_counter = 0
-        self.green_light_timer = None
-        self.last_green_light = None
+        self.last_observed_light = []
+        self.last_observed_time = 0
+        self.frames_of_same_light = 0
+        self.allowed_unrecognized_frames = 0
+        self.go_signals = [4, 9, 12, 14, 17]
         
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
@@ -116,7 +117,7 @@ class ObstacleDetector:
                     #[0] x [1] y [6] s [7] d
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6], obj_s-car_idx, obj_d))
                 #Forward Collision Warning
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -4.5 and obj_d < 4.5:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.6 and obj_d < 1.6:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
                 if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.5 and obj_d < 4.5:
@@ -146,50 +147,37 @@ class ObstacleDetector:
         return obstacle_sd, viz_obstacle, around_obstacle_sd
 
     def process_traffic_lights(self, traffic_light_obs):
-        # if there's no recognized signal, consider it as an unrecognized frame
-        if len(traffic_light_obs) == 0:
-            # self.unrecognized_counter += 1
-            if self.green_light_timer is not None:
-                elapsed_time = time.time() - self.green_light_timer
-                if elapsed_time < 1.5:  # 2 seconds
-                    return self.last_green_light if self.last_green_light is not None else []
-            self.light_counter = 0
-            return []
-
-        current_light = traffic_light_obs[0][0]  # Get the class of the traffic light
-
-        if self.prev_light is None:
-            self.prev_light = current_light
-            self.light_counter = 1
-            return []
-            # if current_light in [4, 9, 12, 14, 17]: # go
-            #     self.green_light_timer = time.time()
-            #     self.last_green_light = [current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]
-        else:
-            if current_light == self.prev_light:
-                self.light_counter += 1
-                # self.unrecognized_counter = 0
+        if not traffic_light_obs:
+            self.allowed_unrecognized_frames += 1
+            if self.allowed_unrecognized_frames <= 2 and self.last_observed_light:
+                return [self.last_observed_light]
+            elif self.last_observed_light and time.time() - self.last_observed_time < 1.1 and self.last_observed_light[0] in self.go_signals:
+                return [self.last_observed_light]
             else:
-                self.prev_light = current_light
-                self.light_counter = 1
-
-            if self.light_counter >= 3:
-                self.prev_light = current_light
-
-                if current_light in [4, 9, 12, 14, 17]:
-                    self.green_light_timer = time.time()
-                    self.last_green_light = [[current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]]
-                    return self.last_green_light
-                else:
-                    self.green_light_timer = None
-                    return [[current_light, traffic_light_obs[0][1], traffic_light_obs[0][2]]]
-            else:
-                if self.prev_light in [4, 9, 12, 14, 17] and self.green_light_timer is not None and current_light not in [4, 9, 12, 14, 17]:
-                    elapsed_time = time.time() - self.green_light_timer
-                    if elapsed_time < 2:  # 2 seconds
-                        return self.last_green_light if self.last_green_light is not None else []
                 return []
+        
+        current_light = traffic_light_obs[0] if traffic_light_obs else None
+        self.allowed_unrecognized_frames = 0
 
+        if current_light is None:
+            return []
+
+        if self.last_observed_light and current_light[0] == self.last_observed_light[0]:
+            self.frames_of_same_light += 1
+        else:
+            self.frames_of_same_light = 1
+
+        self.last_observed_light = current_light
+        self.last_observed_time = time.time()
+
+        if self.frames_of_same_light >= 3:
+            return [current_light]
+
+        if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 1.1:
+            return [self.last_observed_light]
+
+        return []
+    
     def get_traffic_light_objects(self):
         traffic_light_obs = []
 
@@ -224,13 +212,8 @@ class ObstacleDetector:
                 pose.orientation.z = sd[3] # track id
                 lidar_obstacle.poses.append(pose)
             # only my front near obstacle distance
-            if len(obstacle_sd) > 0:
-                if 0 < obstacle_sd[0][0]-car_idx < 100*(1/self.CP.mapParam.precision) and -1.6 < obstacle_sd[0][1] < 1.6:
-                    obstacle_distance = (obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision
-                else:
-                    obstacle_distance = -1
-            else:
-                obstacle_distance = -1
+            obstacle_distance = (
+                obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1
 
             # bsd = Point()
             # bsd.x = int(bool(left_bsd_obstacle_sd)) #function converts the list to a boolean value (True if the list is not empty, False if it is)

@@ -296,6 +296,9 @@ class MainWindow(QMainWindow, form_class):
             self.direction_pixmap_list.append(QPixmap(direction_image_list[i]))
         self.direction_message_list = ['Go Straight', 'Turn Left', 'Turn Right', 'U-Turn']
 
+        self.acc_image_list = [QPixmap(dir_path+"/icon/1.png"), QPixmap(dir_path+"/icon/2.png"), QPixmap(dir_path+"/icon/3.png"), QPixmap(dir_path+"/icon/4.png"), QPixmap(dir_path+"/icon/4none.png")]
+        self.acc_image_s_list = [QPixmap(dir_path+"/icon/1s.png"), QPixmap(dir_path+"/icon/2s.png"), QPixmap(dir_path+"/icon/3s.png"), QPixmap(dir_path+"/icon/4s.png"), QPixmap(dir_path+"/icon/4nones.png")]
+
         l_blinker = QPixmap(dir_path+"/icon/l_blinker.png")
         r_blinker = QPixmap(dir_path+"/icon/r_blinker.png")
 
@@ -309,8 +312,9 @@ class MainWindow(QMainWindow, form_class):
 
         self.obstacle_pixmap_list = [QPixmap(dir_path+"/icon/object_car_b.png"), QPixmap(dir_path+"/icon/object_pedestrian_b.png")]
         self.distance_pixmap = QPixmap(dir_path+"/icon/distance.png")
-        self.distance_label_list = [self.distance_1_label, self.distance_2_label, self.distance_3_label, self.distance_4_label]
-        self.tl_label_list = [self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
+        #self.distance_label_list = [self.distance_1_label, self.distance_2_label, self.distance_3_label, self.distance_4_label]
+        self.tl_label4_list = [self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
+        self.tl_label1_list = [self.label_37, self.label_39, self.label_40, self.label_42]
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -383,47 +387,45 @@ class MainWindow(QMainWindow, form_class):
         self.label_obstacle_distance.setText(str(round(msg.data, 5))+" m")  # nearest obstacle
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            if msg.data > 0 and msg.data <= 7:
-                for i in range(1, 4):
-                    self.distance_label_list[i].setText("")
-                self.distance_label_list[0].setText("❗️")
-            elif msg.data > 7 and msg.data <= 15:
-                for i in range(2, 4):
-                    self.distance_label_list[i].setText("")
-                self.distance_label_list[1].setText("❗️")
-                self.distance_label_list[0].setText("7m")
-            elif msg.data > 15 and msg.data <= 30:
-                self.distance_label_list[3].setText("")
-                self.distance_label_list[2].setText("❗️")
-                self.distance_label_list[1].setText("15m")
-                self.distance_label_list[0].setText("7m")
-            elif msg.data > 30:
-                self.distance_label_list[3].setText("❗️")
-                self.distance_label_list[2].setText("30m")
-                self.distance_label_list[1].setText("15m")
-                self.distance_label_list[0].setText("7m")
-            elif msg.data < 0:
-                self.distance_label_list[3].setText("")
-                self.distance_label_list[2].setText("30m")
-                self.distance_label_list[1].setText("15m")
-                self.distance_label_list[0].setText("7m")
+            if msg.data > 0 and msg.data <= 10:
+                self.distance_label.setPixmap(self.acc_image_list[0])
+            elif msg.data > 10 and msg.data <= 23:
+                self.distance_label.setPixmap(self.acc_image_list[1])
+            elif msg.data > 23 and msg.data <= 36:
+                self.distance_label.setPixmap(self.acc_image_list[2])
+            elif msg.data > 36 and msg.data <= 50:
+                self.distance_label.setPixmap(self.acc_image_list[3])
+            else:
+                self.distance_label.setPixmap(self.acc_image_list[4])
+        elif self.state != 'OVER' and self.tabWidget.currentIndex() == 0:
+            if msg.data > 0 and msg.data <= 10:
+                self.distance_label_s.setPixmap(self.acc_image_s_list[0])
+            elif msg.data > 10 and msg.data <= 23:
+                self.distance_label_s.setPixmap(self.acc_image_s_list[1])
+            elif msg.data > 23 and msg.data <= 36:
+                self.distance_label_s.setPixmap(self.acc_image_s_list[2])
+            elif msg.data > 36 and msg.data <= 50:
+                self.distance_label_s.setPixmap(self.acc_image_s_list[3])
+            else:
+                self.distance_label_s.setPixmap(self.acc_image_s_list[4])
 
     def traffic_light_obstacle_cb(self, msg):
         tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
         tl_off = "⬛️"
-
         if len(msg.poses) == 0:
             for i in range(4):
-                self.tl_label_list[i].setText(tl_off)
+                self.tl_label4_list[i].setText(tl_off)
+                self.tl_label1_list[i].setText(tl_off)
             return 
-        if self.state == 'OVER' or self.tabWidget.currentIndex() != 4:
+        if self.state == 'OVER' or ( self.tabWidget.currentIndex() in [1, 2, 3] ):
             return
         
         tl_cls = msg.poses[0].position.y
         tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
         tl_detect_cls = [i for i, cls in enumerate(tl_cls_list) if tl_cls in cls]
         for i in range(4):
-            self.tl_label_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
+            self.tl_label4_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
+            self.tl_label1_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
 
 
     def trajectory_cb(self, msg):

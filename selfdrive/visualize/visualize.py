@@ -244,7 +244,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.graph_velocity_widget = self.create_graph_widget("Velocity", 0, 10, 0, 60)
         self.graph_acceleration_widget = self.create_graph_widget("Ego Acceleration",0, 10, -20, 20)
-        self.graph_steer_widget = self.create_graph_widget("Steer", 0, 10, -35, 35)
+        self.graph_steer_widget = self.create_graph_widget("Heading", 0, 10, -90, 270)
 
         self.graph_velocity_widget.setLabel('left', 'v', units='km/h')
         self.graph_acceleration_widget.setLabel('left', 'p', units='Ba')
@@ -290,7 +290,7 @@ class MainWindow(QMainWindow, form_class):
         pen = pg.mkPen(color='#1363DF', width=120)
         self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
 
-        direction_image_list = [dir_path+"/icon/straight_b.png", dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",dir_path+"/icon/uturn_b.png"]
+        direction_image_list = [dir_path+"/icon/straight_b.png", dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",dir_path+"/icon/left_b.png"]
         self.direction_pixmap_list = []
         for i in range(4):
             self.direction_pixmap_list.append(QPixmap(direction_image_list[i]))
@@ -337,10 +337,8 @@ class MainWindow(QMainWindow, form_class):
             self.graph_acceleration_data['ya'].append(round(self.CS.actuators.accel, 3))
             self.graph_acceleration_data['yb'].append(-round(self.CS.actuators.brake, 3))
             self.graph_steer_data['x'].append(self.graph_time)
-            self.graph_steer_data['yt'].append(0)
-                #round(self.CC.actuators.steer*self.CP.steerRatio, 3))
-            self.graph_steer_data['ye'].append(round(self.CC.cruiseControl.accerror,2))
-                #round(self.CS.actuators.steer*self.CP.steerRatio, 3))
+            self.graph_steer_data['yt'].append(round((self.CC.actuators.steer/self.CP.steerRatio)+self.CS.yawRate, 3))
+            self.graph_steer_data['ye'].append(round(self.CS.yawRate, 3))
 
             axX_velocity = self.graph_velocity_widget.getAxis('bottom')
             axX_acceleration = self.graph_acceleration_widget.getAxis('bottom')
@@ -581,7 +579,7 @@ class MainWindow(QMainWindow, form_class):
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
         self.label_vehicle_yaw.setText(f"{self.CS.yawRate:.5f} deg")
-        self.label_target_yaw.setText(f"{(float(self.CC.actuators.steer*self.CP.steerRatio)+self.CS.yawRate):.5f} deg")
+        self.label_target_yaw.setText(f"{(float(self.CC.actuators.steer/self.CP.steerRatio)+self.CS.yawRate):.5f} deg")
         self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
         self.check_mode(self.CS.cruiseState)
 

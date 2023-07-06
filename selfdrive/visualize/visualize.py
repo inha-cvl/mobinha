@@ -279,25 +279,14 @@ class MainWindow(QMainWindow, form_class):
         self.graph_timer.start(500)
 
     def information_frame(self):
-        self.trajectory_widget = pg.PlotWidget()
-        self.trajectory_widget.setBackground('#000A14')
-        self.trajectory_widget.setXRange(-10, 10)
-        self.trajectory_widget.setYRange(0, 10)
-        self.trajectory_widget.getPlotItem().hideAxis('bottom')
-        self.trajectory_widget.getPlotItem().hideAxis('left')
-
-        self.trajectory_layout.addWidget(self.trajectory_widget)
-        pen = pg.mkPen(color='#1363DF', width=120)
-        self.trajectory_plot = self.trajectory_widget.plot(pen=pen)
-
         direction_image_list = [dir_path+"/icon/straight_b.png", dir_path+"/icon/left_b.png", dir_path+"/icon/right_b.png",dir_path+"/icon/left_b.png"]
         self.direction_pixmap_list = []
         for i in range(4):
             self.direction_pixmap_list.append(QPixmap(direction_image_list[i]))
         self.direction_message_list = ['Go Straight', 'Turn Left', 'Turn Right', 'U-Turn']
 
-        self.acc_image_list = [QPixmap(dir_path+"/icon/1.png"), QPixmap(dir_path+"/icon/2.png"), QPixmap(dir_path+"/icon/3.png"), QPixmap(dir_path+"/icon/4.png"), QPixmap(dir_path+"/icon/4none.png")]
-        self.acc_image_s_list = [QPixmap(dir_path+"/icon/1s.png"), QPixmap(dir_path+"/icon/2s.png"), QPixmap(dir_path+"/icon/3s.png"), QPixmap(dir_path+"/icon/4s.png"), QPixmap(dir_path+"/icon/4nones.png")]
+        self.acc_image_list = [QPixmap(dir_path+"/icon/1.png"), QPixmap(dir_path+"/icon/2.png"), QPixmap(dir_path+"/icon/3.png"), QPixmap(dir_path+"/icon/4.png"), QPixmap(dir_path+"/icon/5.png")]
+        self.acc_image_s_list = [QPixmap(dir_path+"/icon/1s.png"), QPixmap(dir_path+"/icon/2s.png"), QPixmap(dir_path+"/icon/3s.png"), QPixmap(dir_path+"/icon/4s.png"), QPixmap(dir_path+"/icon/5s.png")]
 
         l_blinker = QPixmap(dir_path+"/icon/l_blinker.png")
         r_blinker = QPixmap(dir_path+"/icon/r_blinker.png")
@@ -310,9 +299,6 @@ class MainWindow(QMainWindow, form_class):
 
         self.gear_label_list = [self.gear_p_label, self.gear_r_label, self.gear_n_label, self.gear_d_label]
 
-        self.obstacle_pixmap_list = [QPixmap(dir_path+"/icon/object_car_b.png"), QPixmap(dir_path+"/icon/object_pedestrian_b.png")]
-        self.distance_pixmap = QPixmap(dir_path+"/icon/distance.png")
-        #self.distance_label_list = [self.distance_1_label, self.distance_2_label, self.distance_3_label, self.distance_4_label]
         self.tl_label4_list = [self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
         self.tl_label1_list = [self.label_37, self.label_39, self.label_40, self.label_42]
 
@@ -407,6 +393,8 @@ class MainWindow(QMainWindow, form_class):
             else:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[4])
 
+
+
     def traffic_light_obstacle_cb(self, msg):
         tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
         tl_off = "⬛️"
@@ -428,11 +416,11 @@ class MainWindow(QMainWindow, form_class):
 
     def trajectory_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            x = [v.position.x for v in msg.poses]
-            y = [v.position.y for v in msg.poses]
+            # x = [v.position.x for v in msg.poses]
+            # y = [v.position.y for v in msg.poses]
 
-            self.trajectory_plot.clear()
-            self.trajectory_plot.setData(x=x, y=y)
+            # self.trajectory_plot.clear()
+            # self.trajectory_plot.setData(x=x, y=y)
             self.info_curvature_label.setText(f"{msg.poses[0].position.z:.1f} m")
     
     def lidar_bsd_cb(self, msg):

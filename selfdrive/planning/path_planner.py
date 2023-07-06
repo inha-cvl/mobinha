@@ -367,7 +367,7 @@ class PathPlanner:
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
                         # if -4.5<obs[2]<-1.5  and lanechangepoint prev or -1.5<obs[2]<1.5 and lanechangepoint next:
-                        if blinker == 1 and get_look_a_head_id and -4.1<obs[2]<-1.7 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
+                        if blinker == 1 and get_look_a_head_id and -4.15<obs[2]<-1.75 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
@@ -407,7 +407,7 @@ class PathPlanner:
                                     if self.renewal_path_cnt > 30:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
-                        elif blinker == 2 and get_look_a_head_id and 1.7<obs[2]<4.0 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
+                        elif blinker == 2 and get_look_a_head_id and 1.75<obs[2]<4.15 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 

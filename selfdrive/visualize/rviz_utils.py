@@ -22,10 +22,10 @@ def ObjectsViz(objects):
         array.markers.append(marker)
     for n, pt in enumerate(objects):
         quaternion = tf.transformations.quaternion_from_euler(
-            0.0, 0.0, math.radians(pt[2]))
-        if 0 < pt[6] < 200 and -1.5<pt[7]<1.5:
+            0.0, 0.0, 0.0)#math.radians(pt[2]))
+        if 0 < pt[6] < 200 and -1.75<pt[7]<1.75:
             color = (1.0, 0.0, 0.0, 1.0)
-        elif -100 < pt[6] < 100 and (-4.2 < pt[7] < -1.7 or 1.7 < pt[7] < 4.2):
+        elif -100 < pt[6] < 100 and (-4.3 < pt[7] < -1.75 or 1.75 < pt[7] < 4.3):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 0.0, 1.0)

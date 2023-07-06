@@ -113,14 +113,14 @@ class ObstacleDetector:
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
-                if obj_d > -4.5 and obj_d < 4.5:
+                if obj_d > -4.3 and obj_d < 4.3:
                     #[0] x [1] y [6] s [7] d
                     viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6], obj_s-car_idx, obj_d))
                 #Forward Collision Warning
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.6 and obj_d < 1.6:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.75 and obj_d < 1.75:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
-                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.5 and obj_d < 4.5:
+                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.3 and obj_d < 4.3:
                         around_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 #BSD1 : Ego Position Based Method
                 
@@ -134,9 +134,9 @@ class ObstacleDetector:
                 #BSD2 : Lange Change Point Based Method
                 '''
                 if self.lane_change_point-(20*(1/self.CP.mapParam.precision))<obj_s<self.lane_change_point+(5*(1/self.CP.mapParam.precision)):
-                    if -4.5<obj_d<-1.5:
+                    if -4.3<obj_d<-1.5:
                         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif 1.5<obj_d<4.5:
+                    elif 1.5<obj_d<4.3:
                         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 '''
                 

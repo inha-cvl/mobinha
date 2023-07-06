@@ -371,24 +371,24 @@ class MainWindow(QMainWindow, form_class):
         self.label_obstacle_distance.setText(str(round(msg.data, 5))+" m")  # nearest obstacle
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            if msg.data > 0 and msg.data <= 10:
+            if msg.data > 0 and msg.data <= 16:
                 self.distance_label.setPixmap(self.acc_image_list[0])
-            elif msg.data > 10 and msg.data <= 23:
+            elif msg.data > 16 and msg.data <= 28:
                 self.distance_label.setPixmap(self.acc_image_list[1])
-            elif msg.data > 23 and msg.data <= 36:
+            elif msg.data > 28 and msg.data <= 40:
                 self.distance_label.setPixmap(self.acc_image_list[2])
-            elif msg.data > 36 and msg.data <= 50:
+            elif msg.data > 40 and msg.data <= 55:
                 self.distance_label.setPixmap(self.acc_image_list[3])
             else:
                 self.distance_label.setPixmap(self.acc_image_list[4])
         elif self.state != 'OVER' and self.tabWidget.currentIndex() == 0:
-            if msg.data > 0 and msg.data <= 10:
+            if msg.data > 0 and msg.data <= 16:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[0])
-            elif msg.data > 10 and msg.data <= 23:
+            elif msg.data > 16 and msg.data <= 28:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[1])
-            elif msg.data > 23 and msg.data <= 36:
+            elif msg.data > 28 and msg.data <= 40:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[2])
-            elif msg.data > 36 and msg.data <= 50:
+            elif msg.data > 40 and msg.data <= 55:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[3])
             else:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[4])

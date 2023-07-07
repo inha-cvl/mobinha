@@ -232,7 +232,7 @@ class PathPlanner:
                 self.non_intp_id = non_intp_id
                 self.head_lane_ids = head_lane_ids
 
-                if len(head_lane_ids) > 2:
+                if len(head_lane_ids) >= 2:
                     self.next_head_lane_id = head_lane_ids[1]
                     self.now_head_lane_id = head_lane_ids[0]
                 elif len(head_lane_ids) == 1:
@@ -267,7 +267,7 @@ class PathPlanner:
                     self.now_head_lane_id = self.next_head_lane_id
                     self.next_head_lane_id = self.head_lane_ids[1]
                     self.head_lane_ids = self.head_lane_ids[1:]
-                    
+
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.l_nitt) and len(self.erase_global_path) > self.l_cut):
                 
                 eg_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))

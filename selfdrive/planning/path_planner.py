@@ -114,7 +114,7 @@ class PathPlanner:
                 if ego_lanelets is not None:
                     e_id, e_idx = ego_lanelets
                 else:
-                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
+                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again 1')
                     self.get_goal = 0
                     self.state = 'WAITING'
                     return None, None
@@ -124,7 +124,7 @@ class PathPlanner:
                     g_id, g_idx = goal_lanelets
 
                 else:
-                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
+                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again 2')
                     self.get_goal = 0
                     self.state = 'WAITING'
                     return None, None
@@ -141,7 +141,7 @@ class PathPlanner:
                     shortest_path = shortest_path[0]
                     break
                 else:
-                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
+                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again 3')
                     self.get_goal = 0
                     self.state = 'WAITING'
                     return None, None

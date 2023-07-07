@@ -69,7 +69,7 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
-    def get_safe_obs_distance_s(self, v_ego, desired_ttc=2, comfort_decel=1.95, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance_s(self, v_ego, desired_ttc=4, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
     
     def desired_follow_distance_s(self, v_ego):
@@ -82,22 +82,25 @@ class LongitudinalPlanner:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
 
-    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=1): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
     
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return max(5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
+        return max(1, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
-    def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
+    def get_dynamic_gain(self, error, ttc, kp=0.08/HZ, ki=0.0/HZ, kd=0.08/HZ):
         self.integral += error*(1/HZ)
         self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
+            print("e:",error,"a:",-(kp*error + ki*self.integral + kd*derivative)*HZ,"m/s")
             return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 > ttc > -3:
+            print("e:",error,"a:",-(kp*error + ki*self.integral + kd*derivative)*HZ,"m/s")
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
+            print("e:",error,"a:",-(kp*error + ki*self.integral + kd*derivative)*HZ,"m/s")
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
@@ -177,7 +180,7 @@ class LongitudinalPlanner:
                     if lobs[4] >= 1: # tracking
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]
-                        print("track car:",dynamic_d*self.IDX_TO_M,"m")
+                        # print("track car:",dynamic_d*self.IDX_TO_M,"m")
                         return dynamic_d
                     else: # only cluster is track_id = 0
                         dynamic_d = lobs[1]-offset-local_s

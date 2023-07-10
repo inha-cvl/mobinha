@@ -32,6 +32,8 @@ class ObstacleDetector:
         self.frames_of_same_light = 0
         self.allowed_unrecognized_frames = 0
         self.go_signals = [4, 9, 12, 14, 17]
+
+        self.lane_change_point = 0
         
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
@@ -55,6 +57,7 @@ class ObstacleDetector:
 
     def lane_information_cb(self, msg):
         self.lane_change_point = msg.orientation.z
+        self.lane_position = msg.orientation.w
 
     def lidar_cluster_box_cb(self, msg):
         objects = []
@@ -113,9 +116,20 @@ class ObstacleDetector:
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
-                if obj_d > -4.3 and obj_d < 4.3:
-                    #[0] x [1] y [6] s [7] d
-                    viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj[2], obj[4], obj[5], obj[6], obj_s-car_idx, obj_d))
+                if self.lane_position == 0:
+                    if obj_d > -1.3 and obj_d < 1.3:  #[0] x [1] y [2] s [3] d [4] car heading
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                elif self.lane_position == 1:
+                    if obj_d > -1.3 and obj_d < 4.3: 
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                elif self.lane_position == 2:
+                    if obj_d > -4.3 and obj_d < 1.3: 
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                else:
+                    if obj_d > -4.3 and obj_d < 4.3: 
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+
+
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.75 and obj_d < 1.75:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))

@@ -479,6 +479,25 @@ class PathPlanner:
                 # else:
                 #     self.obstacle_detect_timer = 0.0
 
+                # CHECK : now lane position
+                '''
+                [1] |@| | |
+                [2] | |@| |
+                [3] | | |@|
+                [0]  x|@|x  
+                '''
+                
+                lane_position = 0
+                if my_neighbor_id[0][0] == None and my_neighbor_id[1][0] == None:
+                    lane_position = 0
+                else:
+                    if my_neighbor_id[0][0] == None:
+                        lane_position = 1
+                    elif my_neighbor_id[1][0] == None:
+                        lane_position = 2
+                    else:
+                        lane_position = 3
+
                 # Pubulish Lane Information
                 pose = Pose()
                 pose.position.x = int(splited_local_id)
@@ -487,7 +506,8 @@ class PathPlanner:
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
                 pose.orientation.z = lane_change_point
-                
+                pose.orientation.w = lane_position
+                   
                 self.pub_lane_information.publish(pose)
 
                 poseArray = PoseArray()

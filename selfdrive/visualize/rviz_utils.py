@@ -19,28 +19,33 @@ def ObjectsViz(objects):
 
     array = MarkerArray()
     marker = Marker()
+
+    if len(objects) < prev_marker_count:
+        for i in range(len(objects), prev_marker_count):
+            marker = Marker()
+            marker.ns = "obstacle"
+            marker.header.frame_id = "world"
+            marker.id = i
+            marker.action = Marker.DELETE
+            array.markers.append(marker)
+
+    prev_marker_count = len(objects)
+    
+    
     for n, pt in enumerate(objects):
         # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
-        if 0 < pt[6] < 200 and -1.75<pt[7]<1.75:
+        if 0 < pt[2] < 200 and -1.7<pt[3]<1.7:
             color = (1.0, 0.0, 0.0, 1.0)
-        elif -100 < pt[6] < 100 and (-4.3 < pt[7] < -1.75 or 1.75 < pt[7] < 4.3):
+        elif -100 < pt[2] < 100 and (-4.3 < pt[3] < -1.7 or 1.7 < pt[3] < 4.3):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 0.0, 1.0)
-        # marker = Cube('obstacle', n, 1, quaternion, color)
-        marker = Sphere('obstacle', n, (pt[0],pt[1]), 2.0, color)
-        marker.pose.position = Point(x=pt[0], y=pt[1], z=0.0)
-        array.markers.append(marker)
+        quaternion = tf.transformations.quaternion_from_euler(
+        0, 0, math.radians(pt[4]+90))
+        marker = CubeV('obstacle', n, 1.8, quaternion, color)
+        marker.pose.position = Point(x=int(pt[0]), y=int(pt[1]), z=1.0)
+        array.markers.append(marker)   
 
-        if len(objects) < prev_marker_count:
-            for i in range(len(objects), prev_marker_count):
-                marker = Marker()
-                marker.header.frame_id = "obstacle"
-                marker.id = i
-                marker.action = Marker.DELETE
-                array.markers.append(marker)
-
-        prev_marker_count = len(objects)
     return array
 
 
@@ -493,9 +498,9 @@ def CubeV(ns, id_, scale, quaternion, color):
     marker.ns = ns
     marker.id = id_
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = scale
-    marker.scale.y = scale*3
-    marker.scale.z = scale
+    marker.scale.x = scale*1.1
+    marker.scale.y = scale*2.0
+    marker.scale.z = scale*0.9
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]
     marker.pose.orientation.z = quaternion[2]
@@ -504,7 +509,6 @@ def CubeV(ns, id_, scale, quaternion, color):
     marker.color.g = color[1]
     marker.color.b = color[2]
     marker.color.a = color[3]
-    marker.pose.orientation.w = 1.0
     return marker
 
 
@@ -606,7 +610,7 @@ def EgoCarViz():
     marker.color.a = 1.0
     marker.pose.position.x = 0
     marker.pose.position.y = 0
-    marker.pose.position.z = 0.0
+    marker.pose.position.z = 1.0
     quaternion = tf.transformations.quaternion_from_euler(
         0, 0, math.radians(90))
     marker.pose.orientation.x = quaternion[0]

@@ -30,8 +30,9 @@ class ObstacleDetector:
         self.last_observed_light = []
         self.last_observed_time = 0
         self.frames_of_same_light = 0
+        self.frames_of_diffrent_light = 0
         self.allowed_unrecognized_frames = 0
-        self.go_signals = [4, 9, 12, 14, 17]
+        self.go_signals = [4, 9, 12, 14]
 
         self.direction_number = 0
         self.lane_change_point = 0
@@ -167,9 +168,9 @@ class ObstacleDetector:
     def process_traffic_lights(self, traffic_light_obs):
         if not traffic_light_obs:
             self.allowed_unrecognized_frames += 1
-            if self.last_observed_light and self.allowed_unrecognized_frames <= 8:
+            if self.last_observed_light and self.allowed_unrecognized_frames <= 10:
                 return [self.last_observed_light]
-            elif self.last_observed_light and time.time() - self.last_observed_time < 4.5 and self.last_observed_light[0] in self.go_signals:
+            elif self.last_observed_light and time.time() - self.last_observed_time < 4 and self.last_observed_light[0] in self.go_signals:
                 return [self.last_observed_light]
             else:
                 return []
@@ -179,29 +180,36 @@ class ObstacleDetector:
 
         if current_light is None:
             return []
+        
         if self.direction_number == 1 and current_light[0] == 14:
             current_light = 4
-        if current_light[0] == 4 or current_light[0] == 9:
+        elif current_light[0] == 4 or current_light[0] == 9:
             current_light[0] = 4
-        if current_light[0] == 6 or current_light[0] == 10:
+        elif current_light[0] == 6 or current_light[0] == 10:
             current_light[0] = 6
-        if current_light[0] == 8 or current_light[0] == 11:
+        elif current_light[0] == 8 or current_light[0] == 11:
             current_light[0] = 8
 
         if self.last_observed_light and current_light[0] == self.last_observed_light[0]:
             self.frames_of_same_light += 1
+            self.frames_of_diffrent_light = 0
         else:
             self.frames_of_same_light = 1
-
-        self.last_observed_light = current_light
-        self.last_observed_time = time.time()
+            self.frames_of_diffrent_light += 1
 
         if self.frames_of_same_light >= 8:
+            self.last_observed_light = current_light
+            self.last_observed_time = time.time()
             return [current_light]
-
-        if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 4.5:
+        elif self.frames_of_diffrent_light < 8:
             return [self.last_observed_light]
+        else:
+            self.last_observed_light = current_light
+            self.last_observed_time = time.time()
 
+        # if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 3:
+            # return [self.last_observed_light]
+        
         return []
     
     def get_traffic_light_objects(self):

@@ -457,9 +457,12 @@ class MainWindow(QMainWindow, form_class):
 
     def compressed_image_cb(self, data,arg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
-            qImage = self.convert_to_qimage(data.data)
-            label_list = [self.camera1_label, self.camera2_label, self.camera3_label]
-            label_list[arg-1].setPixmap(QPixmap.fromImage(qImage))
+            try:
+                qImage = self.convert_to_qimage(data.data)
+                label_list = [self.camera1_label, self.camera2_label, self.camera3_label]
+                label_list[arg-1].setPixmap(QPixmap.fromImage(qImage))
+            except:
+                pass
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:

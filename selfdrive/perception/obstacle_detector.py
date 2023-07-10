@@ -117,17 +117,17 @@ class ObstacleDetector:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 if self.lane_position == 0:
-                    if obj_d > -1.3 and obj_d < 1.3:  #[0] x [1] y [2] s [3] d [4] car heading
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                    if obj_d > -1.5 and obj_d < 1.5:  #[0] x [1] y [2] s [3] d [4] car heading
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 1:
-                    if obj_d > -1.3 and obj_d < 4.3: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                    if obj_d > -1.5 and obj_d < 4.3: 
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 2:
-                    if obj_d > -4.3 and obj_d < 1.3: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                    if obj_d > -4.3 and obj_d < 1.5: 
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
                     if obj_d > -4.3 and obj_d < 4.3: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, obj[2]))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
 
 
                 #Forward Collision Warning

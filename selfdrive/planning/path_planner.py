@@ -486,17 +486,15 @@ class PathPlanner:
                 [3] | | |@|
                 [0]  x|@|x  
                 '''
-                
+                lane_no = self.lmap.lanelets[splited_local_id]['laneNo']
                 lane_position = 0
-                if my_neighbor_id[0][0] == None and my_neighbor_id[1][0] == None:
-                    lane_position = 0
+
+                if (lane_no == 1 and my_neighbor_id[0][0] == None) or lane_no == 91:
+                    lane_position = 1
+                elif lane_no == 4 and my_neighbor_id[1][0] == None:
+                    lane_position = 3
                 else:
-                    if my_neighbor_id[0][0] == None:
-                        lane_position = 1
-                    elif my_neighbor_id[1][0] == None:
-                        lane_position = 2
-                    else:
-                        lane_position = 3
+                    lane_position = 2
 
                 # Pubulish Lane Information
                 pose = Pose()

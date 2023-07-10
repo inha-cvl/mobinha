@@ -14,6 +14,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 prev_marker_count = 0
 
+
 def ObjectsViz(objects):
     global prev_marker_count
 
@@ -41,9 +42,9 @@ def ObjectsViz(objects):
         else:
             color = (0.0, 1.0, 0.0, 1.0)
         quaternion = tf.transformations.quaternion_from_euler(
-        0, 0, math.radians(pt[4]+90))
-        marker = CubeV('obstacle', n, 1.8, quaternion, color)
-        marker.pose.position = Point(x=int(pt[0]), y=int(pt[1]), z=1.0)
+        0, 0, math.radians(pt[4]))
+        marker = Sphere('obstacle', n, (pt[0], pt[1]), 2.0, color)
+        marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
         array.markers.append(marker)   
 
     return array
@@ -498,8 +499,8 @@ def CubeV(ns, id_, scale, quaternion, color):
     marker.ns = ns
     marker.id = id_
     marker.lifetime = rospy.Duration(0)
-    marker.scale.x = scale*1.1
-    marker.scale.y = scale*2.0
+    marker.scale.x = scale*1.3
+    marker.scale.y = scale*1.3
     marker.scale.z = scale*0.9
     marker.pose.orientation.x = quaternion[0]
     marker.pose.orientation.y = quaternion[1]

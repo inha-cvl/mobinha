@@ -33,7 +33,9 @@ class ObstacleDetector:
         self.allowed_unrecognized_frames = 0
         self.go_signals = [4, 9, 12, 14, 17]
 
+        self.direction_number = 0
         self.lane_change_point = 0
+        self.lane_position = 0
         
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
@@ -56,6 +58,7 @@ class ObstacleDetector:
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
 
     def lane_information_cb(self, msg):
+        self.direction_number = msg.position.y # 0 straight, 1 left, 3 u-turn
         self.lane_change_point = msg.orientation.z
         self.lane_position = msg.orientation.w
 
@@ -160,21 +163,30 @@ class ObstacleDetector:
         # right_bsd_obstacle_sd = sorted(right_bsd_obstacle_sd, key=lambda sd: sd[0])
         return obstacle_sd, viz_obstacle, around_obstacle_sd
 
+    #4: green3, 6: red3, 8:,yellow3, 9: green4, 10: red4, 11: yellow4, 12: redgreen4, 13: redyellow4, 14: greenarrow4
     def process_traffic_lights(self, traffic_light_obs):
         if not traffic_light_obs:
             self.allowed_unrecognized_frames += 1
-            if self.allowed_unrecognized_frames <= 2 and self.last_observed_light:
+            if self.last_observed_light and self.allowed_unrecognized_frames <= 8:
                 return [self.last_observed_light]
-            elif self.last_observed_light and time.time() - self.last_observed_time < 1.1 and self.last_observed_light[0] in self.go_signals:
+            elif self.last_observed_light and time.time() - self.last_observed_time < 4.5 and self.last_observed_light[0] in self.go_signals:
                 return [self.last_observed_light]
             else:
                 return []
-        
+            
         current_light = traffic_light_obs[0] if traffic_light_obs else None
         self.allowed_unrecognized_frames = 0
 
         if current_light is None:
             return []
+        if self.direction_number == 1 and current_light[0] == 14:
+            current_light = 4
+        if current_light[0] == 4 or current_light[0] == 9:
+            current_light[0] = 4
+        if current_light[0] == 6 or current_light[0] == 10:
+            current_light[0] = 6
+        if current_light[0] == 8 or current_light[0] == 11:
+            current_light[0] = 8
 
         if self.last_observed_light and current_light[0] == self.last_observed_light[0]:
             self.frames_of_same_light += 1
@@ -184,10 +196,10 @@ class ObstacleDetector:
         self.last_observed_light = current_light
         self.last_observed_time = time.time()
 
-        if self.frames_of_same_light >= 3:
+        if self.frames_of_same_light >= 8:
             return [current_light]
 
-        if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 1.1:
+        if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 4.5:
             return [self.last_observed_light]
 
         return []

@@ -70,7 +70,7 @@ class LongitudinalPlanner:
         return out
 
     # static object
-    def get_safe_obs_distance_s(self, v_ego, desired_ttc=4, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance_s(self, v_ego, desired_ttc=2, comfort_decel=1.5, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
     def desired_follow_distance_s(self, v_ego):
         return max(5, self.get_safe_obs_distance_s(v_ego))
@@ -82,10 +82,10 @@ class LongitudinalPlanner:
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
-    def get_safe_obs_distance(self, v_ego, desired_ttc=3.5, comfort_decel=1.6, offset=2.5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=4): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return max(2.5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
+        return max(4, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
     def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
         self.integral += error*(1/HZ)
@@ -93,19 +93,19 @@ class LongitudinalPlanner:
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
         if error < 0:
-            print("e:",error,"a:",-(kp*error + ki*self.integral + kd*derivative)*HZ,"m/s")
-            return max(0/HZ, min(2.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            print("e:",error,"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
+            return max(0/HZ, min(1.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 > ttc > -3:
-            print("e:",error,"a:",-(kp*error + ki*self.integral + kd*derivative)*HZ,"m/s")
+            print("e:",error,"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
-            print("e:",error,"a:",-(kp*error + ki*self.integral + kd*derivative)*HZ,"m/s")
+            print("e:",error,"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
         
     def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
-            return 2.5 / HZ
+            return 1.5 / HZ
         elif 0 < ttc < 3:
             return max(0/HZ, min(7/HZ, error*gain))
         else:
@@ -146,9 +146,13 @@ class LongitudinalPlanner:
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
-            target_v = min(max_v, self.target_v + gain)
+            if (self.rel_v + cur_v) < 10*KPH_TO_MPS:
+                target_v = min(max_v, self.target_v + 1.5/HZ)
+            else:
+                target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
             target_v = max(0, self.target_v + gain)
+
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
@@ -170,12 +174,12 @@ class LongitudinalPlanner:
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
-        offset = 8.5*self.M_TO_IDX
+        offset = 8*self.M_TO_IDX
         dynamic_d = 90*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
-                if lobs[2] >= -1.75 and lobs[2] <= 1.75:  # object in my lane
+                if lobs[2] >= -1.7 and lobs[2] <= 1.7:  # object in my lane
                     if lobs[4] >= 1: # tracking
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]

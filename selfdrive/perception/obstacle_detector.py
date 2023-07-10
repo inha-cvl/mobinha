@@ -131,10 +131,10 @@ class ObstacleDetector:
 
 
                 #Forward Collision Warning
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.75 and obj_d < 1.75:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.7 and obj_d < 1.7:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
-                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.3 and obj_d < 4.3:
+                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.2 and obj_d < 4.2:
                         around_obstacle_sd.append((obj_s, obj_d, obj[3]))
                 #BSD1 : Ego Position Based Method
                 

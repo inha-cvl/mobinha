@@ -12,26 +12,35 @@ from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplin
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+prev_marker_count = 0
+
 def ObjectsViz(objects):
+    global prev_marker_count
+
     array = MarkerArray()
-    # Add the DELETEALL marker to clear all previous markers
     marker = Marker()
-    if time.time() % 1 < 0.1:
-        marker.action = Marker.DELETEALL
-        marker.ns = 'obstacle'
-        array.markers.append(marker)
     for n, pt in enumerate(objects):
-        quaternion = tf.transformations.quaternion_from_euler(
-            0.0, 0.0, 0.0)#math.radians(pt[2]))
+        # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
         if 0 < pt[6] < 200 and -1.75<pt[7]<1.75:
             color = (1.0, 0.0, 0.0, 1.0)
         elif -100 < pt[6] < 100 and (-4.3 < pt[7] < -1.75 or 1.75 < pt[7] < 4.3):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 0.0, 1.0)
-        marker = Cube('obstacle', n, 1, quaternion, color)
+        # marker = Cube('obstacle', n, 1, quaternion, color)
+        marker = Sphere('obstacle', n, (pt[0],pt[1]), 2.0, color)
         marker.pose.position = Point(x=pt[0], y=pt[1], z=0.0)
         array.markers.append(marker)
+
+        if len(objects) < prev_marker_count:
+            for i in range(len(objects), prev_marker_count):
+                marker = Marker()
+                marker.header.frame_id = "obstacle"
+                marker.id = i
+                marker.action = Marker.DELETE
+                array.markers.append(marker)
+
+        prev_marker_count = len(objects)
     return array
 
 

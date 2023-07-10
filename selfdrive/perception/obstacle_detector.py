@@ -248,8 +248,8 @@ class ObstacleDetector:
             
 
             # self.lidar_object = []
-            viz_obstacle = []
-            if time.time()-self.traffic_light_timer > 3:
-                self.traffic_light_object = []
+            # viz_obstacle = []
+            # if time.time()-self.traffic_light_timer > 3:
+                # self.traffic_light_object = []
 
 

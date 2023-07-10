@@ -43,15 +43,13 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
         self.gear = 0
 
-        # posco 957.413, -851.312, terminal -1601.567, 2375.599
-        # self.ego = Vehicle(165.861, 305.707, math.radians(142), 0.0, 2.65)
-        #songdo campus
-        # self.ego = Vehicle(3823,-3696,math.radians(180), 0, 2.65)
         self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
         # ans bakery
         # self.ego = Vehicle(151.861, 313.707, math.radians(142), 0.0, 2.65)
         #kcity highway 
         # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
+        #songdo-site
+        self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
 

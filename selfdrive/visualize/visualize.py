@@ -244,7 +244,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.graph_velocity_widget = self.create_graph_widget("Velocity", 0, 10, 0, 60)
         self.graph_acceleration_widget = self.create_graph_widget("Ego Acceleration",0, 10, -20, 20)
-        self.graph_steer_widget = self.create_graph_widget("Heading", 0, 10, -90, 270)
+        self.graph_steer_widget = self.create_graph_widget("Heading", 0, 10, -270, 90)
 
         self.graph_velocity_widget.setLabel('left', 'v', units='km/h')
         self.graph_acceleration_widget.setLabel('left', 'p', units='Ba')

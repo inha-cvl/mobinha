@@ -69,26 +69,25 @@ class LongitudinalPlanner:
             out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
         return out
 
+    # static object
     def get_safe_obs_distance_s(self, v_ego, desired_ttc=4, comfort_decel=3, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
-    
     def desired_follow_distance_s(self, v_ego):
         return max(5, self.get_safe_obs_distance_s(v_ego))
     
-    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=1.95):
-        if v_lead <= 1 * KPH_TO_MPS:
+    # moving object
+    def get_stoped_equivalence_factor(self, v_lead, comfort_decel=2):
+        if v_lead < 1.9 * KPH_TO_MPS:
             v_lead = 0
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
-
-    def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=1): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
+    def get_safe_obs_distance(self, v_ego, desired_ttc=3.5, comfort_decel=1.6, offset=2.5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
-    
     def desired_follow_distance(self, v_ego, v_lead=0):
-        return max(1, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
+        return max(2.5, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
-    def get_dynamic_gain(self, error, ttc, kp=0.08/HZ, ki=0.0/HZ, kd=0.08/HZ):
+    def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
         self.integral += error*(1/HZ)
         self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
@@ -171,12 +170,12 @@ class LongitudinalPlanner:
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
-        offset = 8*self.M_TO_IDX
+        offset = 8.5*self.M_TO_IDX
         dynamic_d = 90*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
-                if lobs[2] >= -1.75 and lobs[2] <= 1.75:  # object in my lane
+                if lobs[2] >= -1.6 and lobs[2] <= 1.6:  # object in my lane
                     if lobs[4] >= 1: # tracking
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]

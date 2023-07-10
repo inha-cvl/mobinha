@@ -388,7 +388,7 @@ class PathPlanner:
                                     for i, renew_pt in enumerate(renew_path):
                                         self.local_path[lane_change_point-renew_a+i]=renew_pt
                                         self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
-                                    if  lane_change_point+renew_a+renew_b+10 < len(self.local_path)+1:
+                                    if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
                                         force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
                                         print("left BSD")
                                         for i, force_pt in enumerate(force_interpolate_path):
@@ -429,7 +429,7 @@ class PathPlanner:
                                     for i, renew_pt in enumerate(renew_path):
                                         self.local_path[lane_change_point-renew_a+i]=renew_pt
                                         self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
-                                    if  lane_change_point+renew_a+renew_b+10 < len(self.local_path)+1:
+                                    if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
                                         force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
                                         print("right BSD")
                                         for i, force_pt in enumerate(force_interpolate_path):

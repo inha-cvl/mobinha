@@ -14,12 +14,24 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 prev_marker_count = 0
 
-
 def ObjectsViz(objects):
     global prev_marker_count
 
     array = MarkerArray()
     marker = Marker()
+
+    for n, pt in enumerate(objects):
+        # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
+        if 0 < pt[2] < 200 and -1.7<pt[3]<1.7:
+            color = (1.0, 0.0, 0.0, 1.0)
+        elif -100 < pt[2] < 100 and (-4.2 < pt[3] < -1.7 or 1.7 < pt[3] < 4.2):
+            color = (1.0, 1.0, 0.0, 1.0)
+        else:
+            color = (0.0, 1.0, 0.0, 1.0)
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(pt[4]))
+        marker = Sphere('obstacle', n, (round(pt[0],1), round(pt[1],1)), 2.1, color)
+        # marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
+        array.markers.append(marker)
 
     if len(objects) < prev_marker_count:
         for i in range(len(objects), prev_marker_count):
@@ -31,22 +43,6 @@ def ObjectsViz(objects):
             array.markers.append(marker)
 
     prev_marker_count = len(objects)
-    
-    
-    for n, pt in enumerate(objects):
-        # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
-        if 0 < pt[2] < 200 and -1.7<pt[3]<1.7:
-            color = (1.0, 0.0, 0.0, 1.0)
-        elif -100 < pt[2] < 100 and (-4.3 < pt[3] < -1.7 or 1.7 < pt[3] < 4.3):
-            color = (1.0, 1.0, 0.0, 1.0)
-        else:
-            color = (0.0, 1.0, 0.0, 1.0)
-        quaternion = tf.transformations.quaternion_from_euler(
-        0, 0, math.radians(pt[4]))
-        marker = Sphere('obstacle', n, (pt[0], pt[1]), 2.0, color)
-        marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
-        array.markers.append(marker)   
-
     return array
 
 

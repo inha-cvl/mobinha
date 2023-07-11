@@ -96,7 +96,7 @@ class LongitudinalPlanner:
             print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return max(0/HZ, min(1.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 > ttc > -3:
-            print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
+            print("warn e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")

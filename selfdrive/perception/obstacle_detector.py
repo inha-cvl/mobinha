@@ -30,6 +30,7 @@ class ObstacleDetector:
         self.last_observed_light = None
         self.correct_light = None
         self.last_observed_time = 0
+        self.last_correct_time = 0
         self.frames_of_same_light = 0
         self.frames_of_diffrent_light = 0
         self.allowed_unrecognized_frames = 0
@@ -115,25 +116,22 @@ class ObstacleDetector:
 
         viz_obstacle = []
         obstacle_sd = []
-        # left_bsd_obstacle_sd = []
-        # right_bsd_obstacle_sd = []
         around_obstacle_sd = []
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 if self.lane_position == 0:
-                    if obj_d > -1.5 and obj_d < 1.5:  #[0] x [1] y [2] s [3] d [4] car heading
+                    if obj_d > -1.6 and obj_d < 1.6:  #[0] x [1] y [2] s [3] d [4] car heading
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 1:
-                    if obj_d > -1.5 and obj_d < 4.3: 
+                    if obj_d > -1.6 and obj_d < 4.2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 3:
-                    if obj_d > -4.3 and obj_d < 1.5: 
+                    if obj_d > -4.2 and obj_d < 1.6: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
-                    if obj_d > -4.3 and obj_d < 4.3: 
+                    if obj_d > -4.2 and obj_d < 4.2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
-
 
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.7 and obj_d < 1.7:
@@ -141,38 +139,18 @@ class ObstacleDetector:
                 #BSD3 : Time Based Method
                 if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.2 and obj_d < 4.2:
                         around_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                #BSD1 : Ego Position Based Method
-                
-                # if (-35*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (10*(1/self.CP.mapParam.precision)):
-                #     #print(obj_s-car_idx, obj_d)
-                #     if -4<obj_d<-1:
-                #         left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                #     elif 1<obj_d<4:
-                #         right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                
-                #BSD2 : Lange Change Point Based Method
-                '''
-                if self.lane_change_point-(20*(1/self.CP.mapParam.precision))<obj_s<self.lane_change_point+(5*(1/self.CP.mapParam.precision)):
-                    if -4.3<obj_d<-1.5:
-                        left_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                    elif 1.5<obj_d<4.3:
-                        right_bsd_obstacle_sd.append((obj_s, obj_d, obj[3]))
-                '''
                 
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
-        # left_bsd_obstacle_sd = sorted(left_bsd_obstacle_sd, key=lambda sd: sd[0])
-        # right_bsd_obstacle_sd = sorted(right_bsd_obstacle_sd, key=lambda sd: sd[0])
         return obstacle_sd, viz_obstacle, around_obstacle_sd
 
     #4: green3, 6: red3, 8:,yellow3, 9: green4, 10: red4, 11: yellow4, 12: redgreen4, 13: redyellow4, 14: greenarrow4
     def process_traffic_lights(self, traffic_light_obs):
         if not traffic_light_obs:
             self.allowed_unrecognized_frames += 1
-            if self.last_observed_light and self.allowed_unrecognized_frames <= 10:
-                return [self.last_observed_light]
-            elif self.last_observed_light and time.time() - self.last_observed_time < 4 and self.last_observed_light[0] in self.go_signals:
-                return [self.last_observed_light]
+            if self.correct_light and self.allowed_unrecognized_frames <= 10 or \
+                self.correct_light and time.time() - self.last_correct_time < 4 and self.correct_light[0] in self.go_signals:
+                return [self.correct_light]
             else:
                 return []
             
@@ -181,8 +159,8 @@ class ObstacleDetector:
 
         if current_light is None:
             return []
-        # print("pre current light: ", current_light)
-        if self.direction_number == 0 and current_light[0] == 14:
+
+        if self.direction_number == 0 and current_light[0] == 14: # straight path change greenarrow2green
             current_light[0] = 4
         elif current_light[0] == 4 or current_light[0] == 9:
             current_light[0] = 4
@@ -190,27 +168,30 @@ class ObstacleDetector:
             current_light[0] = 6
         elif current_light[0] == 8 or current_light[0] == 11:
             current_light[0] = 8
-        # print("after current light: ", current_light)
+
         if self.last_observed_light and current_light[0] == self.last_observed_light[0]:
             self.frames_of_same_light += 1
             self.frames_of_diffrent_light = 0
-        else:
+        elif self.correct_light and current_light[0] != self.correct_light[0]:
+            self.frames_of_diffrent_light += 1
+        elif self.frames_of_diffrent_light > 10:
             self.frames_of_same_light = 0
+        else:
             self.frames_of_diffrent_light += 1
 
         if self.frames_of_same_light >= 8:
             self.last_observed_light = current_light
-            self.correct_light = current_light
             self.last_observed_time = time.time()
+            self.correct_light = current_light
+            self.last_correct_time = time.time()
             return [current_light]
         else:
             self.last_observed_light = current_light
             self.last_observed_time = time.time()
         
-        if self.correct_light and self.frames_of_diffrent_light < 10:
+        if self.correct_light and self.frames_of_diffrent_light < 10 or \
+            self.correct_light[0] in self.go_signals and time.time() - self.last_correct_time < 4:
             return [self.correct_light]
-        # if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 3:
-            # return [self.last_observed_light]
         
         return []
     
@@ -285,11 +266,3 @@ class ObstacleDetector:
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)
-            
-
-            # self.lidar_object = []
-            # viz_obstacle = []
-            # if time.time()-self.traffic_light_timer > 3:
-                # self.traffic_light_object = []
-
-

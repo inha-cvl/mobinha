@@ -27,7 +27,8 @@ class ObstacleDetector:
         self.morai_ego_v = 0.0
         self.traffic_light_timer = time.time()
 
-        self.last_observed_light = []
+        self.last_observed_light = None
+        self.correct_light = None
         self.last_observed_time = 0
         self.frames_of_same_light = 0
         self.frames_of_diffrent_light = 0
@@ -180,33 +181,34 @@ class ObstacleDetector:
 
         if current_light is None:
             return []
-        
-        if self.direction_number == 1 and current_light[0] == 14:
-            current_light = 4
+        # print("pre current light: ", current_light)
+        if self.direction_number == 0 and current_light[0] == 14:
+            current_light[0] = 4
         elif current_light[0] == 4 or current_light[0] == 9:
             current_light[0] = 4
         elif current_light[0] == 6 or current_light[0] == 10:
             current_light[0] = 6
         elif current_light[0] == 8 or current_light[0] == 11:
             current_light[0] = 8
-
+        # print("after current light: ", current_light)
         if self.last_observed_light and current_light[0] == self.last_observed_light[0]:
             self.frames_of_same_light += 1
             self.frames_of_diffrent_light = 0
         else:
-            self.frames_of_same_light = 1
+            self.frames_of_same_light = 0
             self.frames_of_diffrent_light += 1
 
         if self.frames_of_same_light >= 8:
             self.last_observed_light = current_light
+            self.correct_light = current_light
             self.last_observed_time = time.time()
             return [current_light]
-        elif self.frames_of_diffrent_light < 8:
-            return [self.last_observed_light]
         else:
             self.last_observed_light = current_light
             self.last_observed_time = time.time()
-
+        
+        if self.frames_of_diffrent_light < 10:
+            return [self.correct_light]
         # if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 3:
             # return [self.last_observed_light]
         
@@ -221,8 +223,12 @@ class ObstacleDetector:
                     traffic_light_obs.append(traffic_light)
         # sorting by size
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1], reverse=True)
-        
+        # if len(traffic_light_obs)>=1:
+            # print("filter tl: ", traffic_light_obs[0][0])
         traffic_light_obs = self.process_traffic_lights(traffic_light_obs)
+        # print(traffic_light_obs)
+        # if len(traffic_light_obs)>=1:
+            # print("final tl: ", traffic_light_obs[0][0])
         return traffic_light_obs
 
     def run(self, CS):

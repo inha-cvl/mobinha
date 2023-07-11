@@ -127,7 +127,7 @@ class ObstacleDetector:
                 elif self.lane_position == 1:
                     if obj_d > -1.5 and obj_d < 4.3: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
-                elif self.lane_position == 2:
+                elif self.lane_position == 3:
                     if obj_d > -4.3 and obj_d < 1.5: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
@@ -207,7 +207,7 @@ class ObstacleDetector:
             self.last_observed_light = current_light
             self.last_observed_time = time.time()
         
-        if self.frames_of_diffrent_light < 10:
+        if self.correct_light and self.frames_of_diffrent_light < 10:
             return [self.correct_light]
         # if self.last_observed_light[0] in self.go_signals and time.time() - self.last_observed_time < 3:
             # return [self.last_observed_light]

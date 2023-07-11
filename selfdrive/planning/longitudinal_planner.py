@@ -174,7 +174,7 @@ class LongitudinalPlanner:
                 return True
 
     def check_dynamic_objects(self, cur_v, local_s):
-        offset = 8*self.M_TO_IDX
+        offset = 7.5*self.M_TO_IDX
         dynamic_d = 90*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:

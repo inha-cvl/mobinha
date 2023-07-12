@@ -152,6 +152,7 @@ class ObstacleDetector:
                 self.correct_light and time.time() - self.last_correct_time < 4 and self.correct_light[0] in self.go_signals:
                 return [self.correct_light]
             else:
+                self.frames_of_same_light = 0
                 return []
             
         current_light = traffic_light_obs[0] if traffic_light_obs else None
@@ -174,23 +175,27 @@ class ObstacleDetector:
             self.frames_of_diffrent_light = 0
         elif self.correct_light and current_light[0] != self.correct_light[0]:
             self.frames_of_diffrent_light += 1
+            self.frames_of_same_light = 0
         elif self.frames_of_diffrent_light > 10:
             self.frames_of_same_light = 0
         else:
+            self.frames_of_same_light = 0
             self.frames_of_diffrent_light += 1
-
-        if self.frames_of_same_light >= 8:
+        
+        print("frames_of_same_light",self.frames_of_same_light)
+        
+        if self.frames_of_same_light > 5:
             self.last_observed_light = current_light
             self.last_observed_time = time.time()
             self.correct_light = current_light
             self.last_correct_time = time.time()
-            return [current_light]
+            return [self.correct_light]
         else:
             self.last_observed_light = current_light
             self.last_observed_time = time.time()
         
         if self.correct_light and self.frames_of_diffrent_light < 10 or \
-            self.correct_light[0] in self.go_signals and time.time() - self.last_correct_time < 4:
+            self.correct_light and self.correct_light[0] in self.go_signals and time.time() - self.last_correct_time < 4:
             return [self.correct_light]
         
         return []

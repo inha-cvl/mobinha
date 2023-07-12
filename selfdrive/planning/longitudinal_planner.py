@@ -147,7 +147,7 @@ class LongitudinalPlanner:
         gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
             if (self.rel_v + cur_v) < 10*KPH_TO_MPS:
-                target_v = min(max_v, self.target_v + 1.5/HZ)
+                target_v = min(max_v, self.target_v + 1/HZ)
             else:
                 target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL

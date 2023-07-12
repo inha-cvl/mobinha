@@ -38,7 +38,7 @@ class ObstacleDetector:
 
         self.direction_number = 0
         self.lane_change_point = 0
-        self.lane_position = 0
+        self.lane_position = 2
         
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
@@ -76,7 +76,7 @@ class ObstacleDetector:
             if self.CS is not None:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
-                objects.append([nx, ny, w, v_rel, track_id, sx, sy, sz])  # [2] heading [3] relative velocity [4] id
+                objects.append([nx, ny, w, v_rel, track_id, sx, sy, sz, x, y])  # [2] heading [3] relative velocity [4] id
 
         self.lidar_object = objects
 
@@ -120,19 +120,18 @@ class ObstacleDetector:
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
-                if self.lane_position == 0:
-                    if obj_d > -1.6 and obj_d < 1.6:  #[0] x [1] y [2] s [3] d [4] car heading
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
-                elif self.lane_position == 1:
-                    if obj_d > -1.6 and obj_d < 4.2: 
+                
+                if self.lane_position == 1:
+                    if obj[9] > -4.2 and obj[9] < 1.6 and obj[4] > 10 : 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 3:
-                    if obj_d > -4.2 and obj_d < 1.6: 
+                    if obj[9] > -1.6 and obj[9] < 4.2 and obj[4] > 10: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
-                    if obj_d > -4.2 and obj_d < 4.2: 
+                    if obj[9] > -4.2 and obj[9] < 4.2 and obj[4] > 10: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
 
+               
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.7 and obj_d < 1.7:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))

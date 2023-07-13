@@ -131,7 +131,6 @@ class ObstacleDetector:
                     if obj[9] > -4.2 and obj[9] < 4.2 and obj[4] > 10: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
 
-               
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.7 and obj_d < 1.7:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
@@ -149,9 +148,11 @@ class ObstacleDetector:
             self.allowed_unrecognized_frames += 1
             if self.correct_light and self.allowed_unrecognized_frames <= 10 or \
                 self.correct_light and time.time() - self.last_correct_time < 4 and self.correct_light[0] in self.go_signals:
+                self.frames_of_same_light = 0
                 return [self.correct_light]
             else:
                 self.frames_of_same_light = 0
+                self.correct_light = None
                 return []
             
         current_light = traffic_light_obs[0] if traffic_light_obs else None
@@ -160,9 +161,9 @@ class ObstacleDetector:
         if current_light is None:
             return []
 
-        if self.direction_number == 0 and current_light[0] == 14: # straight path change greenarrow2green
-            current_light[0] = 4
-        elif current_light[0] == 4 or current_light[0] == 9:
+        # if self.direction_number == 0 and current_light[0] == 14: # straight path change greenarrow2green
+            # current_light[0] = 4
+        if current_light[0] == 4 or current_light[0] == 9:
             current_light[0] = 4
         elif current_light[0] == 6 or current_light[0] == 10:
             current_light[0] = 6

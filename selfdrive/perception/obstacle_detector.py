@@ -122,21 +122,21 @@ class ObstacleDetector:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 
                 if self.lane_position == 1:
-                    if obj[9] > -4.2 and obj[9] < 1.6 and obj[4] > 10 : 
+                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 1.7 and obj[4] > 10 : 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 3:
-                    if obj[9] > -1.6 and obj[9] < 4.2 and obj[4] > 10: 
+                    if -80 < obj[8] < 90 and obj[9] > -1.7 and obj[9] < 4.1 and obj[4] > 10: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
-                    if obj[9] > -4.2 and obj[9] < 4.2 and obj[4] > 10: 
+                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 4.1 and obj[4] > 10: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
 
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.7 and obj_d < 1.7:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
-                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.2 and obj_d < 4.2:
-                        around_obstacle_sd.append((obj_s, obj_d, obj[3]))
+                if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.1 and obj_d < 4.1:
+                        around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
@@ -252,6 +252,7 @@ class ObstacleDetector:
                 pose.position.y = sd[0]
                 pose.position.z = sd[1]
                 pose.orientation.w = sd[2]# relative velocity
+                pose.orientation.z = sd[3] # track id
                 around_obstacle.poses.append(pose)
                 
             # TODO: Traffic Light

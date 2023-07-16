@@ -105,5 +105,5 @@ class SimulatorTransceiver:
         vector3.z = CC.actuators.brake
         self.pub_ego_actuators.publish(vector3)
         
-        self.pub_novatel.publish(inspva)
+        self.pub_novatel.publish(inspva) # if ros bag is used, not publish inspva
         self.pub_velocity.publish(Float32(v))

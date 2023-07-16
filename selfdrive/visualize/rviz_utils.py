@@ -22,9 +22,9 @@ def ObjectsViz(objects):
 
     for n, pt in enumerate(objects):
         # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
-        if 0 < pt[2] < 200 and -1.7<pt[3]<1.7:
+        if 0 < pt[2] < 200 and -1.65<pt[3]<1.65:
             color = (1.0, 0.0, 0.0, 1.0)
-        elif -100 < pt[2] < 100 and (-4.1 < pt[3] < -1.7 or 1.7 < pt[3] < 4.1):
+        elif -100 < pt[2] < 100 and (-4.1 < pt[3] < -1.65 or 1.65 < pt[3] < 4.1):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 0.0, 1.0)

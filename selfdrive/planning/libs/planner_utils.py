@@ -626,3 +626,27 @@ def set_lane_ids(lst):
             lane_ids.append(lst[i])
 
     return lane_ids
+
+
+def removeVegetationFromRoadside(lanelets, l_id, l_idx):
+    lane_no = lanelets[l_id]['laneNo']
+    length = lanelets[l_id]['length']
+    my_distance = lanelets[l_id]['s'][l_idx]
+    left_id = lanelets[l_id]['adjacentLeft']
+
+    if lane_no == 1 and lanelets[left_id] == 91:
+        if length > 20:
+            if my_distance < 20:
+                lane_position = 1 # TODO: check
+            else:
+                lane_position = 2
+        else:
+            lane_position = 2
+    elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
+        lane_position = 1
+    elif lane_no == 4 and lanelets[l_id]['adjacentRight'] == None:
+        lane_position = 3
+    else:
+        lane_position = 2
+    
+    return lane_position

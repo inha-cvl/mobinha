@@ -99,8 +99,6 @@ class PathPlanner:
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
 
-        # self.lidar_bsd = [msg.x, msg.y] #left, right
-
     def nearest_obstacle_distance_cb(self, msg):
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
     
@@ -295,7 +293,6 @@ class PathPlanner:
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
                 self.local_path = local_path
-                # print("update:", len(self.local_path), self.l_idx, self.l_nitt, len(self.erase_global_path), self.l_cut)
                 self.local_id = local_id
                 self.l_idx = self.l_tail
 
@@ -366,7 +363,6 @@ class PathPlanner:
                     renew_a = 30 # uniti: idx
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
-                        # if -4.5<obs[2]<-1.5  and lanechangepoint prev or -1.5<obs[2]<1.5 and lanechangepoint next:
                         if blinker == 1 and get_look_a_head_id and -4.1<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1) and obs[4]>7: # frenet d coordinate left. 
                             vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m

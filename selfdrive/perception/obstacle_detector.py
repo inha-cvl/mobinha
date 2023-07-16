@@ -52,7 +52,6 @@ class ObstacleDetector:
     
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
         self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
-        # self.pub_lidar_bsd = rospy.Publisher('/mobinha/perception/lidar_bsd', Point, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
         self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
@@ -122,13 +121,13 @@ class ObstacleDetector:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 
                 if self.lane_position == 1:
-                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 1.7 and obj[4] > 10 : 
+                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 1.7 and obj[4] > 5: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 3:
-                    if -80 < obj[8] < 90 and obj[9] > -1.7 and obj[9] < 4.1 and obj[4] > 10: 
+                    if -80 < obj[8] < 90 and obj[9] > -1.7 and obj[9] < 4.1 and obj[4] > 5: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
-                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 4.1 and obj[4] > 10: 
+                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 4.1 and obj[4] > 5: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
 
                 #Forward Collision Warning
@@ -161,8 +160,6 @@ class ObstacleDetector:
         if current_light is None:
             return []
 
-        # if self.direction_number == 0 and current_light[0] == 14: # straight path change greenarrow2green
-            # current_light[0] = 4
         if current_light[0] == 4 or current_light[0] == 9:
             current_light[0] = 4
         elif current_light[0] == 6 or current_light[0] == 10:
@@ -181,8 +178,6 @@ class ObstacleDetector:
         else:
             self.frames_of_same_light = 0
             self.frames_of_diffrent_light += 1
-        
-        print("frames_of_same_light",self.frames_of_same_light)
         
         if self.frames_of_same_light > 5:
             self.last_observed_light = current_light
@@ -209,12 +204,8 @@ class ObstacleDetector:
                     traffic_light_obs.append(traffic_light)
         # sorting by size
         traffic_light_obs = sorted(traffic_light_obs, key=lambda obs: obs[1], reverse=True)
-        # if len(traffic_light_obs)>=1:
-            # print("filter tl: ", traffic_light_obs[0][0])
+        # filtering
         traffic_light_obs = self.process_traffic_lights(traffic_light_obs)
-        # print(traffic_light_obs)
-        # if len(traffic_light_obs)>=1:
-            # print("final tl: ", traffic_light_obs[0][0])
         return traffic_light_obs
 
     def run(self, CS):
@@ -241,10 +232,6 @@ class ObstacleDetector:
             obstacle_distance = (
                 obstacle_sd[0][0]-car_idx)*self.CP.mapParam.precision if len(obstacle_sd) > 0 else -1
 
-            # bsd = Point()
-            # bsd.x = int(bool(left_bsd_obstacle_sd)) #function converts the list to a boolean value (True if the list is not empty, False if it is)
-            # bsd.y = int(bool(right_bsd_obstacle_sd))
-
             around_obstacle = PoseArray()
             for sd in around_obstacle_sd:
                 pose = Pose()
@@ -267,7 +254,6 @@ class ObstacleDetector:
 
             self.pub_obstacle_distance.publish(Float32(obstacle_distance))
             self.pub_lidar_obstacle.publish(lidar_obstacle)
-            # self.pub_lidar_bsd.publish(bsd)
             self.pub_around_obstacle.publish(around_obstacle)
             objects_viz = ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)

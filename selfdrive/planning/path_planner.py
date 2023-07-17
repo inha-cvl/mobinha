@@ -222,7 +222,6 @@ class PathPlanner:
                 self.state = 'MOVE'
 
                 global_path, self.last_s = ref_interpolate(non_intp_path, self.precision)
-                # print("nonintppath:", non_intp_path, "globalpath:", global_path, "nonintpid:", non_intp_id)
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
                 self.global_path = global_path
                 self.global_id = global_id
@@ -482,7 +481,8 @@ class PathPlanner:
                 [3] | | |@|
                 [0]  x|@|x  
                 '''
-                lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, self.l_idx)
+                link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
+                lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
 
                 # Pubulish Lane Information
                 pose = Pose()

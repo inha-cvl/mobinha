@@ -627,14 +627,18 @@ def set_lane_ids(lst):
 
     return lane_ids
 
+def findMyLinkIdx(lanelets, l_id, ego_x, ego_y):
+    my_link_wps = KDTree(lanelets[l_id]['waypoints'])
+    link_idx = my_link_wps.query((ego_x, ego_y), 1)[1]
+    return link_idx
 
-def removeVegetationFromRoadside(lanelets, l_id, l_idx):
+def removeVegetationFromRoadside(lanelets, l_id, link_idx):
     lane_no = lanelets[l_id]['laneNo']
     length = lanelets[l_id]['length']
-    my_distance = lanelets[l_id]['s'][l_idx]
+    my_distance = lanelets[l_id]['s'][link_idx]
     left_id = lanelets[l_id]['adjacentLeft']
 
-    if lane_no == 1 and lanelets[left_id] == 91:
+    if lane_no == 1 and (lanelets[left_id] == 91 or lanelets[left_id] == 92):
         if length > 20:
             if my_distance < 20:
                 lane_position = 1 # TODO: check

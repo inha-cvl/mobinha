@@ -637,15 +637,13 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
     length = lanelets[l_id]['length']
     my_distance = lanelets[l_id]['s'][link_idx]
     left_id = lanelets[l_id]['adjacentLeft']
-
-    if lane_no == 1 and (lanelets[left_id] == 91 or lanelets[left_id] == 92):
-        if length > 20:
-            if my_distance < 20:
-                lane_position = 1 # TODO: check
-            else:
-                lane_position = 2
+    if lane_no == 1 and left_id and (lanelets[left_id]['laneNo'] == 91 or lanelets[left_id]['laneNo'] == 92):
+        if my_distance < 30:
+            lane_position = 1
+        elif my_distance > length - 30:
+            lane_position = 1 # [1] |@| | |
         else:
-            lane_position = 2
+            lane_position = 2 # [2] | |@| |
     elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
         lane_position = 1
     elif lane_no == 4 and lanelets[l_id]['adjacentRight'] == None:

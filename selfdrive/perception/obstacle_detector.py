@@ -51,6 +51,7 @@ class ObstacleDetector:
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
     
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
+        self.pub_text_marker = rospy.Publisher('/mobinha/perception/text_marker', MarkerArray, queue_size=1)
         self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
@@ -121,17 +122,17 @@ class ObstacleDetector:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 
                 if self.lane_position == 1:
-                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 1.7 and obj[4] > 5: 
+                    if -80 < obj[8] < 90 and -4.1 < obj[9] < 1.65 and obj[4] > 2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 elif self.lane_position == 3:
-                    if -80 < obj[8] < 90 and obj[9] > -1.7 and obj[9] < 4.1 and obj[4] > 5: 
+                    if -80 < obj[8] < 90 and -1.65 < obj[9] < 4.1 and obj[4] > 2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
                 else:
-                    if -80 < obj[8] < 90 and obj[9] > -4.1 and obj[9] < 4.1 and obj[4] > 5: 
+                    if -80 < obj[8] < 90 and -4.1 < obj[9] < 4.1 and obj[4] > 2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d,self.CS.yawRate+obj[2]))
 
                 #Forward Collision Warning
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.7 and obj_d < 1.7:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.65 and obj_d < 1.65:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
                 if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -4.1 and obj_d < 4.1:
@@ -255,6 +256,7 @@ class ObstacleDetector:
             self.pub_obstacle_distance.publish(Float32(obstacle_distance))
             self.pub_lidar_obstacle.publish(lidar_obstacle)
             self.pub_around_obstacle.publish(around_obstacle)
-            objects_viz = ObjectsViz(viz_obstacle)
+            objects_viz, text_viz= ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
+            self.pub_text_marker.publish(text_viz)
             self.pub_traffic_light_obstacle.publish(traffic_light_obstacle)

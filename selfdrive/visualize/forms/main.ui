@@ -1618,12 +1618,12 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
-          <string>IONIQ</string>
+          <string>SIMULATOR</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>SIMULATOR</string>
+          <string>IONIQ</string>
          </property>
         </item>
         <item>

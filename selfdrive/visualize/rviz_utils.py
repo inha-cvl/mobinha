@@ -19,6 +19,8 @@ def ObjectsViz(objects):
 
     array = MarkerArray()
     marker = Marker()
+    textarray = MarkerArray()
+    text = Marker()
 
     for n, pt in enumerate(objects):
         # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
@@ -28,10 +30,16 @@ def ObjectsViz(objects):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 0.0, 1.0)
-        quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(pt[4]))
+        # quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(pt[4]))
         marker = Sphere('obstacle', n, (round(pt[0],1), round(pt[1],1)), 2.1, color)
+        text  = Text('obstacle_information', n, 1.5, (1,1,1,1), "s:{}m d:{}m v:{}km/h".format(str(pt[2]/2), str(round(pt[3],2)), str(round(max(pt[5],0)))))
+        # text = Text('obstacle_information', n, 1.0, (1, 1, 1, 1), "ABCDEFG")
         # marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
+        text.pose.position = Point(x=pt[0], y=pt[1], z=3.0)
+        # print(text)
+
         array.markers.append(marker)
+        textarray.markers.append(text)
 
     if len(objects) < prev_marker_count:
         for i in range(len(objects), prev_marker_count):
@@ -41,9 +49,15 @@ def ObjectsViz(objects):
             marker.id = i
             marker.action = Marker.DELETE
             array.markers.append(marker)
+            text = Marker()
+            text.ns = "obstacle_information"
+            text.header.frame_id = "world"
+            text.id = i
+            text.action = Marker.DELETE
+            textarray.markers.append(text)
 
     prev_marker_count = len(objects)
-    return array
+    return array, textarray
 
 
 def TrafficLightViz(tl, cls):

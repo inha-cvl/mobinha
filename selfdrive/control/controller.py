@@ -102,4 +102,4 @@ class Controller:
             vector3.y = CS.actuators.accel
             vector3.z = CS.actuators.brake
 
-        self.pub_target_actuators.publish(vector3)
+        # self.pub_target_actuators.publish(vector3)

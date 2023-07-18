@@ -8,7 +8,6 @@ from std_msgs.msg import Float32, Int8
 from geometry_msgs.msg import PoseWithCovarianceStamped, Vector3
 from novatel_oem7_msgs.msg import INSPVA
 
-
 class Vehicle:
     def __init__(self, x, y, yaw, v, L):
         self.x = x
@@ -74,7 +73,7 @@ class SimulatorTransceiver:
         mode = 0
         if canCmd.enable:
             mode = 1
-        self.pub_mode.publish(Int8(mode))
+        # self.pub_mode.publish(Int8(mode))
 
     def run(self, CM):
         CC = CM.CC
@@ -103,7 +102,8 @@ class SimulatorTransceiver:
         vector3.x = CC.actuators.steer
         vector3.y = CC.actuators.accel
         vector3.z = CC.actuators.brake
-        self.pub_ego_actuators.publish(vector3)
         
-        self.pub_novatel.publish(inspva) # if ros bag is used, not publish inspva
-        self.pub_velocity.publish(Float32(v))
+        # self.pub_ego_actuators.publish(vector3)
+        
+        # self.pub_novatel.publish(inspva) # if ros bag is used, not publish inspva
+        # self.pub_velocity.publish(Float32(v))

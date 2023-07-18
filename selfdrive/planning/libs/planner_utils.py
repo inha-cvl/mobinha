@@ -653,7 +653,7 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
             lane_position = 2 # [2] | |@| |
     elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
         lane_position = 1
-    elif lane_no == 4 and lanelets[l_id]['adjacentRight'] == None:
+    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None):
         lane_position = 3
     else:
         lane_position = 2

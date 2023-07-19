@@ -7,6 +7,7 @@ import rospy
 from std_msgs.msg import Float32, Int8
 from geometry_msgs.msg import PoseWithCovarianceStamped, Vector3
 from novatel_oem7_msgs.msg import INSPVA
+from visualization_msgs.msg import Marker, MarkerArray
 
 class Vehicle:
     def __init__(self, x, y, yaw, v, L):
@@ -57,6 +58,7 @@ class SimulatorTransceiver:
         self.pub_gear = rospy.Publisher('/mobinha/car/gear', Int8, queue_size=1)
         self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
         self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
+        self.pub_car_info_text = rospy.Publisher('/mobinha/car/control_info', MarkerArray, queue_size=1)
         rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, self.init_pose_cb)
 
     def init_pose_cb(self, msg):
@@ -74,6 +76,8 @@ class SimulatorTransceiver:
         if canCmd.enable:
             mode = 1
         # self.pub_mode.publish(Int8(mode))
+
+    # def car_control_information(self):
 
     def run(self, CM):
         CC = CM.CC
@@ -102,6 +106,10 @@ class SimulatorTransceiver:
         vector3.x = CC.actuators.steer
         vector3.y = CC.actuators.accel
         vector3.z = CC.actuators.brake
+
+
+        
+        # self.pub_car_info_text.publish(control_information)
         
         # self.pub_ego_actuators.publish(vector3)
         

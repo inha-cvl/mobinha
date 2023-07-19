@@ -56,6 +56,7 @@ class Planning:
                     sm.update()
                     pp, local_path = path_planner.run(sm)
                     lgp = longitudinal_planner.run(sm, pp, local_path)
+                    pp, lgp = 1, 1
                 if pp == 2 and lgp == 2:
                     time.sleep(1)
                     #print("[{}] For Restart, please initialize".format(self.__class__.__name__))

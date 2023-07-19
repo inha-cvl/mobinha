@@ -5,7 +5,7 @@ import cantools
 import time
 
 import rospy
-from std_msgs.msg import Float32, Int8
+from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension
 from geometry_msgs.msg import Vector3
 
 
@@ -28,7 +28,11 @@ class IoniqTransceiver():
         self.pub_gear = rospy.Publisher('/mobinha/car/gear', Int8, queue_size=1)
         self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
         self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
+        self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
+        self.gateway = Int8MultiArray()
+        #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
+        self.gateway.data = [0, 0, 0, 0, 0, 0]
 
         self.rcv_velocity = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
@@ -129,6 +133,9 @@ class IoniqTransceiver():
                 self.Accel_Override = res['Accel_Override']
                 self.Break_Override = res['Break_Override']
                 self.Steering_Overide = res['Steering_Overide']
+                self.gateway.data[2] = res['Accel_Override']
+                self.gateway.data[3] = res['Break_Override']
+                self.gateway.data[4] = res['Steering_Overide']
                 if self.Accel_Override or self.Break_Override or self.Steering_Overide:
                     self.target_actuators['steer'] = self.ego_actuators['steer']
                     self.target_actuators['accel'] = self.ego_actuators['accel']
@@ -140,6 +147,10 @@ class IoniqTransceiver():
         signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_actuators['steer'],
                    'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.target_actuators['brake'], 
                    'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
+        self.gateway.data[0] = signals['PA_Enable']
+        self.gateway.data[1] = signals['LON_Enable']
+        self.gateway.data[5] = signals['Reset_Flag']
+        
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 
@@ -168,3 +179,4 @@ class IoniqTransceiver():
             #     self.prev_control_state = self.control_state.copy()
             self.ioniq_control()
         self.receiver()
+        self.pub_gateway.publish(self.gateway)

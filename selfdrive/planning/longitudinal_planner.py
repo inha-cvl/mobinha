@@ -146,8 +146,8 @@ class LongitudinalPlanner:
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
-            if v_ego < 1*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
-                target_v = min(max_v, self.target_v + 1/HZ)
+            if v_ego < 0.5*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
+                target_v = min(max_v, self.target_v + 0.5/HZ)
             else:
                 target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL
@@ -169,7 +169,7 @@ class LongitudinalPlanner:
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
-                if lobs[2] >= -1.65 and lobs[2] <= 1.65:  # object in my lane
+                if lobs[2] >= -1.45 and lobs[2] <= 1.45:  # object in my lane
                     if lobs[4] > 1: # tracking
                         dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]

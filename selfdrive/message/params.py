@@ -36,7 +36,7 @@ class IONIQ:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 23  # songdo demo site: 21, test site: 15 # min_v
-        car_param_dict["maxEnableSpeed"] = 43  #45 # ref_v
+        car_param_dict["maxEnableSpeed"] = 44  #45 # ref_v
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 3.00  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4

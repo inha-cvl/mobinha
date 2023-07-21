@@ -24,7 +24,8 @@ class LongitudinalPlanner:
         self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
         self.IDX_TO_M = CP.mapParam.precision
-
+        
+        self.max_v = CP.maxEnableSpeed
         self.ref_v = CP.maxEnableSpeed
         self.min_v = CP.minEnableSpeed
         self.target_v = 0
@@ -56,6 +57,11 @@ class LongitudinalPlanner:
     def lane_information_cb(self, msg):
         # [0] id, [1] forward_direction, [2] cross_walk distance [3] forward_curvature
         self.lane_information = [msg.position.x,msg.position.y, msg.position.z, msg.orientation.x]
+
+        if self.lane_information[0] == 979 or self.lane_information[0] == 9:
+            self.ref_v = 34
+        else:
+            self.ref_v = self.max_v
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)

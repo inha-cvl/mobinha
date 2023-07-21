@@ -442,7 +442,7 @@ class MainWindow(QMainWindow, form_class):
                 self.media_thread.get_mode = 4
     
     def gateway_state_cb(self, msg):
-        if msg.data == 0:
+        if msg.data == 0 and self.car_name == 'IONIQ':
             self.media_thread.get_mode = 5
 
     def lane_information_cb(self, msg):

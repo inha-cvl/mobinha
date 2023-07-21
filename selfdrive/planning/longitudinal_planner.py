@@ -59,7 +59,9 @@ class LongitudinalPlanner:
         self.lane_information = [msg.position.x,msg.position.y, msg.position.z, msg.orientation.x]
 
         if self.lane_information[0] == 979 or self.lane_information[0] == 9:
-            self.ref_v = 34
+            self.ref_v = 33
+        elif self.lane_information[0] == 982:
+            self.ref_v = 38
         else:
             self.ref_v = self.max_v
 

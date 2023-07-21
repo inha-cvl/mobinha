@@ -4,9 +4,10 @@ import tf
 import rospy
 from novatel_oem7_msgs.msg import INSPVA
 import math
-from std_msgs.msg import Int8, Float32
+from std_msgs.msg import Int8, Float32, Int8MultiArray
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Imu, NavSatFix
+import time
 
 from selfdrive.message.car_message import car_state
 
@@ -35,6 +36,8 @@ class StateMaster:
         self.mode = 0
         self.blinker = 0
         self.ego_actuators = {"steer":0.0, "accel":0.0, "brake":0.0}
+        self.gateway_count = 0
+        self.mode = 0
 
         if NOVATEL_OK:
             rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
@@ -47,7 +50,18 @@ class StateMaster:
         rospy.Subscriber('/mobinha/car/mode', Int8, self.mode_cb)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
         rospy.Subscriber('/mobinha/car/ego_actuators',Vector3, self.ego_actuators_cb)
+        rospy.Subscriber('/mobinha/car/gateway', Int8MultiArray, self.gateway_cb)
+        self.gateway_check = rospy.Publisher('/gateway_state', Int8, queue_size=1)
+        
+        self.tick = {1: 0}
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+        
     def imu_cb(self, msg):
         orientation = msg.orientation
         quaternion = (orientation.x, orientation.y,
@@ -91,6 +105,28 @@ class StateMaster:
         self.ego_actuators["steer"] = msg.x
         self.ego_actuators["accel"] = msg.y
         self.ego_actuators["brake"] = msg.z
+    
+    def gateway_cb(self, msg):
+        if msg.data[0] and msg.data[1] == 1:
+            self.mode = 1
+        else:
+            self.mode = 0
+        self.gateway_count += 1
+
+    def checker(self):
+        gateway_state = Int8()
+        if self.mode == 1:
+            if self.gateway_count > 5:
+                gateway_state.data = 1
+            else:
+                gateway_state.data = 0
+        else:
+            gateway_state.data = 1
+            
+        if self.timer(1):
+            self.gateway_count = 0
+
+        self.gateway_check.publish(gateway_state)
 
     def update(self):
         car_state = self.CS._asdict()

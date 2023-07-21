@@ -72,7 +72,7 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video0/compressed',CompressedImage, self.compressed_image_cb, 1)
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
-        rospy.Subscriber('mobinha/car/gateway_state', Int8, self.gateway_state_cb)
+        rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -443,7 +443,7 @@ class MainWindow(QMainWindow, form_class):
     
     def gateway_state_cb(self, msg):
         if msg.data == 0:
-            self.media_thread.get_mode = 4
+            self.media_thread.get_mode = 5
 
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:

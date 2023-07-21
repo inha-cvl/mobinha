@@ -37,7 +37,6 @@ class StateMaster:
         self.blinker = 0
         self.ego_actuators = {"steer":0.0, "accel":0.0, "brake":0.0}
         self.gateway_count = 0
-        self.mode = 0
 
         if NOVATEL_OK:
             rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
@@ -51,7 +50,7 @@ class StateMaster:
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
         rospy.Subscriber('/mobinha/car/ego_actuators',Vector3, self.ego_actuators_cb)
         rospy.Subscriber('/mobinha/car/gateway', Int8MultiArray, self.gateway_cb)
-        self.gateway_check = rospy.Publisher('/gateway_state', Int8, queue_size=1)
+        self.gateway_check = rospy.Publisher('/mobinha/car/gateway_state', Int8, queue_size=1)
         
         self.tick = {1: 0}
 
@@ -107,26 +106,24 @@ class StateMaster:
         self.ego_actuators["brake"] = msg.z
     
     def gateway_cb(self, msg):
-        if msg.data[0] and msg.data[1] == 1:
-            self.mode = 1
-        else:
-            self.mode = 0
         self.gateway_count += 1
 
     def checker(self):
         gateway_state = Int8()
         if self.mode == 1:
-            if self.gateway_count > 5:
+            if self.gateway_count >= 1:
                 gateway_state.data = 1
             else:
                 gateway_state.data = 0
+                
+            self.gateway_check.publish(gateway_state)
         else:
             gateway_state.data = 1
             
         if self.timer(1):
             self.gateway_count = 0
 
-        self.gateway_check.publish(gateway_state)
+        
 
     def update(self):
         car_state = self.CS._asdict()
@@ -154,3 +151,4 @@ class StateMaster:
         car_state["buttonEvent"] = self.CS.buttonEvent._make(
             car_state_button_event.values())
         self.CS = self.CS._make(car_state.values())
+        self.checker()

@@ -443,7 +443,7 @@ class PathPlanner:
                                     if self.renewal_path_cnt > 30:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
-                elif self.renewal_path_cnt >= 3:
+                elif self.renewal_path_cnt >= 2:
                     print("Take Over Request(continuos 3 times)")
                     pp = 4
                     if pp == 4:

@@ -37,6 +37,7 @@ class StateMaster:
         self.blinker = 0
         self.ego_actuators = {"steer":0.0, "accel":0.0, "brake":0.0}
         self.gateway_count = 0
+        self.actuator_count = 0
 
         if NOVATEL_OK:
             rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
@@ -52,7 +53,7 @@ class StateMaster:
         rospy.Subscriber('/mobinha/car/gateway', Int8MultiArray, self.gateway_cb)
         self.gateway_check = rospy.Publisher('/mobinha/car/gateway_state', Int8, queue_size=1)
         
-        self.tick = {1: 0}
+        self.tick = {1: 0, 0.5: 0}
 
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
@@ -104,6 +105,7 @@ class StateMaster:
         self.ego_actuators["steer"] = msg.x
         self.ego_actuators["accel"] = msg.y
         self.ego_actuators["brake"] = msg.z
+        self.actuator_count += 1
     
     def gateway_cb(self, msg):
         self.gateway_count += 1
@@ -111,7 +113,7 @@ class StateMaster:
     def checker(self):
         gateway_state = Int8()
         if self.mode == 1:
-            if self.gateway_count >= 1:
+            if self.gateway_count >= 1 or self.actuator_count >= 1:
                 gateway_state.data = 1
             else:
                 gateway_state.data = 0
@@ -122,6 +124,8 @@ class StateMaster:
             
         if self.timer(1):
             self.gateway_count = 0
+        if self.timer(0.5):
+            self.actuator_count = 0
 
         
 

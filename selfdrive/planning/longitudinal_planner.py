@@ -154,8 +154,8 @@ class LongitudinalPlanner:
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
-            if v_ego < 0.5*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
-                target_v = min(max_v, self.target_v + 0.5/HZ)
+            if v_ego < 0.4*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
+                target_v = min(max_v, self.target_v + 0.8/HZ)
             else:
                 target_v = min(max_v, self.target_v + gain)
         else: # PLUS is DECEL

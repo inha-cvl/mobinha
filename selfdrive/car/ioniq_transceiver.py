@@ -5,7 +5,7 @@ import cantools
 import time
 
 import rospy
-from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension
+from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
 
 
@@ -29,13 +29,14 @@ class IoniqTransceiver():
         self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
         self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
         self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
+        self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
         self.gateway = Int8MultiArray()
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
         self.gateway.data = [0, 0, 0, 0, 0, 0]
 
         self.rcv_velocity = 0
-        self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
+        self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0, 1: 0}
         self.Accel_Override = 0
         self.Break_Override = 0
         self.Steering_Overide = 0
@@ -178,5 +179,7 @@ class IoniqTransceiver():
             #     self.init_target_actuator()
             #     self.prev_control_state = self.control_state.copy()
             self.ioniq_control()
+            self.pub_gateway.publish(self.gateway)
+            self.pub_gateway_time.publish(Float64(time.time()))
         self.receiver()
-        self.pub_gateway.publish(self.gateway)
+        

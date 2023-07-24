@@ -67,7 +67,10 @@ class Controller:
             brake_val = 0.0
         elif val_data <= 0.:
             accel_val = 0.0
-            brake_val = -val_data*gain if (self.target_v > 0 and cur_v >= 2*KPH_TO_MPS) else 35
+            if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
+                brake_val = -val_data*gain
+            else:
+                brake_val = 36
         
         return accel_val, brake_val
     

@@ -6,6 +6,7 @@ from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
 from selfdrive.control.libs.pid import PID
 import rospy
+from scipy.spatial import KDTree
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -44,8 +45,8 @@ class Controller:
     def target_v_cb(self, msg):
         self.target_v = msg.data
 
-    def lane_information_cb(self, msg):
-        self.l_idx = msg.orientation.y
+    # def lane_information_cb(self, msg):
+        # self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v):
         # th_a = 4 # 0~20 * gain -> 0~100 accel
@@ -82,8 +83,15 @@ class Controller:
         CS = sm.CS
         vector3 = self.get_init_acuator()
         if self.local_path != None:
+            
+            local_point = KDTree(self.local_path)
+            l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
+            if abs(l_idx-self.l_idx) <= 100:
+                self.l_idx = l_idx
+
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            print(lah_pt)
             steer = wheel_angle*self.steer_ratio
             # print("origin steer:",steer)
             steer = self.limit_steer_change(steer)

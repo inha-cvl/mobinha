@@ -122,13 +122,13 @@ class ObstacleDetector:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 
                 if self.lane_position == 1:
-                    if -80 < obj_s-car_idx < 90 and -1.65 < obj_d < 4.1 and obj[4] > 2: 
+                    if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -1.65 < obj_d < 5 and obj[4] > 2:
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
                 elif self.lane_position == 3:
-                    if -80 < obj_s-car_idx < 90 and -4.1 < obj_d < 1.65 and obj[4] > 2: 
+                    if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -5 < obj_d < 1.65 and obj[4] > 2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
                 else:
-                    if -80 < obj_s-car_idx < 90 and -4.1<obj_d<4.1 and obj[4] > 2: 
+                    if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -5<obj_d<5 and obj[4] > 2: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
 
                 #Forward Collision Warning

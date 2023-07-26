@@ -47,7 +47,7 @@ class Controller:
     def lane_information_cb(self, msg):
         self.l_idx = msg.orientation.y
 
-    def calc_accel_brake_pressure(self, pid, cur_v):
+    def calc_accel_brake_pressure(self, pid, cur_v, pitch):
         # th_a = 4 # 0~20 * gain -> 0~100 accel
         # th_b = 13 # 0~20 * gain -> 0~100 brake
         # val_data = max(-th_b, min(th_a, pid))
@@ -69,8 +69,10 @@ class Controller:
             accel_val = 0.0
             if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
                 brake_val = -val_data*gain
+            elif pitch < -2.5:
+                brake_val = 43
             else:
-                brake_val = 36
+                brake_val = 35
         
         return accel_val, brake_val
     
@@ -94,7 +96,7 @@ class Controller:
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
-            accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo)
+            accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             
             vector3.x = steer
             vector3.y = accel

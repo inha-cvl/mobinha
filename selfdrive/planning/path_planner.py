@@ -444,7 +444,7 @@ class PathPlanner:
                                         self.renewal_path_cnt = 0
                                     return pp, self.local_path
                 elif self.renewal_path_cnt >= 2:
-                    print("Take Over Request(continuos 3 times)")
+                    print("Take Over Request(continuos 2 times)")
                     pp = 4
                     if pp == 4:
                         self.renewal_path_cnt += 1
@@ -493,8 +493,10 @@ class PathPlanner:
                 pose.orientation.y = self.l_idx
                 pose.orientation.z = lane_change_point
                 pose.orientation.w = lane_position
-                   
                 self.pub_lane_information.publish(pose)
+
+                local_path_viz = LocalPathViz(self.local_path)
+                self.pub_local_path.publish(local_path_viz)
 
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):
@@ -509,9 +511,6 @@ class PathPlanner:
                 bsd.x = self.lidar_bsd[0]
                 bsd.y = self.lidar_bsd[1]
                 self.pub_lidar_bsd.publish(bsd)
-
-                local_path_viz = LocalPathViz(self.local_path)
-                self.pub_local_path.publish(local_path_viz)
 
                 forward_path_viz = ForwardPathViz(trajectory)
                 self.pub_forward_path.publish(forward_path_viz)

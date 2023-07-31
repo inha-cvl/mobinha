@@ -97,7 +97,7 @@ class Controller:
             steer = self.limit_steer_change(steer)
             # print("limit steer:",steer)
             lah_viz = LookAheadViz(lah_pt)
-            self.pub_lah.publish(lah_viz)
+            # self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo)
             

@@ -45,8 +45,8 @@ class Controller:
     def target_v_cb(self, msg):
         self.target_v = msg.data
 
-    # def lane_information_cb(self, msg):
-        # self.l_idx = msg.orientation.y
+    def lane_information_cb(self, msg):
+        self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v):
         # th_a = 4 # 0~20 * gain -> 0~100 accel

@@ -73,6 +73,7 @@ class ObstacleDetector:
             track_id = obj.label # uint type 0:clustering 1~: tracking
             w = obj.pose.orientation.z
             sx, sy, sz = obj.dimensions.x, obj.dimensions.y, obj.dimensions.z
+            
             if self.CS is not None:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
@@ -123,13 +124,13 @@ class ObstacleDetector:
                 
                 if self.lane_position == 1:
                     if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -1.65 < obj_d < 5 and obj[4] > 2:
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6]))
                 elif self.lane_position == 3:
                     if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -5 < obj_d < 1.65 and obj[4] > 2: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6]))
                 else:
                     if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -5<obj_d<5 and obj[4] > 2: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6]))
 
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.65 and obj_d < 1.65:

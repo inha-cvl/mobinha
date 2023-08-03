@@ -83,7 +83,6 @@ class Controller:
         CS = sm.CS
         vector3 = self.get_init_acuator()
         if self.local_path != None:
-            
             local_point = KDTree(self.local_path)
             l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
             if abs(l_idx-self.l_idx) <= 100:
@@ -91,7 +90,6 @@ class Controller:
 
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
-            print(lah_pt)
             steer = wheel_angle*self.steer_ratio
             # print("origin steer:",steer)
             steer = self.limit_steer_change(steer)

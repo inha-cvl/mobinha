@@ -32,11 +32,9 @@ def ObjectsViz(objects):
             color = (0.0, 1.0, 0.0, 1.0)
         # quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(pt[4]))
         marker = Sphere('obstacle', n, (round(pt[0],1), round(pt[1],1)), 2.1, color)
-        text  = Text('obstacle_information', n, 1.5, (1,1,1,1), "s:{}m d:{}m v:{}km/h".format(str(pt[2]/2), str(round(pt[3],2)), str(round(max(pt[5],0)))))
-        # text = Text('obstacle_information', n, 1.0, (1, 1, 1, 1), "ABCDEFG")
-        # marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
-        text.pose.position = Point(x=pt[0], y=pt[1], z=3.0)
-        # print(text)
+        text  = Text('obstacle_information', n, 1.5, (1,1,1,1), "s:{} d:{} v:{} x/2:{} y/2:{}"
+                     .format(str(pt[2]/2), str(round(pt[3],2)), str(round(max(pt[5],0))), str(round(pt[6]/2,2)), str(round(pt[7]/2,2))))
+        text.pose.position = Point(x=pt[0], y=pt[1], z=6.0)
 
         array.markers.append(marker)
         textarray.markers.append(text)

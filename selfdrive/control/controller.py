@@ -72,7 +72,7 @@ class Controller:
             elif pitch < -2.5:
                 brake_val = 43
             else:
-                brake_val = 35
+                brake_val = 33
         
         return accel_val, brake_val
     

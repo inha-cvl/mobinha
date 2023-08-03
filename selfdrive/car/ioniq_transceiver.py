@@ -40,6 +40,7 @@ class IoniqTransceiver():
         self.Accel_Override = 0
         self.Break_Override = 0
         self.Steering_Overide = 0
+        self.alv_cnt = 0
 
         self.prev_control_state = self.control_state.copy()
 
@@ -144,10 +145,14 @@ class IoniqTransceiver():
         except Exception as e:
             print(e)
 
+    def alive_counter(self, alv_cnt):
+        return (alv_cnt + 1) % 256
+    
     def ioniq_control(self):
+        self.alv_cnt = self.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_actuators['steer'],
                    'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.target_actuators['brake'], 
-                   'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
+                   'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset}
         self.gateway.data[0] = signals['PA_Enable']
         self.gateway.data[1] = signals['LON_Enable']
         self.gateway.data[5] = signals['Reset_Flag']

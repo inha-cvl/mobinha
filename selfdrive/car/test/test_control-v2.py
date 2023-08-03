@@ -51,9 +51,7 @@ class IONIQ:
                 self.reset_trigger()
 
     def alive_counter(self, alv_cnt):
-        alv_cnt += 1
-        alv_cnt = 0 if alv_cnt > 255 else alv_cnt
-        return alv_cnt
+        return (alv_cnt + 1) % 256
     
     def mover(self):
         for i in range(0,480, 5):
@@ -108,7 +106,7 @@ class IONIQ:
 
     def controller(self):
         while 1:
-            cmd = input('99: enable|88: disable|1001: reset\naccel:0~6|brake:-1~-20\n')
+            cmd = input('99: enable|88: disable|1001: reset\naccel:0~6|brake:-1~-20|-30 is steering move\n')
             cmd = int(cmd)
             if 0 <= cmd <= 6:
                 self.accel = float(cmd)*5
@@ -127,9 +125,6 @@ class IONIQ:
                 self.reset = 0
             elif cmd == -30:
                 self.mover()
-                # self.steering = 50
-            # elif cmd == 30:
-                # self.steering = 100
             elif cmd == 1000:
                 exit(0)
             

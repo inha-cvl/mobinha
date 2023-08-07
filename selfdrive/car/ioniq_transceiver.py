@@ -41,6 +41,7 @@ class IoniqTransceiver():
         self.Break_Override = 0
         self.Steering_Overide = 0
         self.alv_cnt = 0
+        self.Alive_Count_ERR = 0
 
         self.prev_control_state = self.control_state.copy()
 
@@ -66,7 +67,7 @@ class IoniqTransceiver():
         self.mode = 0
         if canCmd.enable:
             self.mode = 1
-        if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+        if self.Accel_Override or self.Break_Override or self.Steering_Overide or self.Alive_Count_ERR:
             self.mode = 2 # override mode
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
@@ -135,6 +136,7 @@ class IoniqTransceiver():
                 self.Accel_Override = res['Accel_Override']
                 self.Break_Override = res['Break_Override']
                 self.Steering_Overide = res['Steering_Overide']
+                self.Alive_Count_ERR = res['Alive_Count_ERR']
                 self.gateway.data[2] = res['Accel_Override']
                 self.gateway.data[3] = res['Break_Override']
                 self.gateway.data[4] = res['Steering_Overide']

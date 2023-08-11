@@ -13,9 +13,37 @@ from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplin
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 prev_marker_count = 0
+prev_text_count = 0
+
+
+import csv
+import datetime
+
+current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+file_name = f'car_size_data_{current_time}.csv'
+directory = "data"
+
+def write_to_csv(data):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_path = os.path.join(directory, file_name)
+    is_new_file = not os.path.exists(file_path)
+
+    with open(file_path, mode='a') as csvfile:
+        writer = csv.writer(csvfile)
+        if is_new_file:
+            header = ['timestamp','s','d', 'x/2', 'y/2','z/2']
+            writer.writerow(header)
+
+        current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data.insert(0, current_timestamp)
+        writer.writerow(data)
 
 def ObjectsViz(objects):
     global prev_marker_count
+    global prev_text_count
+    text_count=0
 
     array = MarkerArray()
     marker = Marker()
@@ -26,19 +54,27 @@ def ObjectsViz(objects):
         # quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, 0.0)
         if 0 < pt[2] < 200 and -1.65<pt[3]<1.65:
             color = (1.0, 0.0, 0.0, 1.0)
-        elif -100 < pt[2] < 100 and (-4.1 < pt[3] < -1.65 or 1.65 < pt[3] < 4.1):
+            # text  = Text('obstacle_information', text_count, 1.5, (1,1,1,1), "s:{} d:{} v:{}\nx/2:{} y/2:{} z/2:{}"
+            #          .format(str(pt[2]/2), str(round(pt[3],2)), str(round(max(pt[5],0))), str(round(pt[6]/2,2)), str(round(pt[7]/2,2)), str(round(pt[8]/2,2))))
+            # text.pose.position = Point(x=pt[0], y=pt[1], z=5.0)
+            # text_count +=1
+            # textarray.markers.append(text)
+        elif -100 < pt[2] < 100 and (-4.5 < pt[3] < -1.65 or 1.65 < pt[3] < 4.5):
             color = (1.0, 1.0, 0.0, 1.0)
+            # if 0 > pt[3]+pt[7]/2 > -1.65 or 0 < pt[3]-pt[7]/2 < 1.65:
+            text  = Text('obstacle_information', text_count, 1.5, (1,1,1,1), "s:{} d:{} x/2:{}\ny/2:{} z/2:{}"
+                    .format(str(pt[2]/2), str(round(pt[3],2)), str(round(pt[6]/2,2)), str(round(pt[7]/2,2)), str(round(pt[8]/2,2))))
+            text.pose.position = Point(x=pt[0], y=pt[1], z=5.0)
+            text_count +=1
+            textarray.markers.append(text)
+            if 1.65 < pt[3] < 5:
+                write_to_csv([pt[2]/2,pt[3],pt[6]/2, pt[7]/2, pt[8]/2])
         else:
             color = (0.0, 1.0, 0.0, 1.0)
         # quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(pt[4]))
         marker = Sphere('obstacle', n, (round(pt[0],1), round(pt[1],1)), 2.1, color)
-        text  = Text('obstacle_information', n, 1.5, (1,1,1,1), "s:{} d:{} v:{} x/2:{} y/2:{}"
-                     .format(str(pt[2]/2), str(round(pt[3],2)), str(round(max(pt[5],0))), str(round(pt[6]/2,2)), str(round(pt[7]/2,2))))
-        text.pose.position = Point(x=pt[0], y=pt[1], z=6.0)
-
         array.markers.append(marker)
-        textarray.markers.append(text)
-
+ 
     if len(objects) < prev_marker_count:
         for i in range(len(objects), prev_marker_count):
             marker = Marker()
@@ -47,6 +83,9 @@ def ObjectsViz(objects):
             marker.id = i
             marker.action = Marker.DELETE
             array.markers.append(marker)
+
+    if text_count < prev_text_count:
+        for i in range(text_count, prev_text_count):
             text = Marker()
             text.ns = "obstacle_information"
             text.header.frame_id = "world"
@@ -55,6 +94,8 @@ def ObjectsViz(objects):
             textarray.markers.append(text)
 
     prev_marker_count = len(objects)
+    prev_text_count = text_count
+    
     return array, textarray
 
 

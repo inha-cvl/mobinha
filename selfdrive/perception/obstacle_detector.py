@@ -93,7 +93,7 @@ class ObstacleDetector:
     def morai_object_list_cb(self, msg):
         objects = []
         for obj in msg.poses:
-            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v, 1, 1,1,1))
+            objects.append((obj.position.x, obj.position.y, 0, (obj.orientation.w/3.6) - self.morai_ego_v, 1, 1,1,1, 0,0))
         self.lidar_object = objects
 
     def morai_traffic_light_cb(self, msg):
@@ -124,13 +124,13 @@ class ObstacleDetector:
                 
                 if self.lane_position == 1:
                     if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -1.65 < obj_d < 5 and obj[4] > 2:
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6]))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6], obj[7]))
                 elif self.lane_position == 3:
                     if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -5 < obj_d < 1.65 and obj[4] > 2: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6]))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6], obj[7]))
                 else:
                     if -80*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -5<obj_d<5 and obj[4] > 2: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6]))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6, obj[5], obj[6], obj[7]))
 
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.65 and obj_d < 1.65:

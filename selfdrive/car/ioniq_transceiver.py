@@ -158,7 +158,7 @@ class IoniqTransceiver():
         self.gateway.data[0] = signals['PA_Enable']
         self.gateway.data[1] = signals['LON_Enable']
         self.gateway.data[5] = signals['Reset_Flag']
-        
+        print("send")
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 

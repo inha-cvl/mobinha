@@ -70,9 +70,9 @@ class Controller:
             if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
                 brake_val = -val_data*gain
             elif pitch < -2.5:
-                brake_val = 43
+                brake_val = 45
             else:
-                brake_val = 31
+                brake_val = 32
         
         return accel_val, brake_val
     
@@ -80,7 +80,7 @@ class Controller:
         vector3 = Vector3()
         vector3.x = 0 #steer
         vector3.y = 0 #accel
-        vector3.z = 35 #brakx
+        vector3.z = 32 #brakx
         return vector3 
     
     def run(self, sm):

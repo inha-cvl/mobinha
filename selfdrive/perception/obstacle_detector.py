@@ -122,17 +122,17 @@ class ObstacleDetector:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 
                 if self.lane_position == 1:
-                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -1.65 < obj_d < 4.15 and obj[4] > 1: 
+                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -1.5 < obj_d < 4.15 and obj[4] > 1: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
                 elif self.lane_position == 3:
-                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -4.15 < obj_d < 1.65 and obj[4] > 1: 
+                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -4.15 < obj_d < 1.5 and obj[4] > 1: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
                 else:
                     if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -4.1 < obj_d < 4.1 and obj[4] > 1: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
 
                 #Forward Collision Warning
-                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.65 and obj_d < 1.65:
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.5 and obj_d < 1.5:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
                 if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -5 and obj_d < 5:

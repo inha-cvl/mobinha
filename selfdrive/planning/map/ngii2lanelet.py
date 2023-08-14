@@ -445,6 +445,9 @@ class NGII2LANELET:
                 return list(simplified.coords)
             def find_next_id(current_id, lanelets):
                 next_id = lanelets[current_id]['successor']
+                if lanelets[current_id]['laneNo'] == 91:
+                    current_id = group[1]
+                    next_id = lanelets[current_id]['successor']
                 if next_id is not None and len(next_id) >= 1:
                     next_id = next_id[0]
                 else:

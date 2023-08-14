@@ -473,8 +473,7 @@ class NGII2LANELET:
             length = 0
             edge_left_new_id = group[0] # edge left link id
             edge_right_new_id = group[-1] # edge right link id
-            print("left id: ", edge_left_new_id)
-            print("right id: ", edge_right_new_id)
+
             length = lanelets[edge_left_new_id]['length']
             left_bound = lanelets[edge_left_new_id]['leftBound']
             right_bound = lanelets[edge_right_new_id]['rightBound']
@@ -484,10 +483,6 @@ class NGII2LANELET:
 
             next_left_id = find_next_id(edge_left_new_id, lanelets)
             next_right_id = find_edge_right_id(next_left_id, lanelets)
-            print("left bound: ", len(ordered_left))
-            print("right bound: ", len(ordered_right))
-            print("next left id: ", next_left_id)
-            print("next right id: ", next_right_id)
             while length<150:
                 if next_left_id is None:
                     break
@@ -499,18 +494,11 @@ class NGII2LANELET:
                 ordered_left = ordered_left + get_ordered_chunks(left_bound)
                 ordered_right = ordered_right + get_ordered_chunks(right_bound)
 
-                print("left bound: ", len(ordered_left))
-                print("right bound: ", len(ordered_right))
-
                 next_left_id = find_next_id(next_left_id, lanelets)
                 next_right_id = find_edge_right_id(next_left_id, lanelets)
-                print("next left id: ", next_left_id)
-                print("next right id: ", next_right_id)
 
             flat_left_bound = [item for sublist in ordered_left for item in sublist]
             flat_right_bound = [item for sublist in ordered_right for item in sublist]
-            print("flat left bound: ", len(flat_left_bound))
-            print("flat right bound: ", len(flat_right_bound))
 
             flat_left_bound = spline(flat_left_bound)
             flat_right_bound = spline(flat_right_bound)
@@ -519,7 +507,8 @@ class NGII2LANELET:
             simplified_right = simplify_coords(flat_right_bound[::-1])
             # Combine
             all_coords_simplified = simplified_left + simplified_right
-            lanelets[new_id]['ROI'] = all_coords_simplified
+            for i in range(len(group)):
+                lanelets[group[i]]['ROI'] = [list(coord) for coord in all_coords_simplified]
             
         for id_, data in lanelets.items():
             data['leftChange'] = [True for _ in range(len(data['waypoints']))]

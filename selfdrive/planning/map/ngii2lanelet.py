@@ -412,6 +412,11 @@ class NGII2LANELET:
 
                     stoplines[left_id] = lines
                     for_vis.append([lines, 'stop_line'])
+        for id_, data in lanelets.items():
+            if data['length'] < 35.0:
+                yaw_err = get_yaw_error(data['yaw'][0], data['yaw'][-1])
+                if abs(math.degrees(yaw_err)) > 150:
+                    data['uTurn'] = True
 
         #TODO: CREATE ROI for front 100m
         for n, group in tqdm(enumerate(groups), desc="roi: ", total=len(groups)):
@@ -445,7 +450,7 @@ class NGII2LANELET:
                 return list(simplified.coords)
             def find_next_id(current_id, lanelets):
                 next_id = lanelets[current_id]['successor']
-                if lanelets[current_id]['laneNo'] == 91:
+                if lanelets[current_id]['uTurn']:
                     current_id = group[1]
                     next_id = lanelets[current_id]['successor']
                 if next_id is not None and len(next_id) >= 1:
@@ -455,8 +460,8 @@ class NGII2LANELET:
 
                 return next_id
             def spline(bound):
-                if len(bound) == 0:
-                    return []
+                if len(bound) < 2:
+                    return bound
                 x, y = zip(*bound)
 
                 # 스플라인 보간
@@ -466,12 +471,18 @@ class NGII2LANELET:
 
                 # 보간된 좌표를 리스트 형태로 변환
                 return [[xi, yi] for xi, yi in zip(xnew, ynew)]
-            def find_edge_right_id(right_id, lanelets):
-                while right_id is not None:
-                    if lanelets[right_id]['adjacentRight'] is None:
-                        break
-                    right_id = lanelets[right_id]['adjacentRight']
-                return right_id
+            def find_edge_id(flag, adjacent_id, lanelets):
+                if flag == 'l':
+                    while adjacent_id is not None:
+                        if lanelets[adjacent_id]['adjacentLeft'] is None:
+                            break
+                        adjacent_id = lanelets[adjacent_id]['adjacentLeft']
+                elif flag == 'r':
+                    while adjacent_id is not None:
+                        if lanelets[adjacent_id]['adjacentRight'] is None:
+                            break
+                        adjacent_id = lanelets[adjacent_id]['adjacentRight']
+                return adjacent_id
 
             length = 0
             edge_left_new_id = group[0] # edge left link id
@@ -485,11 +496,14 @@ class NGII2LANELET:
             ordered_right = get_ordered_chunks(right_bound)
 
             next_left_id = find_next_id(edge_left_new_id, lanelets)
-            next_right_id = find_edge_right_id(next_left_id, lanelets)
-            while length<150:
+            next_id = next_left_id
+            next_right_id = find_edge_id('r', next_left_id, lanelets)
+            while length<250:
                 if next_left_id is None:
                     break
                 length += lanelets[next_left_id]['length']
+                
+                next_left_id = find_edge_id('l', next_left_id, lanelets)
 
                 left_bound = lanelets[next_left_id]['leftBound']
                 right_bound = lanelets[next_right_id]['rightBound'] if next_right_id is not None else []
@@ -498,11 +512,15 @@ class NGII2LANELET:
                 ordered_right = ordered_right + get_ordered_chunks(right_bound)
 
                 next_left_id = find_next_id(next_left_id, lanelets)
-                next_right_id = find_edge_right_id(next_left_id, lanelets)
+                next_right_id = find_edge_id('r', next_left_id, lanelets)
 
             flat_left_bound = [item for sublist in ordered_left for item in sublist]
             flat_right_bound = [item for sublist in ordered_right for item in sublist]
 
+            # all_coords = flat_left_bound + flat_right_bound[::-1]
+            # all_coords_simplified = simplify_coords(all_coords)
+            # spline_all_coords = spline(all_coords_simplified)
+            
             flat_left_bound = spline(flat_left_bound)
             flat_right_bound = spline(flat_right_bound)
 
@@ -512,6 +530,9 @@ class NGII2LANELET:
             all_coords_simplified = simplified_left + simplified_right
             for i in range(len(group)):
                 lanelets[group[i]]['ROI'] = [list(coord) for coord in all_coords_simplified]
+            if next_id and lanelets[next_id]['intersection']:
+                lanelets[next_id]['ROI'] = [list(coord) for coord in all_coords_simplified]
+                
             
         for id_, data in lanelets.items():
             data['leftChange'] = [True for _ in range(len(data['waypoints']))]
@@ -711,12 +732,6 @@ class NGII2LANELET:
         #                 id_ = groups[group_n][0]
         #                 if 'U' not in lanelets[id_]['direction']:
         #                     lanelets[id_]['direction'].append('U')
-
-        for id_, data in lanelets.items():
-            if data['length'] < 35.0:
-                yaw_err = get_yaw_error(data['yaw'][0], data['yaw'][-1])
-                if abs(math.degrees(yaw_err)) > 150:
-                    data['uTurn'] = True
         
         for id_, data in lanelets.items():
             self.link_id_data[id_]=self.new2ori[id_]

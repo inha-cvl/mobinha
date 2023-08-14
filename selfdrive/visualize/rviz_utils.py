@@ -5,7 +5,7 @@ import numpy as np
 import time
 
 import rospy
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point32, Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
@@ -58,6 +58,11 @@ def ObjectsViz(objects):
     prev_marker_count = len(objects)
     return array, textarray
 
+def DrivableAreaViz(points):
+    marker = Line('ROI_polygon', 0, 1, (1.0, 1.0, 0.0, 1.0))
+    for pt in points:
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.0))
+    return marker
 
 def TrafficLightViz(tl, cls):
     quaternion = tf.transformations.quaternion_from_euler(
@@ -277,7 +282,7 @@ def PostPoint(ns, id_, data, radius, height, color):
     marker = Marker()
     marker.type = Marker.CYLINDER
     marker.action = Marker.ADD
-    marker.header.frame_id = 'map'
+    marker.header.frame_id = 'world'
     marker.ns = ns
     marker.id = id_
     marker.lifetime = rospy.Duration(0)

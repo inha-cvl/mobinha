@@ -66,6 +66,7 @@ class PathPlanner:
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
+        self.pub_drivable_ROI = rospy.Publisher('/mobinha/planning/drivable_ROI', Marker, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -497,6 +498,9 @@ class PathPlanner:
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
+
+                drviable_ROI_viz = DrivableAreaViz(self.lmap.lanelets[splited_local_id]['ROI'])
+                self.pub_drivable_ROI.publish(drviable_ROI_viz)
 
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):

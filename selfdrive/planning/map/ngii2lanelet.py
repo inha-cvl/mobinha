@@ -10,6 +10,7 @@ from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 from shapely.geometry import LineString
 from scipy.interpolate import splprep, splev
+from shapely.geometry import Polygon
 
 def convert_2_360(angle):
     if angle >= 0 and angle <= math.pi:
@@ -422,8 +423,7 @@ class NGII2LANELET:
         for n, group in tqdm(enumerate(groups), desc="roi: ", total=len(groups)):
             if len(group)==0:
                 continue
-            def calculate_distance(coord1, coord2):
-                return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
+
             def get_direction(chunk):
                 start = chunk[0]
                 end = chunk[-1]
@@ -431,10 +431,8 @@ class NGII2LANELET:
             def sort_key(chunk, all_chunks):
                 # 모든 청크들에 대한 방향을 계산합니다.
                 directions = [get_direction(c) for c in all_chunks]
-                
                 # 전체 청크들의 평균 방향을 계산합니다.
                 avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
-                
                 start = chunk[0]
                 # 시작점과 평균 방향 벡터의 내적으로 정렬
                 return start[0] * avg_direction[0] + start[1] * avg_direction[1]
@@ -498,21 +496,22 @@ class NGII2LANELET:
             next_left_id = find_next_id(edge_left_new_id, lanelets)
             next_id = next_left_id
             next_right_id = find_edge_id('r', next_left_id, lanelets)
-            while length<250:
-                if next_left_id is None:
-                    break
-                length += lanelets[next_left_id]['length']
+
+            # while length<250:
+            #     if next_left_id is None:
+            #         break
+            #     length += lanelets[next_left_id]['length']
                 
-                next_left_id = find_edge_id('l', next_left_id, lanelets)
+            #     next_left_id = find_edge_id('l', next_left_id, lanelets)
 
-                left_bound = lanelets[next_left_id]['leftBound']
-                right_bound = lanelets[next_right_id]['rightBound'] if next_right_id is not None else []
+            #     left_bound = lanelets[next_left_id]['leftBound']
+            #     right_bound = lanelets[next_right_id]['rightBound'] if next_right_id is not None else []
 
-                ordered_left = ordered_left + get_ordered_chunks(left_bound)
-                ordered_right = ordered_right + get_ordered_chunks(right_bound)
+            #     ordered_left = ordered_left + get_ordered_chunks(left_bound)
+            #     ordered_right = ordered_right + get_ordered_chunks(right_bound)
 
-                next_left_id = find_next_id(next_left_id, lanelets)
-                next_right_id = find_edge_id('r', next_left_id, lanelets)
+            #     next_left_id = find_next_id(next_left_id, lanelets)
+            #     next_right_id = find_edge_id('r', next_left_id, lanelets)
 
             flat_left_bound = [item for sublist in ordered_left for item in sublist]
             flat_right_bound = [item for sublist in ordered_right for item in sublist]
@@ -528,10 +527,11 @@ class NGII2LANELET:
             simplified_right = simplify_coords(flat_right_bound[::-1])
             # Combine
             all_coords_simplified = simplified_left + simplified_right
+
             for i in range(len(group)):
                 lanelets[group[i]]['ROI'] = [list(coord) for coord in all_coords_simplified]
-            if next_id and lanelets[next_id]['intersection']:
-                lanelets[next_id]['ROI'] = [list(coord) for coord in all_coords_simplified]
+            # if next_id and lanelets[next_id]['intersection']:
+                # lanelets[next_id]['ROI'] = [list(coord) for coord in all_coords_simplified]
                 
             
         for id_, data in lanelets.items():

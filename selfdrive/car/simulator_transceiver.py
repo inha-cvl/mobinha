@@ -24,7 +24,7 @@ class Vehicle:
         self.x += self.v * math.cos(self.yaw) * dt
         self.y += self.v * math.sin(self.yaw) * dt
         self.yaw += self.v * dt * math.tan(wheel_angle) / self.L
-        self.yaw = (self.yaw + math.pi) % (2 * math.pi) - math.pi
+        # self.yaw = (self.yaw + math.pi) % (2 * math.pi) - math.pi
         tar_v = self.v
 
         if accel > 0 and brake == 0:

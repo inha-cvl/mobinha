@@ -6,6 +6,8 @@ from scipy.spatial import KDTree
 from std_msgs.msg import Int8, Float32
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
+from shapely.geometry import MultiPolygon, Polygon, MultiLineString
+from shapely.ops import unary_union, linemerge
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -498,8 +500,52 @@ class PathPlanner:
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
+                now_link_ROI = self.lmap.lanelets[self.now_head_lane_id]['ROI']
+                next_link_ROI = self.lmap.lanelets[self.next_head_lane_id]['ROI']
+                third_link_ROI = self.lmap.lanelets[self.head_lane_ids[2]]['ROI']
+                # self.head_lane_ids[1]
+                p1 = Polygon(now_link_ROI)
+                p2 = Polygon(next_link_ROI)
+                p3 = Polygon(third_link_ROI)
 
-                drviable_ROI_viz = DrivableAreaViz(self.lmap.lanelets[splited_local_id]['ROI'])
+                # 아슬아슬하게 붙어있는 폴리곤을 버퍼링하여 합치기
+                buffer_distance = 1  # 버퍼 거리 설정
+                union_result = p1.buffer(buffer_distance).union(p2.buffer(buffer_distance))
+                p_u = union_result.buffer(-buffer_distance)
+                union_result = p_u.buffer(buffer_distance).union(p3.buffer(buffer_distance))
+
+                # 버퍼링으로 인한 확장을 다시 축소
+                p_u = union_result.buffer(-buffer_distance)
+                p_u = p_u.convex_hull
+                                    
+                # p_u=p1.union(p2)
+                # hull_poly = p_u.convex_hull
+                # 1. 각 폴리곤의 boundary를 추출
+                # boundaries = [poly.boundary for poly in p_u.geoms]
+
+                # 2. 모든 외곽선을 병합
+                # merged_boundary = linemerge(boundaries)
+
+                # 3. 병합된 외곽선을 사용하여 새로운 폴리곤 생성 (이 부분은 상황에 따라 다를 수 있습니다)
+                # 이 예에서는 병합된 외곽선이 하나의 연결된 LineString인 경우에만 작동합니다.
+                # if isinstance(merged_boundary, MultiLineString):
+                #     polygons = []
+                #     for line in merged_boundary.geoms:
+                #         # 각 LineString을 Polygon으로 변환
+                #         # 이 부분에서는 각 LineString이 닫힌 형태라고 가정하였습니다.
+                #         poly = Polygon(line)
+                #         polygons.append(poly)
+                    
+                #     # 모든 Polygon을 union으로 병합
+                #     new_poly = unary_union(polygons)
+                #     # print(final_poly)
+
+                # else:
+                #     new_poly = Polygon(merged_boundary.coords)
+
+                # 결과 확인
+
+                drviable_ROI_viz = DrivableAreaViz(p_u)
                 self.pub_drivable_ROI.publish(drviable_ROI_viz)
 
                 poseArray = PoseArray()

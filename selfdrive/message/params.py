@@ -51,12 +51,20 @@ class IONIQ:
             car_param_longitudinal_tuning.values())
 
         car_param_lateral_tuning = car_param_dict["lateralTuning"]._asdict()
+
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
         car_param_lateral_tuning_lqr["l"] = 1.0  # Lfc, look-ahead distance
         car_param_lateral_tuning_lqr["k"] = 1.5 # origin 1.5 lane change good is 2  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
+        
+        car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
+        )
+        car_param_lateral_tuning_stanley["k"] = 0.5  # k, look forward gain
+        car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
+            car_param_lateral_tuning_stanley.values())
+        
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
             car_param_lateral_tuning.values())
 
@@ -107,6 +115,13 @@ class SIMULATOR:
         car_param_lateral_tuning_lqr["k"] = 1.5  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
+        
+        car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
+        )
+        car_param_lateral_tuning_stanley["k"] = 0.3  # k, look forward gain
+        car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
+            car_param_lateral_tuning_stanley.values())
+
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
             car_param_lateral_tuning.values())
 
@@ -156,6 +171,13 @@ class MORAI: # HYUNDAI NEXO
         car_param_lateral_tuning_lqr["k"] = 1.5  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
+        
+        car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
+        )
+        car_param_lateral_tuning_stanley["k"] = 0.5  # k, look forward gain
+        car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
+            car_param_lateral_tuning_stanley.values())
+
         car_param_dict["lateralTuning"] = self.CP.lateralTuning._make(
             car_param_lateral_tuning.values())
 

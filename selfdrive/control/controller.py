@@ -4,6 +4,7 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
+from selfdrive.control.libs.stanley import StanleyController
 from selfdrive.control.libs.pid import PID
 import rospy
 
@@ -16,6 +17,7 @@ class Controller:
     def __init__(self, CP):
         self.pid = PID(CP.longitudinalTuning)
         self.purepursuit = PurePursuit(CP)
+        self.stanley = StanleyController(CP)
         self.steer_ratio = CP.steerRatio
         self.target_v = 0.0
         self.local_path = None
@@ -89,6 +91,10 @@ class Controller:
         if self.local_path != None:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # print("PP wheel_angle:",wheel_angle)
+            wheel_angle = self.stanley.run(
+                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # print("stanley wheel_angle:",wheel_angle)
             steer = wheel_angle*self.steer_ratio
             # print("origin steer:",steer)
             steer = self.limit_steer_change(steer)

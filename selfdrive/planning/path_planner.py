@@ -12,6 +12,7 @@ from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
 
+import json
 
 class PathPlanner:
     def __init__(self, CP):

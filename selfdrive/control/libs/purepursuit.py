@@ -17,33 +17,33 @@ class PurePursuit:
 
         self.isLaneChange = False
         self.isBank = False
-        rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
-        rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
+        # rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
+        # rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
 
         self.k = CP.lateralTuning.lqr.k
-        self.wheel_base = CP.wheelbase
+        # self.wheel_base = CP.wheelbase
         self.Lfc = CP.lateralTuning.lqr.l
         self.k_curva = 20.0
 
         self.cur_curvature = 0.0
 
-    def target_lfc_cb(self, msg):
-        self.Lfc = msg.data
+    # def target_lfc_cb(self, msg):
+    #     self.Lfc = msg.data
 
-    def target_k_cb(self, msg):
-        self.k = msg.data
+    # def target_k_cb(self, msg):
+    #     self.k = msg.data
 
-    def lane_change_cb(self, msg):
-        if msg.data == 1:
-            self.isLaneChange = True
-        else:
-            self.isLaneChange = False
+    # def lane_change_cb(self, msg):
+    #     if msg.data == 1:
+    #         self.isLaneChange = True
+    #     else:
+    #         self.isLaneChange = False
 
-    def bank_cb(self, msg):
-        if msg.data == 1:
-            self.isBank = True
-        else:
-            self.isBank = False
+    # def bank_cb(self, msg):
+    #     if msg.data == 1:
+    #         self.isBank = True
+    #     else:
+    #         self.isBank = False
 
     def euc_distance(self, pt1, pt2):
         return norm([pt2[0] - pt1[0], pt2[1] - pt1[1]])
@@ -77,7 +77,7 @@ class PurePursuit:
             if rotated_diff[0] > 0:
                 dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
                 if dis >= lfd:
-                    theta = np.arctan2(rotated_diff[1]+0.1, rotated_diff[0])
+                    theta = np.arctan2(rotated_diff[1], rotated_diff[0])
                     steering_angle = np.arctan2(
                         2*self.L*np.sin(theta), lfd)
                     lx = point[0]

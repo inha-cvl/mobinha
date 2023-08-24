@@ -61,6 +61,9 @@ class LateralLQRTuning(NamedTuple):
     l: float = 0.0
     k: float = 0.0
 
+class LateralStanleyTuning(NamedTuple):
+    k: float = 0.0
+
 
 class LateralTorqueTuning(NamedTuple):
     useSteeringAngle: bool = False
@@ -78,6 +81,7 @@ class LateralTuning(NamedTuple):
     indi: LateralINDITuning = LateralINDITuning()
     lqr: LateralLQRTuning = LateralLQRTuning()
     torque: LateralTorqueTuning = LateralTorqueTuning()
+    stanley: LateralStanleyTuning = LateralStanleyTuning()
 
 
 class Ecu(NamedTuple):

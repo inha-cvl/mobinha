@@ -62,7 +62,7 @@ class Transceiver:
             can = MoraiTransceiver()
         elif car == "IONIQ":
             can = IoniqTransceiver(CP)
-            timer = 0.02
+            timer = 0
         return cm, can, timer
 
     def state_cb(self, msg):

@@ -8,6 +8,7 @@ import rospy
 from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
 
+import threading
 
 class IoniqTransceiver():
     def __init__(self, CP):
@@ -98,7 +99,6 @@ class IoniqTransceiver():
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                #'%.4f' % res['Gway_Lateral_Accel_Speed']
                 self.ego_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
                 
             if (data.arbitration_id == 0x280):
@@ -158,7 +158,6 @@ class IoniqTransceiver():
         self.gateway.data[0] = signals['PA_Enable']
         self.gateway.data[1] = signals['LON_Enable']
         self.gateway.data[5] = signals['Reset_Flag']
-        print("send")
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 
@@ -177,10 +176,9 @@ class IoniqTransceiver():
     def cleanup(self):
         self.bus.shutdown()
 
-    def run(self, CM):
+    def run_not_thread(self, CM):
         self.can_cmd(CM.CC.canCmd)
         self.set_actuators(CM.CC.actuators)
-        # print(self.Accel_Override, self.Break_Override, self.Steering_Overide)
         if self.timer(0.02):
             # if self.prev_control_state != self.control_state:
             #     self.init_target_actuator()
@@ -188,5 +186,27 @@ class IoniqTransceiver():
             self.ioniq_control()
             self.pub_gateway.publish(self.gateway)
             self.pub_gateway_time.publish(Float64(time.time()))
+        self.receiver()
+
+    def run(self, CM):
+        # 병렬로 실행될 수 있도록 메서드를 수정하거나 추가
+        control_thread = threading.Thread(target=self.control_task, args=(CM,))
+        receiver_thread = threading.Thread(target=self.receiver_task)
+        
+        control_thread.start()
+        receiver_thread.start()
+        
+        control_thread.join()
+        receiver_thread.join()
+
+    def control_task(self, CM):
+        if self.timer(0.02):
+            self.can_cmd(CM.CC.canCmd)
+            self.set_actuators(CM.CC.actuators)
+            self.ioniq_control()
+            self.pub_gateway.publish(self.gateway)
+            self.pub_gateway_time.publish(Float64(time.time()))
+
+    def receiver_task(self):
         self.receiver()
         

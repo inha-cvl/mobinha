@@ -36,6 +36,7 @@ class IoniqTransceiver():
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
         self.gateway.data = [0, 0, 0, 0, 0, 0]
 
+        self.lock = threading.Lock()
         self.rcv_velocity = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0, 1: 0}
         self.Accel_Override = 0
@@ -43,7 +44,6 @@ class IoniqTransceiver():
         self.Steering_Overide = 0
         self.alv_cnt = 0
         self.Alive_Count_ERR = 0
-
         self.prev_control_state = self.control_state.copy()
 
         rospy.on_shutdown(self.cleanup)
@@ -200,7 +200,7 @@ class IoniqTransceiver():
         receiver_thread.join()
 
     def control_task(self, CM):
-        if self.timer(0.02):
+        with self.lock: # Aquire lock
             self.can_cmd(CM.CC.canCmd)
             self.set_actuators(CM.CC.actuators)
             self.ioniq_control()
@@ -208,5 +208,6 @@ class IoniqTransceiver():
             self.pub_gateway_time.publish(Float64(time.time()))
 
     def receiver_task(self):
-        self.receiver()
+        with self.lock: # Acquire lock
+            self.receiver()
         

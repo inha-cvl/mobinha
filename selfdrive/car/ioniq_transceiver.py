@@ -180,19 +180,19 @@ class IoniqTransceiver():
     def cleanup(self):
         self.bus.shutdown()
 
-    def run_not_thread(self, CM):
-        self.can_cmd(CM.CC.canCmd)
-        self.set_actuators(CM.CC.actuators)
+    def run(self, CM):
         if self.timer(0.02):
             # if self.prev_control_state != self.control_state:
             #     self.init_target_actuator()
             #     self.prev_control_state = self.control_state.copy()
+            self.can_cmd(CM.CC.canCmd)
+            self.set_actuators(CM.CC.actuators)
             self.ioniq_control()
             self.pub_gateway.publish(self.gateway)
             self.pub_gateway_time.publish(Float64(time.time()))
         self.receiver()
 
-    def run(self, CM):
+    def run_thread(self, CM):
         # 병렬로 실행될 수 있도록 메서드를 수정하거나 추가
         control_thread = threading.Thread(target=self.control_task, args=(CM,))
         receiver_thread = threading.Thread(target=self.receiver_task)

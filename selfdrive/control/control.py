@@ -33,7 +33,7 @@ class Control:
                 if self.need_init:
                     sm, localizer, controller = self.init()
             elif self.state == 'START':
-                if self.timer(0.1):
+                if self.timer(0.05):
                     self.need_init = True
                     sm.update()
                     localizer.run(sm)

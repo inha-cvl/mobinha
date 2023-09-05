@@ -96,10 +96,7 @@ class IoniqTransceiver():
             self.init_target_actuator()
 
     def receiver(self):
-        data = self.bus.recv(0.02)
-        if data is None:
-            self.recv_err_cnt +=1
-            print("recv err cnt: ", self.recv_err_cnt)
+        data = self.bus.recv(0.5)
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
@@ -149,7 +146,10 @@ class IoniqTransceiver():
                     self.target_actuators['accel'] = self.ego_actuators['accel']
                     self.target_actuators['brake'] = self.ego_actuators['brake']
         except Exception as e:
-            print(e)
+            if data is None:
+                self.recv_err_cnt +=1
+                print("recv err cnt: ", self.recv_err_cnt)
+            # print(e)
 
     def alive_counter(self, alv_cnt):
         return (alv_cnt + 1) % 256

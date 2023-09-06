@@ -3,6 +3,7 @@
 import can
 import cantools
 import time
+if datetime
 
 import rospy
 from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
@@ -45,6 +46,7 @@ class IoniqTransceiver():
         self.alv_cnt = 0
         self.Alive_Count_ERR = 0
         self.recv_err_cnt = 0
+        self.err_time = None  # 예외 발생 시간 초기화
         self.prev_control_state = self.control_state.copy()
 
         rospy.on_shutdown(self.cleanup)
@@ -96,7 +98,7 @@ class IoniqTransceiver():
             self.init_target_actuator()
 
     def receiver(self):
-        data = self.bus.recv(0.5)
+        data = self.bus.recv(0.2)
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
@@ -114,7 +116,7 @@ class IoniqTransceiver():
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
-                gear_sel_disp = res['Gway_GearSelDisp'] 
+                gear_sel_disp = res['Gway_GearSelDisp']
                 if gear_sel_disp == "R":  # R
                     gear_sel_disp = 1
                 elif gear_sel_disp == "N":  # N
@@ -141,15 +143,21 @@ class IoniqTransceiver():
                 self.gateway.data[2] = res['Accel_Override']
                 self.gateway.data[3] = res['Break_Override']
                 self.gateway.data[4] = res['Steering_Overide']
-                if self.Accel_Override or self.Break_Override or self.Steering_Overide:
-                    self.target_actuators['steer'] = self.ego_actuators['steer']
-                    self.target_actuators['accel'] = self.ego_actuators['accel']
-                    self.target_actuators['brake'] = self.ego_actuators['brake']
+                # if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+                #     self.target_actuators['steer'] = self.ego_actuators['steer']
+                #     self.target_actuators['accel'] = self.ego_actuators['accel']
+                #     self.target_actuators['brake'] = self.ego_actuators['brake']
+            if self.err_time is not None:
+                recovery_time = datetime.datetime.now() - self.err_time
+                print(f"Recovered in {recovery_time.total_seconds()} seconds")
+                self.err_time = None
+            
         except Exception as e:
             if data is None:
-                self.recv_err_cnt +=1
+                self.recv_err_cnt += 1
                 print("recv err cnt: ", self.recv_err_cnt)
-            # print(e)
+                if self.err_time is None:
+                    self.err_time = datetime.datetime.now()
 
     def alive_counter(self, alv_cnt):
         return (alv_cnt + 1) % 256

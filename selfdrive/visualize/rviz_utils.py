@@ -33,7 +33,7 @@ def ObjectsViz(objects):
             v = str(round(max(pt[5], 0))) if pt[5] else 0
             # message = "s:{}m d:{}m v:{}km/h".format(s, d, v)
             message = "v:{}km/h".format(v)
-            text = Text('obstacle_information', n, 1.0, (1, 1, 1, 1), message)
+            text = Text('obstacle_information', text_count, 1.0, (1, 1, 1, 1), message)
             text.pose.position = Point(x=pt[0], y=pt[1], z=3.0)
             text_count +=1
             textarray.markers.append(text)

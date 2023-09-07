@@ -3,7 +3,7 @@
 import can
 import cantools
 import time
-if datetime
+import datetime
 
 import rospy
 from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64

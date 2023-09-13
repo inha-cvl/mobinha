@@ -502,6 +502,10 @@ class MainWindow(QMainWindow, form_class):
             self.start_button.setDisabled(True)
             self.initialize_button.setDisabled(True)
             self.pause_button.setEnabled(True)
+            self.player = QMediaPlayer()
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile("alert_sound.mp3")))
+            self.player.play()
+            QMessageBox.warning(self, 'Warning', 'Take over request!')
 
     def start_button_clicked(self):
         self.state = 'START'
@@ -653,6 +657,9 @@ class MediaThread(QThread):
             if self.mode != self.get_mode:
                 if self.get_mode == 1:
                     url = dir_path+"/sounds/on.wav"
+                    self.mode = self.get_mode
+                elif self.get_mode == 2:
+                    url = dir_path+"/sounds/handling-tor.wav"
                     self.mode = self.get_mode
                 elif self.get_mode == 3 or self.get_mode == 4:
                     url = dir_path+"/sounds/bsd.wav"

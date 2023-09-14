@@ -8,6 +8,7 @@ from std_msgs.msg import String
 from selfdrive.message.messaging import *
 from selfdrive.control.localizer import Localizer
 from selfdrive.control.controller import Controller
+from selfdrive.control.controller_mpc import MPCController
 
 
 class Control:
@@ -52,8 +53,9 @@ class Control:
         sm = StateMaster(CP)
         localizer = Localizer()
         controller = Controller(CP)
+        mpccontroller = MPCController(CP)
 
-        return sm, localizer, controller
+        return sm, localizer, mpccontroller # , mpccontroller
 
     def state_cb(self, msg):
         if self.state != str(msg.data):

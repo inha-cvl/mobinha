@@ -33,6 +33,7 @@ class PathPlanner:
         self.local_path = None
         self.local_id = None
         self.temp_global_idx = 0
+        self.local_path_theta = None
 
         self.get_goal = False
 
@@ -68,6 +69,8 @@ class PathPlanner:
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
+        self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
+        self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -192,7 +195,7 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
-    def estimate_theta(path, index):
+    def estimate_theta(self, path, index):
         """
         Estimate the orientation theta based on two consecutive points in the path.
         
@@ -309,14 +312,19 @@ class PathPlanner:
                     local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:]
                     #local_id = self.erase_global_id[eg_idx -self.l_tail:]
                     local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:]
-
                 self.erase_global_path = self.erase_global_path[eg_idx:]
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
+                '''
                 self.local_path_theta = []
                 for i in range(len(local_path)):
                     theta = self.estimate_theta(local_path, i)
-                    self.local_path_theta.append([local_path[i][0], local_path[i][1], theta])
+                    self.local_path_theta.append(theta)
+                '''
+                yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
+                self.pub_local_path_theta.publish(Float32MultiArray(data=yaw))
+                self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
+                self.pub_local_path_k.publish(Float32MultiArray(data=k))
                 self.local_path = local_path
                 self.local_id = local_id
                 self.l_idx = self.l_tail
@@ -523,7 +531,6 @@ class PathPlanner:
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
-                self.pub_local_path_theta.publish(Float32MultiArray(data=self.local_path_theta))
 
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):

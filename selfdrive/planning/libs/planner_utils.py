@@ -659,3 +659,24 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
         lane_position = 2
     
     return lane_position
+
+def extract_path_info(local_path, local_id, lanelets):
+    yaw_list = []
+    radius_list = []
+    k_list = []
+    
+    for idx, id_str in enumerate(local_id):
+        # Extract lanelet_id and waypoint_idx from local_id
+        lanelet_id, waypoint_idx = map(int, id_str.split('_'))
+        
+        # Access corresponding yaw, radius, and k values using lanelet_id and waypoint_idx
+        yaw = lanelets[str(lanelet_id)]['yaw'][waypoint_idx]
+        k = lanelets[str(lanelet_id)]['k'][waypoint_idx]
+        radius = 1 / k if k != 0 else float('inf')
+        
+        # Append these values to new lists
+        yaw_list.append(yaw)
+        radius_list.append(radius)
+        k_list.append(k)
+        
+    return yaw_list, radius_list, k_list

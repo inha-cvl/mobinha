@@ -16,7 +16,7 @@ KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
 
-class Controller:
+class MPCController:
 
     def __init__(self, CP):
         self.pid = PID(CP.longitudinalTuning)
@@ -28,10 +28,14 @@ class Controller:
         self.l_idx = 0
         self.prev_steer = 0.0
         self.local_path_theta = None
+        self.local_path_radius = None
+        self.local_path_k = None
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         rospy.Subscriber('mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
+        rospy.Subscriber('mobinha/planning/local_path_radius', Float32MultiArray, self.local_path_radius_cb)
+        rospy.Subscriber('mobinha/planning/local_path_k', Float32MultiArray, self.local_path_k_cb)
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
 
@@ -56,6 +60,12 @@ class Controller:
     
     def local_path_theta_cb(self, msg):
         self.local_path_theta = msg.data
+
+    def local_path_radius_cb(self, msg):
+        self.local_path_radius = msg.data
+    
+    def local_path_k_cb(self, msg):
+        self.local_path_k = msg.data
 
     def calc_accel_brake_pressure(self, pid, cur_v, pitch):
         th_a = 4 # 0~20 * gain -> 0~100 accel
@@ -299,6 +309,8 @@ class Controller:
     def solve_mpc_problem(self, A, B, C, Q, R, lower_bound, upper_bound, ref, horizon, control_horizon, x0, u0):
         n = A.shape[0]
         m = B.shape[1]
+        ref = ref.flatten()
+        C = C.flatten()
         x = cp.Variable((n, horizon+1))
         u = cp.Variable((m, control_horizon))
         cost = 0
@@ -411,13 +423,13 @@ class Controller:
         return steer_cmd, acc, steer_feedforward
 
     # limit_steer_angle function
-    def limit_steer_angle(steer_angle, max_steer_angle):
+    def limit_steer_angle(self,steer_angle, max_steer_angle):
         steer_angle = min(steer_angle, max_steer_angle)
         steer_angle = max(steer_angle, -max_steer_angle)
         return steer_angle
 
     # limit_steer_by_angular_vel function
-    def limit_steer_by_angular_vel(expect_steer_angle, current_steer_angle, max_angular_vel, time_step):
+    def limit_steer_by_angular_vel(self,expect_steer_angle, current_steer_angle, max_angular_vel, time_step):
         steer_angle = expect_steer_angle
         max_steer_angle = current_steer_angle + max_angular_vel * time_step
         min_steer_angle = current_steer_angle - max_angular_vel * time_step
@@ -434,7 +446,7 @@ class Controller:
 
             veh_pose = (CS.position.x, CS.position.y, CS.yawRate)
 
-            trajref = np.column_stack((self.local_path, self.local_path_theta))
+            trajref = np.column_stack((self.local_path, self.local_path_theta, self.local_path_radius, self.local_path_k))
 
             ref_pose = self.calc_proj_pose(veh_pose, trajref[0], trajref[1])
             

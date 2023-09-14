@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32
+from std_msgs.msg import Int8, Float32, Float32MultiArray
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -67,6 +67,7 @@ class PathPlanner:
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
+        self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -191,6 +192,26 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
+    def estimate_theta(path, index):
+        """
+        Estimate the orientation theta based on two consecutive points in the path.
+        
+        Parameters:
+        path (np.ndarray): The reference path [x, y]
+        index (int): The index of the current point in the path
+        
+        Returns:
+        float: The estimated orientation theta
+        """
+        point_current = path[index]
+        point_next = path[index + 1] if index + 1 < len(path) else path[index]
+        
+        dx = point_next[0] - point_current[0]
+        dy = point_next[1] - point_current[1]
+        
+        theta = np.arctan2(dy, dx)
+        
+        return theta
 
     def run(self, sm):
         CS = sm.CS
@@ -292,6 +313,10 @@ class PathPlanner:
                 self.erase_global_path = self.erase_global_path[eg_idx:]
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
+                self.local_path_theta = []
+                for i in range(len(local_path)):
+                    theta = self.estimate_theta(local_path, i)
+                    self.local_path_theta.append([local_path[i][0], local_path[i][1], theta])
                 self.local_path = local_path
                 self.local_id = local_id
                 self.l_idx = self.l_tail
@@ -498,6 +523,7 @@ class PathPlanner:
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
+                self.pub_local_path_theta.publish(Float32MultiArray(data=self.local_path_theta))
 
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):

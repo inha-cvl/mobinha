@@ -7,7 +7,7 @@ from selfdrive.control.libs.purepursuit import PurePursuit
 from selfdrive.control.libs.stanley import StanleyController
 from selfdrive.control.libs.pid import PID
 import rospy
-
+from selfdrive.planning.libs.map import LaneletMap, TileMap
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
@@ -15,6 +15,7 @@ MPS_TO_KPH = 3.6
 class Controller:
 
     def __init__(self, CP):
+        self.lmap = LaneletMap(CP.mapParam.path)
         self.pid = PID(CP.longitudinalTuning)
         self.purepursuit = PurePursuit(CP)
         self.stanley = StanleyController(CP)

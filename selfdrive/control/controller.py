@@ -93,8 +93,8 @@ class Controller:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             # print("PP wheel_angle:",wheel_angle)
-            wheel_angle = self.stanley.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # wheel_angle = self.stanley.run(
+                # CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             # print("stanley wheel_angle:",wheel_angle)
             steer = wheel_angle*self.steer_ratio
             # print("origin steer:",steer)

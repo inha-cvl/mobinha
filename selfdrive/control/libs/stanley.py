@@ -47,7 +47,7 @@ class StanleyController:
 
         # Calculate cross track error
         cte = self.cross_track_error(closest_point, ahead_point, position)
-        print("cte: ", cte)
+        # print("cte: ", cte)
         # Calculate the heading error
         theta_e = atan2(ahead_point[1] - closest_point[1], ahead_point[0] - closest_point[0])
         theta = radians(yaw)

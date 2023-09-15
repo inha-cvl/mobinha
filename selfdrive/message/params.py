@@ -37,8 +37,8 @@ class IONIQ:
 
         car_param_dict["minEnableSpeed"] = 23  # songdo demo site: 21, test site: 15 # min_v
         car_param_dict["maxEnableSpeed"] = 43  #45 # ref_v
-        car_param_dict["mass"] = 1737.0 + 136.0
-        car_param_dict["wheelbase"] = 3.00  # L
+        car_param_dict["mass"] = 2245.0
+        car_param_dict["wheelbase"] = 3.0  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
         car_param_dict["steerRatio"] = 13.5
 
@@ -61,7 +61,7 @@ class IONIQ:
         
         car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
         )
-        car_param_lateral_tuning_stanley["k"] = 0.5  # k, look forward gain
+        car_param_lateral_tuning_stanley["k"] = 0.25  # k, look forward gain
         car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
             car_param_lateral_tuning_stanley.values())
         

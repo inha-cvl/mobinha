@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from visualization_msgs.msg import Marker
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float32MultiArray
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
@@ -24,10 +24,17 @@ class Controller:
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
+        self.local_path_theta = None
+        self.local_path_radius = None
+        self.local_path_k = None
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
+        # rospy.Subscriber('mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
+        # rospy.Subscriber('mobinha/planning/local_path_radius', Float32MultiArray, self.local_path_radius_cb)
+        # rospy.Subscriber('mobinha/planning/local_path_k', Float32MultiArray, self.local_path_k_cb)
+
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
 
@@ -43,6 +50,15 @@ class Controller:
     
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
+    
+    def local_path_theta_cb(self, msg):
+        self.local_path_theta = msg.data
+
+    def local_path_radius_cb(self, msg):
+        self.local_path_radius = msg.data
+    
+    def local_path_k_cb(self, msg):
+        self.local_path_k = msg.data
 
     def target_v_cb(self, msg):
         self.target_v = msg.data
@@ -90,12 +106,17 @@ class Controller:
         CS = sm.CS
         vector3 = self.get_init_acuator()
         if self.local_path != None:
+            
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            
             # print("PP wheel_angle:",wheel_angle)
+
             # wheel_angle = self.stanley.run(
                 # CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+
             # print("stanley wheel_angle:",wheel_angle)
+
             steer = wheel_angle*self.steer_ratio
             # print("origin steer:",steer)
             steer = self.limit_steer_change(steer)

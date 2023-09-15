@@ -7,6 +7,7 @@ from selfdrive.control.libs.purepursuit import PurePursuit
 from selfdrive.control.libs.stanley import StanleyController
 from selfdrive.control.libs.pid import PID
 import rospy
+import time
 
 from scipy.linalg import inv
 import cvxpy as cp
@@ -30,6 +31,10 @@ class MPCController:
         self.local_path_theta = None
         self.local_path_radius = None
         self.local_path_k = None
+        self.previous_yawRate = None  # To store the previous yawRate
+        self.previous_time = None  # To store the previous time stamp
+        self.angular_v = 0
+
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
@@ -164,10 +169,10 @@ class MPCController:
         """
         
         # Given and calculated constants
-        mass_fl = mass_fr = mass_rl = mass_rr = 500  # in kg
-        mass = 2000  # Total mass in kg
-        mass_front = 1000  # Mass at the front
-        mass_rear = 1000  # Mass at the rear
+        # mass_fl = mass_fr = mass_rl = mass_rr = 500  # in kg
+        mass = 2245  # Total mass in kg
+        mass_front = 1200  # Mass at the front
+        mass_rear = 1045  # Mass at the rear
         
         # Constants
         eps = 0.01
@@ -186,8 +191,9 @@ class MPCController:
         iz = lf * lf * mass_front + lr * lr * mass_rear
 
         # Constants related to the vehicle and matrices
-        cf = 155494.663
-        cr = 155494.663
+        cf = 191788.56874
+        cr = 202119.10055
+
         basic_state_size = 6
         control_size = 2
         
@@ -309,10 +315,14 @@ class MPCController:
     def solve_mpc_problem(self, A, B, C, Q, R, lower_bound, upper_bound, ref, horizon, control_horizon, x0, u0):
         n = A.shape[0]
         m = B.shape[1]
+        # print(A, B)
+        # print(ref,C)
         ref = ref.flatten()
         C = C.flatten()
+        # print(ref,C)
         x = cp.Variable((n, horizon+1))
         u = cp.Variable((m, control_horizon))
+        # print(x,u)
         cost = 0
         constraints = []
         for t in range(horizon):
@@ -327,8 +337,12 @@ class MPCController:
         constraints += [x[:, 0] == x0.flatten()]
         problem = cp.Problem(cp.Minimize(cost), constraints)
         problem.solve()
+        # print(problem.status)
+        # print(problem.value)
+        # print(u[:, 0].value)
         if problem.status == cp.OPTIMAL or problem.status == cp.OPTIMAL_INACCURATE:
             u1 = u[:, 0].value
+            print(u1)
             return u1
         else:
             return np.zeros((m,))
@@ -414,13 +428,34 @@ class MPCController:
         matrix_r = np.eye(control_horizon, control_horizon)
         ref_state = np.zeros((basic_state_size, 1))
 
-        steer_cmd, acc = self.solve_mpc_problem(mpc_params['A'], mpc_params['B'], mpc_params['C'],
-                                      matrix_q, matrix_r,
-                                      lower_bound.flatten(), upper_bound.flatten(),
-                                      ref_state, horizon, control_horizon,
-                                      matrix_state, control_state)
+        # steer_cmd, acc = self.solve_mpc_problem(mpc_params['A'], mpc_params['B'], mpc_params['C'],
+        #                               matrix_q, matrix_r,
+        #                               lower_bound.flatten(), upper_bound.flatten(),
+        #                               ref_state, horizon, control_horizon,
+        #                               matrix_state, control_state)
+        steer_cmd, acc = self.solve_mpc_problem(matrix_ad, matrix_bd, matrix_cd,
+                                matrix_q, matrix_r,
+                                lower_bound.flatten(), upper_bound.flatten(),
+                                ref_state, horizon, control_horizon,
+                                matrix_state, control_state)
         
         return steer_cmd, acc, steer_feedforward
+    
+    def calculate_angular_velocity(self, current_heading_deg, previous_heading_deg, delta_time):
+        # Convert degrees to radians
+        current_heading_rad = current_heading_deg * (np.pi / 180)
+        previous_heading_rad = previous_heading_deg * (np.pi / 180)
+        
+        # Calculate angular velocity in rad/s
+        angular_velocity_rad_per_s = (current_heading_rad - previous_heading_rad) / delta_time
+        
+        # Handle the wrap-around issue at the -180 to 180 boundary
+        if angular_velocity_rad_per_s > np.pi:
+            angular_velocity_rad_per_s -= 2 * np.pi
+        elif angular_velocity_rad_per_s < -np.pi:
+            angular_velocity_rad_per_s += 2 * np.pi
+        
+        return angular_velocity_rad_per_s
 
     # limit_steer_angle function
     def limit_steer_angle(self,steer_angle, max_steer_angle):
@@ -441,26 +476,38 @@ class MPCController:
         CS = sm.CS
         vector3 = self.get_init_acuator()
 
-
         if self.local_path != None:
+            current_time = time.time()  # Assuming sm.timestamp gives the current time in seconds
+            current_yawRate = CS.yawRate  # Assuming CS.yawRate gives the current heading in degrees
 
             veh_pose = (CS.position.x, CS.position.y, CS.yawRate)
 
+            min_length = min(len(self.local_path), len(self.local_path_theta), len(self.local_path_radius), len(self.local_path_k))
+
+            # Trim the arrays to have the same length
+            self.local_path = self.local_path[:min_length]
+            self.local_path_theta = self.local_path_theta[:min_length]
+            self.local_path_radius = self.local_path_radius[:min_length]
+            self.local_path_k = self.local_path_k[:min_length]
+
             trajref = np.column_stack((self.local_path, self.local_path_theta, self.local_path_radius, self.local_path_k))
 
-            ref_pose = self.calc_proj_pose(veh_pose, trajref[0], trajref[1])
-            
+            ref_pose = self.calc_proj_pose(veh_pose, trajref[int(self.l_idx)], trajref[int(self.l_idx)+1])
             delta_x = veh_pose - ref_pose
+            
+            if self.previous_yawRate is not None and self.previous_time is not None:
+                delta_time = current_time - self.previous_time
+                self.angular_v = self.calculate_angular_velocity(current_yawRate, self.previous_yawRate, delta_time)
 
             veh_params = {
             'velocity': CS.vEgo,  # Current velocity, m/s
             'v_des': CS.vEgo,  # Desired velocity, m/s
-            'angular_v': CS.yawRate/10,  # Current angular velocity, rad/s
+            'angular_v': self.angular_v,  # Current angular velocity, rad/s
             'wheel_base': 3.0,  # Wheelbase, m
-            'max_steer_angle': 35 / 180 * np.pi,  # Maximum steer angle, rad
-            'max_angular_vel': 12 / 180 * np.pi,  # Maximum angular velocity, rad/s
-            'max_acceleration': 5,  # Maximum acceleration
-            'max_deceleration': 5,  # Maximum deceleration
+            'max_steer_angle': 33 / 180 * np.pi,  # Maximum steer angle, rad
+            'max_angular_vel': 6 / 180 * np.pi,  # Maximum angular velocity, rad/s
+            'max_acceleration': 3,  # Maximum acceleration
+            'max_deceleration': 3,  # Maximum deceleration
             'vehicle_size': 20,
             'vehicle_length': 6 * 0.1 * 0.8  # velocity * time_step * 0.8, assuming time_step = 0.1 for now
             }
@@ -468,31 +515,35 @@ class MPCController:
             mpc_params = self.load_mpc_params(veh_params)
 
             steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, int(self.l_idx), veh_params)
-            
-            steer_cmd = steer_feedforward + steer_command
-
-            # steer_cmd = self.limit_steer_by_angular_vel(steer_cmd, steer_state, veh_params['max_angular_vel'], 0.1)
-
+            # print("first output : ", steer_command)
+            steer_cmd = steer_feedforward + steer_command # steer cmd is degree unit
+            steer_cmd = self.limit_steer_by_angular_vel(steer_cmd, CS.actuators.steer/self.steer_ratio/180*np.pi, veh_params['max_angular_vel'], 0.1)
             steer = self.limit_steer_angle(steer_cmd, veh_params['max_steer_angle'])
-            print(steer)
+            print("wheel : ",steer)
+            steer = steer * self.steer_ratio
+            print("steering : " ,steer)
+            print("==================================")
 
-            wheel_angle, lah_pt = self.purepursuit.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # wheel_angle, lah_pt = self.purepursuit.run(
+            #     CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             
-            wheel_angle = self.stanley.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # wheel_angle = self.stanley.run(
+            #     CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             
-            steer = wheel_angle*self.steer_ratio
+            # steer = wheel_angle*self.steer_ratio
             
-            lah_viz = LookAheadViz(lah_pt)
+            # lah_viz = LookAheadViz(lah_pt)
 
-            self.pub_lah.publish(lah_viz)
+            # self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             
             vector3.x = steer
             vector3.y = accel
             vector3.z = brake
+
+            self.previous_yawRate = current_yawRate
+            self.previous_time = current_time
 
         if CS.cruiseState != 1:
             vector3.x = CS.actuators.steer

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from visualization_msgs.msg import Marker
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float32MultiArray
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
@@ -48,16 +48,6 @@ class Controller:
         self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v, pitch):
-        # th_a = 4 # 0~20 * gain -> 0~100 accel
-        # th_b = 13 # 0~20 * gain -> 0~100 brake
-        # val_data = max(-th_b, min(th_a, pid))
-        # gain = 5
-        # if val_data > 0.:
-        #     accel_val = val_data*gain
-        #     brake_val = 0.0
-        # elif val_data <= 0.:
-        #     accel_val = 0.0
-        #     brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
         th_a = 4 # 0~20 * gain -> 0~100 accel
         th_b = 13 # 0~20 * gain -> 0~100 brake
         gain = 5
@@ -89,12 +79,13 @@ class Controller:
         if self.local_path != None:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            
             steer = wheel_angle*self.steer_ratio
-            # print("origin steer:",steer)
             steer = self.limit_steer_change(steer)
-            # print("limit steer:",steer)
+
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
+
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             

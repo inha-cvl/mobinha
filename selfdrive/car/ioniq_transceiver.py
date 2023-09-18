@@ -9,8 +9,6 @@ import rospy
 from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
 
-import threading
-
 class IoniqTransceiver():
     def __init__(self, CP):
         self.control_state = {
@@ -33,11 +31,10 @@ class IoniqTransceiver():
         self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
         self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
-        self.gateway = Int8MultiArray()
+
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
         self.gateway.data = [0, 0, 0, 0, 0, 0]
-
-        # self.lock = threading.Lock()
+        self.gateway = Int8MultiArray()
         self.rcv_velocity = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0, 1: 0}
         self.Accel_Override = 0
@@ -47,6 +44,9 @@ class IoniqTransceiver():
         self.Alive_Count_ERR = 0
         self.recv_err_cnt = 0
         self.err_time = None  # 예외 발생 시간 초기화
+        self.last_mode_2_time = 0
+        self.force_mode_2 = False
+
         self.prev_control_state = self.control_state.copy()
 
         rospy.on_shutdown(self.cleanup)
@@ -59,22 +59,32 @@ class IoniqTransceiver():
 
     def can_cmd(self, canCmd):
         state = self.control_state
-        if canCmd.disable:  # Full disable
-            self.reset_trigger()
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-        elif canCmd.enable:  # Full
-            state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
-        elif canCmd.latActive:  # Only Lateral
-            state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
-        elif canCmd.longActive:  # Only Longitudinal
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
-        self.mode = 0
-        if canCmd.enable:
-            self.mode = 1
-        if self.Accel_Override or self.Break_Override or self.Steering_Overide or self.Alive_Count_ERR:
-            self.mode = 2 # override mode
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-            self.reset_trigger()
+        current_time = rospy.get_time()
+        
+        if self.force_mode_2 and current_time - self.last_mode_2_time < 1.0:
+            # mode를 강제로 2로 1초 동안 유지
+            self.mode = 2
+        else:
+            self.force_mode_2 = False  # 강제 유지를 종료
+            if canCmd.disable:  # Full disable
+                self.reset_trigger()
+                state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+                if not self.force_mode_2:  # 강제 유지가 아닐 경우에만 mode를 0으로 설정
+                    self.mode = 0
+            elif canCmd.enable:  # Full
+                state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
+                self.mode = 1
+            elif canCmd.latActive:  # Only Lateral
+                state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
+            elif canCmd.longActive:  # Only Longitudinal
+                state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
+            
+            if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+                self.mode = 2  # override mode
+                self.last_mode_2_time = current_time  # 현재 시간을 저장
+                self.force_mode_2 = True  # mode를 강제로 2로 유지
+                state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+                self.reset_trigger()
         
         self.control_state = state 
         self.pub_mode.publish(Int8(self.mode))
@@ -143,10 +153,6 @@ class IoniqTransceiver():
                 self.gateway.data[2] = res['Accel_Override']
                 self.gateway.data[3] = res['Break_Override']
                 self.gateway.data[4] = res['Steering_Overide']
-                # if self.Accel_Override or self.Break_Override or self.Steering_Overide:
-                #     self.target_actuators['steer'] = self.ego_actuators['steer']
-                #     self.target_actuators['accel'] = self.ego_actuators['accel']
-                #     self.target_actuators['brake'] = self.ego_actuators['brake']
             if self.err_time is not None:
                 recovery_time = datetime.datetime.now() - self.err_time
                 print(f"Recovered in {recovery_time.total_seconds()} seconds")
@@ -158,6 +164,8 @@ class IoniqTransceiver():
                 print("recv err cnt: ", self.recv_err_cnt)
                 if self.err_time is None:
                     self.err_time = datetime.datetime.now()
+            else:
+                print(e)
 
     def alive_counter(self, alv_cnt):
         return (alv_cnt + 1) % 256
@@ -190,36 +198,10 @@ class IoniqTransceiver():
 
     def run(self, CM):
         if self.timer(0.02):
-            # if self.prev_control_state != self.control_state:
-            #     self.init_target_actuator()
-            #     self.prev_control_state = self.control_state.copy()
             self.can_cmd(CM.CC.canCmd)
             self.set_actuators(CM.CC.actuators)
             self.ioniq_control()
             self.pub_gateway.publish(self.gateway)
             self.pub_gateway_time.publish(Float64(time.time()))
-        self.receiver()
-
-    def run_thread(self, CM):
-        # 병렬로 실행될 수 있도록 메서드를 수정하거나 추가
-        control_thread = threading.Thread(target=self.control_task, args=(CM,))
-        receiver_thread = threading.Thread(target=self.receiver_task)
-        
-        control_thread.start()
-        receiver_thread.start()
-        
-        control_thread.join()
-        receiver_thread.join()
-
-    def control_task(self, CM):
-        # with self.lock: # Aquire lock
-        self.can_cmd(CM.CC.canCmd)
-        self.set_actuators(CM.CC.actuators)
-        self.ioniq_control()
-        self.pub_gateway.publish(self.gateway)
-        self.pub_gateway_time.publish(Float64(time.time()))
-
-    def receiver_task(self):
-        # with self.lock: # Acquire lock
         self.receiver()
         

@@ -30,7 +30,7 @@ def ObjectsViz(objects):
             color = (1.0, 0.0, 0.0, 1.0)
             s = str(pt[2] / 2) if pt[2] else 0
             d = str(round(pt[3], 1)) if pt[3] else 0
-            v = str(round(max(pt[5], 0))) if pt[5] else 0
+            v = str(round(max(pt[5], 0))) if pt[5] and not math.isnan(pt[5]) else 0
             # message = "s:{}m d:{}m v:{}km/h".format(s, d, v)
             message = "v:{}km/h".format(v)
             text = Text('obstacle_information', text_count, 1.0, (1, 1, 1, 1), message)

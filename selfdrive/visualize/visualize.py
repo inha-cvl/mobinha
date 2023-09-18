@@ -478,6 +478,7 @@ class MainWindow(QMainWindow, form_class):
             self.scenario1_button.setDisabled(True)
             self.scenario2_button.setDisabled(True)
             self.scenario3_button.setDisabled(True)
+            self.media_thread.planning_state = 1
 
         elif msg.data[0] == 2 and msg.data[1] == 2:
             self.status_label.setText("Arrived")
@@ -485,27 +486,23 @@ class MainWindow(QMainWindow, form_class):
             self.pause_button.setDisabled(True)
             self.start_button.setEnabled(True)
             self.initialize_button.setEnabled(True)
+            self.media_thread.planning_state = 2
 
         elif msg.data[0] == 3:
             self.status_label.setText("Insert Goal")
             self.scenario1_button.setEnabled(True)
             self.scenario2_button.setEnabled(True)
             self.scenario3_button.setEnabled(True)
+            self.media_thread.planning_state = 3
 
         elif msg.data[0] == 4:
             # self.state = 'TOR'
             self.status_label.setText("Take Over Request")
             self.cmd_button_clicked(0)
-            # self.start_button.setDisabled(True)
-            # self.initialize_button.setEnabled(True)
-            # self.pause_button.setDisabled(True)
             self.start_button.setDisabled(True)
             self.initialize_button.setDisabled(True)
             self.pause_button.setEnabled(True)
-            self.player = QMediaPlayer()
-            self.player.setMedia(QMediaContent(QUrl.fromLocalFile("alert_sound.mp3")))
-            self.player.play()
-            QMessageBox.warning(self, 'Warning', 'Take over request!')
+            self.media_thread.planning_state = 4
 
     def start_button_clicked(self):
         self.state = 'START'
@@ -650,6 +647,7 @@ class MediaThread(QThread):
         self.status = True
         self.mode = 0
         self.get_mode = 0
+        self.planning_state = 0
     
     def run(self):
         player = QMediaPlayer()
@@ -670,6 +668,9 @@ class MediaThread(QThread):
                 else:
                     url = dir_path+"/sounds/off.wav"
                     self.mode = self.get_mode
+            if self.planning_state == 4:
+                url = dir_path+"/sounds/planning-tor.wav"
+
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
                 player.play()

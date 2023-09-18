@@ -109,7 +109,7 @@ class IoniqTransceiver():
             self.init_target_actuator()
 
     def receiver(self):
-        data = self.bus.recv(0.05)
+        data = self.bus.recv(0.2)
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)

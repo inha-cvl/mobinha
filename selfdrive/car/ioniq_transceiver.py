@@ -33,8 +33,8 @@ class IoniqTransceiver():
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
-        self.gateway.data = [0, 0, 0, 0, 0, 0]
         self.gateway = Int8MultiArray()
+        self.gateway.data = [0, 0, 0, 0, 0, 0]
         self.rcv_velocity = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0, 1: 0}
         self.Accel_Override = 0

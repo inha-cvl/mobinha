@@ -18,6 +18,7 @@ class MoraiTransceiver:
         self.roll = 0.0
         self.pitch = 0.0
         self.yaw = 0.0
+        self.velocity = 0.0
 
         self.pub_novatel = rospy.Publisher('/novatel/oem7/inspva', INSPVA, queue_size=1)
         self.pub_velocity = rospy.Publisher('/mobinha/car/velocity', Float32, queue_size=1)

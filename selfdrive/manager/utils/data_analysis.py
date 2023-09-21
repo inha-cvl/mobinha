@@ -11,7 +11,7 @@ from tqdm import tqdm
 import pandas as pd
 import multiprocessing
 
-rosbag_file_name = '2023-09-15-23-26-30-pp'
+rosbag_file_name = '2023-09-16-00-10-20-pp'
 
 # Initialize
 path_data = []
@@ -36,6 +36,16 @@ def calculate_cte(pointA, pointB, pointP):
     numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
     denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
     return numerator / denominator if denominator != 0 else 0
+    # cte = numerator / denominator if denominator != 0 else 0
+    # # Calculate cross product to find the sign
+    # cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+    
+    # if cross_product > 0:
+    #     return cte  # Point P is on the right side of line AB
+    # elif cross_product < 0:
+    #     return -cte  # Point P is on the left side of line AB
+    # else:
+    #     return 0  # Point P is on the line AB
 
 def find_overlap_index(accumulated, new_segment):
     # 찾은 겹치는 인덱스를 저장할 변수
@@ -70,12 +80,13 @@ with rosbag.Bag(rosbag_file_name+'.bag', 'r') as bag:
         
         # Update veh_pose data
         if topic == '/enu_pose':
-            enu_pose_data.append([msg.x, msg.y, np.deg2rad(msg.theta), current_car_mode])  # Convert theta to radian if it's in degree
+            if current_car_mode == 1:
+                enu_pose_data.append([msg.x, msg.y, np.deg2rad(msg.theta), current_car_mode])  # Convert theta to radian if it's in degree
 
-            enu_data['timestamp'].append(timestamp)
-            enu_data['x'].append(msg.x)
-            enu_data['y'].append(msg.y)
-            enu_data['heading'].append(np.deg2rad(msg.theta))
+                enu_data['timestamp'].append(timestamp)
+                enu_data['x'].append(msg.x)
+                enu_data['y'].append(msg.y)
+                enu_data['heading'].append(np.deg2rad(msg.theta))
 
         # Update novatel/oem7/odom data for accelerations
         if topic == '/novatel/oem7/odom':
@@ -148,6 +159,8 @@ percentile_95 = df[['long_acceleration', 'lat_acceleration', 'long_jerk', 'lat_j
 df['long_jerk_rolling_mean'] = df['long_jerk'].rolling(window=int(1/0.05)).mean()  # 1 second at 20Hz is 20 samples
 df['lat_jerk_rolling_mean'] = df['lat_jerk'].rolling(window=int(0.5/0.05)).mean()  # 0.5 seconds at 20Hz is 10 samples
 
+df['timestamp'] = pd.to_datetime(df['timestamp'])
+
 # Find the intervals where the rolling mean exceeds the limit
 long_jerk_exceed_intervals = df[df['long_jerk_rolling_mean'] > 2.5]
 lat_jerk_exceed_intervals = df[df['lat_jerk_rolling_mean'] > 2.5]
@@ -212,54 +225,54 @@ statistics_df_corrected = pd.DataFrame(statistics_corrected)
 fig, axes = plt.subplots(3, 2, figsize=(14, 15))
 
 # Plot longitudinal velocity
-axes[0, 0].plot(df['timestamp'], df['long_velocity'], label='Longitudinal Velocity', color='b')
+axes[0, 0].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['long_velocity'], label='Longitudinal Velocity', color='b')
 axes[0, 0].set_title('Longitudinal Velocity')
 axes[0, 0].set_xlabel('Time')
 axes[0, 0].set_ylabel('Velocity (m/s)')
-axes[0, 0].grid(True)
+axes[0, 0].grid(True, axis='y')
 
 # Plot lateral velocity
-axes[0, 1].plot(df['timestamp'], df['lat_velocity'], label='Lateral Velocity', color='g')
+axes[0, 1].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['lat_velocity'], label='Lateral Velocity', color='g')
 axes[0, 1].set_title('Lateral Velocity')
 axes[0, 1].set_xlabel('Time')
 axes[0, 1].set_ylabel('Velocity (m/s)')
-axes[0, 1].grid(True)
+axes[0, 1].grid(True, axis='y')
 
 # Plot longitudinal acceleration
-axes[1, 0].plot(df['timestamp'], df['long_acceleration'], label='Longitudinal Acceleration', color='r')
+axes[1, 0].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['long_acceleration'], label='Longitudinal Acceleration', color='r')
 axes[1, 0].set_title('Longitudinal Acceleration')
 axes[1, 0].set_xlabel('Time')
 axes[1, 0].set_ylabel('Acceleration (m/s^2)')
-axes[1, 0].grid(True)
+axes[1, 0].grid(True, axis='y')
 
 # Plot lateral acceleration
-axes[1, 1].plot(df['timestamp'], df['lat_acceleration'], label='Lateral Acceleration', color='m')
+axes[1, 1].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['lat_acceleration'], label='Lateral Acceleration', color='m')
 axes[1, 1].set_title('Lateral Acceleration')
 axes[1, 1].set_xlabel('Time')
 axes[1, 1].set_ylabel('Acceleration (m/s^2)')
-axes[1, 1].grid(True)
+axes[1, 1].grid(True, axis='y')
 
 # Plot longitudinal jerk
-axes[2, 0].plot(df['timestamp'], df['long_jerk'], label='Longitudinal Jerk', color='c')
+axes[2, 0].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['long_jerk'], label='Longitudinal Jerk', color='c')
 
-axes[2, 0].plot(df['timestamp'], df['long_jerk_rolling_mean'], label='1s Rolling Mean', linestyle='--')
-axes[2, 0].fill_between(df['timestamp'], 5, df['long_jerk_rolling_mean'].where(df['long_jerk_rolling_mean']>5), color='red', alpha=0.3)
+axes[2, 0].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['long_jerk_rolling_mean'], label='1s Rolling Mean', linestyle='--')
+axes[2, 0].fill_between(df['timestamp'].dt.strftime('%H:%M:%S'), 5, df['long_jerk_rolling_mean'].where(df['long_jerk_rolling_mean']>5), color='red', alpha=0.3)
 
 axes[2, 0].set_title('Longitudinal Jerk')
 axes[2, 0].set_xlabel('Time')
 axes[2, 0].set_ylabel('Jerk (m/s^3)')
-axes[2, 0].grid(True)
+axes[2, 0].grid(True, axis='y')
 
 # Plot lateral jerk
-axes[2, 1].plot(df['timestamp'], df['lat_jerk'], label='Lateral Jerk', color='y')
+axes[2, 1].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['lat_jerk'], label='Lateral Jerk', color='y')
 
-axes[2, 1].plot(df['timestamp'], df['lat_jerk_rolling_mean'], label='0.5s Rolling Mean', linestyle='--')
-axes[2, 1].fill_between(df['timestamp'], 5, df['lat_jerk_rolling_mean'].where(df['lat_jerk_rolling_mean']>5), color='red', alpha=0.3)
+axes[2, 1].plot(df['timestamp'].dt.strftime('%H:%M:%S'), df['lat_jerk_rolling_mean'], label='0.5s Rolling Mean', linestyle='--')
+axes[2, 1].fill_between(df['timestamp'].dt.strftime('%H:%M:%S'), 5, df['lat_jerk_rolling_mean'].where(df['lat_jerk_rolling_mean']>5), color='red', alpha=0.3)
 
 axes[2, 1].set_title('Lateral Jerk')
 axes[2, 1].set_xlabel('Time')
 axes[2, 1].set_ylabel('Jerk (m/s^3)')
-axes[2, 1].grid(True)
+axes[2, 1].grid(True, axis='y')
 
 plt.tight_layout()
 
@@ -282,11 +295,18 @@ for enu_x, enu_y, enu_heading, _ in tqdm(enu_pose_data, desc="Calculating CTE an
     # CTE 계산
     cte = calculate_cte(closest_point[:2], next_point[:2], (enu_x, enu_y))
     cte_values.append(cte)
-    
+
     # 헤딩 오차 계산
     heading_error = abs(closest_point[2] - enu_heading)
     heading_errors.append(heading_error)
 
+# Plot the histogram of CTE values
+plt.figure(figsize=(10, 10))
+plt.hist(cte_values, bins=50, color='blue', edgecolor='black')
+plt.xlabel('Cross Track Error (meters)')
+plt.ylabel('Frequency (Counts)')
+plt.title('Histogram of Cross Track Errors')
+plt.grid(True)
 
 # Calculate statistics for CTE
 cte_values = np.array(cte_values)

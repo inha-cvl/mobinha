@@ -93,7 +93,7 @@ class SIMULATOR:
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 15  # min_v
-        car_param_dict["maxEnableSpeed"] = 30  # ref_v
+        car_param_dict["maxEnableSpeed"] = 35  # ref_v
 
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L
@@ -150,11 +150,11 @@ class MORAI: # HYUNDAI NEXO
             car_param_map_param.values())
 
         car_param_dict["minEnableSpeed"] = 15  # min_v
-        car_param_dict["maxEnableSpeed"] = 50  # ref_v
+        car_param_dict["maxEnableSpeed"] = 35  # ref_v
         car_param_dict["mass"] = 1840 + 140 # unladen weight + 1 driver and 1 passenger 
-        car_param_dict["wheelbase"] = 2.79  # L, vehicle length 
+        car_param_dict["wheelbase"] = 2.8  # L, vehicle length 
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
-        car_param_dict["steerRatio"] = 1
+        car_param_dict["steerRatio"] = 13.5
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )

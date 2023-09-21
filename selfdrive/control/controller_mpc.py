@@ -17,6 +17,7 @@ import numpy as np
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
+HZ = 1/20
 
 class MPCController:
 
@@ -239,7 +240,7 @@ class MPCController:
             'B': matrix_b,
             'C': matrix_c,
             'I': I,
-            'ts': 0.05,  # MPC time period
+            'ts': HZ,  # MPC time period
             'lr': lr,
             'lf': lf,
             'cf': cf,
@@ -317,19 +318,19 @@ class MPCController:
             angle_norm = angle_origin
         return angle_norm
     
-    def solve_mpc_problem(self, A, B, C, matrix_q, matrix_r, lower, upper, ref_state, horizon, control, matrix_state, control_state):
+    def solve_mpc_problem(self, A, B, C, matrix_q, matrix_r, lower, upper, ref_state, Np, Nc, matrix_state, control_state):
         # Initialize matrices
         q = A.shape[0]
-        matrix_aa = np.zeros((q, horizon * A.shape[1]))
+        matrix_aa = np.zeros((q, Np * A.shape[1]))
         
-        for i in range(horizon):
+        for i in range(Np):
             matrix_aa[:, i*q:(i+1)*q] = np.linalg.matrix_power(A, i + 1) # 6 * 60
         
         # matrix k: 60 * 20
-        K_cell = [[None for _ in range(horizon)] for _ in range(horizon)]
+        K_cell = [[None for _ in range(Np)] for _ in range(Np)]
 
-        for r in range(horizon):
-            for c in range(horizon):
+        for r in range(Np):
+            for c in range(Np):
                 if c <= r:
                     K_cell[r][c] = np.linalg.matrix_power(A, r - c) @ B
                 else:
@@ -339,28 +340,32 @@ class MPCController:
         matrix_k = np.block(K_cell)
         
         c_r = C.shape[0]
-        matrix_cc = np.zeros((horizon * c_r, C.shape[1]))
-        matrix_cc[0:c_r, 0:1] = C
+        matrix_cc = np.zeros((Np * c_r, C.shape[1]))
+        matrix_cc[0:c_r, 0:1] = C # 0 -> 0:1
         
-        for j in range(1, horizon):
-            matrix_cc[j*c_r:(j+1)*c_r, 0:1] = np.linalg.matrix_power(A, j) @ C + matrix_cc[(j-1)*c_r:j*c_r, 0:1]
+        for j in range(1, Np):
+            matrix_cc[j*c_r:(j+1)*c_r, 0:1] = np.linalg.matrix_power(A, j) @ C + matrix_cc[(j-1)*c_r:j*c_r, 0:1] # 0 -> 0:1
         
-        matrix_Q = np.kron(np.eye(horizon), matrix_q)
-        matrix_R = np.kron(np.eye(horizon), matrix_r)
+        matrix_Q = np.kron(np.eye(Np), matrix_q)
+        matrix_R = np.kron(np.eye(Np), matrix_r)
         
-        matrix_ll = np.tile(lower, (horizon, 1))
-        matrix_uu = np.tile(upper, (horizon, 1))
+        matrix_ll = np.tile(lower, (Np, 1))
+        matrix_ll = matrix_ll.reshape(-1, 1)
+        matrix_uu = np.tile(upper, (Np, 1))
+        matrix_uu = matrix_uu.reshape(-1, 1)
+        matrix_ll = matrix_ll.reshape(-1)
+        matrix_uu = matrix_uu.reshape(-1)
         
-        matrix_M = np.zeros((horizon * q, 1))
+        matrix_M = np.zeros((Np * q, 1))
         
-        for i in range(horizon):
+        for i in range(Np):
             matrix_M[i*q:(i+1)*q, :] = np.linalg.matrix_power(A, i+1) @ matrix_state
         
-        matrix_t = np.zeros((B.shape[0] * horizon, 1))
-        matrix_v = np.tile(control_state, (horizon, 1))
-        print(matrix_k.shape)
-        print(matrix_Q.shape)
-        print(matrix_R.shape)
+        matrix_t = np.zeros((B.shape[0] * Np, 1))
+        matrix_v = np.tile(control_state, (Np, 1))
+        # print(matrix_k.shape)
+        # print(matrix_Q.shape)
+        # print(matrix_R.shape)
         matrix_m1 = matrix_k.T @ matrix_Q @ matrix_k + matrix_R
         matrix_m1 = (matrix_m1 + matrix_m1.T) / 2
         matrix_m2 = matrix_k.T @ matrix_Q @ (matrix_M + matrix_cc + matrix_t)
@@ -370,12 +375,12 @@ class MPCController:
         # min_x  : q(x) = 0.5 * x^T * Q * x  + x^T c
         # with respect to:  A * x = b (equality constraint)
         # C * x >= d (inequality constraint)
-        l_row, l_col = matrix_ll.shape  # or len(matrix_ll), len(matrix_ll[0])
-        matrix_inequality_constrain_ll = np.eye(horizon * control)
+        # l_row, l_col = matrix_ll.shape  # or len(matrix_ll), len(matrix_ll[0])
+        matrix_inequality_constrain_ll = np.eye(Np * Nc)
         # print("matrix_inequality_constrain_ll shape: ", matrix_inequality_constrain_ll.shape)
         # print("matrix_inequality_constrain_ll: ", matrix_inequality_constrain_ll)
-        u_row = len(matrix_uu)  # or matrix_uu.shape[0]
-        matrix_inequality_constrain_uu = np.eye(horizon * control, 1)
+        # u_row = len(matrix_uu)  # or matrix_uu.shape[0]
+        matrix_inequality_constrain_uu = np.eye(Np * Nc, 1)
         # print("matrix_inequality_constrain_uu shape: ", matrix_inequality_constrain_uu.shape)
         # print("matrix_inequality_constrain_uu: ", matrix_inequality_constrain_uu)
 
@@ -399,12 +404,32 @@ class MPCController:
         # print("u shape: ", u.shape)
         # print("u: ", u)
 
-        m = osqp.OSQP()
-        m.setup(P=P_sparse, q=q, A=A_sparse, l=l, u=u, verbose=False)
-        results = m.solve()
+        # Variables
+        x = cp.Variable(Np * Nc)
 
-        matrix_v = results.x
-        return matrix_v[0], matrix_v[1]# command를 반환하면 됩니다.
+        # Objective function
+        objective = cp.Minimize(0.5 * cp.quad_form(x, matrix_m1) + matrix_m2.T @ x)
+
+        # Constraints
+        constraints = [
+            matrix_ll <= x,
+            x <= matrix_uu
+        ]
+
+        # Solve the QP problem using cvxpy
+        problem = cp.Problem(objective, constraints)
+        problem.solve()
+
+        # Extract control variables
+        matrix_v = x.value
+        return matrix_v[0], matrix_v[1]
+
+        # m = osqp.OSQP()
+        # m.setup(P=P_sparse, q=q, A=A_sparse, l=l, u=u, verbose=False)
+        # results = m.solve()
+
+        # matrix_v = results.x
+        # return matrix_v[0], matrix_v[1]# command를 반환하면 됩니다.
         
 
     # Define the calc_mpc function based on the given MATLAB code
@@ -449,23 +474,23 @@ class MPCController:
         # Calculate the state
         # lateral error
         matrix_state[0, 0] = dy * np.cos(theta_des) - dx * np.sin(theta_des)
-        print("lateral error: ", matrix_state[0, 0])
+        # print("lateral error: ", matrix_state[0, 0])
         # lateral error rate
         matrix_state[1, 0] = v * np.sin(dtheta)
-        print("lateral error rate: ", matrix_state[1, 0])
+        # print("lateral error rate: ", matrix_state[1, 0])
         # heading error        
         matrix_state[2, 0] = self.angle_normalization(dtheta)
-        print("heading error: ", matrix_state[2, 0])
+        # print("heading error: ", matrix_state[2, 0])
         # heading error rate
         heading_error_rate = angular_v - angular_v_des
         matrix_state[3, 0] = heading_error_rate
-        print("heading error rate: ", matrix_state[3, 0])
+        # print("heading error rate: ", matrix_state[3, 0])
         # station error
         matrix_state[4, 0] = -(dx * np.cos(theta_des) + dy * np.sin(theta_des))
-        print("station error: ", matrix_state[4, 0])
+        # print("station error: ", matrix_state[4, 0])
         # speed error
         matrix_state[5, 0] = v_des - v * np.cos(dtheta) / one_min_k
-        print("speed error: ", matrix_state[5, 0])
+        # print("speed error: ", matrix_state[5, 0])
         
         # Update Matrix
         mpc_params = self.update_state_matrix(v, mpc_params)
@@ -486,30 +511,30 @@ class MPCController:
         steer_feedforward = np.arctan(veh_params['wheel_base'] * k + kv * v * v * k)
         steer_feedforward = self.angle_normalization(steer_feedforward)
         
-        horizon = 10
-        control_horizon = 2
+        Np = 10
+        Nc = 2
         
-        lower_bound = np.zeros((control_horizon, 1))
+        lower_bound = np.zeros((Nc, 1))
         lower_bound[0, 0] = -veh_params['max_steer_angle']
         lower_bound[1, 0] = -veh_params['max_deceleration']
 
-        upper_bound = np.zeros((control_horizon, 1))
+        upper_bound = np.zeros((Nc, 1))
         upper_bound[0, 0] = veh_params['max_steer_angle']
         upper_bound[1, 0] = veh_params['max_acceleration']
 
         matrix_q = np.zeros((basic_state_size, basic_state_size))
-        matrix_q[0, 0] = 1
+        matrix_q[0, 0] = 0.13
         matrix_q[2, 2] = 1
 
-        matrix_r = np.eye(control_horizon, control_horizon)
+        matrix_r = 6 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 
         steer_cmd, acc = self.solve_mpc_problem(matrix_ad, matrix_bd, matrix_cd,
                                 matrix_q, matrix_r, lower_bound, upper_bound,
-                                ref_state, horizon, control_horizon,
+                                ref_state, Np, Nc,
                                 matrix_state, control_state)
-        gain = -1.0
+        gain = 0
         print("output : ", steer_cmd+gain, acc)
         
         return steer_cmd+gain, acc, steer_feedforward
@@ -556,7 +581,8 @@ class MPCController:
             veh_pose = (CS.position.x, CS.position.y, CS.yawRate*np.pi/180)
 
             min_length = min(len(self.local_path), len(self.local_path_theta), len(self.local_path_radius), len(self.local_path_k))
-
+            idx = int(self.l_idx)
+            print("idx : ",idx)
             # Trim the arrays to have the same length
             self.local_path = self.local_path[:min_length]
             self.local_path_theta = self.local_path_theta[:min_length]
@@ -564,10 +590,13 @@ class MPCController:
             self.local_path_k = self.local_path_k[:min_length]
 
             trajref = np.column_stack((self.local_path, self.local_path_theta, self.local_path_radius, self.local_path_k))
+            # trajref = trajref[::4]
             # print("trajref : ",trajref[int(self.l_idx):int(self.l_idx)+10])
-            ref_pose = trajref[int(self.l_idx)][0:3]
+            ref_pose = trajref[idx][0:3]
             
             delta_x = veh_pose - ref_pose
+            print("veh_pose : ",veh_pose)
+            print("ref_pose : ",ref_pose)
             delta_x[2] = self.angle_normalization(delta_x[2])
             print("delta_x : ",delta_x)
             
@@ -575,15 +604,15 @@ class MPCController:
                 delta_time = current_time - self.previous_time
                 self.angular_v = self.calculate_angular_velocity(current_yawRate, self.previous_yawRate, delta_time) # rad/s
 
-            print("angular_v : ", self.angular_v)
+            # print("angular_v : ", self.angular_v)
 
             veh_params = {
             'velocity': CS.vEgo,  # Current velocity, m/s
             'v_des': self.target_v,  # Desired velocity, m/s
             'angular_v': self.angular_v,  # Current angular velocity, rad/s
             'wheel_base': 3.0,  # Wheelbase, m
-            'max_steer_angle': 60 / 180 * np.pi,  # Maximum steer angle, rad
-            'max_angular_vel': 60 / 180 * np.pi,  # Maximum angular velocity, rad/s
+            'max_steer_angle': 30 / 180 * np.pi,  # Maximum steer angle, rad
+            'max_angular_vel': 5 / 180 * np.pi,  # Maximum angular velocity, rad/s
             'max_acceleration': 3,  # Maximum acceleration
             'max_deceleration': 10,  # Maximum deceleration
             'vehicle_size': 20,
@@ -591,12 +620,15 @@ class MPCController:
             }
 
             mpc_params = self.load_mpc_params(veh_params)
-
-            steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, int(self.l_idx), veh_params)
-            steer_cmd = steer_feedforward + steer_command # steer cmd is degree unit
-            print("steer_cmd : ",steer_cmd)
-            steer_cmd = self.limit_steer_by_angular_vel(steer_cmd, CS.actuators.steer/self.steer_ratio/180*np.pi, veh_params['max_angular_vel'], 0.05)
-            print("limit_steer_cmd_by_angular_vel : ",steer_cmd)
+            start_time = time.time()  # Start time
+            steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, idx, veh_params)
+            end_time = time.time()  # End time
+            mpc_execution_time = end_time - start_time
+            print("MPC execution time: ", mpc_execution_time)
+            steer_cmd = steer_command# + steer_feedforward # steer cmd is degree unit
+            # print("steer_cmd : ",steer_cmd)
+            # steer_cmd = self.limit_steer_by_angular_vel(steer_cmd, CS.actuators.steer/self.steer_ratio/180*np.pi, veh_params['max_angular_vel'], HZ)
+            # print("limit_steer_cmd_by_angular_vel : ",steer_cmd)
             steer = self.limit_steer_angle(steer_cmd, veh_params['max_steer_angle'])
             print("limit steer : " ,steer)
             steer = steer * 180 / np.pi # degree unit
@@ -604,18 +636,6 @@ class MPCController:
             steer = steer * self.steer_ratio # steering
             # print("steer wheel deg: ",steer)
             print("==================================")
-
-            # wheel_angle, lah_pt = self.purepursuit.run(
-            #     CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
-            
-            # wheel_angle = self.stanley.run(
-            #     CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
-            
-            # steer = wheel_angle*self.steer_ratio
-            
-            # lah_viz = LookAheadViz(lah_pt)
-
-            # self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             

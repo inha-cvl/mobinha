@@ -526,7 +526,7 @@ class MPCController:
         matrix_q[0, 0] = 0.13
         matrix_q[2, 2] = 1
 
-        matrix_r = 6 * np.eye(Nc, Nc)
+        matrix_r = 7 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 

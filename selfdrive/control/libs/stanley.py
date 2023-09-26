@@ -42,7 +42,7 @@ class StanleyController:
         closest_point = path[closest_idx]
         
         # Choose a point ahead in the path as reference
-        look_ahead_idx = min(len(path) - 1, closest_idx + lfd)
+        look_ahead_idx = min(len(path) - 1, closest_idx + 10)
         ahead_point = path[look_ahead_idx]
 
         # Calculate cross track error

@@ -13,7 +13,6 @@ MPS_TO_KPH = 3.6
 
 
 class Controller:
-
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
         self.pid = PID(CP.longitudinalTuning)
@@ -89,7 +88,7 @@ class Controller:
             if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
                 brake_val = -val_data*gain
             elif pitch < -2.5:
-                brake_val = 45
+                brake_val = 42
             else:
                 brake_val = 32
         
@@ -112,14 +111,14 @@ class Controller:
             
             # print("PP wheel_angle:",wheel_angle)
 
-            wheel_angle = self.stanley.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # wheel_angle = self.stanley.run(
+                # CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
 
             # print("stanley wheel_angle:",wheel_angle)
 
             steer = wheel_angle*self.steer_ratio
             # print("origin steer:",steer)
-            steer = self.limit_steer_change(steer)
+            # steer = self.limit_steer_change(steer)
             # print("limit steer:",steer)
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)

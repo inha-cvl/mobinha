@@ -523,10 +523,10 @@ class MPCController:
         upper_bound[1, 0] = veh_params['max_acceleration']
 
         matrix_q = np.zeros((basic_state_size, basic_state_size))
-        matrix_q[0, 0] = 0.13
+        matrix_q[0, 0] = 0.15
         matrix_q[2, 2] = 1
 
-        matrix_r = 6 * np.eye(Nc, Nc)
+        matrix_r = 7 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 
@@ -582,7 +582,7 @@ class MPCController:
 
             min_length = min(len(self.local_path), len(self.local_path_theta), len(self.local_path_radius), len(self.local_path_k))
             idx = int(self.l_idx)
-            print("idx : ",idx)
+            # print("idx : ",idx)
             # Trim the arrays to have the same length
             self.local_path = self.local_path[:min_length]
             self.local_path_theta = self.local_path_theta[:min_length]
@@ -595,8 +595,8 @@ class MPCController:
             ref_pose = trajref[idx][0:3]
             
             delta_x = veh_pose - ref_pose
-            print("veh_pose : ",veh_pose)
-            print("ref_pose : ",ref_pose)
+            # print("veh_pose : ",veh_pose)
+            # print("ref_pose : ",ref_pose)
             delta_x[2] = self.angle_normalization(delta_x[2])
             print("delta_x : ",delta_x)
             
@@ -612,7 +612,7 @@ class MPCController:
             'angular_v': self.angular_v,  # Current angular velocity, rad/s
             'wheel_base': 3.0,  # Wheelbase, m
             'max_steer_angle': 30 / 180 * np.pi,  # Maximum steer angle, rad
-            'max_angular_vel': 5 / 180 * np.pi,  # Maximum angular velocity, rad/s
+            'max_angular_vel': 10 / 180 * np.pi,  # Maximum angular velocity, rad/s
             'max_acceleration': 3,  # Maximum acceleration
             'max_deceleration': 10,  # Maximum deceleration
             'vehicle_size': 20,
@@ -625,9 +625,9 @@ class MPCController:
             end_time = time.time()  # End time
             mpc_execution_time = end_time - start_time
             print("MPC execution time: ", mpc_execution_time)
-            steer_cmd = steer_command# + steer_feedforward # steer cmd is degree unit
+            steer_cmd = steer_command #+ steer_feedforward # steer cmd is degree unit
             # print("steer_cmd : ",steer_cmd)
-            # steer_cmd = self.limit_steer_by_angular_vel(steer_cmd, CS.actuators.steer/self.steer_ratio/180*np.pi, veh_params['max_angular_vel'], HZ)
+            steer_cmd = self.limit_steer_by_angular_vel(steer_cmd, CS.actuators.steer/self.steer_ratio/180*np.pi, veh_params['max_angular_vel'], HZ)
             # print("limit_steer_cmd_by_angular_vel : ",steer_cmd)
             steer = self.limit_steer_angle(steer_cmd, veh_params['max_steer_angle'])
             print("limit steer : " ,steer)

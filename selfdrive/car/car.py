@@ -21,7 +21,7 @@ class Transceiver:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
-        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
+        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0, 0: 0}
         rospy.Subscriber('/mobinha/visualize/system_state',
                          String, self.state_cb)
     

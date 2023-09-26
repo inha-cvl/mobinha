@@ -668,9 +668,12 @@ class MediaThread(QThread):
                 else:
                     url = dir_path+"/sounds/off.wav"
                     self.mode = self.get_mode
+                
+                media = QMediaContent(QUrl.fromLocalFile(url))
+                player.setMedia(media)
+                player.play()
             if self.planning_state == 4:
                 url = dir_path+"/sounds/planning-tor.wav"
-
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
                 player.play()

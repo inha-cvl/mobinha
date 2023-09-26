@@ -120,15 +120,16 @@ class ObstacleDetector:
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
-                
+                #x/2 is obj[5]/2, y/2 is obj[6]/2, z/2 is obj[7]/2
                 if self.lane_position == 1:
-                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -1.5 < obj_d < 4.15 and obj[4] > 1: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -1.5 < obj_d < 4.15 and obj[4] > 1:
+                        if 0.1 < obj[5]/2 < 2.8 and 0.5 < obj[6]/2 < 1.4 and 0.2 < obj[7]/2 < 1.2:
+                            viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
                 elif self.lane_position == 3:
-                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -4.15 < obj_d < 1.5 and obj[4] > 1: 
+                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -4.15 < obj_d < 1.5 and obj[4] > 1: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
                 else:
-                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 80*(1/self.CP.mapParam.precision) and -4.1 < obj_d < 4.1 and obj[4] > 1: 
+                    if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -4.1 < obj_d < 4.1 and obj[4] > 1: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
 
                 #Forward Collision Warning

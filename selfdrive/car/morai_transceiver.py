@@ -36,6 +36,8 @@ class MoraiTransceiver:
         self.imu_ok = True
         quaternion = (msg.orientation.x, msg.orientation.y,
                       msg.orientation.z, msg.orientation.w)
+        acceleration = (msg.linear_acceleration.x,
+                        msg.linear_acceleration.y, msg.linear_acceleration.z)
         self.roll, self.pitch, self.yaw = tf.transformations.euler_from_quaternion(
             quaternion)
 

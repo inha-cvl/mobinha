@@ -8,6 +8,8 @@ from selfdrive.control.libs.stanley import StanleyController
 from selfdrive.control.libs.pid import PID
 import rospy
 from selfdrive.planning.libs.map import LaneletMap, TileMap
+from selfdrive.message.messaging import *
+
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
@@ -27,6 +29,8 @@ class Controller:
         self.local_path_theta = None
         self.local_path_radius = None
         self.local_path_k = None
+
+        self.car = rospy.get_param('car_name', 'None')
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
@@ -67,16 +71,6 @@ class Controller:
         self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v, pitch):
-        # th_a = 4 # 0~20 * gain -> 0~100 accel
-        # th_b = 13 # 0~20 * gain -> 0~100 brake
-        # val_data = max(-th_b, min(th_a, pid))
-        # gain = 5
-        # if val_data > 0.:
-        #     accel_val = val_data*gain
-        #     brake_val = 0.0
-        # elif val_data <= 0.:
-        #     accel_val = 0.0
-        #     brake_val = (-val_data/th_b)**1.1*th_b*gain if (self.target_v > 0 and cur_v >= 3*KPH_TO_MPS) else 35
         th_a = 4 # 0~20 * gain -> 0~100 accel
         th_b = 13 # 0~20 * gain -> 0~100 brake
         gain = 5
@@ -95,12 +89,24 @@ class Controller:
         
         return accel_val, brake_val
     
+    def morai_accel_brake(self, pid, cur_v, pitch):
+        if pid > 0.:
+            accel_val = pid
+            brake_val = 0.0
+        elif pid <= 0.:
+            accel_val = 0.0
+            # if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
+            brake_val = max(-pid - 5, 0)
+            # else:
+                # brake_val = 5
+        return accel_val, brake_val
+    
     def get_init_acuator(self):
         vector3 = Vector3()
         vector3.x = 0 #steer
         vector3.y = 0 #accel
         vector3.z = 32 #brakx
-        return vector3 
+        return vector3
     
     def run(self, sm):
         CS = sm.CS
@@ -112,8 +118,8 @@ class Controller:
             
             # print("PP wheel_angle:",wheel_angle)
 
-            wheel_angle = self.stanley.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            # wheel_angle = self.stanley.run(
+            #     CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
 
             # print("stanley wheel_angle:",wheel_angle)
 
@@ -125,6 +131,9 @@ class Controller:
             self.pub_lah.publish(lah_viz)
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
+            if self.car =="MORAI":
+                accel, brake = self.morai_accel_brake(pid, CS.vEgo, CS.pitchRate)
+                print("morai accel:",round(accel),"brake:",round(brake))
             
             vector3.x = steer
             vector3.y = accel

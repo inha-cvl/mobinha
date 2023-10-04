@@ -1,4 +1,4 @@
-rosbag_file_name = '../data/2023-09-22-01-40-45-pp-fast'
+rosbag_file_name = '../data/2023-09-22-00-01-30-proposed'
 
 import json
 import pandas as pd
@@ -48,6 +48,8 @@ axes[0].plot(cte_values, label="CTE Values", color="blue")
 axes[0].set_title("CTE Values")
 axes[0].set_xlabel("Index")
 axes[0].set_ylabel("CTE (meters)")
+axes[0].set_ylim(0, 2)
+axes[0].set_xlim(0, 9000)
 axes[0].grid(True)
 
 # Plot Heading Errors (converted to degrees)
@@ -55,6 +57,8 @@ axes[1].plot(adjusted_heading_errors, label="Heading Errors", color="red")
 axes[1].set_title("Heading Errors (Degrees)")
 axes[1].set_xlabel("Index")
 axes[1].set_ylabel("Heading Errors (Degrees)")
+axes[1].set_ylim(0, 150)
+axes[1].set_xlim(0, 9000)
 axes[1].grid(True)
 
 plt.tight_layout()
@@ -65,6 +69,7 @@ plt.hist(cte_values, bins=50, color='blue', edgecolor='black')
 plt.xlabel('Cross Track Error (meters)')
 plt.ylabel('Frequency (Counts)')
 plt.title('Histogram of Cross Track Errors')
+plt.xlim(0, 2) 
 plt.grid(True)
 
 plt.figure(figsize=(10, 10))
@@ -72,6 +77,7 @@ plt.hist(adjusted_heading_errors, bins=50, color='red', edgecolor='black')
 plt.xlabel('Heading Error (degrees)')
 plt.ylabel('Frequency (Counts)')
 plt.title('Histogram of Heading Errors')
+plt.xlim(0, 150) 
 plt.grid(True)
 
 
@@ -84,6 +90,8 @@ axes[0].plot(df["speed"], label="Vehicle Speed", color='black')
 axes[0].set_title('Vehicle Speed')
 # axes[0].set_xlabel('Index')
 axes[0].set_ylabel('Speed (m/s)')
+axes[0].set_ylim(-1, 14)
+axes[0].set_xlim(0, 9000)
 axes[0].grid(True)
 
 # Plot longitudinal acceleration
@@ -91,6 +99,8 @@ axes[1].plot(df["long_acceleration"], label="Longitudinal Acceleration", color='
 axes[1].set_title('Longitudinal Acceleration')
 # axes[1].set_xlabel('Index')
 axes[1].set_ylabel('Acceleration (m/s^2)')
+axes[1].set_ylim(-5, 5)
+axes[1].set_xlim(0, 9000)
 axes[1].grid(True)
 
 # Plot lateral acceleration
@@ -98,6 +108,8 @@ axes[2].plot(df["lat_acceleration"], label="Lateral Acceleration", color='red')
 axes[2].set_title('Lateral Acceleration')
 # axes[2].set_xlabel('Index')
 axes[2].set_ylabel('Acceleration (m/s^2)')
+axes[2].set_ylim(-3, 3)
+axes[2].set_xlim(0, 9000)
 axes[2].grid(True)
 
 plt.tight_layout()
@@ -112,6 +124,8 @@ axes[1].fill_between(df.index, 2.5, df["lat_jerk_rolling_mean"].where(df["lat_je
 axes[0].set_title('Longitudinal Jerk')
 # axes[0].set_xlabel('Index')
 axes[0].set_ylabel('Jerk (m/s^3)')
+axes[0].set_ylim(-50, 50)
+axes[0].set_xlim(0, 9000)
 axes[0].grid(True)
 axes[0].legend()
 
@@ -122,6 +136,8 @@ axes[1].fill_between(df.index, 2.5, df["lat_jerk_rolling_mean"].where(df["lat_je
 axes[1].set_title('Lateral Jerk')
 # axes[1].set_xlabel('Index')
 axes[1].set_ylabel('Jerk (m/s^3)')
+axes[1].set_ylim(-50, 50)
+axes[1].set_xlim(0, 9000)
 axes[1].grid(True)
 axes[1].legend()
 

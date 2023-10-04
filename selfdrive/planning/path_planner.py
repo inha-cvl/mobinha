@@ -483,6 +483,7 @@ class PathPlanner:
                 '''
                 link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
                 lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
+                lane_position = 2
 
                 # Pubulish Lane Information
                 pose = Pose()

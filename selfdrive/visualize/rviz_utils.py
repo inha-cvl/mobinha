@@ -59,11 +59,12 @@ def ObjectsViz(objects):
             # text.pose.position = Point(x=pt[0], y=pt[1], z=5.0)
             # text_count +=1
             # textarray.markers.append(text)
-        elif -100 < pt[2] < 100 and (-4.5 < pt[3] < -1.65 or 1.65 < pt[3] < 4.5):
+        elif -100 < pt[2] < 100 and (-4.5 < pt[3] < -1.65):# or 1.65 < pt[3] < 4.5):
             color = (1.0, 1.0, 0.0, 1.0)
             # if 0 > pt[3]+pt[7]/2 > -1.65 or 0 < pt[3]-pt[7]/2 < 1.65:
-            text  = Text('obstacle_information', text_count, 1.5, (1,1,1,1), "s:{} d:{} x/2:{}\ny/2:{} z/2:{}"
-                    .format(str(pt[2]/2), str(round(pt[3],2)), str(round(pt[6]/2,2)), str(round(pt[7]/2,2)), str(round(pt[8]/2,2))))
+            text  = Text('obstacle_information', text_count, 1.5, (1,1,1,1), "s:{} \n d:{} \n v:{}\n x/2:{}\ny/2:{}\nz/2:{}"
+                    .format(str(pt[2]/2), str(round(pt[3],2)), str(round(max(pt[5],0))), 
+                            str(round(pt[6]/2,2)), str(round(pt[7]/2,2)), str(round(pt[8]/2,2))))
             text.pose.position = Point(x=pt[0], y=pt[1], z=5.0)
             text_count +=1
             textarray.markers.append(text)

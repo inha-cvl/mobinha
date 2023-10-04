@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32
+from std_msgs.msg import Int8, Float32, Float32MultiArray
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -32,6 +32,9 @@ class PathPlanner:
         self.local_path = None
         self.local_id = None
         self.temp_global_idx = 0
+        self.local_path_theta = None
+        self.yaw = None
+        self.prev_yaw = None
 
         self.get_goal = False
 
@@ -66,6 +69,9 @@ class PathPlanner:
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
+        self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
+        self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
+        self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -190,7 +196,7 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
-
+    
     def run(self, sm):
         CS = sm.CS
         pp = 0
@@ -291,6 +297,12 @@ class PathPlanner:
                 self.erase_global_path = self.erase_global_path[eg_idx:]
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
+
+                self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
+                self.pub_local_path_theta.publish(Float32MultiArray(data=self.yaw))
+                self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
+                self.pub_local_path_k.publish(Float32MultiArray(data=k))
+
                 self.local_path = local_path
                 self.local_id = local_id
                 self.l_idx = self.l_tail
@@ -516,11 +528,21 @@ class PathPlanner:
                 self.pub_forward_path.publish(forward_path_viz)
                 self.pub_blinkiker.publish(blinker)
 
-            pose = Pose()
-            pose.position.x = 1
-            pose.position.y = self.last_s  # m
-            pose.position.z = s
-            self.pub_goal_object.publish(pose)
+                pose = Pose()
+                pose.position.x = 1
+                pose.position.y = self.last_s  # m
+                pose.position.z = s
+                # local_path my theta
+                target_heading = estimate_theta(self.local_path, self.l_idx) * 180 / np.pi
+                pose.orientation.x = target_heading
+                # if self.yaw is not None:
+                #     self.prev_yaw = self.yaw  # Update the previous yaw value
+                # else:
+                #     self.yaw = self.prev_yaw  # Use the previous yaw value if current yaw is not defined
+                # pose.orientation.x = self.yaw[self.l_idx] * 180 / np.pi
+                # CTE
+                pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
+                self.pub_goal_object.publish(pose)
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

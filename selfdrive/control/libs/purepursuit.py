@@ -77,7 +77,7 @@ class PurePursuit:
             if rotated_diff[0] > 0:
                 dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
                 if dis >= lfd:
-                    theta = np.arctan2(rotated_diff[1]+0.1, rotated_diff[0])
+                    theta = np.arctan2(rotated_diff[1], rotated_diff[0])
                     steering_angle = np.arctan2(
                         2*self.L*np.sin(theta), lfd)
                     lx = point[0]

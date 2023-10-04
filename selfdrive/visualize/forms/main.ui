@@ -1010,7 +1010,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>Goal Information</string>
+             <string>Path Tracking Error</string>
             </property>
            </widget>
           </item>
@@ -1040,7 +1040,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>x</string>
+             <string>CTE</string>
             </property>
            </widget>
           </item>
@@ -1070,7 +1070,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>0.0</string>
+             <string>0.0 m</string>
             </property>
            </widget>
           </item>
@@ -1100,7 +1100,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>distance</string>
+             <string>-</string>
             </property>
            </widget>
           </item>
@@ -1146,7 +1146,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>0 km</string>
+             <string>-</string>
             </property>
            </widget>
           </item>
@@ -1176,7 +1176,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>y</string>
+             <string>Heading Error</string>
             </property>
            </widget>
           </item>
@@ -1206,7 +1206,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>0.0</string>
+             <string>0.0 deg</string>
             </property>
            </widget>
           </item>

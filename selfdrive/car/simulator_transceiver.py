@@ -97,7 +97,7 @@ class SimulatorTransceiver:
         inspva.height = alt
         inspva.roll = self.roll
         inspva.pitch = self.pitch
-        inspva.azimuth = -(math.degrees(yaw)+270)
+        inspva.azimuth = -(math.degrees(yaw)+270-360)
 
         vector3 = Vector3()
         vector3.x = CC.actuators.steer

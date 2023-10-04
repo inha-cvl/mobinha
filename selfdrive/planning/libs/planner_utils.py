@@ -659,3 +659,55 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
         lane_position = 2
     
     return lane_position
+
+
+def extract_path_info(local_path, local_id, lanelets):
+    yaw_list = []
+    radius_list = []
+    k_list = []
+    
+    for idx, id_str in enumerate(local_id):
+        # Extract lanelet_id and waypoint_idx from local_id
+        lanelet_id, waypoint_idx = map(int, id_str.split('_'))
+        
+        # Access corresponding yaw, radius, and k values using lanelet_id and waypoint_idx
+        yaw = lanelets[str(lanelet_id)]['yaw'][waypoint_idx]
+        k = lanelets[str(lanelet_id)]['k'][waypoint_idx]
+        radius = 1 / k if k != 0 else float('inf')
+        
+        # Append these values to new lists
+        yaw_list.append(yaw)
+        radius_list.append(radius)
+        k_list.append(k)
+        
+    return yaw_list, radius_list, k_list
+
+def calculate_cte(pointA, pointB, pointP):
+    Ax, Ay = pointA
+    Bx, By = pointB
+    Px, Py = pointP
+
+    numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+    denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+    # return numerator / denominator if denominator != 0 else 0
+    cte = numerator / denominator if denominator != 0 else 0
+    # Calculate cross product to find the sign
+    cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+    
+    if cross_product > 0:
+        return -cte  # Point P is on the left side of line AB
+    elif cross_product < 0:
+        return cte  # Point P is on the right side of line AB
+    else:
+        return 0  # Point P is on the line AB
+
+def estimate_theta(path, index):
+    point_current = path[index]
+    point_next = path[index + 1] if index + 1 < len(path) else path[index]
+    
+    dx = point_next[0] - point_current[0]
+    dy = point_next[1] - point_current[1]
+    
+    theta = np.arctan2(dy, dx)
+    
+    return theta

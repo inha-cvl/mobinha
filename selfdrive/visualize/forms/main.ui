@@ -1146,7 +1146,7 @@ border-bottom-style: solid;
 border-color: rgb(71,181,255);</string>
             </property>
             <property name="text">
-             <string>-</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>

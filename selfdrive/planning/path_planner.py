@@ -35,12 +35,15 @@ class PathPlanner:
         self.local_path_theta = None
         self.yaw = None
         self.prev_yaw = None
+        # self.global_yaw, self.global_k = [], []
 
         self.get_goal = False
 
         self.l_idx = 0
         self.erase_global_path = []
         self.erase_global_id = []
+        self.erase_global_yaw = []
+        self.erase_global_k = []
         self.last_s = 99999
         self.blinker = 0
         self.blinker_target_id = None
@@ -156,7 +159,6 @@ class PathPlanner:
                     shortest_path = ([e_node], 0)
                 else:
                     shortest_path = dijkstra(self.graph, e_node, g_node)
-                    print(shortest_path)
 
                 if shortest_path is not None:
                     shortest_path = shortest_path[0]
@@ -229,6 +231,7 @@ class PathPlanner:
                 self.state = 'MOVE'
 
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
+                global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
                 self.global_path = global_path
                 self.global_id = global_id
@@ -250,28 +253,30 @@ class PathPlanner:
                     self.now_head_lane_id = None
                 self.erase_global_path = global_path
                 self.erase_global_id = global_id
+                self.erase_global_yaw = global_yaw
+                self.erase_global_k = global_k
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
 
             pp = 0
 
-            import json
-            # Creating a dictionary to store the data
-            data = {
-                'non_intp_path': non_intp_path,
-                'non_intp_id': non_intp_id,
-                'head_lane_ids': head_lane_ids,
-                'global_path': global_path,
-                'global_id': global_id
-            }
+            # import json
+            # # Creating a dictionary to store the data
+            # data = {
+            #     'non_intp_path': non_intp_path,
+            #     'non_intp_id': non_intp_id,
+            #     'head_lane_ids': head_lane_ids,
+            #     'global_path': global_path,
+            #     'global_id': global_id
+            # }
 
-            # Convert the dictionary to a JSON string
-            json_data = json.dumps(data, indent=4)
+            # # Convert the dictionary to a JSON string
+            # json_data = json.dumps(data, indent=4)
 
-            # Save the JSON string to a file
-            filename = "./waypoints_data.json"
-            with open(filename, "w") as file:
-                file.write(json_data)
+            # # Save the JSON string to a file
+            # filename = "./waypoints_data.json"
+            # with open(filename, "w") as file:
+            #     file.write(json_data)
 
         elif self.state == 'MOVE':
 
@@ -300,32 +305,39 @@ class PathPlanner:
                 eg_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 local_id = []
+                local_yaw = []
+                local_k = []
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
-                        #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
-                        #local_id = self.erase_global_id[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
+                        local_yaw = local_yaw[self.l_idx-self.l_tail:]+self.erase_global_yaw[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
+                        local_k = local_k[self.l_idx-self.l_tail:]+self.erase_global_k[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
                     else:
                         local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                         local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
+                        local_yaw = self.erase_global_yaw[eg_idx:eg_idx+(self.l_cut+1)]
+                        local_k = self.erase_global_k[eg_idx:eg_idx+(self.l_cut+1)]
                 elif len(self.global_path) < self.l_cut:
                     local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                     local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
+                    local_yaw = self.erase_global_yaw[eg_idx:eg_idx+(self.l_cut+1)]
+                    local_k = self.erase_global_k[eg_idx:eg_idx+(self.l_cut+1)]
                 else:
-                    #local_path = self.erase_global_path[eg_idx -self.l_tail:]
                     local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:]
-                    #local_id = self.erase_global_id[eg_idx -self.l_tail:]
                     local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:]
+                    local_yaw = local_yaw[self.l_idx-self.l_tail:]+self.erase_global_yaw[eg_idx+self.l_nitt:]
+                    local_k = local_k[self.l_idx-self.l_tail:]+self.erase_global_k[eg_idx+self.l_nitt:]
+
 
                 self.erase_global_path = self.erase_global_path[eg_idx:]
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
 
-                self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
-                self.pub_local_path_theta.publish(Float32MultiArray(data=self.yaw))
-                self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
-                self.pub_local_path_k.publish(Float32MultiArray(data=k))
+                # self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
+                self.pub_local_path_theta.publish(Float32MultiArray(data=local_yaw))
+                # self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
+                self.pub_local_path_k.publish(Float32MultiArray(data=local_k))
 
                 self.local_path = local_path
                 self.local_id = local_id

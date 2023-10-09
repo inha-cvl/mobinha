@@ -187,9 +187,8 @@ def interpolate(points, precision):
     return itp_points, itp.s[-1], yaw, k
 
 from scipy.interpolate import UnivariateSpline
+def ref_interpolate_2d(points, precision, smoothing=0):
 
-def ref_interpolate_2d(points, precision, smoothing=3):
-    #TODO yaw k s made!
     points = filter_same_points(points)
     wx, wy = zip(*points)
 
@@ -209,6 +208,34 @@ def ref_interpolate_2d(points, precision, smoothing=3):
         itp_points.append((float(sx(d)), float(sy(d))))
 
     return itp_points, total_distance
+
+from scipy.ndimage import gaussian_filter1d
+def gaussian_smoothing_2d(points, sigma=9):
+    wx, wy = zip(*points)
+    smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
+    smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
+    
+    return list(zip(smoothed_wx, smoothed_wy))
+
+def smooth_compute_yaw_and_curvature(points, precision):
+    # Apply Gaussian smoothing
+    smoothed_path = gaussian_smoothing_2d(points)
+    
+    # Extract x and y from smoothed path
+    wx, wy = zip(*smoothed_path)
+    
+    # Create an interpolator object
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
+    
+    yaw = []
+    k = []
+    
+    # Compute yaw and curvature for each point in the smoothed path
+    for ds in np.arange(0.0, itp.s[-1], precision):
+        yaw.append(itp.calc_yaw(ds))
+        k.append(itp.calc_curvature(ds))
+        
+    return smoothed_path, yaw, k
 
 def ref_interpolate(points, precision):
     points = filter_same_points(points)

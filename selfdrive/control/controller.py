@@ -24,6 +24,7 @@ class Controller:
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
+        self.max_steer_change_rate = 30.0
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
@@ -40,15 +41,12 @@ class Controller:
 
         self.car = rospy.get_param('car_name', 'None')
 
-    def limit_steer_change(self, steer):
-        #TODO:limit logic error need modified 
-        # steer_diff = steer - self.prev_steer
-        # if abs(steer_diff) > 10:
-        #     steer = self.prev_steer + (10 if steer_diff > 0 else -10)
-        # else:
-        #     self.prev_steer = steer
-        # self.prev_steer = steer
-        return steer
+    def limit_steer_change(self, current_steer):
+        steer_change = current_steer - self.prev_steer
+        steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
+        limited_steer = self.prev_steer + steer_change
+        self.prev_steer = limited_steer
+        return limited_steer
     
     def local_path_theta_cb(self, msg):
         self.local_path_theta = msg.data

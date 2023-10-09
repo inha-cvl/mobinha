@@ -56,6 +56,7 @@ class ObstacleDetector:
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
         self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
+        self.pub_avoid_gain = rospy.Publisher('/mobinha/avoid_gain', Float32, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -117,6 +118,9 @@ class ObstacleDetector:
         viz_obstacle = []
         obstacle_sd = []
         around_obstacle_sd = []
+        # Flag to track if an avoidance maneuver is required
+        avoidance_required = False
+        gain = 0.0  # Default avoid_gain value
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
@@ -136,8 +140,19 @@ class ObstacleDetector:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
                 #BSD3 : Time Based Method
                 if (-50*(1/self.CP.mapParam.precision)) <(obj_s-car_idx) < (50*(1/self.CP.mapParam.precision)) and obj_d > -5 and obj_d < 5:
-                        around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4]))
-                
+                        around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
+                #avoid tail car
+                if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3 and obj_d < 3:
+                    # self.pub_avoid_gain.publish(Float32(ObstacleUtils.calculate_avoid_gain(obj_d, obj[6])))
+                    calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6])
+                    if calculated_gain != 0:
+                        # If any obstacle requires avoidance, set the flag
+                        avoidance_required = True
+                        gain = calculated_gain
+                        break  # Exit the loop if an avoidance maneuver is required
+                    
+            if avoidance_required:
+                self.pub_avoid_gain.publish(Float32(gain))
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0])
         return obstacle_sd, viz_obstacle, around_obstacle_sd

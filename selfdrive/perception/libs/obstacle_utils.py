@@ -44,3 +44,22 @@ class ObstacleUtils:
             frenet_d *= -1
 
         return frenet_s, frenet_d
+
+    def calculate_avoid_gain(obs_d, obs_width):
+        """
+        Calculate the avoid gain based on the position of the obstacle and its width.
+        """
+        # Half width of the obstacle car
+        half_width = obs_width / 2
+
+        # Adjust the obs_d value based on its sign
+        if obs_d < 0:
+            adjusted_obs_d = obs_d + half_width
+            if -1.3 < adjusted_obs_d < 0:
+                return 0.3  # move the car by 30cm to the right
+        else:
+            adjusted_obs_d = obs_d - half_width
+            if 0 < adjusted_obs_d < 1.3:
+                return -0.3  # move the car by 30cm to the left
+
+        return 0.0  # no need to move

@@ -76,6 +76,7 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
+        rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         self.state = 'WAITING'
@@ -372,6 +373,8 @@ class MainWindow(QMainWindow, form_class):
         self.cte = msg.orientation.y
     #     m_distance = msg.position.y-msg.position.z
     #     distance = f"{(m_distance/1000.0):.5f} km" if m_distance / 1000 >= 1 else f"{m_distance:.5f} m"
+    def avoid_gain_cb(self, msg):
+        self.goal_distance_label.setText(f"{msg.data:.2f}")
     #     self.goal_distance_label.setText(distance)
 
     def nearest_obstacle_distance_cb(self, msg):

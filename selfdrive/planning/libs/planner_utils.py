@@ -162,14 +162,12 @@ def filter_same_points(points):
 
 
 def interpolate(points, precision):
-
     points = filter_same_points(points)
     if len(points) < 2:
         return points, None, None, None
-
     wx, wy = zip(*points)
-    itp = QuadraticSplineInterpolate(list(wx), list(wy))
 
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
     s = []
     yaw = []
@@ -186,14 +184,39 @@ def interpolate(points, precision):
         yaw.append(dyaw)
         k.append(dk)
 
-    return itp_points, s, yaw, k
+    return itp_points, itp.s[-1], yaw, k
 
+from scipy.interpolate import UnivariateSpline
+
+def ref_interpolate_2d(points, precision, smoothing=3):
+    #TODO yaw k s made!
+    points = filter_same_points(points)
+    wx, wy = zip(*points)
+
+    # Create a cumulative distance array
+    dist = [0.0]
+    for i in range(1, len(wx)):
+        dist.append(dist[-1] + np.sqrt((wx[i] - wx[i-1])**2 + (wy[i] - wy[i-1])**2))
+    total_distance = dist[-1]
+
+    # Use 2nd order (quadratic) UnivariateSpline for interpolation
+    sx = UnivariateSpline(dist, wx, k=2, s=smoothing)
+    sy = UnivariateSpline(dist, wy, k=2, s=smoothing)
+
+    # Generate interpolated points
+    itp_points = []
+    for d in np.arange(0, total_distance, precision):
+        itp_points.append((float(sx(d)), float(sy(d))))
+
+    return itp_points, total_distance
 
 def ref_interpolate(points, precision):
     points = filter_same_points(points)
     wx, wy = zip(*points)
+
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
+
     for ds in np.arange(0.0, itp.s[-1], precision):
         x, y = itp.calc_position(ds)
         itp_points.append((float(x), float(y)))
@@ -285,17 +308,17 @@ def dijkstra(graph, start, finish):
     return None
 
 
-def filter_same_points(points):
-    filtered_points = []
-    pre_pt = None
+# def filter_same_points(points):
+#     filtered_points = []
+#     pre_pt = None
 
-    for pt in points:
-        if pre_pt is None or pt != pre_pt:
-            filtered_points.append(pt)
+#     for pt in points:
+#         if pre_pt is None or pt != pre_pt:
+#             filtered_points.append(pt)
 
-        pre_pt = pt
+#         pre_pt = pt
 
-    return filtered_points
+#     return filtered_points
 
 
 def node_to_waypoints2(lanelet, shortest_path):
@@ -711,3 +734,47 @@ def estimate_theta(path, index):
     theta = np.arctan2(dy, dx)
     
     return theta
+
+#TODO: check
+def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextID):
+                                # prevLeftBound, prevRightBound, 
+                                # nowLeftBound, nowRightBound, nextLeftBound, nextRightBound):
+    
+    def create_and_flatten_polygon(leftBound, rightBound):
+        if leftBound is None or rightBound is None:
+            return []
+        polygon = leftBound + rightBound[::-1]
+        return [coord for sublist in polygon for coord in sublist]
+    
+    def is_point_inside_polygon(pt, poly):
+        x, y = pt
+        oddNodes = False
+        j = len(poly) - 1  # The last vertex is the 'previous' one to start with
+
+        for i in range(len(poly)):
+            xi, yi = poly[i]
+            xj, yj = poly[j]
+            if yi < y and yj >= y or yj < y and yi >= y:
+                if xi + (y - yi) / (yj - yi) * (xj - xi) < x:
+                    oddNodes = not oddNodes
+            j = i
+        return oddNodes
+    
+    prevLeftBound = lanelet[prevID]['leftBound']
+    prevRightBound = lanelet[prevID]['rightBound']
+    nowLeftBound = lanelet[nowID]['leftBound']
+    nowRightBound = lanelet[nowID]['rightBound']
+    nextLeftBound = lanelet[nextID]['leftBound']
+    nextRightBound = lanelet[nextID]['rightBound']
+
+    # Create and flatten polygons for each road
+    prev_polygon_flat = create_and_flatten_polygon(prevLeftBound, prevRightBound)
+    now_polygon_flat = create_and_flatten_polygon(nowLeftBound, nowRightBound)
+    next_polygon_flat = create_and_flatten_polygon(nextLeftBound, nextRightBound)
+
+    # Determine if the obstacle is inside any of the flattened road polygons
+    road1_result = is_point_inside_polygon(obstacle_position, prev_polygon_flat) if prev_polygon_flat else False
+    road2_result = is_point_inside_polygon(obstacle_position, now_polygon_flat) if now_polygon_flat else False
+    road3_result = is_point_inside_polygon(obstacle_position, next_polygon_flat) if next_polygon_flat else False
+
+    return road1_result or road2_result or road3_result # if just one true is true return true

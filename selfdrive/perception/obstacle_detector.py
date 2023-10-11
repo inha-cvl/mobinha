@@ -143,13 +143,11 @@ class ObstacleDetector:
                         around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
                 #avoid tail car
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3 and obj_d < 3:
-                    # self.pub_avoid_gain.publish(Float32(ObstacleUtils.calculate_avoid_gain(obj_d, obj[6])))
                     calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6])
-                    if calculated_gain != 0:
-                        # If any obstacle requires avoidance, set the flag
+                    if calculated_gain != 0 and not avoidance_required:
+                        # If any obstacle requires avoidance, set the flag and update the gain value
                         avoidance_required = True
                         gain = calculated_gain
-                        break  # Exit the loop if an avoidance maneuver is required
                     
             if avoidance_required:
                 self.pub_avoid_gain.publish(Float32(gain))
@@ -254,6 +252,8 @@ class ObstacleDetector:
                 pose.position.x = 0  # 0:dynamic
                 pose.position.y = sd[0]
                 pose.position.z = sd[1]
+                pose.orientation.x = sd[4] #enu x
+                pose.orientation.y = sd[5] #enu y
                 pose.orientation.w = sd[2]# relative velocity
                 pose.orientation.z = sd[3] # track id
                 around_obstacle.poses.append(pose)
@@ -270,7 +270,7 @@ class ObstacleDetector:
 
             self.pub_obstacle_distance.publish(Float32(obstacle_distance))
             self.pub_lidar_obstacle.publish(lidar_obstacle)
-            self.pub_around_obstacle.publish(around_obstacle)
+            # self.pub_around_obstacle.publish(around_obstacle)
             objects_viz, text_viz= ObjectsViz(viz_obstacle)
             self.pub_object_marker.publish(objects_viz)
             self.pub_text_marker.publish(text_viz)

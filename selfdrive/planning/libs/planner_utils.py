@@ -762,16 +762,50 @@ def estimate_theta(path, index):
     
     return theta
 
-#TODO: check
 def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextID):
                                 # prevLeftBound, prevRightBound, 
                                 # nowLeftBound, nowRightBound, nextLeftBound, nextRightBound):
+    def find_edge_id(flag, adjacent_id, lanelets):
+        if flag == 'l':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentLeft'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentLeft']
+        elif flag == 'r':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentRight'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentRight']
+        return adjacent_id
     
+    def get_direction(chunk):
+        start = chunk[0]
+        end = chunk[-1]
+        return (end[0] - start[0], end[1] - start[1])
+    def sort_key(chunk, all_chunks):
+        directions = [get_direction(c) for c in all_chunks]
+        avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
+        start = chunk[0]
+        return start[0] * avg_direction[0] + start[1] * avg_direction[1]
+    def get_ordered_chunks(chunks):
+        sorted_chunks = sorted(chunks, key=lambda chunk: sort_key(chunk, chunks))
+        return sorted_chunks
+        
     def create_and_flatten_polygon(leftBound, rightBound):
         if leftBound is None or rightBound is None:
             return []
-        polygon = leftBound + rightBound[::-1]
-        return [coord for sublist in polygon for coord in sublist]
+        
+        ordered_leftBound = get_ordered_chunks(leftBound)
+        ordered_rightBound = get_ordered_chunks(rightBound)
+
+        # Flatten the coordinates inside the chunks
+        flat_ordered_left = [coord for sublist in ordered_leftBound for coord in sublist]
+        # Flatten the coordinates inside the chunks and then reverse their order
+        flat_ordered_right = [coord for sublist in ordered_rightBound for coord in sublist][::-1]
+        
+        # Create the polygon using the flattened coordinates
+        polygon = flat_ordered_left + flat_ordered_right
+        return polygon
     
     def is_point_inside_polygon(pt, poly):
         x, y = pt
@@ -786,13 +820,14 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
                     oddNodes = not oddNodes
             j = i
         return oddNodes
-    
-    prevLeftBound = lanelet[prevID]['leftBound']
-    prevRightBound = lanelet[prevID]['rightBound']
-    nowLeftBound = lanelet[nowID]['leftBound']
-    nowRightBound = lanelet[nowID]['rightBound']
-    nextLeftBound = lanelet[nextID]['leftBound']
-    nextRightBound = lanelet[nextID]['rightBound']
+
+    # Finding the most left and right boundaries for each lanelet ID
+    prevLeftBound = lanelet[find_edge_id('l', prevID, lanelet)]['leftBound'] if prevID else None
+    prevRightBound = lanelet[find_edge_id('r', prevID, lanelet)]['rightBound'] if prevID else None
+    nowLeftBound = lanelet[find_edge_id('l', nowID, lanelet)]['leftBound'] if nowID else None
+    nowRightBound = lanelet[find_edge_id('r', nowID, lanelet)]['rightBound'] if nowID else None
+    nextLeftBound = lanelet[find_edge_id('l', nextID, lanelet)]['leftBound'] if nextID else None
+    nextRightBound = lanelet[find_edge_id('r', nextID, lanelet)]['rightBound'] if nextID else None
 
     # Create and flatten polygons for each road
     prev_polygon_flat = create_and_flatten_polygon(prevLeftBound, prevRightBound)
@@ -804,4 +839,31 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
     road2_result = is_point_inside_polygon(obstacle_position, now_polygon_flat) if now_polygon_flat else False
     road3_result = is_point_inside_polygon(obstacle_position, next_polygon_flat) if next_polygon_flat else False
 
-    return road1_result or road2_result or road3_result # if just one true is true return true
+    return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
+
+# import rospy
+# from visualization_msgs.msg import Marker
+
+# def create_road_marker(polygon_coords, marker_id, color, frame_id="world"):
+#     marker = Marker()
+#     marker.header.frame_id = frame_id
+#     marker.header.stamp = rospy.Time.now()
+#     marker.id = marker_id
+#     marker.type = Marker.LINE_STRIP
+#     marker.action = Marker.ADD
+    
+#     # Define the marker scale, color, etc.
+#     marker.scale.x = 0.5  # Width of the line
+#     marker.color.a = 1.0  # Opacity
+#     marker.color.r = color[0]
+#     marker.color.g = color[1]
+#     marker.color.b = color[2]
+    
+#     for coord in polygon_coords:
+#         marker.points.append(Point(x=coord[0], y=coord[1], z=0))
+#         # point = marker.points.append()
+#         # point.x = coord[0]
+#         # point.y = coord[1]
+#         # point.z = 0  # Assuming the roads are flat
+    
+#     return marker

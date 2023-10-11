@@ -75,7 +75,9 @@ class PathPlanner:
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
         self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
         self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
-
+        self.prevRoadPolygon_pub = rospy.Publisher('/prevRoadPolygon', Marker, queue_size=10)
+        self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
+        self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -112,8 +114,8 @@ class PathPlanner:
         self.nearest_obstacle_distance = round(msg.data, 5)  # nearest obstacle
     
     def around_obstacle_cb(self, msg):
-        # idx, s, d, v
-        self.around_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
+        # idx, s, d, enu_x, enu_y, v, track id
+        self.around_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
     
     def look_a_head_cb(self, msg):
         self.look_a_head_pos = [msg.pose.position.x, msg.pose.position.y]
@@ -402,6 +404,15 @@ class PathPlanner:
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
                 self.lidar_bsd = [0, 0]
+                # for obs in self.around_obstacle:
+                    # prevRoadPolygon, nowRoadPolygon, nextRoadPolygon, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
+                    
+                #     prevRoadPolygonmarker = create_road_marker(prevRoadPolygon, marker_id=1, color=(0,0,1))
+                #     nowRoadPolygonmarker = create_road_marker(nowRoadPolygon, marker_id=2, color=(0,1,0))
+                #     nextRoadPolygonmarker = create_road_marker(nextRoadPolygon, marker_id=3, color=(1,0,0))
+                #     self.prevRoadPolygon_pub.publish(prevRoadPolygonmarker)
+                #     self.nowRoadPolygon_pub.publish(nowRoadPolygonmarker)
+                #     self.nextRoadPolygon_pub.publish(nextRoadPolygonmarker)
                 if blinker != 0 and not self.renewal_path_in_progress:
                     # look a head's idx's id == lane id => stop looking BSD
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
@@ -411,10 +422,11 @@ class PathPlanner:
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
                         #Left
-                        if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1) and obs[4]>3: # frenet d coordinate left. 
+                        if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1) and obs[6]>3: # frenet d coordinate left. 
                             #TODO: if left lane change, get prev,now,next leftBound and check obstacle where is it. 
-                            if is_car_inside_combined_road((obs[4],obs[5]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id):
-                                vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
+                            _, _, _, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
+                            if isCarInRoad:
+                                vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
                                 targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                                 safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
                                 print("d: ", d)
@@ -453,8 +465,8 @@ class PathPlanner:
                                         if self.renewal_path_cnt > 30:
                                             self.renewal_path_cnt = 0
                                         return pp, self.local_path
-                        elif blinker == 2 and get_look_a_head_id and 1.8<obs[2]<4.05 and lane_change_point<(len(self.local_path)-1) and obs[4]>3: # frenet d coordinate right.
-                            vTargetCar = (obs[3] + CS.vEgo) # unit: m/s
+                        elif blinker == 2 and get_look_a_head_id and 1.8<obs[2]<4.05 and lane_change_point<(len(self.local_path)-1) and obs[6]>3: # frenet d coordinate right.
+                            vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
                             print("d: ", d)

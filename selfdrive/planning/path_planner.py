@@ -76,6 +76,8 @@ class PathPlanner:
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
         self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
         self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
+        self.pub_data_k = rospy.Publisher('/data_k', Float32MultiArray, queue_size=1)
+        self.pub_data_theta = rospy.Publisher('/data_theta', Float32MultiArray, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -316,10 +318,13 @@ class PathPlanner:
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
 
-                # self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
-                self.pub_local_path_theta.publish(Float32MultiArray(data=local_yaw))
-                # self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
-                self.pub_local_path_k.publish(Float32MultiArray(data=local_k))
+                self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
+                print("LENGTH:",len(local_yaw),len(radius),len(local_k))
+                self.pub_local_path_theta.publish(Float32MultiArray(data=self.yaw))
+                self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
+                self.pub_local_path_k.publish(Float32MultiArray(data=k))
+                self.pub_data_theta.publish(Float32MultiArray(data=local_yaw))
+                self.pub_data_k.publish(Float32MultiArray(data=local_k))
 
                 self.local_path = local_path
                 self.local_id = local_id

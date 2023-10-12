@@ -45,11 +45,13 @@ class SimulatorTransceiver:
 
         self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
         # ans bakery
-        self.ego = Vehicle(151.861, 313.707, math.radians(142), 0.0, 2.65)
+        self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
         #kcity highway 
         # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
         #songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
+        #path test
+        # self.ego = Vehicle(-694.072, 977.590, 2.399, 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
 
@@ -97,7 +99,7 @@ class SimulatorTransceiver:
         inspva.height = alt
         inspva.roll = self.roll
         inspva.pitch = self.pitch
-        inspva.azimuth = -(math.degrees(yaw)+270)
+        inspva.azimuth = -(math.degrees(yaw)+270-360)
 
         vector3 = Vector3()
         vector3.x = CC.actuators.steer

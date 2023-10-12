@@ -162,14 +162,12 @@ def filter_same_points(points):
 
 
 def interpolate(points, precision):
-
     points = filter_same_points(points)
     if len(points) < 2:
         return points, None, None, None
-
     wx, wy = zip(*points)
-    itp = QuadraticSplineInterpolate(list(wx), list(wy))
 
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
     s = []
     yaw = []
@@ -186,14 +184,66 @@ def interpolate(points, precision):
         yaw.append(dyaw)
         k.append(dk)
 
-    return itp_points, s, yaw, k
+    return itp_points, itp.s[-1], yaw, k
 
+from scipy.interpolate import UnivariateSpline
+def ref_interpolate_2d(points, precision, smoothing=0):
+
+    points = filter_same_points(points)
+    wx, wy = zip(*points)
+
+    # Create a cumulative distance array
+    dist = [0.0]
+    for i in range(1, len(wx)):
+        dist.append(dist[-1] + np.sqrt((wx[i] - wx[i-1])**2 + (wy[i] - wy[i-1])**2))
+    total_distance = dist[-1]
+
+    # Use 2nd order (quadratic) UnivariateSpline for interpolation
+    sx = UnivariateSpline(dist, wx, k=2, s=smoothing)
+    sy = UnivariateSpline(dist, wy, k=2, s=smoothing)
+
+    # Generate interpolated points
+    itp_points = []
+    for d in np.arange(0, total_distance, precision):
+        itp_points.append((float(sx(d)), float(sy(d))))
+
+    return itp_points, total_distance
+
+from scipy.ndimage import gaussian_filter1d
+def gaussian_smoothing_2d(points, sigma=9):
+    wx, wy = zip(*points)
+    smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
+    smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
+    
+    return list(zip(smoothed_wx, smoothed_wy))
+
+def smooth_compute_yaw_and_curvature(points, precision):
+    # Apply Gaussian smoothing
+    smoothed_path = gaussian_smoothing_2d(points)
+    
+    # Extract x and y from smoothed path
+    wx, wy = zip(*smoothed_path)
+    
+    # Create an interpolator object
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
+    
+    yaw = []
+    k = []
+    
+    # Compute yaw and curvature for each point in the smoothed path
+    for ds in np.arange(0.0, itp.s[-1], precision):
+        yaw.append(itp.calc_yaw(ds))
+        k.append(itp.calc_curvature(ds))
+        
+    return smoothed_path, yaw, k
 
 def ref_interpolate(points, precision):
     points = filter_same_points(points)
     wx, wy = zip(*points)
+
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
+
     for ds in np.arange(0.0, itp.s[-1], precision):
         x, y = itp.calc_position(ds)
         itp_points.append((float(x), float(y)))
@@ -285,17 +335,17 @@ def dijkstra(graph, start, finish):
     return None
 
 
-def filter_same_points(points):
-    filtered_points = []
-    pre_pt = None
+# def filter_same_points(points):
+#     filtered_points = []
+#     pre_pt = None
 
-    for pt in points:
-        if pre_pt is None or pt != pre_pt:
-            filtered_points.append(pt)
+#     for pt in points:
+#         if pre_pt is None or pt != pre_pt:
+#             filtered_points.append(pt)
 
-        pre_pt = pt
+#         pre_pt = pt
 
-    return filtered_points
+#     return filtered_points
 
 
 def node_to_waypoints2(lanelet, shortest_path):
@@ -659,3 +709,161 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
         lane_position = 2
     
     return lane_position
+
+
+def extract_path_info(local_path, local_id, lanelets):
+    yaw_list = []
+    radius_list = []
+    k_list = []
+    
+    for idx, id_str in enumerate(local_id):
+        # Extract lanelet_id and waypoint_idx from local_id
+        lanelet_id, waypoint_idx = map(int, id_str.split('_'))
+        
+        # Access corresponding yaw, radius, and k values using lanelet_id and waypoint_idx
+        yaw = lanelets[str(lanelet_id)]['yaw'][waypoint_idx]
+        k = lanelets[str(lanelet_id)]['k'][waypoint_idx]
+        radius = 1 / k if k != 0 else float('inf')
+        
+        # Append these values to new lists
+        yaw_list.append(yaw)
+        radius_list.append(radius)
+        k_list.append(k)
+        
+    return yaw_list, radius_list, k_list
+
+def calculate_cte(pointA, pointB, pointP):
+    Ax, Ay = pointA
+    Bx, By = pointB
+    Px, Py = pointP
+
+    numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+    denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+    # return numerator / denominator if denominator != 0 else 0
+    cte = numerator / denominator if denominator != 0 else 0
+    # Calculate cross product to find the sign
+    cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+    
+    if cross_product > 0:
+        return -cte  # Point P is on the left side of line AB
+    elif cross_product < 0:
+        return cte  # Point P is on the right side of line AB
+    else:
+        return 0  # Point P is on the line AB
+
+def estimate_theta(path, index):
+    point_current = path[index]
+    point_next = path[index + 1] if index + 1 < len(path) else path[index]
+    
+    dx = point_next[0] - point_current[0]
+    dy = point_next[1] - point_current[1]
+    
+    theta = np.arctan2(dy, dx)
+    
+    return theta
+
+def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextID):
+                                # prevLeftBound, prevRightBound, 
+                                # nowLeftBound, nowRightBound, nextLeftBound, nextRightBound):
+    def find_edge_id(flag, adjacent_id, lanelets):
+        if flag == 'l':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentLeft'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentLeft']
+        elif flag == 'r':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentRight'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentRight']
+        return adjacent_id
+    
+    def get_direction(chunk):
+        start = chunk[0]
+        end = chunk[-1]
+        return (end[0] - start[0], end[1] - start[1])
+    def sort_key(chunk, all_chunks):
+        directions = [get_direction(c) for c in all_chunks]
+        avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
+        start = chunk[0]
+        return start[0] * avg_direction[0] + start[1] * avg_direction[1]
+    def get_ordered_chunks(chunks):
+        sorted_chunks = sorted(chunks, key=lambda chunk: sort_key(chunk, chunks))
+        return sorted_chunks
+        
+    def create_and_flatten_polygon(leftBound, rightBound):
+        if leftBound is None or rightBound is None:
+            return []
+        
+        ordered_leftBound = get_ordered_chunks(leftBound)
+        ordered_rightBound = get_ordered_chunks(rightBound)
+
+        # Flatten the coordinates inside the chunks
+        flat_ordered_left = [coord for sublist in ordered_leftBound for coord in sublist]
+        # Flatten the coordinates inside the chunks and then reverse their order
+        flat_ordered_right = [coord for sublist in ordered_rightBound for coord in sublist][::-1]
+        
+        # Create the polygon using the flattened coordinates
+        polygon = flat_ordered_left + flat_ordered_right
+        return polygon
+    
+    def is_point_inside_polygon(pt, poly):
+        x, y = pt
+        oddNodes = False
+        j = len(poly) - 1  # The last vertex is the 'previous' one to start with
+
+        for i in range(len(poly)):
+            xi, yi = poly[i]
+            xj, yj = poly[j]
+            if yi < y and yj >= y or yj < y and yi >= y:
+                if xi + (y - yi) / (yj - yi) * (xj - xi) < x:
+                    oddNodes = not oddNodes
+            j = i
+        return oddNodes
+
+    # Finding the most left and right boundaries for each lanelet ID
+    prevLeftBound = lanelet[find_edge_id('l', prevID, lanelet)]['leftBound'] if prevID else None
+    prevRightBound = lanelet[find_edge_id('r', prevID, lanelet)]['rightBound'] if prevID else None
+    nowLeftBound = lanelet[find_edge_id('l', nowID, lanelet)]['leftBound'] if nowID else None
+    nowRightBound = lanelet[find_edge_id('r', nowID, lanelet)]['rightBound'] if nowID else None
+    nextLeftBound = lanelet[find_edge_id('l', nextID, lanelet)]['leftBound'] if nextID else None
+    nextRightBound = lanelet[find_edge_id('r', nextID, lanelet)]['rightBound'] if nextID else None
+
+    # Create and flatten polygons for each road
+    prev_polygon_flat = create_and_flatten_polygon(prevLeftBound, prevRightBound)
+    now_polygon_flat = create_and_flatten_polygon(nowLeftBound, nowRightBound)
+    next_polygon_flat = create_and_flatten_polygon(nextLeftBound, nextRightBound)
+
+    # Determine if the obstacle is inside any of the flattened road polygons
+    road1_result = is_point_inside_polygon(obstacle_position, prev_polygon_flat) if prev_polygon_flat else False
+    road2_result = is_point_inside_polygon(obstacle_position, now_polygon_flat) if now_polygon_flat else False
+    road3_result = is_point_inside_polygon(obstacle_position, next_polygon_flat) if next_polygon_flat else False
+
+    return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
+
+# import rospy
+# from visualization_msgs.msg import Marker
+
+# def create_road_marker(polygon_coords, marker_id, color, frame_id="world"):
+#     marker = Marker()
+#     marker.header.frame_id = frame_id
+#     marker.header.stamp = rospy.Time.now()
+#     marker.id = marker_id
+#     marker.type = Marker.LINE_STRIP
+#     marker.action = Marker.ADD
+    
+#     # Define the marker scale, color, etc.
+#     marker.scale.x = 0.5  # Width of the line
+#     marker.color.a = 1.0  # Opacity
+#     marker.color.r = color[0]
+#     marker.color.g = color[1]
+#     marker.color.b = color[2]
+    
+#     for coord in polygon_coords:
+#         marker.points.append(Point(x=coord[0], y=coord[1], z=0))
+#         # point = marker.points.append()
+#         # point.x = coord[0]
+#         # point.y = coord[1]
+#         # point.z = 0  # Assuming the roads are flat
+    
+#     return marker

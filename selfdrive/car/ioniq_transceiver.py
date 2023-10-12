@@ -43,7 +43,7 @@ class IoniqTransceiver():
         self.alv_cnt = 0
         self.Alive_Count_ERR = 0
         self.recv_err_cnt = 0
-        self.err_time = None  # 예외 발생 시간 초기화
+        self.err_time = None 
         self.last_mode_2_time = 0
         self.force_mode_2 = False
 

@@ -143,7 +143,7 @@ class ObstacleDetector:
                         around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
                 #avoid tail car
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -3 and obj_d < 3:
-                    calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6])
+                    calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6], (self.CS.vEgo + obj[3])*3.6)
                     if calculated_gain != 0 and not avoidance_required:
                         # If any obstacle requires avoidance, set the flag and update the gain value
                         avoidance_required = True

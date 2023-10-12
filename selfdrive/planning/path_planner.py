@@ -319,7 +319,7 @@ class PathPlanner:
                 self.erase_global_point = KDTree(self.erase_global_path)
 
                 self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
-                print("LENGTH:",len(local_yaw),len(radius),len(local_k))
+                # print("LENGTH:",len(local_yaw),len(radius),len(local_k))
                 self.pub_local_path_theta.publish(Float32MultiArray(data=self.yaw))
                 self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
                 self.pub_local_path_k.publish(Float32MultiArray(data=k))

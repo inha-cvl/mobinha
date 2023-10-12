@@ -52,10 +52,10 @@ class Control:
         CP = (getattr(sys.modules[__name__], car)(map)).CP
         sm = StateMaster(CP)
         localizer = Localizer()
-        controller = Controller(CP)
-        mpccontroller = MPCController(CP)
+        c = Controller(CP)
+        m = MPCController(CP)
 
-        return sm, localizer, controller # , mpccontroller
+        return sm, localizer, m # , mpccontroller
 
     def state_cb(self, msg):
         if self.state != str(msg.data):

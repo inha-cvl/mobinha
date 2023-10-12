@@ -35,8 +35,8 @@ class IONIQ:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 23  # songdo demo site: 21, test site: 15 # min_v
-        car_param_dict["maxEnableSpeed"] = 43  #45 # ref_v
+        car_param_dict["minEnableSpeed"] = 25  # songdo demo site: 21, test site: 15 # min_v
+        car_param_dict["maxEnableSpeed"] = 50  #45 # ref_v
         car_param_dict["mass"] = 2245.0
         car_param_dict["wheelbase"] = 3.0  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
@@ -92,8 +92,8 @@ class SIMULATOR:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 15  # min_v
-        car_param_dict["maxEnableSpeed"] = 35  # ref_v
+        car_param_dict["minEnableSpeed"] = 25  # min_v
+        car_param_dict["maxEnableSpeed"] = 50  # ref_v
 
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L
@@ -149,8 +149,8 @@ class MORAI: # HYUNDAI NEXO
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 20  # min_v
-        car_param_dict["maxEnableSpeed"] = 40  # ref_v
+        car_param_dict["minEnableSpeed"] = 15  # min_v
+        car_param_dict["maxEnableSpeed"] = 35  # ref_v
         car_param_dict["mass"] = 1755 + 140 # unladen weight + 1 driver and 1 passenger 
         car_param_dict["wheelbase"] = 2.7  # L, vehicle length 
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4

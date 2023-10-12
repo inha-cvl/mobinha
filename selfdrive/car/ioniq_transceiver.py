@@ -32,8 +32,9 @@ class IoniqTransceiver():
         self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
         self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
-        self.gateway = Int8MultiArray()
+       
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
+        self.gateway = Int8MultiArray()
         self.gateway.data = [0, 0, 0, 0, 0, 0]
 
         self.rcv_velocity = 0

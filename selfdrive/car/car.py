@@ -21,10 +21,10 @@ class Transceiver:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
-        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
+        self.tick = {0: 0, 0.01: 0, 0.02: 0, 0.05: 0, 0.1: 0, 1: 0}
         rospy.Subscriber('/mobinha/visualize/system_state',
                          String, self.state_cb)
-    
+ 
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
             self.tick[sec] = time.time()
@@ -34,7 +34,7 @@ class Transceiver:
         
     def transceiver(self):
         can = None
-        timer = 0.1
+        timer = None
         cm = None
         while True:
             if self.state == 'INITIALIZE':
@@ -47,7 +47,7 @@ class Transceiver:
                     can.run(cm)
             elif self.state == 'OVER':
                 return 1
-            time.sleep(timer)
+            # time.sleep(timer)
 
     def init(self):
         self.need_init = False
@@ -58,6 +58,7 @@ class Transceiver:
         timer = 0.05
         if car == "SIMULATOR":
             can = SimulatorTransceiver(CP)
+            timer = 0.1
         elif car == "MORAI":
             can = MoraiTransceiver()
         elif car == "IONIQ":

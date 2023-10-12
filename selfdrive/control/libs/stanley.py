@@ -34,35 +34,65 @@ class StanleyController:
         vector2 = np.array([current_point[0] - closest_point[0], current_point[1] - closest_point[1]])
         crosstrack_error = np.cross(vector1, vector2) / np.linalg.norm(vector1)
         return crosstrack_error
+    def calculate_cte(self, pointA, pointB, pointP):
+        Ax, Ay = pointA
+        Bx, By = pointB
+        Px, Py = pointP
+
+        numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+        denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+        # return numerator / denominator if denominator != 0 else 0
+        cte = numerator / denominator if denominator != 0 else 0
+        # Calculate cross product to find the sign
+        cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+
+        if cross_product > 0:
+            return -cte  # Point P is on the left side of line AB
+        elif cross_product < 0:
+            return cte  # Point P is on the right side of line AB
+        else:
+            return 0  # Point P is on the line AB
+    
+    def get_front_wheel_position(self, rear_wheel_position, yaw):
+        dx = self.wheel_base * cos(yaw)
+        dy = self.wheel_base * sin(yaw)
+        front_wheel_position = (rear_wheel_position[0] + dx, rear_wheel_position[1] + dy)
+        return front_wheel_position
 
     def run(self, vEgo, path, position, yaw):
-        lfd = self.Lfc+self.lqr_k*vEgo
-        lfd = int(np.clip(lfd, 4, 60))
-        closest_idx = self.find_nearest_idx(path, position)
+        front_wheel_position = self.get_front_wheel_position(position, radians(yaw))
+        # lfd = self.Lfc+self.lqr_k*vEgo
+        # lfd = int(np.clip(lfd, 4, 60))
+        closest_idx = self.find_nearest_idx(path, front_wheel_position)
         closest_point = path[closest_idx]
         
         # Choose a point ahead in the path as reference
-        look_ahead_idx = min(len(path) - 1, closest_idx + lfd)
-        ahead_point = path[look_ahead_idx]
+        # look_ahead_idx = min(len(path) - 1, closest_idx + lfd)
+        ahead_point = path[closest_idx+2]
 
         # Calculate cross track error
-        cte = self.cross_track_error(closest_point, ahead_point, position)
-        # print("cte: ", cte)
+        cte = self.calculate_cte(closest_point, ahead_point, front_wheel_position)
+        # print("cte: ", round(cte,2))
         # Calculate the heading error
         theta_e = atan2(ahead_point[1] - closest_point[1], ahead_point[0] - closest_point[0])
         theta = radians(yaw)
         theta = theta % (2 * np.pi)
         if theta > np.pi:
             theta -= 2 * np.pi
-        # print("theta_e: ", theta_e, "theta: ", theta)
+        # print("theta_e: ", round(theta_e,4), "theta: ", round(theta,4))
         heading_error = theta_e - theta
-        # print("heading_error: ", heading_error)
+        # print("heading_error: ", round(heading_error,4))
 
         # Ensure heading_error is within [-pi, pi]
         heading_error = atan2(sin(heading_error), cos(heading_error))
 
         # Stanley control law
-        steering_angle = heading_error + atan2(-self.k * cte, vEgo)
-
+        # k higher -> more aggressive for cte
+        steering_angle = heading_error + atan2(self.k * cte, vEgo) if vEgo > 5 else heading_error
+        if vEgo > 5:
+            print("steering: ", round(degrees(heading_error)),"+",round(degrees(atan2(self.k * cte, vEgo))), "=", round(degrees(steering_angle)))
+        else:
+            print("steering: ", round(degrees(heading_error)))
+        # print(front_wheel_position)
         # Convert to degrees and return
         return degrees(steering_angle)

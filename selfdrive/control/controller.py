@@ -29,6 +29,8 @@ class Controller:
         self.local_path_theta = None
         self.local_path_radius = None
         self.local_path_k = None
+        
+        self.max_steer_change_rate = 8/20*self.steer_ratio
 
         self.car = rospy.get_param('car_name', 'None')
 
@@ -42,15 +44,12 @@ class Controller:
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
 
-    def limit_steer_change(self, steer):
-        #TODO:limit logic error need modified 
-        # steer_diff = steer - self.prev_steer
-        # if abs(steer_diff) > 10:
-        #     steer = self.prev_steer + (10 if steer_diff > 0 else -10)
-        # else:
-        #     self.prev_steer = steer
-        # self.prev_steer = steer
-        return steer
+    def limit_steer_change(self, current_steer):
+        steer_change = current_steer - self.prev_steer
+        steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
+        limited_steer = self.prev_steer + steer_change
+        self.prev_steer = limited_steer
+        return limited_steer
     
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -118,8 +117,7 @@ class Controller:
             
             # print("PP wheel_angle:",wheel_angle)
 
-            # wheel_angle = self.stanley.run(
-            #     CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            wheel_angle = self.stanley.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
 
             # print("stanley wheel_angle:",wheel_angle)
 

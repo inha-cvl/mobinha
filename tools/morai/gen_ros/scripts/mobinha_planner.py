@@ -84,13 +84,9 @@ class MoraiPlanner():
         return min(hi, x)
 
     def set_ctrl_cmd(self, ctrl_cmd):
-        ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
-        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel*5, 100)*0.01
-        ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake*80/65, 100)*0.01
-        # if 0 < self.CM.CC.actuators.brake/10*0.11 < 0.01:
-        #     ctrl_cmd.brake = 0.003
-        # else:
-        #     ctrl_cmd.brake = self.rmin(1.1*(self.CM.CC.actuators.brake/10*0.11)-0.011, 0.11)
+        ctrl_cmd.steering = self.CM.CC.actuators.steer/450
+        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel, 100)/100
+        ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake, 100)/100
         return ctrl_cmd
 
     def statusCB(self, data):  # Vehicle Status Subscriber

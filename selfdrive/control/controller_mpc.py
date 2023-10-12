@@ -36,6 +36,7 @@ class MPCController:
         self.previous_yawRate = None  # To store the previous yawRate
         self.previous_time = None  # To store the previous time stamp
         self.angular_v = 0
+        self.max_steer_change_rate = 10/20*self.steer_ratio
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
@@ -46,15 +47,12 @@ class MPCController:
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
 
-    def limit_steer_change(self, steer):
-        #TODO:limit logic error need modified 
-        # steer_diff = steer - self.prev_steer
-        # if abs(steer_diff) > 10:
-        #     steer = self.prev_steer + (10 if steer_diff > 0 else -10)
-        # else:
-        #     self.prev_steer = steer
-        # self.prev_steer = steer
-        return steer
+    def limit_steer_change(self, current_steer):
+        steer_change = current_steer - self.prev_steer
+        steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
+        limited_steer = self.prev_steer + steer_change
+        self.prev_steer = limited_steer
+        return limited_steer
     
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -523,10 +521,10 @@ class MPCController:
         upper_bound[1, 0] = veh_params['max_acceleration']
 
         matrix_q = np.zeros((basic_state_size, basic_state_size))
-        matrix_q[0, 0] = 0.15
-        matrix_q[2, 2] = 1
+        matrix_q[0, 0] = 0.12
+        matrix_q[2, 2] = 0.7
 
-        matrix_r = 7 * np.eye(Nc, Nc)
+        matrix_r = 20 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 
@@ -632,8 +630,10 @@ class MPCController:
             steer = self.limit_steer_angle(steer_cmd, veh_params['max_steer_angle'])
             print("limit steer : " ,steer)
             steer = steer * 180 / np.pi # degree unit
-            print("steer deg : ",steer)
+            # print("steer deg : ",steer)
             steer = steer * self.steer_ratio # steering
+            steer = self.limit_steer_change(steer)
+            print("steer deg : ",steer)
             # print("steer wheel deg: ",steer)
             print("==================================")
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100

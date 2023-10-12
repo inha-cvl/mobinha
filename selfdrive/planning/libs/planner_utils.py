@@ -162,14 +162,12 @@ def filter_same_points(points):
 
 
 def interpolate(points, precision):
-
     points = filter_same_points(points)
     if len(points) < 2:
         return points, None, None, None
-
     wx, wy = zip(*points)
-    itp = QuadraticSplineInterpolate(list(wx), list(wy))
 
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
     s = []
     yaw = []
@@ -186,20 +184,71 @@ def interpolate(points, precision):
         yaw.append(dyaw)
         k.append(dk)
 
-    return itp_points, s, yaw, k
+    return itp_points, itp.s[-1], yaw, k
 
+from scipy.interpolate import UnivariateSpline
+def ref_interpolate_2d(points, precision, smoothing=0):
+
+    points = filter_same_points(points)
+    wx, wy = zip(*points)
+
+    # Create a cumulative distance array
+    dist = [0.0]
+    for i in range(1, len(wx)):
+        dist.append(dist[-1] + np.sqrt((wx[i] - wx[i-1])**2 + (wy[i] - wy[i-1])**2))
+    total_distance = dist[-1]
+
+    # Use 2nd order (quadratic) UnivariateSpline for interpolation
+    sx = UnivariateSpline(dist, wx, k=2, s=smoothing)
+    sy = UnivariateSpline(dist, wy, k=2, s=smoothing)
+
+    # Generate interpolated points
+    itp_points = []
+    for d in np.arange(0, total_distance, precision):
+        itp_points.append((float(sx(d)), float(sy(d))))
+
+    return itp_points, total_distance
+
+from scipy.ndimage import gaussian_filter1d
+def gaussian_smoothing_2d(points, sigma=9):
+    wx, wy = zip(*points)
+    smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
+    smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
+    
+    return list(zip(smoothed_wx, smoothed_wy))
+
+def smooth_compute_yaw_and_curvature(points, precision):
+    # Apply Gaussian smoothing
+    smoothed_path = gaussian_smoothing_2d(points)
+    
+    # Extract x and y from smoothed path
+    wx, wy = zip(*smoothed_path)
+    
+    # Create an interpolator object
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
+    
+    yaw = []
+    k = []
+    
+    # Compute yaw and curvature for each point in the smoothed path
+    for ds in np.arange(0.0, itp.s[-1], precision):
+        yaw.append(itp.calc_yaw(ds))
+        k.append(itp.calc_curvature(ds))
+        
+    return smoothed_path, yaw, k
 
 def ref_interpolate(points, precision):
     points = filter_same_points(points)
     wx, wy = zip(*points)
+
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
+
     for ds in np.arange(0.0, itp.s[-1], precision):
         x, y = itp.calc_position(ds)
         itp_points.append((float(x), float(y)))
 
     return itp_points, itp.s[-1]
-
 
 def id_interpolate(non_intp, intp, non_intp_id):
     itp_ids = []
@@ -285,17 +334,17 @@ def dijkstra(graph, start, finish):
     return None
 
 
-def filter_same_points(points):
-    filtered_points = []
-    pre_pt = None
+# def filter_same_points(points):
+#     filtered_points = []
+#     pre_pt = None
 
-    for pt in points:
-        if pre_pt is None or pt != pre_pt:
-            filtered_points.append(pt)
+#     for pt in points:
+#         if pre_pt is None or pt != pre_pt:
+#             filtered_points.append(pt)
 
-        pre_pt = pt
+#         pre_pt = pt
 
-    return filtered_points
+#     return filtered_points
 
 
 def node_to_waypoints2(lanelet, shortest_path):
@@ -680,3 +729,33 @@ def extract_path_info(local_path, local_id, lanelets):
         k_list.append(k)
         
     return yaw_list, radius_list, k_list
+
+def calculate_cte(pointA, pointB, pointP):
+    Ax, Ay = pointA
+    Bx, By = pointB
+    Px, Py = pointP
+
+    numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+    denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+    # return numerator / denominator if denominator != 0 else 0
+    cte = numerator / denominator if denominator != 0 else 0
+    # Calculate cross product to find the sign
+    cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+    
+    if cross_product > 0:
+        return -cte  # Point P is on the left side of line AB
+    elif cross_product < 0:
+        return cte  # Point P is on the right side of line AB
+    else:
+        return 0  # Point P is on the line AB
+    
+def estimate_theta(path, index):
+    point_current = path[index]
+    point_next = path[index + 1] if index + 1 < len(path) else path[index]
+    
+    dx = point_next[0] - point_current[0]
+    dy = point_next[1] - point_current[1]
+    
+    theta = np.arctan2(dy, dx)
+    
+    return theta

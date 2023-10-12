@@ -34,12 +34,17 @@ class PathPlanner:
         self.local_id = None
         self.temp_global_idx = 0
         self.local_path_theta = None
+        self.yaw = None
+        self.prev_yaw = None
+        # self.global_yaw, self.global_k = [], []
 
         self.get_goal = False
 
         self.l_idx = 0
         self.erase_global_path = []
         self.erase_global_id = []
+        self.erase_global_yaw = []
+        self.erase_global_k = []
         self.last_s = 99999
         self.blinker = 0
         self.blinker_target_id = None
@@ -71,6 +76,8 @@ class PathPlanner:
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
         self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
         self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
+        self.pub_data_k = rospy.Publisher('/data_k', Float32MultiArray, queue_size=1)
+        self.pub_data_theta = rospy.Publisher('/data_theta', Float32MultiArray, queue_size=1)
 
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -195,26 +202,6 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
-    def estimate_theta(self, path, index):
-        """
-        Estimate the orientation theta based on two consecutive points in the path.
-        
-        Parameters:
-        path (np.ndarray): The reference path [x, y]
-        index (int): The index of the current point in the path
-        
-        Returns:
-        float: The estimated orientation theta
-        """
-        point_current = path[index]
-        point_next = path[index + 1] if index + 1 < len(path) else path[index]
-        
-        dx = point_next[0] - point_current[0]
-        dy = point_next[1] - point_current[1]
-        
-        theta = np.arctan2(dy, dx)
-        
-        return theta
 
     def run(self, sm):
         CS = sm.CS
@@ -246,7 +233,8 @@ class PathPlanner:
             if non_intp_path is not None:
                 self.state = 'MOVE'
 
-                global_path, self.last_s = ref_interpolate(non_intp_path, self.precision)
+                global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
+                global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
                 self.global_path = global_path
                 self.global_id = global_id
@@ -255,18 +243,24 @@ class PathPlanner:
                 self.head_lane_ids = head_lane_ids
 
                 if len(head_lane_ids) >= 2:
+                    self.prev_head_lane_id = None
                     self.next_head_lane_id = head_lane_ids[1]
                     self.now_head_lane_id = head_lane_ids[0]
                 elif len(head_lane_ids) == 1:
+                    self.prev_head_lane_id = None
                     self.now_head_lane_id = head_lane_ids[0]
                     self.next_head_lane_id = head_lane_ids[0]
                 else:
+                    self.prev_head_lane_id = None
                     self.next_head_lane_id = None
                     self.now_head_lane_id = None
                 self.erase_global_path = global_path
                 self.erase_global_id = global_id
+                self.erase_global_yaw = global_yaw
+                self.erase_global_k = global_k
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
+
 
             pp = 0
 
@@ -295,36 +289,43 @@ class PathPlanner:
                 eg_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 local_id = []
+                local_yaw = []
+                local_k = []
                 if len(self.erase_global_path)-eg_idx> self.l_cut:
                     if eg_idx-self.l_tail > 0:
-                        #local_path = self.erase_global_path[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
-                        #local_id = self.erase_global_id[eg_idx-self.l_tail:eg_idx +self.l_cut]
                         local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
+                        local_yaw = local_yaw[self.l_idx-self.l_tail:]+self.erase_global_yaw[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
+                        local_k = local_k[self.l_idx-self.l_tail:]+self.erase_global_k[eg_idx+self.l_nitt:eg_idx+(self.l_cut+1)]
                     else:
                         local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                         local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
+                        local_yaw = self.erase_global_yaw[eg_idx:eg_idx+(self.l_cut+1)]
+                        local_k = self.erase_global_k[eg_idx:eg_idx+(self.l_cut+1)]
                 elif len(self.global_path) < self.l_cut:
                     local_path= self.erase_global_path[eg_idx:eg_idx+(self.l_cut+1)]
                     local_id = self.erase_global_id[eg_idx:eg_idx+(self.l_cut+1)]
+                    local_yaw = self.erase_global_yaw[eg_idx:eg_idx+(self.l_cut+1)]
+                    local_k = self.erase_global_k[eg_idx:eg_idx+(self.l_cut+1)]
                 else:
-                    #local_path = self.erase_global_path[eg_idx -self.l_tail:]
                     local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[eg_idx+self.l_nitt:]
-                    #local_id = self.erase_global_id[eg_idx -self.l_tail:]
                     local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[eg_idx+self.l_nitt:]
+                    local_yaw = local_yaw[self.l_idx-self.l_tail:]+self.erase_global_yaw[eg_idx+self.l_nitt:]
+                    local_k = local_k[self.l_idx-self.l_tail:]+self.erase_global_k[eg_idx+self.l_nitt:]
+
+
                 self.erase_global_path = self.erase_global_path[eg_idx:]
                 self.erase_global_id = self.erase_global_id[eg_idx:]
                 self.erase_global_point = KDTree(self.erase_global_path)
-                '''
-                self.local_path_theta = []
-                for i in range(len(local_path)):
-                    theta = self.estimate_theta(local_path, i)
-                    self.local_path_theta.append(theta)
-                '''
-                yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
-                self.pub_local_path_theta.publish(Float32MultiArray(data=yaw))
+
+                self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
+                print("LENGTH:",len(local_yaw),len(radius),len(local_k))
+                self.pub_local_path_theta.publish(Float32MultiArray(data=self.yaw))
                 self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
                 self.pub_local_path_k.publish(Float32MultiArray(data=k))
+                self.pub_data_theta.publish(Float32MultiArray(data=local_yaw))
+                self.pub_data_k.publish(Float32MultiArray(data=local_k))
+
                 self.local_path = local_path
                 self.local_id = local_id
                 self.l_idx = self.l_tail
@@ -550,11 +551,21 @@ class PathPlanner:
                 self.pub_forward_path.publish(forward_path_viz)
                 self.pub_blinkiker.publish(blinker)
 
-            pose = Pose()
-            pose.position.x = 1
-            pose.position.y = self.last_s  # m
-            pose.position.z = s
-            self.pub_goal_object.publish(pose)
+                pose = Pose()
+                pose.position.x = 1
+                pose.position.y = self.last_s  # m
+                pose.position.z = s
+                # local_path my theta
+                target_heading = estimate_theta(self.local_path, self.l_idx) * 180 / np.pi
+                pose.orientation.x = target_heading
+                # if self.yaw is not None:
+                #     self.prev_yaw = self.yaw  # Update the previous yaw value
+                # else:
+                #     self.yaw = self.prev_yaw  # Use the previous yaw value if current yaw is not defined
+                # pose.orientation.x = self.yaw[self.l_idx] * 180 / np.pi
+                # CTE
+                pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
+                self.pub_goal_object.publish(pose)
 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

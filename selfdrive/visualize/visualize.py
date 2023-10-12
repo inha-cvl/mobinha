@@ -9,7 +9,7 @@ import traceback
 import pymap3d
 from collections import deque
 from rviz import bindings as rviz
-from std_msgs.msg import String, Float32, Int8, Int16MultiArray
+from std_msgs.msg import String, Float32, Int8, Int16MultiArray, Float32MultiArray
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -30,7 +30,8 @@ dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
 MPH_TO_KPH = 3.6
-
+# self.goal_x_label.setText() : CTE : + right, - left
+# self.goal_y_label.setText() : Heading Error :  + clock wise error, - counter clock wise error
 class MainWindow(QMainWindow, form_class):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -57,10 +58,12 @@ class MainWindow(QMainWindow, form_class):
         self.rosbag_proc = None
         self.media_thread = None
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
-        
+        self.target_yaw = 0
+        self.cte = 0
+
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
-        rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
+        # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
         rospy.Subscriber('/mobinha/planning/target_v',Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning_state',Int16MultiArray, self.planning_state_cb)
         rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
@@ -245,7 +248,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.graph_velocity_widget = self.create_graph_widget("Velocity", 0, 10, 0, 60)
         self.graph_acceleration_widget = self.create_graph_widget("Ego Acceleration",0, 10, -20, 20)
-        self.graph_steer_widget = self.create_graph_widget("Heading", 0, 10, -270, 90)
+        self.graph_steer_widget = self.create_graph_widget("Heading", 0, 10, -180, 180)
 
         self.graph_velocity_widget.setLabel('left', 'v', units='km/h')
         self.graph_acceleration_widget.setLabel('left', 'p', units='Ba')
@@ -357,16 +360,18 @@ class MainWindow(QMainWindow, form_class):
                 self.graph_steer_ego_plot.setData(x=self.graph_steer_data['x'], y=self.graph_steer_data['ye'])
                 self.graph_steer_target_plot.setData(x=self.graph_steer_data['x'], y=self.graph_steer_data['yt'])
 
-    def goal_cb(self, msg):
-        self.goal_x_label.setText(str(round(msg.pose.position.x, 5)))
-        self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
+    # def goal_cb(self, msg):
+    #     self.goal_x_label.setText(str(round(msg.pose.position.x, 5))) 
+    #     self.goal_y_label.setText(str(round(msg.pose.position.y, 5)))
 
-        self.goal_lat, self.goal_lng, self.goal_alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
+    #     self.goal_lat, self.goal_lng, self.goal_alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
 
     def goal_information_cb(self, msg):
-        m_distance = msg.position.y-msg.position.z
-        distance = f"{(m_distance/1000.0):.5f} km" if m_distance / 1000 >= 1 else f"{m_distance:.5f} m"
-        self.goal_distance_label.setText(distance)
+        self.target_yaw = msg.orientation.x
+        self.cte = msg.orientation.y
+    #     m_distance = msg.position.y-msg.position.z
+    #     distance = f"{(m_distance/1000.0):.5f} km" if m_distance / 1000 >= 1 else f"{m_distance:.5f} m"
+
 
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(str(round(msg.data, 5))+" m")  # nearest obstacle
@@ -576,12 +581,17 @@ class MainWindow(QMainWindow, form_class):
                 self.media_thread.get_mode = mode
             if mode == 2:
                 self.cmd_button_clicked(0) #act like click disable button
-
+    
+    def angle_difference(self, a, b):
+        diff = (a - b + 180) % 360 - 180
+        return diff
 
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
-        self.label_vehicle_yaw.setText(f"{self.CS.yawRate:.5f} deg")
-        self.label_target_yaw.setText(f"{(float(self.CC.actuators.steer/self.CP.steerRatio)+self.CS.yawRate):.5f} deg")
+        self.label_vehicle_yaw.setText(f"{self.CS.yawRate:.2f} deg")
+        self.label_target_yaw.setText(f"{self.target_yaw:.2f} deg")
+        self.goal_x_label.setText(f"{self.cte:.2f} m") # CTE : + right, - left
+        self.goal_y_label.setText(f"{self.angle_difference(self.target_yaw, self.CS.yawRate):.2f} deg") # Heading Error :  + clock wise error, - counter clock wise error
         self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
         self.check_mode(self.CS.cruiseState)
 

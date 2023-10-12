@@ -35,8 +35,8 @@ class IONIQ:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 23  # songdo demo site: 21, test site: 15 # min_v
-        car_param_dict["maxEnableSpeed"] = 43  #45 # ref_v
+        car_param_dict["minEnableSpeed"] = 25  # songdo demo site: 21, test site: 15 # min_v
+        car_param_dict["maxEnableSpeed"] = 50  #45 # ref_v
         car_param_dict["mass"] = 2245.0
         car_param_dict["wheelbase"] = 3.0  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
@@ -92,8 +92,8 @@ class SIMULATOR:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 15  # min_v
-        car_param_dict["maxEnableSpeed"] = 35  # ref_v
+        car_param_dict["minEnableSpeed"] = 25  # min_v
+        car_param_dict["maxEnableSpeed"] = 50  # ref_v
 
         car_param_dict["mass"] = 1737.0 + 136.0
         car_param_dict["wheelbase"] = 2.72  # L
@@ -151,16 +151,16 @@ class MORAI: # HYUNDAI NEXO
 
         car_param_dict["minEnableSpeed"] = 15  # min_v
         car_param_dict["maxEnableSpeed"] = 35  # ref_v
-        car_param_dict["mass"] = 1840 + 140 # unladen weight + 1 driver and 1 passenger 
-        car_param_dict["wheelbase"] = 2.8  # L, vehicle length 
+        car_param_dict["mass"] = 1755 + 140 # unladen weight + 1 driver and 1 passenger 
+        car_param_dict["wheelbase"] = 2.7  # L, vehicle length 
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
-        car_param_dict["steerRatio"] = 13.5
+        car_param_dict["steerRatio"] = 13.4731
 
         car_param_longitudinal_tuning = car_param_dict["longitudinalTuning"]._asdict(
         )
-        car_param_longitudinal_tuning["kpV"] = 8.5   # K_P
-        car_param_longitudinal_tuning["kiV"] = 6.0  # K_I
-        car_param_longitudinal_tuning["kf"] = 2.25 # K_D
+        car_param_longitudinal_tuning["kpV"] = 29.0   # K_P
+        car_param_longitudinal_tuning["kiV"] = 1.0  # K_I
+        car_param_longitudinal_tuning["kf"] = 5.0 # K_D
         car_param_dict["longitudinalTuning"] = self.CP.longitudinalTuning._make(
             car_param_longitudinal_tuning.values())
 
@@ -168,7 +168,7 @@ class MORAI: # HYUNDAI NEXO
         car_param_lateral_tuning_lqr = car_param_lateral_tuning["lqr"]._asdict(
         )
         car_param_lateral_tuning_lqr["l"] = 1.0  # Lfc, look-ahead distance
-        car_param_lateral_tuning_lqr["k"] = 1.5  # k, look forward gain
+        car_param_lateral_tuning_lqr["k"] = 1.4  # k, look forward gain
         car_param_lateral_tuning["lqr"] = self.CP.lateralTuning.lqr._make(
             car_param_lateral_tuning_lqr.values())
         

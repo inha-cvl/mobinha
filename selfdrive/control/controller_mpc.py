@@ -521,10 +521,10 @@ class MPCController:
         upper_bound[1, 0] = veh_params['max_acceleration']
 
         matrix_q = np.zeros((basic_state_size, basic_state_size))
-        matrix_q[0, 0] = 0.12
-        matrix_q[2, 2] = 0.7
+        matrix_q[0, 0] = 0.2
+        matrix_q[2, 2] = 1.5
 
-        matrix_r = 10 * np.eye(Nc, Nc)
+        matrix_r = 12 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 

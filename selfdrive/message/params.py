@@ -61,7 +61,7 @@ class IONIQ:
         
         car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
         )
-        car_param_lateral_tuning_stanley["k"] = 0.2 # k, look forward gain
+        car_param_lateral_tuning_stanley["k"] = 0.18 # k, look forward gain
         car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
             car_param_lateral_tuning_stanley.values())
         

@@ -465,6 +465,17 @@ def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph
     #     return_v = min(return_v, max(return_v, 25))    
     return return_v*KPH_TO_MPS
 
+def calculate_v_by_centripetal_acceleration(lane_information, ref_v, cur_v, max_lateral_acceleration=1.5):
+    r = lane_information[3]
+    
+    # Calculate the speed limit based on centripetal acceleration formula
+    v_limit = math.sqrt(max_lateral_acceleration * r)
+
+    if v_limit > ref_v*KPH_TO_MPS:
+        v_limit = ref_v*KPH_TO_MPS
+
+    return v_limit  # The speed limit is returned in m/s
+
 
 def get_a_b_for_curv(min, ignore):
     # a = -90 / (min-ignore)

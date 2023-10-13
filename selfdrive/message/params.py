@@ -174,7 +174,7 @@ class MORAI: # HYUNDAI NEXO
         
         car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
         )
-        car_param_lateral_tuning_stanley["k"] = 0.5  # k, look forward gain
+        car_param_lateral_tuning_stanley["k"] = 0.3  # k, look forward gain
         car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
             car_param_lateral_tuning_stanley.values())
 

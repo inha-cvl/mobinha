@@ -138,22 +138,28 @@ for i in range(len(file_names)):
     df['combined_velocity'] = (df['long_velocity']**2 + df['lat_velocity']**2)**0.5
 
     # Filter out rows where combined_velocity is <= 1km/h
-    df = df[df['combined_velocity'] > 1/3.6]
+    df = df[df['combined_velocity'] > 5/3.6]
 
     # Calculate the 95th percentile for each category
     percentile_95 = df[['long_acceleration', 'lat_acceleration', 'long_jerk', 'lat_jerk','heading_error', 'cte']].quantile(0.95).to_dict()
 
+
+    df['long_acceleration_rolling_mean'] = df['long_acceleration'].rolling(window=int(2/0.05)).mean()  # 1 second at 20Hz is 20 samples
+    # df['lat_acceleration_rolling_mean'] = df['lat_acceleration'].rolling(window=int(2/0.05)).mean()  # 1 second at 20Hz is 20 samples
+
     # Calculate the rolling mean of jerk over 1 second for longitudinal and 0.5 seconds for lateral
-    df['long_jerk_rolling_mean'] = df['long_jerk'].rolling(window=int(1/0.05)).mean()  # 1 second at 20Hz is 20 samples
+    df['long_jerk_rolling_mean'] = df['long_jerk'].rolling(window=int(2/0.05)).mean()  # 1 second at 20Hz is 20 samples
     df['lat_jerk_rolling_mean'] = df['lat_jerk'].rolling(window=int(0.5/0.05)).mean()  # 0.5 seconds at 20Hz is 10 samples
 
     df['timestamp'] = pd.to_datetime(df['timestamp'])
 
     # Find the intervals where the rolling mean exceeds the limit
-    long_jerk_exceed_intervals = df[df['long_jerk_rolling_mean'] > 3.75]
+    long_acc_exceed_intervals = df[df['long_acceleration_rolling_mean'] > 3.5]
+    long_jerk_exceed_intervals = df[df['long_jerk_rolling_mean'] > 2.5]
     lat_jerk_exceed_intervals = df[df['lat_jerk_rolling_mean'] > 5]
 
     # Count the number of intervals
+    long_acc_exceed_count = len(long_acc_exceed_intervals)
     long_jerk_exceed_count = len(long_jerk_exceed_intervals)
     lat_jerk_exceed_count = len(lat_jerk_exceed_intervals)
 
@@ -174,7 +180,8 @@ for i in range(len(file_names)):
             'std': df['long_acceleration'].std(),
             'max': df['long_acceleration'].max(),
             'min': df['long_acceleration'].min(),
-            'percentile_95': percentile_95['long_acceleration']
+            'percentile_95': percentile_95['long_acceleration'],
+            'long_acc_exceed_count': len(long_acc_exceed_intervals)
         },
         'Lateral Acceleration': {
             'RMS': np.sqrt(np.mean(df['lat_acceleration']**2)),

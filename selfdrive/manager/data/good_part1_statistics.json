@@ -12,7 +12,8 @@
         "std": 0.7651737247886703,
         "max": 2.759230841474071,
         "min": -5.549134968535809,
-        "percentile_95": 1.0802944526542484
+        "percentile_95": 1.0802944526542484,
+        "long_acc_exceed_count": 0
     },
     "Lateral Acceleration": {
         "RMS": 0.15153007322650988,
@@ -28,7 +29,7 @@
         "max": 62.749638984447,
         "min": -51.635564489394966,
         "percentile_95": 11.05804890111167,
-        "long_jerk_exceed_count": 0
+        "long_jerk_exceed_count": 1
     },
     "Lateral Jerk": {
         "RMS": 3.4061485695059224,

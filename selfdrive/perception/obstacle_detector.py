@@ -119,6 +119,7 @@ class ObstacleDetector:
         around_obstacle_sd = []
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object:
+                obj_x, obj_y = ObstacleUtils.object2enu((self.CS.position.x, self.CS.position.y, self.CS.yawRate), obj[0], obj[1])
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy))
                 
                 if self.lane_position == 1:

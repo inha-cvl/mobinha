@@ -24,7 +24,7 @@ class Controller:
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
-        self.max_steer_change_rate = 5/20*self.steer_ratio
+        self.max_steer_change_rate = 8/20*self.steer_ratio
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)

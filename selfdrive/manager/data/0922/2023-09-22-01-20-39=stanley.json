@@ -1,0 +1,58 @@
+{
+    "CTE": {
+        "RMSE": NaN,
+        "Mean": NaN,
+        "Std Dev": NaN,
+        "Min": NaN,
+        "Max": NaN
+    },
+    "Heading Error": {
+        "RMSE": NaN,
+        "Mean": NaN,
+        "Std Dev": NaN,
+        "Min": NaN,
+        "Max": NaN
+    },
+    "Longitudinal Velocity": {
+        "mean": 4.998594056101473,
+        "std": 4.985868040049474,
+        "max": 11.68617848953526,
+        "min": -3.293995625472304
+    },
+    "Lateral Velocity": {
+        "mean": -0.03838352971003331,
+        "std": 0.046861224160680795,
+        "max": 0.2708897737952192,
+        "min": -0.4487972239763352
+    },
+    "Longitudinal Acceleration": {
+        "mean": -0.0017765453382292914,
+        "std": 0.5762001619646463,
+        "max": 2.5638778344243067,
+        "min": -6.687394998247597,
+        "percentile_95": 0.8718853946979566
+    },
+    "Lateral Acceleration": {
+        "mean": -4.645244955744123e-05,
+        "std": 0.18407858094771934,
+        "max": 3.49793014263945,
+        "min": -2.235251692742365,
+        "percentile_95": 0.18843247246166736
+    },
+    "Longitudinal Jerk": {
+        "mean": -0.00453577388012985,
+        "std": 5.651911889674262,
+        "max": 80.57227619336408,
+        "min": -99.36895030876498,
+        "percentile_95": 7.6585302335577286,
+        "long_jerk_exceed_count": 28
+    },
+    "Lateral Jerk": {
+        "mean": 0.002309731613585639,
+        "std": 3.463482294840048,
+        "max": 78.21721352913922,
+        "min": -73.43880818872255,
+        "percentile_95": 4.214189593003751,
+        "lat_jerk_exceed_count": 67
+    }
+}

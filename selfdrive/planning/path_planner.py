@@ -235,6 +235,15 @@ class PathPlanner:
 
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
                 global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
+                data = {
+                    'global_path': global_path,
+                    'global_yaw': global_yaw,
+                    'global_k': global_k
+                }
+
+                # JSON 파일로 저장합니다.
+                with open('path_data.json', 'w') as outfile:
+                    json.dump(data, outfile, indent=4)         
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
                 self.global_path = global_path
                 self.global_id = global_id

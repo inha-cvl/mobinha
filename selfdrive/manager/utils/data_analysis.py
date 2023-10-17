@@ -9,7 +9,6 @@ from scipy.spatial import distance
 import json
 from tqdm import tqdm
 import pandas as pd
-import multiprocessing
 
 rosbag_file_name = '2023-09-22-01-20-39=stanley'
 file_names = ['2023-09-22-01-40-45-pp-fast',
@@ -20,7 +19,7 @@ file_names = ['2023-09-22-01-40-45-pp-fast',
 '2023-09-22-00-13-47-stanley',
 '2023-09-22-00-01-30-proposed']
 
-for i in range(7):
+for i in range(len(file_names)):
     rosbag_file_name = file_names[i]
 
     # Initialize

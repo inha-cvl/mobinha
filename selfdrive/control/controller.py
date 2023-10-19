@@ -25,10 +25,12 @@ class Controller:
         self.l_idx = 0
         self.prev_steer = 0.0
         self.max_steer_change_rate = 8/20*self.steer_ratio
+        self.cte = 0
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
+        rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
         # rospy.Subscriber('mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
@@ -47,6 +49,9 @@ class Controller:
         limited_steer = self.prev_steer + steer_change
         self.prev_steer = limited_steer
         return limited_steer
+
+    def goal_information_cb(self, msg):
+        self.cte = msg.orientation.y
     
     def local_path_theta_cb(self, msg):
         self.local_path_theta = msg.data
@@ -97,7 +102,7 @@ class Controller:
         vector3 = self.get_init_acuator()
         if self.local_path != None:
             wheel_angle, lah_pt = self.purepursuit.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte)
             
             steer = wheel_angle*self.steer_ratio
             steer = self.limit_steer_change(steer)

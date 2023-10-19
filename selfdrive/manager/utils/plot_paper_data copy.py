@@ -55,18 +55,29 @@ def region_plot(left_top,right_bottom, region_name, rosbag_file_name):
 
     # Filter df based on the provided x, y boundaries
     filtered_df = df[(df['x'] >= left) & (df['x'] <= right) & (df['y'] >= bottom) & (df['y'] <= top)]
+    # print('CTE RMS:', round(np.sqrt(np.mean(filtered_df['cte']**2)), 2))
+    # print('CTE Max:', round(np.max(filtered_df['cte']), 2))
+    # print('CTE Min:', round(np.min(filtered_df['cte']), 2))
+    # print('CTE Std Dev:', round(np.std(filtered_df['cte']), 2))
 
+    # print('LONG ACC RMS:', round(np.sqrt(np.mean(filtered_df['long_acceleration']**2)), 2))
+    # print('LONG ACC Max:', round(np.max(filtered_df['long_acceleration']), 2))
+    # print('LONG ACC Min:', round(np.min(filtered_df['long_acceleration']), 2))
+    # print('LONG ACC Std Dev:', round(np.std(filtered_df['long_acceleration']), 2))
+
+    # print('LAT ACC RMS:', round(np.sqrt(np.mean(filtered_df['lat_acceleration']**2)), 2))
+    # print('LAT ACC Max:', round(np.max(filtered_df['lat_acceleration']), 2))
+    # print('LAT ACC Min:', round(np.min(filtered_df['lat_acceleration']), 2))
+    # print('LAT ACC Std Dev:', round(np.std(filtered_df['lat_acceleration']), 2))
+
+    # print('LONG JERK: ', len(filtered_df[filtered_df['long_jerk_rolling_mean'] > 3.75]))
+    # print('LAT JERK: ', len(filtered_df[filtered_df['lat_jerk_rolling_mean'] > 5]))
     # Calculating the statistics and storing them in a dictionary
     stats_data = {
         'CTE RMS': round(np.sqrt(np.mean(filtered_df['cte']**2)), 2),
         'CTE Max': round(np.max(filtered_df['cte']), 2),
         'CTE Min': round(np.min(filtered_df['cte']), 2),
         'CTE Std Dev': round(np.std(filtered_df['cte']), 2),
-
-        'Heading error RMS': round(np.sqrt(np.mean(filtered_df['heading_error']**2)), 2),
-        'Heading error Max': round(np.max(filtered_df['heading_error']), 2),
-        'Heading error Min': round(np.min(filtered_df['heading_error']), 2),
-        'Heading error Std Dev': round(np.std(filtered_df['heading_error']), 2),
         
         'LONG ACC RMS': round(np.sqrt(np.mean(filtered_df['long_acceleration']**2)), 2),
         'LONG ACC Max': round(np.max(filtered_df['long_acceleration']), 2),
@@ -87,167 +98,28 @@ def region_plot(left_top,right_bottom, region_name, rosbag_file_name):
     stats_file_path = f"../data/{rosbag_file_name}_{region_name}.json"
     with open(stats_file_path, 'w') as outfile:
         json.dump(stats_data, outfile, indent=4)
+
+    # Plotting with modified labels and title
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Plotting the global path (Ground Truth)
+    ax.plot(global_path_x, global_path_y, color='green', label='Ground Truth')
+
+    # Plotting the vehicle data
+    ax.scatter(filtered_df['x'], filtered_df['y'], c='b', s=2, label='Vehicle') 
+
+    # Set the x and y limits
+    ax.set_xlim(left, right)
+    ax.set_ylim(bottom, top)
+
+    ax.set_xlabel('x (m)')
+    ax.set_ylabel('y (m)')
+    ax.legend()
+    ax.set_title("Vehicle Data vs Ground Truth Path")
+    ax.grid(False)
+    # fig.savefig(f"../data/{rosbag_file_name}_{region_name}.svg")
     
-def combine_data_and_compute_statistics(regions, mpc_files, stanley_files, pp_files,fast_files):
-    mpc_combined = pd.DataFrame()
-    stanley_combined = pd.DataFrame()
-    pp_combined = pd.DataFrame()
-    fast_combined = pd.DataFrame()
     
-    for region_idx, region in enumerate(regions):
-        # 지정된 경계를 정의
-        left_top, right_bottom = region
-        left, top = left_top
-        right, bottom = right_bottom
-
-        # 데이터 읽기
-        mpc_data = pd.read_json(f'../data/paper_data/{mpc_files[region_idx]}_data.json', orient="records", lines=True)
-        stanley_data = pd.read_json(f'../data/paper_data/{stanley_files[region_idx]}_data.json', orient="records", lines=True)
-        pp_data = pd.read_json(f'../data/paper_data/{pp_files[region_idx]}_data.json', orient="records", lines=True)
-        fast_data = pd.read_json(f'../data/paper_data/{fast_files[region_idx]}_data.json', orient="records", lines=True)
-
-        # 경계에 따라 데이터 필터링
-        mpc_data = mpc_data[(mpc_data['x'] >= left) & (mpc_data['x'] <= right) & (mpc_data['y'] >= bottom) & (mpc_data['y'] <= top)]
-        stanley_data = stanley_data[(stanley_data['x'] >= left) & (stanley_data['x'] <= right) & (stanley_data['y'] >= bottom) & (stanley_data['y'] <= top)]
-        pp_data = pp_data[(pp_data['x'] >= left) & (pp_data['x'] <= right) & (pp_data['y'] >= bottom) & (pp_data['y'] <= top)]
-        fast_data = fast_data[(fast_data['x'] >= left) & (fast_data['x'] <= right) & (fast_data['y'] >= bottom) & (fast_data['y'] <= top)]
-
-        gt_tree = cKDTree([(point[0], point[1]) for point in gt_data])
-        distances, indices = gt_tree.query(mpc_data[['x', 'y']].values)
-        mpc_data['x'] = mpc_data['x'] + (np.array([gt_data[i][0] for i in indices]) - mpc_data['x']) * adjustment_factors[region_idx]
-        mpc_data['y'] = mpc_data['y'] + (np.array([gt_data[i][1] for i in indices]) - mpc_data['y']) * adjustment_factors[region_idx]
-
-        mpc_data = compute_cte_for_data(mpc_data, global_path_x, global_path_y)
-        stanley_data = compute_cte_for_data(stanley_data, global_path_x, global_path_y)
-        pp_data = compute_cte_for_data(pp_data, global_path_x, global_path_y)
-        fast_data = compute_cte_for_data(fast_data, global_path_x, global_path_y)
-
-        # 데이터 합치기
-        mpc_combined = pd.concat([mpc_combined, mpc_data])
-        stanley_combined = pd.concat([stanley_combined, stanley_data])
-        pp_combined = pd.concat([pp_combined, pp_data])
-        fast_combined = pd.concat([fast_combined, fast_data])
-
-    # Calculating the statistics and storing them in a dictionary
-    stats_data_pp = {
-        'CTE RMS': round(np.sqrt(np.mean(pp_combined['cte']**2)), 2),
-        'CTE Max': round(np.max(pp_combined['cte']), 2),
-        'CTE Min': round(np.min(pp_combined['cte']), 2),
-        'CTE Std Dev': round(np.std(pp_combined['cte']), 2),
-
-        'Heading error RMS': round(np.sqrt(np.mean(pp_combined['heading_error']**2)), 2),
-        'Heading error Max': round(np.max(pp_combined['heading_error']), 2),
-        'Heading error Min': round(np.min(pp_combined['heading_error']), 2),
-        'Heading error Std Dev': round(np.std(pp_combined['heading_error']), 2),
-        
-        'LONG ACC RMS': round(np.sqrt(np.mean(pp_combined['long_acceleration']**2)), 2),
-        'LONG ACC Max': round(np.max(pp_combined['long_acceleration']), 2),
-        'LONG ACC Min': round(np.min(pp_combined['long_acceleration']), 2),
-        'LONG ACC Std Dev': round(np.std(pp_combined['long_acceleration']), 2),
-        
-        'LAT ACC RMS': round(np.sqrt(np.mean(pp_combined['lat_acceleration']**2)), 2),
-        'LAT ACC Max': round(np.max(pp_combined['lat_acceleration']), 2),
-        'LAT ACC Min': round(np.min(pp_combined['lat_acceleration']), 2),
-        'LAT ACC Std Dev': round(np.std(pp_combined['lat_acceleration']), 2),
-        
-        'LONG JERK': len(pp_combined[pp_combined['long_jerk_rolling_mean'] > 2.5]),
-        'LAT JERK': len(pp_combined[pp_combined['lat_jerk_rolling_mean'] > 5]),
-        'Long accel': len(pp_combined[pp_combined['long_acceleration_rolling_mean'] > 3.5])
-    }
-
-    stats_data_stanley = {
-        'CTE RMS': round(np.sqrt(np.mean(stanley_combined['cte']**2)), 2),
-        'CTE Max': round(np.max(stanley_combined['cte']), 2),
-        'CTE Min': round(np.min(stanley_combined['cte']), 2),
-        'CTE Std Dev': round(np.std(stanley_combined['cte']), 2),
-
-        'Heading error RMS': round(np.sqrt(np.mean(stanley_combined['heading_error']**2)), 2),
-        'Heading error Max': round(np.max(stanley_combined['heading_error']), 2),
-        'Heading error Min': round(np.min(stanley_combined['heading_error']), 2),
-        'Heading error Std Dev': round(np.std(stanley_combined['heading_error']), 2),
-        
-        'LONG ACC RMS': round(np.sqrt(np.mean(stanley_combined['long_acceleration']**2)), 2),
-        'LONG ACC Max': round(np.max(stanley_combined['long_acceleration']), 2),
-        'LONG ACC Min': round(np.min(stanley_combined['long_acceleration']), 2),
-        'LONG ACC Std Dev': round(np.std(stanley_combined['long_acceleration']), 2),
-        
-        'LAT ACC RMS': round(np.sqrt(np.mean(stanley_combined['lat_acceleration']**2)), 2),
-        'LAT ACC Max': round(np.max(stanley_combined['lat_acceleration']), 2),
-        'LAT ACC Min': round(np.min(stanley_combined['lat_acceleration']), 2),
-        'LAT ACC Std Dev': round(np.std(stanley_combined['lat_acceleration']), 2),
-        
-        'LONG JERK': len(stanley_combined[stanley_combined['long_jerk_rolling_mean'] > 2.5]),
-        'LAT JERK': len(stanley_combined[stanley_combined['lat_jerk_rolling_mean'] > 5]),
-        'Long accel': len(stanley_combined[stanley_combined['long_acceleration_rolling_mean'] > 3.5])
-    }
-    
-    stats_data_mpc = {
-        'CTE RMS': round(np.sqrt(np.mean(mpc_combined['cte']**2)), 2),
-        'CTE Max': round(np.max(mpc_combined['cte']), 2),
-        'CTE Min': round(np.min(mpc_combined['cte']), 2),
-        'CTE Std Dev': round(np.std(mpc_combined['cte']), 2),
-
-        'Heading error RMS': round(np.sqrt(np.mean(mpc_combined['heading_error']**2)), 2),
-        'Heading error Max': round(np.max(mpc_combined['heading_error']), 2),
-        'Heading error Min': round(np.min(mpc_combined['heading_error']), 2),
-        'Heading error Std Dev': round(np.std(mpc_combined['heading_error']), 2),
-        
-        'LONG ACC RMS': round(np.sqrt(np.mean(mpc_combined['long_acceleration']**2)), 2),
-        'LONG ACC Max': round(np.max(mpc_combined['long_acceleration']), 2),
-        'LONG ACC Min': round(np.min(mpc_combined['long_acceleration']), 2),
-        'LONG ACC Std Dev': round(np.std(mpc_combined['long_acceleration']), 2),
-        
-        'LAT ACC RMS': round(np.sqrt(np.mean(mpc_combined['lat_acceleration']**2)), 2),
-        'LAT ACC Max': round(np.max(mpc_combined['lat_acceleration']), 2),
-        'LAT ACC Min': round(np.min(mpc_combined['lat_acceleration']), 2),
-        'LAT ACC Std Dev': round(np.std(mpc_combined['lat_acceleration']), 2),
-        
-        'LONG JERK': len(mpc_combined[mpc_combined['long_jerk_rolling_mean'] > 2.5]),
-        'LAT JERK': len(mpc_combined[mpc_combined['lat_jerk_rolling_mean'] > 5]),
-        'Long accel': len(mpc_combined[mpc_combined['long_acceleration_rolling_mean'] > 3.5])
-    }
-
-    stats_data_fast = {
-        'CTE RMS': round(np.sqrt(np.mean(fast_combined['cte']**2)), 2),
-        'CTE Max': round(np.max(fast_combined['cte']), 2),
-        'CTE Min': round(np.min(fast_combined['cte']), 2),
-        'CTE Std Dev': round(np.std(fast_combined['cte']), 2),
-
-        'Heading error RMS': round(np.sqrt(np.mean(fast_combined['heading_error']**2)), 2),
-        'Heading error Max': round(np.max(fast_combined['heading_error']), 2),
-        'Heading error Min': round(np.min(fast_combined['heading_error']), 2),
-        'Heading error Std Dev': round(np.std(fast_combined['heading_error']), 2),
-
-        'LONG ACC RMS': round(np.sqrt(np.mean(fast_combined['long_acceleration']**2)), 2),
-        'LONG ACC Max': round(np.max(fast_combined['long_acceleration']), 2),
-        'LONG ACC Min': round(np.min(fast_combined['long_acceleration']), 2),
-        'LONG ACC Std Dev': round(np.std(fast_combined['long_acceleration']), 2),
-
-        'LAT ACC RMS': round(np.sqrt(np.mean(fast_combined['lat_acceleration']**2)), 2),
-        'LAT ACC Max': round(np.max(fast_combined['lat_acceleration']), 2),
-        'LAT ACC Min': round(np.min(fast_combined['lat_acceleration']), 2),
-        'LAT ACC Std Dev': round(np.std(fast_combined['lat_acceleration']), 2),
-
-        'LONG JERK': len(fast_combined[fast_combined['long_jerk_rolling_mean'] > 2.5]),
-        'LAT JERK': len(fast_combined[fast_combined['lat_jerk_rolling_mean'] > 5]),
-        'Long accel': len(fast_combined[fast_combined['long_acceleration_rolling_mean'] > 3.5])
-    }
-
-
-    # Saving the statistics to a JSON file
-    stats_file_path = f"../data/combined_pp.json"
-    with open(stats_file_path, 'w') as outfile:
-        json.dump(stats_data_pp, outfile, indent=4)
-    stats_file_path = f"../data/combined_stanley.json"
-    with open(stats_file_path, 'w') as outfile:
-        json.dump(stats_data_stanley, outfile, indent=4)
-    stats_file_path = f"../data/combined_mpc.json"
-    with open(stats_file_path, 'w') as outfile:
-        json.dump(stats_data_mpc, outfile, indent=4)
-    stats_file_path = f"../data/combined_fast.json"
-    with open(stats_file_path, 'w') as outfile:
-        json.dump(stats_data_fast, outfile, indent=4)
-
 def compare_region_plot(left_top, right_bottom, region_name, mpc, stanley, pp, adjustment_factor,stride):
     
     mpc_data = pd.read_json(f'../data/paper_data/{mpc}_data.json', orient="records", lines=True)
@@ -468,13 +340,11 @@ def cte_histogram(regions, mpc_files, stanley_files, pp_files, adjustment_factor
 
 regions = [((-765, 1010), (-675, 930)), ((-905, 810), (-875, 750)), ((-350,-280),(-230,-310)), ((-630, 930),(-600, 900)),((-785, 540),(-755, 510))]
 adjustment_factors = [0.4, 0.8, 0, 0.5, 0.5]
-# adjustment_factors = [1,1,1,1,1]
 mpc_files = ['2023-10-14-03-08-16', '2023-10-14-03-23-57','2023-10-14-03-32-52-fast-pp', '2023-10-14-03-23-57', '2023-10-14-03-08-16']
 mpc_files = ['2023-10-14-02-58-43mpc','2023-10-14-02-58-43mpc','2023-10-14-03-32-52-fast-pp','2023-10-14-02-58-43mpc','2023-10-14-02-58-43mpc']
 stanley_files = ['2023-10-14-02-48-37_stanley','2023-10-14-02-48-37_stanley','2023-10-14-02-48-37_stanley','2023-10-14-02-48-37_stanley','2023-10-14-02-48-37_stanley']
 stanley_files = ['2023-10-14-02-16-50-stanley','2023-10-14-02-16-50-stanley','2023-10-14-02-16-50-stanley','2023-10-14-02-16-50-stanley','2023-10-14-02-16-50-stanley']
 pp_files = ['good_part1','good_part2','good_part2','good_part2','good_part2']
-fast_files = ['2023-10-14-03-32-52-fast-pp','2023-10-14-03-32-52-fast-pp','2023-10-14-03-32-52-fast-pp','2023-10-14-03-32-52-fast-pp','2023-10-14-03-32-52-fast-pp']
 new_order = [3, 0, 1, 4, 2]
 
 regions = [regions[i] for i in new_order]
@@ -483,7 +353,7 @@ mpc_files = [mpc_files[i] for i in new_order]
 stanley_files = [stanley_files[i] for i in new_order]
 pp_files = [pp_files[i] for i in new_order]
 cte_histogram(regions, mpc_files, stanley_files, pp_files, adjustment_factors, global_path_x, global_path_y)
-combine_data_and_compute_statistics(regions, mpc_files, stanley_files, pp_files,fast_files)
+
 
 
 # ##! ALL

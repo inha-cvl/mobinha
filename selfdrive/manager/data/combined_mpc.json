@@ -1,0 +1,21 @@
+{
+    "CTE RMS": 1.04,
+    "CTE Max": 2.91,
+    "CTE Min": 0.0,
+    "CTE Std Dev": 0.75,
+    "Heading error RMS": 7.25,
+    "Heading error Max": 20.74,
+    "Heading error Min": -23.51,
+    "Heading error Std Dev": 7.18,
+    "LONG ACC RMS": 0.71,
+    "LONG ACC Max": 2.06,
+    "LONG ACC Min": -2.6,
+    "LONG ACC Std Dev": 0.68,
+    "LAT ACC RMS": 0.24,
+    "LAT ACC Max": 1.49,
+    "LAT ACC Min": -1.59,
+    "LAT ACC Std Dev": 0.24,
+    "LONG JERK": 0,
+    "LAT JERK": 0,
+    "Long accel": 0
+}

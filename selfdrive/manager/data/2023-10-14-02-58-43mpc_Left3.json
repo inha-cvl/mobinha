@@ -1,0 +1,17 @@
+{
+    "CTE RMS": 2.6,
+    "CTE Max": 9.07,
+    "CTE Min": -1.05,
+    "CTE Std Dev": 2.34,
+    "LONG ACC RMS": 0.88,
+    "LONG ACC Max": 2.08,
+    "LONG ACC Min": -0.72,
+    "LONG ACC Std Dev": 0.55,
+    "LAT ACC RMS": 0.2,
+    "LAT ACC Max": 0.64,
+    "LAT ACC Min": -0.75,
+    "LAT ACC Std Dev": 0.2,
+    "LONG JERK": 0,
+    "LAT JERK": 0,
+    "Long accel": 0
+}

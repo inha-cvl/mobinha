@@ -327,11 +327,12 @@ def compute_cte_for_data(data, global_path_x, global_path_y):
     data['cte'] = cte_values
     return data
 
-def cte_histogram(regions, mpc_files, stanley_files, pp_files, adjustment_factors, global_path_x, global_path_y):
+def cte_histogram(regions, mpc_files, stanley_files, pp_files, fast_files, adjustment_factors, global_path_x, global_path_y):
 
     mpc_combined = pd.DataFrame()
     stanley_combined = pd.DataFrame()
     pp_combined = pd.DataFrame()
+    fast_combined = pd.DataFrame()
     
     for region_idx, region in enumerate(regions):
         # 지정된 경계를 정의
@@ -343,12 +344,14 @@ def cte_histogram(regions, mpc_files, stanley_files, pp_files, adjustment_factor
         mpc_data = pd.read_json(f'../data/paper_data/{mpc_files[region_idx]}_data.json', orient="records", lines=True)
         stanley_data = pd.read_json(f'../data/paper_data/{stanley_files[region_idx]}_data.json', orient="records", lines=True)
         pp_data = pd.read_json(f'../data/paper_data/{pp_files[region_idx]}_data.json', orient="records", lines=True)
+        fast_data = pd.read_json(f'../data/paper_data/{fast_files[region_idx]}_data.json', orient="records", lines=True)
 
         # 경계에 따라 데이터 필터링
         mpc_data = mpc_data[(mpc_data['x'] >= left) & (mpc_data['x'] <= right) & (mpc_data['y'] >= bottom) & (mpc_data['y'] <= top)]
         stanley_data = stanley_data[(stanley_data['x'] >= left) & (stanley_data['x'] <= right) & (stanley_data['y'] >= bottom) & (stanley_data['y'] <= top)]
         pp_data = pp_data[(pp_data['x'] >= left) & (pp_data['x'] <= right) & (pp_data['y'] >= bottom) & (pp_data['y'] <= top)]
-        
+        fast_data = fast_data[(fast_data['x'] >= left) & (fast_data['x'] <= right) & (fast_data['y'] >= bottom) & (fast_data['y'] <= top)]
+
         gt_tree = cKDTree([(point[0], point[1]) for point in gt_data])
         distances, indices = gt_tree.query(mpc_data[['x', 'y']].values)
         mpc_data['x'] = mpc_data['x'] + (np.array([gt_data[i][0] for i in indices]) - mpc_data['x']) * adjustment_factors[region_idx]
@@ -357,54 +360,96 @@ def cte_histogram(regions, mpc_files, stanley_files, pp_files, adjustment_factor
         mpc_data = compute_cte_for_data(mpc_data, global_path_x, global_path_y)
         stanley_data = compute_cte_for_data(stanley_data, global_path_x, global_path_y)
         pp_data = compute_cte_for_data(pp_data, global_path_x, global_path_y)
+        fast_data = compute_cte_for_data(fast_data, global_path_x, global_path_y)
 
         # 데이터 합치기
         mpc_combined = pd.concat([mpc_combined, mpc_data])
         stanley_combined = pd.concat([stanley_combined, stanley_data])
         pp_combined = pd.concat([pp_combined, pp_data])
+        fast_combined = pd.concat([fast_combined, fast_data])
 
     # 히스토그램 생성
         # bin edges 계산
-    all_cte = pd.concat([mpc_combined['cte'], stanley_combined['cte'], pp_combined['cte']])
-    bins = np.histogram(all_cte, bins=50)[1]  # Only get bin edges
-
-    plt.figure(figsize=(10, 6))
-    plt.hist(mpc_combined['cte'], bins=bins, alpha=0.5, label="MPC")
-    plt.hist(stanley_combined['cte'], bins=bins, alpha=0.5, label="Stanley")
-    plt.hist(pp_combined['cte'], bins=bins, alpha=0.5, label="PP")
-    plt.xlim([min(bins), 2.])  # x축 범위 설정
+    # all_cte = pd.concat([mpc_combined['cte'], stanley_combined['cte'], pp_combined['cte']])
+    # bins = np.histogram(all_cte, bins=50)[1]  # Only get bin edges
 
     # plt.figure(figsize=(10, 6))
+    # plt.hist(mpc_combined['cte'], bins=bins, alpha=0.5, label="MPC")
+    # plt.hist(stanley_combined['cte'], bins=bins, alpha=0.5, label="Stanley")
+    # plt.hist(pp_combined['cte'], bins=bins, alpha=0.5, label="PP")
+    # plt.xlim([min(bins), 2.])  # x축 범위 설정
+
+    all_cte = pd.concat([fast_combined['cte'], pp_combined['cte']])
+    bins = np.histogram(all_cte, bins=50)[1]  # Only get bin edges
+    plt.figure(figsize=(10, 6))
     # plt.hist(mpc_combined['cte'], alpha=0.5, label="MPC", bins=50)
     # plt.hist(stanley_combined['cte'], alpha=0.5, label="Stanley", bins=50)
-    # plt.hist(pp_combined['cte'], alpha=0.5, label="PP", bins=50)
-    # plt.title("CTE histogram")
+    plt.hist(fast_combined['cte'], bins=bins, alpha=0.5, label="w/o Proposed.")
+    plt.hist(pp_combined['cte'], bins=bins, alpha=0.5, label="Proposed.")
+    plt.title("CTE histogram")
     plt.xlabel("CTE (m)")
     plt.ylabel("counts")
     plt.legend(loc='upper right', fontsize = 16)
-    plt.show()
-    all_cte = pd.concat([mpc_combined['cte'], stanley_combined['cte'], pp_combined['cte']])
+
+    all_cte = pd.concat([fast_combined['cte'], pp_combined['cte']])
     bins = np.histogram(all_cte, bins=50)[1]  # Only get bin edges
 
-    # Offset 계산
-    bin_width = bins[1] - bins[0]
-    mpc_offset = (1 - 0.9) * bin_width / 2
-    stanley_offset = (1 - 0.8) * bin_width / 2
-    pp_offset = (1 - 0.7) * bin_width / 2
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 6))
 
-    adjusted_bins_mpc = bins - mpc_offset
-    adjusted_bins_stanley = bins - stanley_offset
-    adjusted_bins_pp = bins - pp_offset
+    # 왼쪽 그래프 (CTE < 1.5)
+    bins_left = bins[bins < 1.5]
+    ax1.hist(fast_combined['cte'], bins=bins_left, alpha=0.5, label="w/o Proposed.")
+    ax1.hist(pp_combined['cte'], bins=bins_left, alpha=0.5, label="Proposed.")
+    ax1.set_xlim(min(bins_left), max(bins_left))
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(mpc_combined['cte'], bins=adjusted_bins_mpc, alpha=1, label="MPC", rwidth=0.9, align='left')
-    plt.hist(stanley_combined['cte'], bins=adjusted_bins_stanley, alpha=1, label="Stanley", rwidth=0.8, align='left')
-    plt.hist(pp_combined['cte'], bins=adjusted_bins_pp, alpha=1, label="Pure-Pursuit", rwidth=0.7, align='left')
-    plt.xlim([min(bins), 2.])  # x축 범위 설정
+    # 오른쪽 그래프 (CTE > 2.5)
+    bins_right = bins[bins > 2.7]
+    ax2.hist(fast_combined['cte'], bins=bins_right, alpha=0.5, label="w/o Proposed.")
+    ax2.hist(pp_combined['cte'], bins=bins_right, alpha=0.5, label="Proposed.")
+    ax2.set_xlim(2.7, 3)
 
-    plt.xlabel("CTE (m)")
-    plt.ylabel("counts")
-    plt.legend(loc='upper right', fontsize=20)
+    # 그래프 사이에 끊어진 부분 표시
+    ax1.spines['right'].set_visible(False)
+    ax2.spines['left'].set_visible(False)
+    ax1.yaxis.tick_left()
+    ax1.tick_params(labelright=False)
+    ax2.yaxis.tick_right()
+
+    d = .015  # 끊어진 부분의 대각선 길이
+    kwargs = dict(transform=ax1.transAxes, color='k', clip_on=False)
+    ax1.plot((1 - d, 1 + d), (-d, +d), **kwargs)
+    ax1.plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)
+
+    kwargs.update(transform=ax2.transAxes)
+    ax2.plot((-d, +d), (-d, +d), **kwargs)
+    ax2.plot((-d, +d), (1 - d, 1 + d), **kwargs)
+
+    # plt.ylabel("counts")
+    fig.text(0.5, 0.04, "CTE (m)", ha='center')
+    ax1.legend(loc='upper right', fontsize=16)
+    plt.show()
+
+
+
+    # # Offset 계산
+    # bin_width = bins[1] - bins[0]
+    # mpc_offset = (1 - 0.9) * bin_width / 2
+    # stanley_offset = (1 - 0.8) * bin_width / 2
+    # pp_offset = (1 - 0.7) * bin_width / 2
+
+    # adjusted_bins_mpc = bins - mpc_offset
+    # adjusted_bins_stanley = bins - stanley_offset
+    # adjusted_bins_pp = bins - pp_offset
+
+    # plt.figure(figsize=(10, 6))
+    # plt.hist(mpc_combined['cte'], bins=adjusted_bins_mpc, alpha=1, label="MPC", rwidth=0.9, align='left')
+    # plt.hist(stanley_combined['cte'], bins=adjusted_bins_stanley, alpha=1, label="Stanley", rwidth=0.8, align='left')
+    # plt.hist(pp_combined['cte'], bins=adjusted_bins_pp, alpha=1, label="Pure-Pursuit", rwidth=0.7, align='left')
+    # plt.xlim([min(bins), 2.])  # x축 범위 설정
+
+    # plt.xlabel("CTE (m)")
+    # plt.ylabel("counts")
+    # plt.legend(loc='upper right', fontsize=20)
     plt.show()
 
 # #*GLOBAL PATH
@@ -482,7 +527,7 @@ adjustment_factors = [adjustment_factors[i] for i in new_order]
 mpc_files = [mpc_files[i] for i in new_order]
 stanley_files = [stanley_files[i] for i in new_order]
 pp_files = [pp_files[i] for i in new_order]
-cte_histogram(regions, mpc_files, stanley_files, pp_files, adjustment_factors, global_path_x, global_path_y)
+cte_histogram(regions, mpc_files, stanley_files, pp_files,fast_files, adjustment_factors, global_path_x, global_path_y)
 combine_data_and_compute_statistics(regions, mpc_files, stanley_files, pp_files,fast_files)
 
 

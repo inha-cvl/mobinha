@@ -126,13 +126,13 @@ class ObstacleDetector:
                 #x/2 is obj[5]/2, y/2 is obj[6]/2, z/2 is obj[7]/2
                 if self.lane_position == 1:
                     if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -1.5 < obj_d < 4.15 and obj[4] > 1:
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (obj[3])*3.6))
                 elif self.lane_position == 3:
                     if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -4.15 < obj_d < 1.5 and obj[4] > 1: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (obj[3])*3.6))
                 else:
                     if -50*(1/self.CP.mapParam.precision) < obj_s-car_idx < 90*(1/self.CP.mapParam.precision) and -4.1 < obj_d < 4.1 and obj[4] > 1: 
-                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
+                        viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (obj[3])*3.6))
 
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and obj_d > -1.5 and obj_d < 1.5:
@@ -142,7 +142,7 @@ class ObstacleDetector:
                         around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
                 #avoid tail car
                 if (obj_s-car_idx) > -5*(1/self.CP.mapParam.precision) and (obj_s-car_idx) < 100*(1/self.CP.mapParam.precision) and -3 < obj_d < -1. and 1. < obj_d < 3:
-                    calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6], (self.CS.vEgo + obj[3])*3.6)
+                    calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6], (obj[3])*3.6)
                     if calculated_gain != 0 and not avoidance_required:
                         # If any obstacle requires avoidance, set the flag and update the gain value
                         avoidance_required = True

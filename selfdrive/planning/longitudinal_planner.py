@@ -149,12 +149,12 @@ class LongitudinalPlanner:
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego):
         target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
-        follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
+        follow_distance = self.desired_follow_distance(cur_v, self.rel_v) #output follow_distance unit (m)
         ttc = min_s / self.rel_v if self.rel_v != 0 else min_s# minus value is collision case
         self.follow_error = follow_distance-min_s
         gain = self.get_dynamic_gain(self.follow_error, ttc)
         if self.follow_error < 0: # MINUS is ACCEL
-            if v_ego < 0.4*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
+            if v_ego < 0.4*MPS_TO_KPH and (self.rel_v) < 15*KPH_TO_MPS:
                 target_v = min(max_v, self.target_v + 0.8/HZ)
             else:
                 target_v = min(max_v, self.target_v + gain)

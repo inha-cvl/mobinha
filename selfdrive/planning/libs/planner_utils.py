@@ -46,46 +46,31 @@ def lanelet_matching(tile, tile_size, t_pt):
         return None
 
 def get_my_neighbor(lanelets, my_id):
+    
+    def get_front_id(current_id):
+        """Helper function to get the front id for a given lanelet id."""
+        if current_id is not None and lanelets[current_id]['successor'] is not None:
+            if set(lanelets[current_id]['successor']) & set(lanelets[my_id]['successor']):
+                return None
+            else:
+                if len(lanelets[current_id]['successor']) == 1:
+                    return lanelets[current_id]['successor'][0]
+                elif len(lanelets[current_id]['successor']) > 1:
+                    for id in lanelets[current_id]['successor']:
+                        if lanelets[id]['laneNo'] == lanelets[current_id]['laneNo']:
+                            return id
+        return None
+
+    # Initialize lanelet ids
+    l_id, l_front_id, r_id, r_front_id = None, None, None, None
+    
     l_id = lanelets[my_id]['adjacentLeft']
-    if l_id != None and lanelets[l_id]['successor'] is not None:
-        if set(lanelets[l_id]['successor']) & set(lanelets[my_id]['successor']):
-            l_front_id = None
-        else: 
-            #TODO: not 100% [0] is not left...
-            #l id successor is 2 over -> my id successor adjacentleft and l id successor is same
-            #l id successor ~ lane no see . 
-            if len(lanelets[l_id]['successor']) == 1:
-                l_front_id = lanelets[l_id]['successor'][0]
-            elif len(lanelets[l_id]['successor']) > 1:
-                for id in lanelets[l_id]['successor']:
-                    if lanelets[id]['laneNo'] == lanelets[l_id]['laneNo']:
-                        l_front_id = id
-                        break
-            else:
-                l_front_id = None
-            # l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
-    else:
-        l_front_id = None
-    #TODO: have to look left_front, right_front
-    #lanelets[l_id]['successor']
+    l_front_id = get_front_id(l_id)
+    
     r_id = lanelets[my_id]['adjacentRight']
-    if r_id != None and lanelets[r_id]['successor'] is not None:
-        if set(lanelets[r_id]['successor']) & set(lanelets[my_id]['successor']):
-            r_front_id = None
-        else:
-            if len(lanelets[r_id]['successor']) == 1:
-                r_front_id = lanelets[r_id]['successor'][0]
-            elif len(lanelets[r_id]['successor']) > 1:
-                for id in lanelets[r_id]['successor']:
-                    if lanelets[id]['laneNo'] == lanelets[r_id]['laneNo']:
-                        r_front_id = id
-                        break
-            else:
-                r_front_id = None
-            # r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
-    else:
-        r_front_id = None
-    return ((l_id,l_front_id),(r_id,r_front_id))
+    r_front_id = get_front_id(r_id)
+
+    return ((l_id, l_front_id), (r_id, r_front_id))
 
 def exchange_waypoint(target, now):
     exchange_waypoints = []

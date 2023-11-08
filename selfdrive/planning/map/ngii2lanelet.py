@@ -420,118 +420,118 @@ class NGII2LANELET:
                     data['uTurn'] = True
 
         #TODO: CREATE ROI for front 100m
-        for n, group in tqdm(enumerate(groups), desc="roi: ", total=len(groups)):
-            if len(group)==0:
-                continue
+        # for n, group in tqdm(enumerate(groups), desc="roi: ", total=len(groups)):
+        #     if len(group)==0:
+        #         continue
 
-            def get_direction(chunk):
-                start = chunk[0]
-                end = chunk[-1]
-                return (end[0] - start[0], end[1] - start[1])
-            def sort_key(chunk, all_chunks):
-                # 모든 청크들에 대한 방향을 계산합니다.
-                directions = [get_direction(c) for c in all_chunks]
-                # 전체 청크들의 평균 방향을 계산합니다.
-                avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
-                start = chunk[0]
-                # 시작점과 평균 방향 벡터의 내적으로 정렬
-                return start[0] * avg_direction[0] + start[1] * avg_direction[1]
-            def get_ordered_chunks(chunks):
-                # sorted 함수에서 여러 인자를 전달하기 위해 lambda를 사용
-                sorted_chunks = sorted(chunks, key=lambda chunk: sort_key(chunk, chunks))
-                return sorted_chunks
-            def simplify_coords(coords, tolerance=0.005):
-                if len(coords) <= 2:
-                    return coords
-                line = LineString(coords)
-                simplified = line.simplify(tolerance)
-                return list(simplified.coords)
-            def find_next_id(current_id, lanelets):
-                next_id = lanelets[current_id]['successor']
-                if lanelets[current_id]['uTurn']:
-                    current_id = group[1]
-                    next_id = lanelets[current_id]['successor']
-                if next_id is not None and len(next_id) >= 1:
-                    next_id = next_id[0]
-                else:
-                    return None
+        #     def get_direction(chunk):
+        #         start = chunk[0]
+        #         end = chunk[-1]
+        #         return (end[0] - start[0], end[1] - start[1])
+        #     def sort_key(chunk, all_chunks):
+        #         # 모든 청크들에 대한 방향을 계산합니다.
+        #         directions = [get_direction(c) for c in all_chunks]
+        #         # 전체 청크들의 평균 방향을 계산합니다.
+        #         avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
+        #         start = chunk[0]
+        #         # 시작점과 평균 방향 벡터의 내적으로 정렬
+        #         return start[0] * avg_direction[0] + start[1] * avg_direction[1]
+        #     def get_ordered_chunks(chunks):
+        #         # sorted 함수에서 여러 인자를 전달하기 위해 lambda를 사용
+        #         sorted_chunks = sorted(chunks, key=lambda chunk: sort_key(chunk, chunks))
+        #         return sorted_chunks
+        #     def simplify_coords(coords, tolerance=0.005):
+        #         if len(coords) <= 2:
+        #             return coords
+        #         line = LineString(coords)
+        #         simplified = line.simplify(tolerance)
+        #         return list(simplified.coords)
+        #     def find_next_id(current_id, lanelets):
+        #         next_id = lanelets[current_id]['successor']
+        #         if lanelets[current_id]['uTurn']:
+        #             current_id = group[1]
+        #             next_id = lanelets[current_id]['successor']
+        #         if next_id is not None and len(next_id) >= 1:
+        #             next_id = next_id[0]
+        #         else:
+        #             return None
 
-                return next_id
-            def spline(bound):
-                if len(bound) < 2:
-                    return bound
-                x, y = zip(*bound)
+        #         return next_id
+        #     def spline(bound):
+        #         if len(bound) < 2:
+        #             return bound
+        #         x, y = zip(*bound)
 
-                # 스플라인 보간
-                tck, u = splprep([x, y], s=0)
-                unew = np.linspace(0, 1, 100)
-                xnew, ynew = splev(unew, tck)
+        #         # 스플라인 보간
+        #         tck, u = splprep([x, y], s=0)
+        #         unew = np.linspace(0, 1, 100)
+        #         xnew, ynew = splev(unew, tck)
 
-                # 보간된 좌표를 리스트 형태로 변환
-                return [[xi, yi] for xi, yi in zip(xnew, ynew)]
-            def find_edge_id(flag, adjacent_id, lanelets):
-                if flag == 'l':
-                    while adjacent_id is not None:
-                        if lanelets[adjacent_id]['adjacentLeft'] is None:
-                            break
-                        adjacent_id = lanelets[adjacent_id]['adjacentLeft']
-                elif flag == 'r':
-                    while adjacent_id is not None:
-                        if lanelets[adjacent_id]['adjacentRight'] is None:
-                            break
-                        adjacent_id = lanelets[adjacent_id]['adjacentRight']
-                return adjacent_id
+        #         # 보간된 좌표를 리스트 형태로 변환
+        #         return [[xi, yi] for xi, yi in zip(xnew, ynew)]
+        #     def find_edge_id(flag, adjacent_id, lanelets):
+        #         if flag == 'l':
+        #             while adjacent_id is not None:
+        #                 if lanelets[adjacent_id]['adjacentLeft'] is None:
+        #                     break
+        #                 adjacent_id = lanelets[adjacent_id]['adjacentLeft']
+        #         elif flag == 'r':
+        #             while adjacent_id is not None:
+        #                 if lanelets[adjacent_id]['adjacentRight'] is None:
+        #                     break
+        #                 adjacent_id = lanelets[adjacent_id]['adjacentRight']
+        #         return adjacent_id
 
-            length = 0
-            edge_left_new_id = group[0] # edge left link id
-            edge_right_new_id = group[-1] # edge right link id
+        #     length = 0
+        #     edge_left_new_id = group[0] # edge left link id
+        #     edge_right_new_id = group[-1] # edge right link id
 
-            length = lanelets[edge_left_new_id]['length']
-            left_bound = lanelets[edge_left_new_id]['leftBound']
-            right_bound = lanelets[edge_right_new_id]['rightBound']
+        #     length = lanelets[edge_left_new_id]['length']
+        #     left_bound = lanelets[edge_left_new_id]['leftBound']
+        #     right_bound = lanelets[edge_right_new_id]['rightBound']
 
-            ordered_left = get_ordered_chunks(left_bound)
-            ordered_right = get_ordered_chunks(right_bound)
+        #     ordered_left = get_ordered_chunks(left_bound)
+        #     ordered_right = get_ordered_chunks(right_bound)
 
-            next_left_id = find_next_id(edge_left_new_id, lanelets)
-            next_id = next_left_id
-            next_right_id = find_edge_id('r', next_left_id, lanelets)
+        #     next_left_id = find_next_id(edge_left_new_id, lanelets)
+        #     next_id = next_left_id
+        #     next_right_id = find_edge_id('r', next_left_id, lanelets)
 
-            # while length<250:
-            #     if next_left_id is None:
-            #         break
-            #     length += lanelets[next_left_id]['length']
+        #     # while length<250:
+        #     #     if next_left_id is None:
+        #     #         break
+        #     #     length += lanelets[next_left_id]['length']
                 
-            #     next_left_id = find_edge_id('l', next_left_id, lanelets)
+        #     #     next_left_id = find_edge_id('l', next_left_id, lanelets)
 
-            #     left_bound = lanelets[next_left_id]['leftBound']
-            #     right_bound = lanelets[next_right_id]['rightBound'] if next_right_id is not None else []
+        #     #     left_bound = lanelets[next_left_id]['leftBound']
+        #     #     right_bound = lanelets[next_right_id]['rightBound'] if next_right_id is not None else []
 
-            #     ordered_left = ordered_left + get_ordered_chunks(left_bound)
-            #     ordered_right = ordered_right + get_ordered_chunks(right_bound)
+        #     #     ordered_left = ordered_left + get_ordered_chunks(left_bound)
+        #     #     ordered_right = ordered_right + get_ordered_chunks(right_bound)
 
-            #     next_left_id = find_next_id(next_left_id, lanelets)
-            #     next_right_id = find_edge_id('r', next_left_id, lanelets)
+        #     #     next_left_id = find_next_id(next_left_id, lanelets)
+        #     #     next_right_id = find_edge_id('r', next_left_id, lanelets)
 
-            flat_left_bound = [item for sublist in ordered_left for item in sublist]
-            flat_right_bound = [item for sublist in ordered_right for item in sublist]
+        #     flat_left_bound = [item for sublist in ordered_left for item in sublist]
+        #     flat_right_bound = [item for sublist in ordered_right for item in sublist]
 
-            # all_coords = flat_left_bound + flat_right_bound[::-1]
-            # all_coords_simplified = simplify_coords(all_coords)
-            # spline_all_coords = spline(all_coords_simplified)
+        #     # all_coords = flat_left_bound + flat_right_bound[::-1]
+        #     # all_coords_simplified = simplify_coords(all_coords)
+        #     # spline_all_coords = spline(all_coords_simplified)
             
-            flat_left_bound = spline(flat_left_bound)
-            flat_right_bound = spline(flat_right_bound)
+        #     flat_left_bound = spline(flat_left_bound)
+        #     flat_right_bound = spline(flat_right_bound)
 
-            simplified_left = simplify_coords(flat_left_bound)
-            simplified_right = simplify_coords(flat_right_bound[::-1])
-            # Combine
-            all_coords_simplified = simplified_left + simplified_right
+        #     simplified_left = simplify_coords(flat_left_bound)
+        #     simplified_right = simplify_coords(flat_right_bound[::-1])
+        #     # Combine
+        #     all_coords_simplified = simplified_left + simplified_right
 
-            for i in range(len(group)):
-                lanelets[group[i]]['ROI'] = [list(coord) for coord in all_coords_simplified]
-            # if next_id and lanelets[next_id]['intersection']:
-                # lanelets[next_id]['ROI'] = [list(coord) for coord in all_coords_simplified]
+        #     for i in range(len(group)):
+        #         lanelets[group[i]]['ROI'] = [list(coord) for coord in all_coords_simplified]
+        #     # if next_id and lanelets[next_id]['intersection']:
+        #         # lanelets[next_id]['ROI'] = [list(coord) for coord in all_coords_simplified]
                 
             
         for id_, data in lanelets.items():

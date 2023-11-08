@@ -27,7 +27,7 @@ if __name__ == "__main__":
     name = 'songdo'
 
     parser.add_argument('--ngii_path', type=str, default='./%s'%(name))
-    parser.add_argument('--precision', type=float, default=0.5)
+    parser.add_argument('--precision', type=float, default=1.0)
     parser.add_argument('--base_lla', type=tuple, default=(37.3888319, 126.6428739, 7.369), help='(lat, lon, alt)')
     parser.add_argument('--is_utm', type=bool, default=False)
 

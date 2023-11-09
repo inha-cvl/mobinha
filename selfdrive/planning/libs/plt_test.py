@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import splprep, splev
 
+precision = 0.5
 # # Load the JSON data from the provided file
 with open("/home/jang/Desktop/waypoints_data_all_smooth5.json", "r") as file:
     loaded_data = json.load(file)
@@ -49,7 +50,7 @@ def ref_interpolate_2d(points, precision, smoothing=0):
 
     return itp_points, total_distance
 
-global_path, last_s = ref_interpolate_2d(non_intp_path, 0.5)
+global_path, last_s = ref_interpolate_2d(non_intp_path, precision)
 global a
 a = 0
 
@@ -152,7 +153,7 @@ def ref_interpolate_2d_adaptive(points, precision, curve_smoothing, straight_smo
 # Interpolate each segment with different smoothing parameters
 curve_smoothing = 100
 straight_smoothing = 0.01
-interpolated_path_adaptive = ref_interpolate_2d_adaptive(non_intp_path, 0.5, curve_smoothing, straight_smoothing)
+interpolated_path_adaptive = ref_interpolate_2d_adaptive(non_intp_path, precision, curve_smoothing, straight_smoothing)
 
 def calculate_angles(points):
     """Calculate angles (in radians) between consecutive points."""
@@ -229,7 +230,7 @@ def ref_interpolate_2d_v3(points, precision, curve_smoothing, straight_smoothing
 
 
 # Using the function to interpolate the test_wps
-interpolated_path_v3, s = ref_interpolate_2d_v3(non_intp_path, 0.5, curve_smoothing=200, straight_smoothing=0)
+interpolated_path_v3, s = ref_interpolate_2d_v3(non_intp_path, precision, curve_smoothing=200, straight_smoothing=0)
 
 
 from scipy.ndimage import gaussian_filter1d

@@ -381,7 +381,7 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo) 
+                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX) 
                                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
 
                 if blinker != 0 and self.blinker_target_id == None:
@@ -398,7 +398,7 @@ class PathPlanner:
                     # self.change_lane_flag = False
                     self.renewal_path_cnt = 0
 
-                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id)
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
                 lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
                 ## Lane Change Local Path Planning
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
@@ -421,8 +421,10 @@ class PathPlanner:
                     renew_a = 30 # uniti: idx
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
+                        print(obs)
+                        print(get_look_a_head_id)
                         #Left
-                        if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1) and obs[6]>3: # frenet d coordinate left. 
+                        if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             #TODO: if left lane change, get prev,now,next leftBound and check obstacle where is it. 
                             _, _, _, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
                             if isCarInRoad:
@@ -465,7 +467,7 @@ class PathPlanner:
                                         if self.renewal_path_cnt > 30:
                                             self.renewal_path_cnt = 0
                                         return pp, self.local_path
-                        elif blinker == 2 and get_look_a_head_id and 1.8<obs[2]<4.05 and lane_change_point<(len(self.local_path)-1) and obs[6]>3: # frenet d coordinate right.
+                        elif blinker == 2 and get_look_a_head_id and 1.8<obs[2]<4.05 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
                             vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
                             targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                             safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 

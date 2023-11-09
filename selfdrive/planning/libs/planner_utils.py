@@ -11,8 +11,6 @@ from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-M_TO_IDX = 2
-IDX_TO_M = 0.5
 HZ = 10
 
 def euc_distance(pt1, pt2):
@@ -172,8 +170,8 @@ def interpolate(points, precision):
     return itp_points, itp.s[-1], yaw, k
 
 from scipy.interpolate import UnivariateSpline
-def ref_interpolate_2d(points, precision, smoothing=0):
 
+def ref_interpolate_2d(points, precision, smoothing=0):
     points = filter_same_points(points)
     wx, wy = zip(*points)
 
@@ -195,7 +193,8 @@ def ref_interpolate_2d(points, precision, smoothing=0):
     return itp_points, total_distance
 
 from scipy.ndimage import gaussian_filter1d
-def gaussian_smoothing_2d(points, sigma=9):
+
+def gaussian_smoothing_2d(points, sigma=1):
     wx, wy = zip(*points)
     smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
     smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
@@ -318,20 +317,6 @@ def dijkstra(graph, start, finish):
                 hq.heapify(nodes)  # heapq relocate
 
     return None
-
-
-# def filter_same_points(points):
-#     filtered_points = []
-#     pre_pt = None
-
-#     for pt in points:
-#         if pre_pt is None or pt != pre_pt:
-#             filtered_points.append(pt)
-
-#         pre_pt = pt
-
-#     return filtered_points
-
 
 def node_to_waypoints2(lanelet, shortest_path):
     final_path = []
@@ -466,7 +451,7 @@ def get_a_b_for_blinker(min, ignore):
     b = 10
     return a,b
 
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):#, local_id, change_target_id, change_lane_flag): 
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX):#, local_id, change_target_id, change_lane_flag): 
     #TODO: CHECK FLAG     
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
@@ -497,7 +482,7 @@ def compare_id(lh_id, my_neighbor_id):
     else:
         return True
 
-def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id, next_id):
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id, next_id, M_TO_IDX):
     # ws = int((1.5*vEgo)+70)
     # ws = int(14.4*vEgo+80)
     ws = int(1.014*vEgo**2 - 0.776*vEgo + 95)

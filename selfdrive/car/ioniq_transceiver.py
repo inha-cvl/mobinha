@@ -3,11 +3,11 @@
 import can
 import cantools
 import time
+import datetime
 
 import rospy
-from std_msgs.msg import Float32, Int8
+from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
-
 
 class IoniqTransceiver():
     def __init__(self, CP):
@@ -28,13 +28,24 @@ class IoniqTransceiver():
         self.pub_gear = rospy.Publisher('/mobinha/car/gear', Int8, queue_size=1)
         self.pub_mode = rospy.Publisher('/mobinha/car/mode', Int8, queue_size=1)
         self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
+        self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
+        self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
+        #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
+        self.gateway = Int8MultiArray()
+        self.gateway.data = [0, 0, 0, 0, 0, 0]
         self.rcv_velocity = 0
-        self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0}
+        self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0, 1: 0}
         self.Accel_Override = 0
         self.Break_Override = 0
         self.Steering_Overide = 0
+        self.alv_cnt = 0
+        self.Alive_Count_ERR = 0
+        self.recv_err_cnt = 0
+        self.err_time = None 
+        self.last_mode_2_time = 0
+        self.force_mode_2 = False
 
         self.prev_control_state = self.control_state.copy()
 
@@ -48,22 +59,32 @@ class IoniqTransceiver():
 
     def can_cmd(self, canCmd):
         state = self.control_state
-        if canCmd.disable:  # Full disable
-            self.reset_trigger()
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-        elif canCmd.enable:  # Full
-            state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
-        elif canCmd.latActive:  # Only Lateral
-            state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
-        elif canCmd.longActive:  # Only Longitudinal
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
-        self.mode = 0
-        if canCmd.enable:
-            self.mode = 1
-        if self.Accel_Override or self.Break_Override or self.Steering_Overide:
-            self.mode = 2 # override mode
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-            self.reset_trigger()
+        current_time = rospy.get_time()
+        
+        if self.force_mode_2 and current_time - self.last_mode_2_time < 1.0:
+            # mode를 강제로 2로 1초 동안 유지
+            self.mode = 2
+        else:
+            self.force_mode_2 = False  # 강제 유지를 종료
+            if canCmd.disable:  # Full disable
+                self.reset_trigger()
+                state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+                if not self.force_mode_2:  # 강제 유지가 아닐 경우에만 mode를 0으로 설정
+                    self.mode = 0
+            elif canCmd.enable:  # Full
+                state = {**state, 'steer_en': 0x1, 'acc_en': 0x1}
+                self.mode = 1
+            elif canCmd.latActive:  # Only Lateral
+                state = {**state, 'steer_en': 0x1, 'acc_en': 0x0}
+            elif canCmd.longActive:  # Only Longitudinal
+                state = {**state, 'steer_en': 0x0, 'acc_en': 0x1}
+            
+            if self.Accel_Override or self.Break_Override or self.Steering_Overide:
+                self.mode = 2  # override mode
+                self.last_mode_2_time = current_time  # 현재 시간을 저장
+                self.force_mode_2 = True  # mode를 강제로 2로 유지
+                state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+                self.reset_trigger()
         
         self.control_state = state 
         self.pub_mode.publish(Int8(self.mode))
@@ -87,11 +108,10 @@ class IoniqTransceiver():
             self.init_target_actuator()
 
     def receiver(self):
-        data = self.bus.recv()
+        data = self.bus.recv(0.2)
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                #'%.4f' % res['Gway_Lateral_Accel_Speed']
                 self.ego_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
                 
             if (data.arbitration_id == 0x280):
@@ -106,7 +126,7 @@ class IoniqTransceiver():
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
-                gear_sel_disp = res['Gway_GearSelDisp'] 
+                gear_sel_disp = res['Gway_GearSelDisp']
                 if gear_sel_disp == "R":  # R
                     gear_sel_disp = 1
                 elif gear_sel_disp == "N":  # N
@@ -129,17 +149,35 @@ class IoniqTransceiver():
                 self.Accel_Override = res['Accel_Override']
                 self.Break_Override = res['Break_Override']
                 self.Steering_Overide = res['Steering_Overide']
-                if self.Accel_Override or self.Break_Override or self.Steering_Overide:
-                    self.target_actuators['steer'] = self.ego_actuators['steer']
-                    self.target_actuators['accel'] = self.ego_actuators['accel']
-                    self.target_actuators['brake'] = self.ego_actuators['brake']
+                self.Alive_Count_ERR = res['Alive_Count_ERR']
+                self.gateway.data[2] = res['Accel_Override']
+                self.gateway.data[3] = res['Break_Override']
+                self.gateway.data[4] = res['Steering_Overide']
+            if self.err_time is not None:
+                recovery_time = datetime.datetime.now() - self.err_time
+                print(f"Recovered in {recovery_time.total_seconds()} seconds")
+                self.err_time = None
+            
         except Exception as e:
-            print(e)
+            if data is None:
+                self.recv_err_cnt += 1
+                print("recv err cnt: ", self.recv_err_cnt)
+                if self.err_time is None:
+                    self.err_time = datetime.datetime.now()
+            else:
+                print(e)
 
+    def alive_counter(self, alv_cnt):
+        return (alv_cnt + 1) % 256
+    
     def ioniq_control(self):
+        self.alv_cnt = self.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.control_state['steer_en'], 'PA_StrAngCmd': self.target_actuators['steer'],
                    'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.target_actuators['brake'], 
-                   'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': 0x0, 'Reset_Flag': self.reset}
+                   'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset}
+        self.gateway.data[0] = signals['PA_Enable']
+        self.gateway.data[1] = signals['LON_Enable']
+        self.gateway.data[5] = signals['Reset_Flag']
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 
@@ -159,12 +197,11 @@ class IoniqTransceiver():
         self.bus.shutdown()
 
     def run(self, CM):
-        self.can_cmd(CM.CC.canCmd)
-        self.set_actuators(CM.CC.actuators)
-        # print(self.Accel_Override, self.Break_Override, self.Steering_Overide)
         if self.timer(0.02):
-            # if self.prev_control_state != self.control_state:
-            #     self.init_target_actuator()
-            #     self.prev_control_state = self.control_state.copy()
+            self.can_cmd(CM.CC.canCmd)
+            self.set_actuators(CM.CC.actuators)
             self.ioniq_control()
+            self.pub_gateway.publish(self.gateway)
+            self.pub_gateway_time.publish(Float64(time.time()))
         self.receiver()
+        

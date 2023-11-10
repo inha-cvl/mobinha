@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /BoundingBoxArray1
       Splitter Ratio: 0.5
     Tree Height: 787
   - Class: rviz/Selection
@@ -81,12 +82,12 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: jsk_rviz_plugin/BoundingBoxArray
-      Enabled: true
+      Enabled: false
       Name: BoundingBoxArray
       Queue Size: 10
       Topic: /mobinha/perception/lidar/track_box
       Unreliable: false
-      Value: true
+      Value: false
       alpha: 0.800000011920929
       color: 25; 255; 0
       coloring: Auto

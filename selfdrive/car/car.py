@@ -21,24 +21,33 @@ class Transceiver:
     def __init__(self):
         self.state = 'WAITING'
         self.need_init = True
+        self.tick = {0: 0, 0.01: 0, 0.02: 0, 0.05: 0, 0.1: 0, 1: 0}
         rospy.Subscriber('/mobinha/visualize/system_state',
                          String, self.state_cb)
 
+    def timer(self, sec):
+        if time.time() - self.tick[sec] > sec:
+            self.tick[sec] = time.time()
+            return True
+        else:
+            return False
+        
     def transceiver(self):
         can = None
-        timer = 0.1
+        timer = None
         cm = None
         while True:
             if self.state == 'INITIALIZE':
                 if self.need_init:
                     cm, can, timer = self.init()
             elif self.state == 'START':
-                self.need_init = True
-                cm.update()
-                can.run(cm)
+                if self.timer(timer):
+                    self.need_init = True
+                    cm.update()
+                    can.run(cm)
             elif self.state == 'OVER':
                 return 1
-            time.sleep(timer)
+            # time.sleep(timer)
 
     def init(self):
         self.need_init = False

@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /PointCloud21
         - /BoundingBoxArray1
       Splitter Ratio: 0.5
     Tree Height: 787
@@ -76,18 +75,18 @@ Visualization Manager:
       Size (Pixels): 1
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /full_cloud_projection
+      Topic: /ground_removed_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: jsk_rviz_plugin/BoundingBoxArray
-      Enabled: true
+      Enabled: false
       Name: BoundingBoxArray
       Queue Size: 10
       Topic: /mobinha/perception/lidar/track_box
       Unreliable: false
-      Value: true
+      Value: false
       alpha: 0.800000011920929
       color: 25; 255; 0
       coloring: Auto

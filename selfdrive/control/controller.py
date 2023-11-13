@@ -27,21 +27,21 @@ class Controller:
         self.prev_steer = 0.0
         self.local_path_theta = None
         self.local_path_radius = None
-        self.local_path_k = None
-        
+        self.local_path_k = None        
         self.max_steer_change_rate = 8/20*self.steer_ratio
-
         self.car = rospy.get_param('car_name', 'None')
-
+        self.cte = 0
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         # rospy.Subscriber('mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
         # rospy.Subscriber('mobinha/planning/local_path_radius', Float32MultiArray, self.local_path_radius_cb)
         # rospy.Subscriber('mobinha/planning/local_path_k', Float32MultiArray, self.local_path_k_cb)
-
+        rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
         self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
+
+        self.car = rospy.get_param('car_name', 'None')
 
     def limit_steer_change(self, current_steer):
         steer_change = current_steer - self.prev_steer
@@ -49,7 +49,10 @@ class Controller:
         limited_steer = self.prev_steer + steer_change
         self.prev_steer = limited_steer
         return limited_steer
-    
+
+    def goal_information_cb(self, msg):
+        self.cte = msg.orientation.y
+        
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
     
@@ -124,8 +127,11 @@ class Controller:
             # print("origin steer:",steer)
             # steer = self.limit_steer_change(steer)
             # print("limit steer:",steer)
+            steer = self.limit_steer_change(steer)
+
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
+
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             if self.car =="MORAI":

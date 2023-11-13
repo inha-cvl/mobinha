@@ -12,11 +12,12 @@ def getBaseLLA(map_path):
         return base[0], base[1], base[2]
 
 
-def getPrecision(map_name):
-    precision = 0.5
-    if map_name == 'KCity':
-        precision = 0.5
+def getPrecision(map_path):
+    with open(map_path) as f:
+        data = json.load(f)
+        precision = data['precision']
     return precision
+
 
 class IONIQ:
     def __init__(self, map_name='KCity'):
@@ -28,6 +29,7 @@ class IONIQ:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
+        car_param_map_param["precision"] = getPrecision(car_param_map_param["path"])
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng
@@ -84,7 +86,7 @@ class SIMULATOR:
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-
+        car_param_map_param["precision"] = getPrecision(car_param_map_param["path"])
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng
@@ -141,7 +143,7 @@ class MORAI: # HYUNDAI NEXO
         car_param_map_param = car_param_dict["mapParam"]._asdict()
         car_param_map_param["path"] = dir_path + \
             '/planning/map/%s.json' % map_name
-        car_param_map_param["precision"] = getPrecision(map_name)
+        car_param_map_param["precision"] = getPrecision(car_param_map_param["path"])
         base_lat, base_lng, base_alt = getBaseLLA(car_param_map_param["path"])
         car_param_map_param["baseLatitude"] = base_lat
         car_param_map_param["baseLongitude"] = base_lng

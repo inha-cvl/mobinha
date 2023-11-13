@@ -13,9 +13,12 @@ from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplin
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 prev_marker_count = 0
+prev_text_count = 0
 
 def ObjectsViz(objects):
     global prev_marker_count
+    global prev_text_count
+    text_count=0
 
     array = MarkerArray()
     marker = Marker()
@@ -25,6 +28,15 @@ def ObjectsViz(objects):
     for n, pt in enumerate(objects):
         if 0 < pt[2] < 200 and -1.45<pt[3]<1.45:
             color = (1.0, 0.0, 0.0, 1.0)
+            s = str(pt[2] / 2) if pt[2] else 0
+            d = str(round(pt[3], 1)) if pt[3] else 0
+            v = str(round(max(pt[5], 0))) if pt[5] and not math.isnan(pt[5]) else 0
+            # message = "s:{}m d:{}m v:{}km/h".format(s, d, v)
+            message = "v:{}km/h".format(v)
+            text = Text('obstacle_information', text_count, 1.0, (1, 1, 1, 1), message)
+            text.pose.position = Point(x=pt[0], y=pt[1], z=3.0)
+            text_count +=1
+            textarray.markers.append(text)
         elif -100 < pt[2] < 100 and (-4.05 < pt[3] < -1.45 or 1.45 < pt[3] < 4.05):
             color = (1.0, 1.0, 0.0, 1.0)
         else:
@@ -48,6 +60,9 @@ def ObjectsViz(objects):
             marker.id = i
             marker.action = Marker.DELETE
             array.markers.append(marker)
+
+    if text_count < prev_text_count:
+        for i in range(text_count, prev_text_count):
             text = Marker()
             text.ns = "obstacle_information"
             text.header.frame_id = "world"
@@ -56,6 +71,7 @@ def ObjectsViz(objects):
             textarray.markers.append(text)
 
     prev_marker_count = len(objects)
+    prev_text_count = text_count
     return array, textarray
 
 

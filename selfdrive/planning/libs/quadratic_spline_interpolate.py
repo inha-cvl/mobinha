@@ -2,7 +2,6 @@ import math
 import numpy as np
 from scipy.interpolate import interp1d
 
-
 class QuadraticSplineInterpolate:
     def __init__(self, x, y):
         self.s = self.calc_s(x, y)

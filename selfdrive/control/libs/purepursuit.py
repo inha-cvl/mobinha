@@ -11,8 +11,42 @@ class PurePursuit:
 
     def __init__(self, CP):
         self.L = CP.wheelbase
+        self.temp_lx = None
+        self.temp_ly = None
+
+        self.isLaneChange = False
+        self.isBank = False
+        rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
+        rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
+        rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
+        self.avoid_gain = 0.0
+
         self.k = CP.lateralTuning.lqr.k
         self.Lfc = CP.lateralTuning.lqr.l
+        self.k_curva = 20.0
+
+        self.cur_curvature = 0.0
+
+    def target_lfc_cb(self, msg):
+        self.Lfc = msg.data
+
+    def target_k_cb(self, msg):
+        self.k = msg.data
+
+    def avoid_gain_cb(self, msg):
+        self.avoid_gain = msg.data
+
+    def lane_change_cb(self, msg):
+        if msg.data == 1:
+            self.isLaneChange = True
+        else:
+            self.isLaneChange = False
+
+    def bank_cb(self, msg):
+        if msg.data == 1:
+            self.isBank = True
+        else:
+            self.isBank = False
 
     def euc_distance(self, pt1, pt2):
         return norm([pt2[0] - pt1[0], pt2[1] - pt1[1]])
@@ -33,7 +67,7 @@ class PurePursuit:
         new_y = (in_x - my_x) * sin(-yaw) + (in_y - my_y)*cos(-yaw)
         return (new_x, new_y)
 
-    def run(self, vEgo, path, position, yawRate):
+    def run(self, vEgo, path, position, yawRate, cte):
         lfd = self.Lfc+self.k*vEgo
         lfd = np.clip(lfd, 4, 60)
         steering_angle = 0.
@@ -46,9 +80,9 @@ class PurePursuit:
             if rotated_diff[0] > 0:
                 dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
                 if dis >= lfd:
-                    theta = np.arctan2(rotated_diff[1], rotated_diff[0])
-                    steering_angle = np.arctan2(
-                        2*self.L*np.sin(theta), lfd)
+                    theta = np.arctan2(rotated_diff[1]-self.avoid_gain, rotated_diff[0])
+                    steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
+                    steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 6 else steering_angle
                     lx = point[0]
                     ly = point[1]
                     break

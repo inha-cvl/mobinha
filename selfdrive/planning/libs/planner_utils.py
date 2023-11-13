@@ -11,8 +11,6 @@ from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-M_TO_IDX = 2
-IDX_TO_M = 0.5
 HZ = 10
 
 def euc_distance(pt1, pt2):
@@ -46,46 +44,31 @@ def lanelet_matching(tile, tile_size, t_pt):
         return None
 
 def get_my_neighbor(lanelets, my_id):
+    
+    def get_front_id(current_id):
+        """Helper function to get the front id for a given lanelet id."""
+        if current_id is not None and lanelets[current_id]['successor'] is not None:
+            if set(lanelets[current_id]['successor']) & set(lanelets[my_id]['successor']):
+                return None
+            else:
+                if len(lanelets[current_id]['successor']) == 1:
+                    return lanelets[current_id]['successor'][0]
+                elif len(lanelets[current_id]['successor']) > 1:
+                    for id in lanelets[current_id]['successor']:
+                        if lanelets[id]['laneNo'] == lanelets[current_id]['laneNo']:
+                            return id
+        return None
+
+    # Initialize lanelet ids
+    l_id, l_front_id, r_id, r_front_id = None, None, None, None
+    
     l_id = lanelets[my_id]['adjacentLeft']
-    if l_id != None and lanelets[l_id]['successor'] is not None:
-        if set(lanelets[l_id]['successor']) & set(lanelets[my_id]['successor']):
-            l_front_id = None
-        else: 
-            #TODO: not 100% [0] is not left...
-            #l id successor is 2 over -> my id successor adjacentleft and l id successor is same
-            #l id successor ~ lane no see . 
-            if len(lanelets[l_id]['successor']) == 1:
-                l_front_id = lanelets[l_id]['successor'][0]
-            elif len(lanelets[l_id]['successor']) > 1:
-                for id in lanelets[l_id]['successor']:
-                    if lanelets[id]['laneNo'] == lanelets[l_id]['laneNo']:
-                        l_front_id = id
-                        break
-            else:
-                l_front_id = None
-            # l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
-    else:
-        l_front_id = None
-    #TODO: have to look left_front, right_front
-    #lanelets[l_id]['successor']
+    l_front_id = get_front_id(l_id)
+    
     r_id = lanelets[my_id]['adjacentRight']
-    if r_id != None and lanelets[r_id]['successor'] is not None:
-        if set(lanelets[r_id]['successor']) & set(lanelets[my_id]['successor']):
-            r_front_id = None
-        else:
-            if len(lanelets[r_id]['successor']) == 1:
-                r_front_id = lanelets[r_id]['successor'][0]
-            elif len(lanelets[r_id]['successor']) > 1:
-                for id in lanelets[r_id]['successor']:
-                    if lanelets[id]['laneNo'] == lanelets[r_id]['laneNo']:
-                        r_front_id = id
-                        break
-            else:
-                r_front_id = None
-            # r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[r_id]['successor']) > 0 else None
-    else:
-        r_front_id = None
-    return ((l_id,l_front_id),(r_id,r_front_id))
+    r_front_id = get_front_id(r_id)
+
+    return ((l_id, l_front_id), (r_id, r_front_id))
 
 def exchange_waypoint(target, now):
     exchange_waypoints = []
@@ -187,6 +170,7 @@ def interpolate(points, precision):
     return itp_points, itp.s[-1], yaw, k
 
 from scipy.interpolate import UnivariateSpline
+
 def ref_interpolate_2d(points, precision, smoothing=0):
 
     points = filter_same_points(points)
@@ -210,7 +194,8 @@ def ref_interpolate_2d(points, precision, smoothing=0):
     return itp_points, total_distance
 
 from scipy.ndimage import gaussian_filter1d
-def gaussian_smoothing_2d(points, sigma=9):
+
+def gaussian_smoothing_2d(points, sigma=1):
     wx, wy = zip(*points)
     smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
     smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
@@ -332,20 +317,6 @@ def dijkstra(graph, start, finish):
                 hq.heapify(nodes)  # heapq relocate
 
     return None
-
-
-# def filter_same_points(points):
-#     filtered_points = []
-#     pre_pt = None
-
-#     for pt in points:
-#         if pre_pt is None or pt != pre_pt:
-#             filtered_points.append(pt)
-
-#         pre_pt = pt
-
-#     return filtered_points
-
 
 def node_to_waypoints2(lanelet, shortest_path):
     final_path = []
@@ -491,7 +462,7 @@ def get_a_b_for_blinker(min, ignore):
     b = 10
     return a,b
 
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):#, local_id, change_target_id, change_lane_flag): 
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX):#, local_id, change_target_id, change_lane_flag): 
     #TODO: CHECK FLAG     
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
@@ -522,7 +493,7 @@ def compare_id(lh_id, my_neighbor_id):
     else:
         return True
 
-def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id, next_id):
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id, next_id, M_TO_IDX):
     # ws = int((1.5*vEgo)+70)
     # ws = int(14.4*vEgo+80)
     ws = int(1.014*vEgo**2 - 0.776*vEgo + 95)
@@ -770,3 +741,109 @@ def estimate_theta(path, index):
     theta = np.arctan2(dy, dx)
     
     return theta
+
+def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextID):
+                                # prevLeftBound, prevRightBound, 
+                                # nowLeftBound, nowRightBound, nextLeftBound, nextRightBound):
+    def find_edge_id(flag, adjacent_id, lanelets):
+        if flag == 'l':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentLeft'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentLeft']
+        elif flag == 'r':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentRight'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentRight']
+        return adjacent_id
+    
+    def get_direction(chunk):
+        start = chunk[0]
+        end = chunk[-1]
+        return (end[0] - start[0], end[1] - start[1])
+    def sort_key(chunk, all_chunks):
+        directions = [get_direction(c) for c in all_chunks]
+        avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
+        start = chunk[0]
+        return start[0] * avg_direction[0] + start[1] * avg_direction[1]
+    def get_ordered_chunks(chunks):
+        sorted_chunks = sorted(chunks, key=lambda chunk: sort_key(chunk, chunks))
+        return sorted_chunks
+        
+    def create_and_flatten_polygon(leftBound, rightBound):
+        if leftBound is None or rightBound is None:
+            return []
+        
+        ordered_leftBound = get_ordered_chunks(leftBound)
+        ordered_rightBound = get_ordered_chunks(rightBound)
+
+        # Flatten the coordinates inside the chunks
+        flat_ordered_left = [coord for sublist in ordered_leftBound for coord in sublist]
+        # Flatten the coordinates inside the chunks and then reverse their order
+        flat_ordered_right = [coord for sublist in ordered_rightBound for coord in sublist][::-1]
+        
+        # Create the polygon using the flattened coordinates
+        polygon = flat_ordered_left + flat_ordered_right
+        return polygon
+    
+    def is_point_inside_polygon(pt, poly):
+        x, y = pt
+        oddNodes = False
+        j = len(poly) - 1  # The last vertex is the 'previous' one to start with
+
+        for i in range(len(poly)):
+            xi, yi = poly[i]
+            xj, yj = poly[j]
+            if yi < y and yj >= y or yj < y and yi >= y:
+                if xi + (y - yi) / (yj - yi) * (xj - xi) < x:
+                    oddNodes = not oddNodes
+            j = i
+        return oddNodes
+
+    # Finding the most left and right boundaries for each lanelet ID
+    prevLeftBound = lanelet[find_edge_id('l', prevID, lanelet)]['leftBound'] if prevID else None
+    prevRightBound = lanelet[find_edge_id('r', prevID, lanelet)]['rightBound'] if prevID else None
+    nowLeftBound = lanelet[find_edge_id('l', nowID, lanelet)]['leftBound'] if nowID else None
+    nowRightBound = lanelet[find_edge_id('r', nowID, lanelet)]['rightBound'] if nowID else None
+    nextLeftBound = lanelet[find_edge_id('l', nextID, lanelet)]['leftBound'] if nextID else None
+    nextRightBound = lanelet[find_edge_id('r', nextID, lanelet)]['rightBound'] if nextID else None
+
+    # Create and flatten polygons for each road
+    prev_polygon_flat = create_and_flatten_polygon(prevLeftBound, prevRightBound)
+    now_polygon_flat = create_and_flatten_polygon(nowLeftBound, nowRightBound)
+    next_polygon_flat = create_and_flatten_polygon(nextLeftBound, nextRightBound)
+
+    # Determine if the obstacle is inside any of the flattened road polygons
+    road1_result = is_point_inside_polygon(obstacle_position, prev_polygon_flat) if prev_polygon_flat else False
+    road2_result = is_point_inside_polygon(obstacle_position, now_polygon_flat) if now_polygon_flat else False
+    road3_result = is_point_inside_polygon(obstacle_position, next_polygon_flat) if next_polygon_flat else False
+
+    return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
+
+# import rospy
+# from visualization_msgs.msg import Marker
+
+# def create_road_marker(polygon_coords, marker_id, color, frame_id="world"):
+#     marker = Marker()
+#     marker.header.frame_id = frame_id
+#     marker.header.stamp = rospy.Time.now()
+#     marker.id = marker_id
+#     marker.type = Marker.LINE_STRIP
+#     marker.action = Marker.ADD
+    
+#     # Define the marker scale, color, etc.
+#     marker.scale.x = 0.5  # Width of the line
+#     marker.color.a = 1.0  # Opacity
+#     marker.color.r = color[0]
+#     marker.color.g = color[1]
+#     marker.color.b = color[2]
+    
+#     for coord in polygon_coords:
+#         marker.points.append(Point(x=coord[0], y=coord[1], z=0))
+#         # point = marker.points.append()
+#         # point.x = coord[0]
+#         # point.y = coord[1]
+#         # point.z = 0  # Assuming the roads are flat
+    
+#     return marker

@@ -60,7 +60,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
         self.target_yaw = 0
         self.cte = 0
-
+        
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
@@ -76,6 +76,8 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
+        rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
+        # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -371,7 +373,9 @@ class MainWindow(QMainWindow, form_class):
         self.cte = msg.orientation.y
     #     m_distance = msg.position.y-msg.position.z
     #     distance = f"{(m_distance/1000.0):.5f} km" if m_distance / 1000 >= 1 else f"{m_distance:.5f} m"
-
+    def avoid_gain_cb(self, msg):
+        self.goal_distance_label.setText(f"{msg.data:.2f}")
+    #     self.goal_distance_label.setText(distance)
 
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(str(round(msg.data, 5))+" m")  # nearest obstacle
@@ -504,9 +508,6 @@ class MainWindow(QMainWindow, form_class):
             # self.state = 'TOR'
             self.status_label.setText("Take Over Request")
             self.cmd_button_clicked(0)
-            # self.start_button.setDisabled(True)
-            # self.initialize_button.setEnabled(True)
-            # self.pause_button.setDisabled(True)
             self.start_button.setDisabled(True)
             self.initialize_button.setDisabled(True)
             self.pause_button.setEnabled(True)
@@ -670,7 +671,7 @@ class MediaThread(QThread):
                     url = dir_path+"/sounds/on.wav"
                     self.mode = self.get_mode
                 elif self.get_mode == 2:
-                    url = dir_path+"/sounds/manual_handling.wav"
+                    url = dir_path+"/sounds/handling-tor.wav"
                     self.mode = self.get_mode
                 elif self.get_mode == 3 or self.get_mode == 4:
                     url = dir_path+"/sounds/bsd.wav"
@@ -681,12 +682,12 @@ class MediaThread(QThread):
                 else:
                     url = dir_path+"/sounds/off.wav"
                     self.mode = self.get_mode
-
+                
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
                 player.play()
             if self.planning_state == 4:
-                url = dir_path+"/sounds/path_error_tor.wav"
+                url = dir_path+"/sounds/planning-tor.wav"
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
                 player.play()

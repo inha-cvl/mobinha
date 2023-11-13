@@ -9,8 +9,8 @@ class ObstacleUtils:
     def object2enu(odom, obj_local_x, obj_local_y):
         rad = np.radians(odom[2])
 
-        nx = math.cos(-rad) * obj_local_y - math.sin(-rad) * obj_local_x
-        ny = math.sin(-rad) * obj_local_y + math.cos(-rad) * obj_local_x
+        nx = math.cos(rad) * obj_local_x - math.sin(rad) * obj_local_y
+        ny = math.sin(rad) * obj_local_x + math.cos(rad) * obj_local_y
 
         obj_x = odom[0] + nx
         obj_y = odom[1] + ny
@@ -44,3 +44,20 @@ class ObstacleUtils:
             frenet_d *= -1
 
         return frenet_s, frenet_d
+
+    def calculate_avoid_gain(obs_d, obs_width, obs_speed):
+        half_width = obs_width / 2
+
+        # Adjust the obs_d value based on its sign
+        if obs_speed < 10: # 10km/h
+            if obs_d < 0:
+                adjusted_obs_d = obs_d + half_width
+                if -1.3 < adjusted_obs_d < -0.5:
+                    return 0.3  # move the car by 30cm to the right
+            else:
+                adjusted_obs_d = obs_d - half_width
+                if 0.5 < adjusted_obs_d < 1.3:
+                    return -0.3  # move the car by 30cm to the left
+        #TODO: -0.5~0.5 is need STOP
+
+        return 0.0  # no need to move

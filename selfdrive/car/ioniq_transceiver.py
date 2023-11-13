@@ -9,7 +9,6 @@ import rospy
 from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
 
-
 class IoniqTransceiver():
     def __init__(self, CP):
         self.control_state = {
@@ -32,11 +31,9 @@ class IoniqTransceiver():
         self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
         self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
-       
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
         self.gateway = Int8MultiArray()
         self.gateway.data = [0, 0, 0, 0, 0, 0]
-
         self.rcv_velocity = 0
         self.tick = {0.01: 0, 0.02: 0, 0.2: 0, 0.5: 0, 0.09: 0, 1: 0}
         self.Accel_Override = 0
@@ -45,7 +42,7 @@ class IoniqTransceiver():
         self.alv_cnt = 0
         self.Alive_Count_ERR = 0
         self.recv_err_cnt = 0
-        self.err_time = None
+        self.err_time = None 
         self.last_mode_2_time = 0
         self.force_mode_2 = False
 
@@ -62,7 +59,7 @@ class IoniqTransceiver():
     def can_cmd(self, canCmd):
         state = self.control_state
         current_time = rospy.get_time()
-
+        
         if self.force_mode_2 and current_time - self.last_mode_2_time < 1.0:
             # mode를 강제로 2로 1초 동안 유지
             self.mode = 2
@@ -114,7 +111,6 @@ class IoniqTransceiver():
         try:
             if (data.arbitration_id == 304):
                 res = self.db.decode_message(data.arbitration_id, data.data)
-                #'%.4f' % res['Gway_Lateral_Accel_Speed']
                 self.ego_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
                 
             if (data.arbitration_id == 0x280):
@@ -129,7 +125,7 @@ class IoniqTransceiver():
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
-                gear_sel_disp = res['Gway_GearSelDisp'] 
+                gear_sel_disp = res['Gway_GearSelDisp']
                 if gear_sel_disp == "R":  # R
                     gear_sel_disp = 1
                 elif gear_sel_disp == "N":  # N
@@ -160,6 +156,7 @@ class IoniqTransceiver():
                 recovery_time = datetime.datetime.now() - self.err_time
                 print(f"Recovered in {recovery_time.total_seconds()} seconds")
                 self.err_time = None
+            
         except Exception as e:
             if data is None:
                 self.recv_err_cnt += 1

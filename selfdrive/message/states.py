@@ -88,7 +88,7 @@ class StateMaster:
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
-        self.yaw = self.yaw-0.1
+        self.yaw = self.yaw - 0.5
        
     def velocity_cb(self, msg):
         self.v = msg.data

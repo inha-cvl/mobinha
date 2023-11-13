@@ -24,7 +24,7 @@ class Transceiver:
         self.tick = {0: 0, 0.01: 0, 0.02: 0, 0.05: 0, 0.1: 0, 1: 0}
         rospy.Subscriber('/mobinha/visualize/system_state',
                          String, self.state_cb)
- 
+        
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
             self.tick[sec] = time.time()

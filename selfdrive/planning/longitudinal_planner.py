@@ -49,13 +49,13 @@ class LongitudinalPlanner:
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
 
     def lidar_obstacle_cb(self, msg):
-        self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
+        self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z, pose.orientation.x, pose.orientation.y)for pose in msg.poses]
 
     def traffic_light_obstacle_cb(self, msg):
         self.traffic_light_obstacle = [(pose.position.x, pose.position.y, pose.position.z)for pose in msg.poses]
 
     def lane_information_cb(self, msg):
-        # [0] id, [1] forward_direction, [2] cross_walk distance [3] forward_curvature
+        # [0] id, [1] forward_direction, [2] stop line distance [3] forward_curvature
         self.lane_information = [msg.position.x,msg.position.y, msg.position.z, msg.orientation.x]
 
         if self.lane_information[0] == 979 or self.lane_information[0] == 9:
@@ -171,34 +171,35 @@ class LongitudinalPlanner:
         else: # Go sign
                 return True
 
-    def check_dynamic_objects(self, cur_v, local_s):
+    def check_dynamic_objects(self, cur_v, local_s, veh_pose):
         offset = 7.5*self.M_TO_IDX
-        dynamic_d = 90*self.M_TO_IDX 
+        dynamic_s = 90*self.M_TO_IDX 
         self.rel_v = 0
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
                 if lobs[2] >= -1.45 and lobs[2] <= 1.45:  # object in my lane
+                    dynamic_s = math.sqrt((lobs[5] - veh_pose[0])**2 + (lobs[6] - veh_pose[1])**2) - offset
+                    dynamic_s = round(dynamic_s*self.M_TO_IDX,2)
+                    # dynamic_s = lobs[1]-offset-local_s
                     if lobs[4] > 1: # tracking
-                        dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = lobs[3]
-                        return dynamic_d
+                        return dynamic_s
                     else: # only cluster is track_id = 0
-                        dynamic_d = lobs[1]-offset-local_s
                         self.rel_v = 0 # TODO: track and cluster box color modify
-                        return dynamic_d
-        return dynamic_d
+                        return dynamic_s
+        return dynamic_s
     
     def check_static_object(self, local_path, local_s):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
         tl_offset = 7*self.M_TO_IDX
-        static_d1, static_d2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
+        static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:
             left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX
             if left <= local_len:
                 if left-goal_offset < 90*self.M_TO_IDX:
-                    static_d1 = left-goal_offset
+                    static_s1 = left-goal_offset
         # [2] = Traffic Light
         if self.traffic_light_obstacle is not None:
             can_go = False
@@ -208,11 +209,12 @@ class LongitudinalPlanner:
                     can_go = True
             if not can_go:
                 if self.lane_information[2] < math.inf:
-                    if self.lane_information[2]-tl_offset-local_s < 90*self.M_TO_IDX:
-                        static_d2 = self.lane_information[2]-tl_offset-local_s
-                    if static_d2 < -12*self.M_TO_IDX: # passed traffic light is not considered
-                        static_d2 = 90*self.M_TO_IDX
-        return min(static_d1, static_d2)
+                    left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
+                    if left_distance_to_stopline < 90*self.M_TO_IDX:
+                        static_s2 = left_distance_to_stopline
+                    if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
+                        static_s2 = 90*self.M_TO_IDX
+        return min(static_s1, static_s2)
 
     def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
@@ -226,7 +228,7 @@ class LongitudinalPlanner:
                 # local_curv_v = calculate_v_by_centripetal_acceleration(self.lane_information, self.ref_v, CS.vEgo)
                 local_curv_v = self.max_v*KPH_TO_MPS
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
-                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx) # output unit: idx
+                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
                 target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
                 self.target_v = min(target_v_static, target_v_dynamic)

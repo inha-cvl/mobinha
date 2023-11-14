@@ -178,9 +178,9 @@ class LongitudinalPlanner:
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
                 if lobs[2] >= -1.45 and lobs[2] <= 1.45:  # object in my lane
-                    dynamic_s = math.sqrt((lobs[5] - veh_pose[0])**2 + (lobs[6] - veh_pose[1])**2) - offset
-                    dynamic_s = round(dynamic_s*self.M_TO_IDX,2)
-                    # dynamic_s = lobs[1]-offset-local_s
+                    # dynamic_s = math.sqrt((lobs[5] - veh_pose[0])**2 + (lobs[6] - veh_pose[1])**2) - offset
+                    # dynamic_s = round(dynamic_s*self.M_TO_IDX,2)
+                    dynamic_s = lobs[1]-offset-local_s
                     if lobs[4] > 1: # tracking
                         self.rel_v = lobs[3]
                         return dynamic_s

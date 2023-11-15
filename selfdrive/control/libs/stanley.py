@@ -88,8 +88,8 @@ class StanleyController:
 
         # Stanley control law
         # k higher -> more aggressive for cte
-        steering_angle = heading_error + atan2(self.k * cte, vEgo) if vEgo > 5 else heading_error
-        if vEgo > 5:
+        steering_angle = heading_error + atan2(self.k * cte, vEgo) if vEgo > 3 else heading_error
+        if vEgo > 3:
             print("steering: ", round(degrees(heading_error)),"+",round(degrees(atan2(self.k * cte, vEgo))), "=", round(degrees(steering_angle)))
         else:
             print("steering: ", round(degrees(heading_error)))

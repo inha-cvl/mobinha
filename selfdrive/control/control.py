@@ -55,7 +55,7 @@ class Control:
         c = Controller(CP)
         m = MPCController(CP)
 
-        return sm, localizer, c # , mpccontroller
+        return sm, localizer, m #c or m
 
     def state_cb(self, msg):
         if self.state != str(msg.data):

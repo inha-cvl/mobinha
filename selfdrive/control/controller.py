@@ -28,7 +28,7 @@ class Controller:
         self.local_path_theta = None
         self.local_path_radius = None
         self.local_path_k = None        
-        self.max_steer_change_rate = 8/20*self.steer_ratio
+        self.max_steer_change_rate = 10/20*self.steer_ratio
         self.car = rospy.get_param('car_name', 'None')
         self.cte = 0
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
@@ -115,7 +115,7 @@ class Controller:
         if self.local_path != None:
             
             wheel_angle, lah_pt = self.purepursuit.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte)
             
             # print("PP wheel_angle:",wheel_angle)
 

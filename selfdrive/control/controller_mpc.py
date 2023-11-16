@@ -284,8 +284,8 @@ class MPCController:
         A[3, 3] = A[3,3]/v
         
         # Update the B matrix
-        # B[1, 0] = v * cf / mass
-        # B[3, 0] = v * lf * cf / iz
+        B[1, 0] = v * cf / mass
+        B[3, 0] = v * lf * cf / iz
         
         # Update the C matrix
         C[1,0] = (lr*cr-lf*cf)/(mass*v)-v
@@ -293,7 +293,7 @@ class MPCController:
 
         # Update mpc_params with the new matrices
         mpc_params['A'] = A
-        # mpc_params['B'] = B
+        mpc_params['B'] = B
         mpc_params['C'] = C
         
         return mpc_params
@@ -406,7 +406,14 @@ class MPCController:
         x = cp.Variable(Np * Nc)
 
         # Objective function
-        objective = cp.Minimize(0.5 * cp.quad_form(x, matrix_m1) + matrix_m2.T @ x)
+        # objective = cp.Minimize(0.5 * cp.quad_form(x, matrix_m1) + matrix_m2.T @ x)
+        # 목표 상태(ref_state)와 현재 상태(matrix_state) 간의 차이 계산
+        ref_state_expanded = np.tile(ref_state, (Np, 1))
+        matrix_diff = ref_state_expanded - matrix_M - matrix_cc
+
+        # 최적화 목적 함수 수정
+        # 목표 상태와 현재 상태 사이의 차이를 최소화하는 항 추가
+        objective = cp.Minimize(0.5 * cp.quad_form(x, matrix_m1) + matrix_m2.T @ x + cp.norm(matrix_diff, 'fro'))
 
         # Constraints
         constraints = [
@@ -421,13 +428,6 @@ class MPCController:
         # Extract control variables
         matrix_v = x.value
         return matrix_v[0], matrix_v[1]
-
-        # m = osqp.OSQP()
-        # m.setup(P=P_sparse, q=q, A=A_sparse, l=l, u=u, verbose=False)
-        # results = m.solve()
-
-        # matrix_v = results.x
-        # return matrix_v[0], matrix_v[1]# command를 반환하면 됩니다.
         
 
     # Define the calc_mpc function based on the given MATLAB code
@@ -521,10 +521,10 @@ class MPCController:
         upper_bound[1, 0] = veh_params['max_acceleration']
 
         matrix_q = np.zeros((basic_state_size, basic_state_size))
-        matrix_q[0, 0] = 0.2
-        matrix_q[2, 2] = 1.5
+        matrix_q[0, 0] = 0.2 # cte
+        matrix_q[2, 2] = 4.0 # heading error
 
-        matrix_r = 12 * np.eye(Nc, Nc)
+        matrix_r = 10 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 
@@ -533,9 +533,9 @@ class MPCController:
                                 ref_state, Np, Nc,
                                 matrix_state, control_state)
         gain = 0
-        print("output : ", steer_cmd+gain, acc)
+        print("output : ", steer_cmd + gain, acc)
         
-        return steer_cmd+gain, acc, steer_feedforward
+        return steer_cmd + gain, acc, steer_feedforward
 
     def calculate_angular_velocity(self, current_heading_deg, previous_heading_deg, delta_time):
         # Convert degrees to radians
@@ -590,7 +590,7 @@ class MPCController:
             trajref = np.column_stack((self.local_path, self.local_path_theta, self.local_path_radius, self.local_path_k))
             # trajref = trajref[::4]
             # print("trajref : ",trajref[int(self.l_idx):int(self.l_idx)+10])
-            ref_pose = trajref[idx][0:3]
+            ref_pose = trajref[idx+5][0:3]
             
             delta_x = veh_pose - ref_pose
             # print("veh_pose : ",veh_pose)
@@ -619,7 +619,7 @@ class MPCController:
 
             mpc_params = self.load_mpc_params(veh_params)
             start_time = time.time()  # Start time
-            steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, idx, veh_params)
+            steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, idx+5, veh_params)
             end_time = time.time()  # End time
             mpc_execution_time = end_time - start_time
             print("MPC execution time: ", mpc_execution_time)

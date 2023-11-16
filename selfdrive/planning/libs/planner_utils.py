@@ -408,7 +408,7 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     return return_v * KPH_TO_MPS
 
-def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph, kph, mps
+def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v, max_speed_change_rate=2.0/HZ): # info, kph, kph, mps
     #lane information -> [1]:forward direction, [3]:curvature
     max_curvature = 600
     min_curvature = 0
@@ -422,19 +422,27 @@ def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph
     decel = (ref_v - min_v) * (1 - normalized_curvature)
     return_v = ref_v - decel
     # print("return-v:", return_v, "cur_v:",cur_v)
-    if lane_information[3] < max_curvature:
-        if cur_v - return_v*KPH_TO_MPS > 5/HZ: # smooth deceleration
-            return_v = cur_v*MPS_TO_KPH - (5/HZ*MPS_TO_KPH)
-            # print("decel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
-        elif cur_v*MPS_TO_KPH > min_v and return_v*KPH_TO_MPS - cur_v > 5/HZ: # smooth acceleration
-            return_v = cur_v*MPS_TO_KPH + (5/HZ*MPS_TO_KPH)
-            # print("accel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
-    if return_v > ref_v:
-        return_v = ref_v
-
+    # if lane_information[3] < max_curvature:
+    #     if cur_v - return_v*KPH_TO_MPS > 5/HZ: # smooth deceleration
+    #         return_v = cur_v*MPS_TO_KPH - (5/HZ*MPS_TO_KPH)
+    #         # print("decel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+    #     elif cur_v*MPS_TO_KPH > min_v and return_v*KPH_TO_MPS - cur_v > 5/HZ: # smooth acceleration
+    #         return_v = cur_v*MPS_TO_KPH + (5/HZ*MPS_TO_KPH)
+    #         # print("accel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+    # if return_v > ref_v:
+    #     return_v = ref_v
+    # 계산된 목표 속도와 현재 속도 사이의 차이 계산
+    speed_change = return_v * KPH_TO_MPS - cur_v
+    # 속도 변경량 제한
+    speed_change = np.clip(speed_change, -max_speed_change_rate, max_speed_change_rate)
+    # 제한된 속도 변경량을 현재 속도에 적용하여 새로운 속도 계산
+    new_speed = cur_v + speed_change
+    if new_speed > ref_v:
+        new_speed = ref_v
     # if lane_information[1]==1:
     #     return_v = min(return_v, max(return_v, 25))    
-    return return_v*KPH_TO_MPS
+    # return return_v*KPH_TO_MPS
+    return new_speed
 
 def calculate_v_by_centripetal_acceleration(lane_information, ref_v, cur_v, max_lateral_acceleration=1.5):
     r = lane_information[3]

@@ -100,24 +100,45 @@ class LongitudinalPlanner:
         self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
         self.last_error = error
-        if error < 0:
-            # print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
-            return max(0/HZ, min(1.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
-        elif 0 > ttc > -3:
-            # print("warn e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
-            return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
-        else:
-            # print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
-            return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+        pid_gain = -(kp * error + ki * self.integral + kd * derivative)
+
+        if error < 0:  # 가속 상황
+            max_speed_change_rate = 1.5 / HZ  # 가속을 위한 최대 속도 변경율
+        else:  # 감속 상황
+            if 0 > ttc > -3:  # 높은 충돌 위험
+                max_speed_change_rate = 7 / HZ
+            else:  # 낮은 충돌 위험
+                max_speed_change_rate = 3 / HZ
+
+        deltaV = np.clip(pid_gain, -max_speed_change_rate, max_speed_change_rate)
+        return deltaV
+        # if error < 0:
+        #     return max(0/HZ, min(1.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+        # elif 0 > ttc > -3:
+        #     return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+        # else:
+        #     return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
+        # print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
         
     def get_static_gain(self, error, ttc, gain=0.1/HZ):
-        if error < 0:
-            return 1.5 / HZ
-        elif 0 < ttc < 3:
-            return max(0/HZ, min(7/HZ, error*gain))
-        else:
-            return max(0/HZ, min(4/HZ, error*gain))
+        if error < 0:  # 가속 상황
+            max_speed_change_rate = 1.5 / HZ  # 예를 들어 가속을 위한 최대 속도 변경율
+        else:  # 감속 상황
+            if 0 < ttc < 3:  # 높은 충돌 위험
+                max_speed_change_rate = 7 / HZ
+            else:  # 낮은 충돌 위험
+                max_speed_change_rate = 4 / HZ
+
+        calculated_gain = -(gain * error)
+        deltaV = np.clip(calculated_gain, -max_speed_change_rate, max_speed_change_rate)
+        return deltaV
+        # if error < 0:
+        #     return 1.5 / HZ
+        # elif 0 < ttc < 3:
+        #     return max(0/HZ, min(7/HZ, error*gain))
+        # else:
+        #     return max(0/HZ, min(4/HZ, error*gain))
         
     def dynamic_consider_range(self, max_v, base_range=50):  # input max_v unit (m/s)#TODO:range ignore check
         return (base_range + (0.267*(max_v)**1.902))*self.M_TO_IDX 
@@ -140,28 +161,44 @@ class LongitudinalPlanner:
         follow_distance = self.desired_follow_distance_s(cur_v) #output follow_distance unit (m)
         ttc = min_s / cur_v if cur_v != 0 else min_s
         self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
-        gain = self.get_static_gain(self.follow_error, ttc)
-        if self.follow_error < 0: # MINUS is ACCEL
-            target_v = min(max_v, self.target_v + gain)
-        else: # PLUS is DECEL
-            target_v = max(0, self.target_v - gain)
-        return target_v
+        deltaV = self.get_static_gain(self.follow_error, ttc)
+        
+        # 목표 속도에 gain 적용
+        new_target_v = self.target_v + deltaV
+        # 결과적인 속도가 최대 속도를 초과하지 않도록 제한
+        new_target_v = min(new_target_v, max_v)
+
+        return new_target_v
+
+        # if self.follow_error < 0: # MINUS is ACCEL
+        #     target_v = min(max_v, self.target_v + gain)
+        # else: # PLUS is DECEL
+        #     target_v = max(0, self.target_v - gain)
+        # return target_v
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego):
         target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
         follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
         ttc = min_s / self.rel_v if self.rel_v != 0 else min_s# minus value is collision case
         self.follow_error = follow_distance-min_s
-        gain = self.get_dynamic_gain(self.follow_error, ttc)
-        if self.follow_error < 0: # MINUS is ACCEL
-            if v_ego < 0.4*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
-                target_v = min(max_v, self.target_v + 0.8/HZ)
-            else:
-                target_v = min(max_v, self.target_v + gain)
-        else: # PLUS is DECEL
-            target_v = max(0, self.target_v + gain)
+        deltaV = self.get_dynamic_gain(self.follow_error, ttc)
 
-        return target_v
+        # 목표 속도에 gain 적용
+        new_target_v = self.target_v + deltaV
+        # 결과적인 속도가 최대 속도를 초과하지 않도록 제한
+        new_target_v = min(new_target_v, max_v)
+
+        return new_target_v
+    
+        # if self.follow_error < 0: # MINUS is ACCEL
+        #     if v_ego < 0.4*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
+        #         target_v = min(max_v, self.target_v + 0.8/HZ)
+        #     else:
+        #         target_v = min(max_v, self.target_v + gain)
+        # else: # PLUS is DECEL
+        #     target_v = max(0, self.target_v + gain)
+
+        # return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
         stop_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [

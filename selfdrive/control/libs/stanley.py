@@ -68,7 +68,7 @@ class StanleyController:
         
         # Choose a point ahead in the path as reference
         # look_ahead_idx = min(len(path) - 1, closest_idx + lfd)
-        ahead_point = path[closest_idx+2]
+        ahead_point = path[closest_idx+6]
 
         # Calculate cross track error
         cte = self.calculate_cte(closest_point, ahead_point, front_wheel_position)
@@ -84,7 +84,7 @@ class StanleyController:
         # print("heading_error: ", round(heading_error,4))
 
         # Ensure heading_error is within [-pi, pi]
-        heading_error = atan2(sin(heading_error), cos(heading_error))
+        heading_error = 0.9 * atan2(sin(heading_error), cos(heading_error))
 
         # Stanley control law
         # k higher -> more aggressive for cte

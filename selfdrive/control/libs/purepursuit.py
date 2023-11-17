@@ -17,7 +17,7 @@ class PurePursuit:
         self.isLaneChange = False
         self.isBank = False
         rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
-        rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
+        # rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
         self.avoid_gain = 0.0
 
@@ -70,6 +70,7 @@ class PurePursuit:
     def run(self, vEgo, path, position, yawRate, cte):
         lfd = self.Lfc+self.k*vEgo
         lfd = np.clip(lfd, 4, 60)
+        # lfd = 20
         steering_angle = 0.
         lx, ly = path[0]
         for point in path:
@@ -82,7 +83,7 @@ class PurePursuit:
                 if dis >= lfd:
                     theta = np.arctan2(rotated_diff[1]-self.avoid_gain, rotated_diff[0])
                     steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
-                    steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 6 else steering_angle
+                    steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 3 else steering_angle
                     lx = point[0]
                     ly = point[1]
                     break

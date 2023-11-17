@@ -53,7 +53,7 @@ class SimulatorTransceiver:
         #path test
         # self.ego = Vehicle(-694.072, 977.590, 2.399, 0.0, 3.0)
         #kcity urban
-        # self.ego = Vehicle(378.327, 1150.295 ,1.070, 0, 3.0)
+        self.ego = Vehicle(378.327, 1150.295 ,1.070, 0, 3.0)
         self.roll = 0.0
         self.pitch = 0.0
 

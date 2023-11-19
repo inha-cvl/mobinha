@@ -522,9 +522,9 @@ class MPCController:
 
         matrix_q = np.zeros((basic_state_size, basic_state_size))
         matrix_q[0, 0] = 0.15 # cte
-        matrix_q[2, 2] = 3.0 # heading error
+        matrix_q[2, 2] = 1.5 # heading error
 
-        matrix_r = 10 * np.eye(Nc, Nc)
+        matrix_r = 11 * np.eye(Nc, Nc)
 
         ref_state = np.zeros((basic_state_size, 1))
 
@@ -590,7 +590,7 @@ class MPCController:
             trajref = np.column_stack((self.local_path, self.local_path_theta, self.local_path_radius, self.local_path_k))
             # trajref = trajref[::4]
             # print("trajref : ",trajref[int(self.l_idx):int(self.l_idx)+10])
-            ref_pose = trajref[idx+7][0:3]
+            ref_pose = trajref[idx+10][0:3]
             
             delta_x = veh_pose - ref_pose
             # print("veh_pose : ",veh_pose)
@@ -619,7 +619,7 @@ class MPCController:
 
             mpc_params = self.load_mpc_params(veh_params)
             start_time = time.time()  # Start time
-            steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, idx+7, veh_params)
+            steer_command, acc, steer_feedforward = self.calc_mpc(trajref, delta_x, veh_pose, ref_pose, mpc_params, idx+10, veh_params)
             end_time = time.time()  # End time
             mpc_execution_time = end_time - start_time
             print("MPC execution time: ", mpc_execution_time)

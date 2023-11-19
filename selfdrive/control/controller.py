@@ -12,7 +12,7 @@ from selfdrive.message.messaging import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-
+HZ=20
 
 class Controller:
     def __init__(self, CP):
@@ -28,7 +28,7 @@ class Controller:
         self.local_path_theta = None
         self.local_path_radius = None
         self.local_path_k = None        
-        self.max_steer_change_rate = 10/20*self.steer_ratio
+        self.max_steer_change_rate = 10/HZ*self.steer_ratio
         self.car = rospy.get_param('car_name', 'None')
         self.cte = 0
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
@@ -72,7 +72,7 @@ class Controller:
         self.l_idx = msg.orientation.y
 
     def calc_accel_brake_pressure(self, pid, cur_v, pitch):
-        th_a = 4 # 0~20 * gain -> 0~100 accel
+        th_a = 4 # 0~20 * gain -> 0~100 accel origin a,b = 4, 13
         th_b = 13 # 0~20 * gain -> 0~100 brake
         gain = 5
         val_data = max(-th_b, min(th_a, pid))

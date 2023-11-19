@@ -58,12 +58,12 @@ class LongitudinalPlanner:
         # [0] id, [1] forward_direction, [2] stop line distance [3] forward_curvature
         self.lane_information = [msg.position.x,msg.position.y, msg.position.z, msg.orientation.x]
 
-        if self.lane_information[0] == 979 or self.lane_information[0] == 9:
-            self.ref_v = 33
-        elif self.lane_information[0] == 982:
-            self.ref_v = 38
-        else:
-            self.ref_v = self.max_v
+        # if self.lane_information[0] == 979 or self.lane_information[0] == 9:
+        #     self.ref_v = 33
+        # elif self.lane_information[0] == 982:
+        #     self.ref_v = 38
+        # else:
+        #     self.ref_v = self.max_v
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
@@ -132,6 +132,7 @@ class LongitudinalPlanner:
 
         calculated_gain = -(gain * error)
         deltaV = np.clip(calculated_gain, -max_speed_change_rate, max_speed_change_rate)
+        # deltaV = calculated_gain
         return deltaV
         # if error < 0:
         #     return 1.5 / HZ
@@ -166,7 +167,7 @@ class LongitudinalPlanner:
         # 목표 속도에 gain 적용
         new_target_v = self.target_v + deltaV
         # 결과적인 속도가 최대 속도를 초과하지 않도록 제한
-        new_target_v = min(new_target_v, max_v)
+        new_target_v = max(0, min(new_target_v, max_v))
 
         return new_target_v
 
@@ -186,7 +187,7 @@ class LongitudinalPlanner:
         # 목표 속도에 gain 적용
         new_target_v = self.target_v + deltaV
         # 결과적인 속도가 최대 속도를 초과하지 않도록 제한
-        new_target_v = min(new_target_v, max_v)
+        new_target_v = max(0,min(new_target_v, max_v))
 
         return new_target_v
     
@@ -261,9 +262,9 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                # local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
+                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
                 # local_curv_v = calculate_v_by_centripetal_acceleration(self.lane_information, self.ref_v, CS.vEgo)
-                local_curv_v = self.max_v*KPH_TO_MPS
+                # local_curv_v = self.max_v*KPH_TO_MPS
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)

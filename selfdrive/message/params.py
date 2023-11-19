@@ -37,8 +37,8 @@ class IONIQ:
         car_param_dict["mapParam"] = self.CP.mapParam._make(
             car_param_map_param.values())
 
-        car_param_dict["minEnableSpeed"] = 15  # songdo demo site: 21, test site: 15 # min_v
-        car_param_dict["maxEnableSpeed"] = 40 # ref_v # songdo 45~25 kcity 40~20
+        car_param_dict["minEnableSpeed"] = 25  # songdo demo site: 21, test site: 15 # min_v
+        car_param_dict["maxEnableSpeed"] = 50 # ref_v # songdo 50~25 kcity 40~15
         car_param_dict["mass"] = 2245.0
         car_param_dict["wheelbase"] = 3.0  # L
         car_param_dict["centerToFront"] = car_param_dict["wheelbase"] * 0.4
@@ -63,7 +63,7 @@ class IONIQ:
         
         car_param_lateral_tuning_stanley = car_param_lateral_tuning["stanley"]._asdict(
         )
-        car_param_lateral_tuning_stanley["k"] = 0.15 # k, look forward gain
+        car_param_lateral_tuning_stanley["k"] = 0.15 # kcity 0.15
         car_param_lateral_tuning["stanley"] = self.CP.lateralTuning.stanley._make(
             car_param_lateral_tuning_stanley.values())
         

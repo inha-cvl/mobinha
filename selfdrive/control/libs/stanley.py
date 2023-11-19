@@ -84,7 +84,7 @@ class StanleyController:
         # print("heading_error: ", round(heading_error,4))
 
         # Ensure heading_error is within [-pi, pi]
-        heading_error = 0.9 * atan2(sin(heading_error), cos(heading_error))
+        heading_error = 0.6 * atan2(sin(heading_error), cos(heading_error))
 
         # Stanley control law
         # k higher -> more aggressive for cte

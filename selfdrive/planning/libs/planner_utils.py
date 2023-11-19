@@ -424,10 +424,8 @@ def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph
     if lane_information[3] < max_curvature:
         if cur_v - return_v*KPH_TO_MPS > 5/HZ: # smooth deceleration
             return_v = cur_v*MPS_TO_KPH - (5/HZ*MPS_TO_KPH)
-            # print("decel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
         elif cur_v*MPS_TO_KPH > min_v and return_v*KPH_TO_MPS - cur_v > 5/HZ: # smooth acceleration
             return_v = cur_v*MPS_TO_KPH + (5/HZ*MPS_TO_KPH)
-            # print("accel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
     if return_v > ref_v:
         return_v = ref_v
 

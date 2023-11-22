@@ -58,10 +58,24 @@ def load_data(file_path):
         data = json.load(file)
     return data
 
-name ='curve'
-map = 'kcity'
+
+# 맵과 파일 이름 설정
+map = 'kcity'  # 또는 'songdo'
 file_name = '1-1.bag'
+name = 'curve'
+
+# 데이터 파일 경로 및 로딩
 file_path = f'./{map}/{file_name}_data_{name}.json'
 data = load_data(file_path)
+
+# 맵에 따른 y축 범위 설정
+if map == 'kcity':
+    y_limits = {'velocity': [0, 40]}
+elif map == 'songdo':
+    y_limits = {'velocity': [0, 50]}
+else:
+    y_limits = {}  # 기본값이나 다른 맵에 대한 설정
+
+# 데이터 플롯
 plotter = DataPlotter(data)
-plotter.plot(y_limits={'velocity': [0, 40]})
+plotter.plot(y_limits=y_limits)

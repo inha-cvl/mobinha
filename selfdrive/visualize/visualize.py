@@ -168,6 +168,8 @@ class MainWindow(QMainWindow, form_class):
         self.up_button.setDisabled(False)
         self.down_button.setDisabled(False)
         self.pub_max_v.publish(target_velocity)
+        print("-------------------------")
+
 
     def senser_check_callback(self, msg):
         for i, sensor_status in enumerate(msg.data):
@@ -298,7 +300,7 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.setSplashPath("")
         rviz_frame.initialize()
         reader = rviz.YamlConfigReader()
-        self.rviz_map_screen.addWidget(rviz_frame)
+        # self.rviz_map_screen.addWidget(rviz_frame)
 
         if type == 'map':
             config = rviz.Config()

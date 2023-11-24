@@ -3702,7 +3702,7 @@ color: #00AAFF;
                    </font>
                   </property>
                   <property name="styleSheet">
-                   <string notr="true">QLabel {color: #FC6C6C;}</string>
+                   <string notr="true">QLabel {color: #00AAFF;}</string>
                   </property>
                   <property name="text">
                    <string>CAMERA 1</string>
@@ -3890,7 +3890,7 @@ color: #00AAFF;
              </widget>
             </item>
             <item row="0" column="0" colspan="7">
-             <widget class="QLabel" name="label_44">
+             <widget class="QLabel" name="state_screen">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>

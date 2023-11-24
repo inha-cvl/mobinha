@@ -74,7 +74,10 @@ class MainWindow(QMainWindow, form_class):
         self.cmd_full_button.clicked.connect(lambda: self.cmd_button_clicked(1))
         self.cmd_disable_button.clicked.connect(lambda: self.cmd_button_clicked(0))
 
-        self.label_cam = self.findChild(QLabel, 'warn_camera1')
+        self.label_cam1 = self.findChild(QLabel, 'warn_camera1')
+        self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
+        self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
+
         self.label_lidar = self.findChild(QLabel, 'warn_lidar')
         self.label_gps = self.findChild(QLabel, 'warn_gps')
         self.label_ins = self.findChild(QLabel, 'warn_ins')
@@ -109,6 +112,7 @@ class MainWindow(QMainWindow, form_class):
         self.pub_state = rospy.Publisher('/mobinha/visualize/system_state', String, queue_size=1)
         self.pub_can_cmd = rospy.Publisher('/mobinha/visualize/can_cmd', Int8, queue_size=1)
         self.pub_scenario_goal = rospy.Publisher('/mobinha/visualize/scenario_goal', PoseArray, queue_size=1)
+        self.pub_max_v = rospy.Publisher('/mobinha/visualize/max_v', Int8, queue_size=1)
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
@@ -163,6 +167,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.up_button.setDisabled(False)
         self.down_button.setDisabled(False)
+        self.pub_max_v.publish(target_velocity)
 
     def senser_check_callback(self, msg):
         for i, sensor_status in enumerate(msg.data):
@@ -170,7 +175,7 @@ class MainWindow(QMainWindow, form_class):
             self.update_text_color(i, text_color)
 
     def update_text_color(self, sensor_index, color):
-        sensors = [self.label_cam, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
         sensor = sensors[sensor_index]
         sensor.setStyleSheet(f"color : {color}")
 
@@ -293,6 +298,7 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.setSplashPath("")
         rviz_frame.initialize()
         reader = rviz.YamlConfigReader()
+        self.rviz_map_screen.addWidget(rviz_frame)
 
         if type == 'map':
             config = rviz.Config()
@@ -302,6 +308,8 @@ class MainWindow(QMainWindow, form_class):
             self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
             self.rviz_layout.addWidget(rviz_frame)
+            
+
 
         else:
             config = rviz.Config()

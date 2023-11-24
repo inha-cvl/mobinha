@@ -85,6 +85,8 @@ class MainWindow(QMainWindow, form_class):
         self.label_perception = self.findChild(QLabel, 'warn_perception')
         self.label_planning = self.findChild(QLabel, 'warn_planning')
 
+        self.rviz_map_screen.setLayout(QVBoxLayout())
+
         
 ########       
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
@@ -158,8 +160,8 @@ class MainWindow(QMainWindow, form_class):
 
     def on_set_button_clicked(self):
         # self.blink_timer.stop() 
-        target_velocity = self.setting_target_vel.text() 
-        self.info_target_vel.setText(target_velocity)
+        target_velocity = int(self.setting_target_vel.text()) 
+        self.info_target_vel.setText(str(target_velocity)) 
 
         self.setting_target_vel.setVisible(False)
         self.name_adjustvelocity.setVisible(False)
@@ -167,14 +169,39 @@ class MainWindow(QMainWindow, form_class):
 
         self.up_button.setDisabled(False)
         self.down_button.setDisabled(False)
-        self.pub_max_v.publish(target_velocity)
-        print("-------------------------")
+        self.pub_max_v.publish(Int8(data=target_velocity))
 
 
     def senser_check_callback(self, msg):
+        camera1_warning = 0
+        camera2_warning = 1
+        camera3_warning = 2
+        lidar_warning = 3
+        gps_warning = 4
+        ins_warning = 5
+        can_warning = 6
+        perception_warning = 7
+        planning_warning = 8
+
+
         for i, sensor_status in enumerate(msg.data):
             text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
             self.update_text_color(i, text_color)
+
+            if i == camera1_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : CAMERA")
+            elif i == lidar_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : LIDAR")
+            elif i == gps_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : GPS")
+            elif i == ins_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : INS")
+            elif i == can_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : CAN")
+            elif i == perception_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : PERCEPTION")
+            elif i == planning_warning and sensor_status ==1:
+                self.state_screen.setText("State Error : PLANNING")
 
     def update_text_color(self, sensor_index, color):
         sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
@@ -300,7 +327,15 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.setSplashPath("")
         rviz_frame.initialize()
         reader = rviz.YamlConfigReader()
-        # self.rviz_map_screen.addWidget(rviz_frame)
+        config = rviz.Config()
+        reader.readFile(config, dir_path+"/forms/main.rviz")
+        rviz_frame.load(config)
+        manager = rviz_frame.getManager()
+        self.map_view_manager = manager.getViewManager()
+        if type == 'map':
+            self.clear_layout(self.rviz_map_screen.layout())  # 기존 레이아웃을 정리합니다.
+            self.rviz_map_screen.layout().addWidget(rviz_frame) 
+            # self.rviz_map_screen.addWidget(rviz_frame)
 
         if type == 'map':
             config = rviz.Config()

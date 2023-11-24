@@ -74,6 +74,14 @@ class MainWindow(QMainWindow, form_class):
         self.cmd_full_button.clicked.connect(lambda: self.cmd_button_clicked(1))
         self.cmd_disable_button.clicked.connect(lambda: self.cmd_button_clicked(0))
 
+        self.label_cam = self.findChild(QLabel, 'warn_camera1')
+        self.label_lidar = self.findChild(QLabel, 'warn_lidar')
+        self.label_gps = self.findChild(QLabel, 'warn_gps')
+        self.label_ins = self.findChild(QLabel, 'warn_ins')
+        self.label_can = self.findChild(QLabel, 'warn_can')
+        self.label_perception = self.findChild(QLabel, 'warn_perception')
+        self.label_planning = self.findChild(QLabel, 'warn_planning')
+
         
 ########       
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
@@ -93,6 +101,8 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
+
+        rospy.Subscriber('/sensor_check', Int16MultiArray, self.senser_check_callback)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -153,6 +163,18 @@ class MainWindow(QMainWindow, form_class):
 
         self.up_button.setDisabled(False)
         self.down_button.setDisabled(False)
+
+    def senser_check_callback(self, msg):
+        for i, sensor_status in enumerate(msg.data):
+            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
+            self.update_text_color(i, text_color)
+
+    def update_text_color(self, sensor_index, color):
+        sensors = [self.label_cam, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        sensor = sensors[sensor_index]
+        sensor.setStyleSheet(f"color : {color}")
+
+
 
 #####
     def timer(self, sec):

@@ -3,7 +3,7 @@ import signal
 import time
 import rospy
 import traceback
-from std_msgs.msg import String
+from std_msgs.msg import String, Int8
 
 from obstacle_detector import ObstacleDetector
 from selfdrive.message.messaging import *
@@ -16,6 +16,8 @@ class Perception:
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
         rospy.Subscriber(
             '/mobinha/visualize/system_state', String, self.state_cb)
+        self.pub_perception_State = rospy.Publisher(
+            '/mobinha/perception_state', Int8, queue_size=10)
 
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
@@ -25,10 +27,12 @@ class Perception:
             return False
         
     def perception(self):
+        state = 0
         sm = None
         obstacle_detector = None
         while True:
             if self.state == 'INITIALIZE':
+                state = 0
                 if self.need_init:
                     sm, obstacle_detector = self.init()
             elif self.state == 'START':
@@ -36,11 +40,16 @@ class Perception:
                     self.need_init = True
                     sm.update()
                     obstacle_detector.run(sm.CS)
+                    state = 1
             elif self.state == 'OVER':
+                state = 0
                 return 1
             else:
+                state = 0
                 time.sleep(0.1)
-                continue
+                #continue
+
+            self.pub_perception_State.publish(Int8(state))
 
     def init(self):
         self.need_init = False

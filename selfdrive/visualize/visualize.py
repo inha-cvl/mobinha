@@ -22,6 +22,8 @@ import shlex
 from selfdrive.message.messaging import *
 from sensor_msgs.msg import CompressedImage
 
+from PyQt5.QtCore import QTimer
+
 import selfdrive.visualize.libs.imugl as imugl
 from simple_writer import SimpleWriter
 from tl_simulator import TLSimulator
@@ -60,7 +62,20 @@ class MainWindow(QMainWindow, form_class):
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
         self.target_yaw = 0
         self.cte = 0
+######33
+        self.blink_timer = QTimer(self)
+        self.blink_timer.timeout.connect(self.toggle_visibility)
+        self.blink_status = False
+
+        self.up_button.clicked.connect(self.increase_target_velocity)
+        self.down_button.clicked.connect(self.decrease_target_velocity)
+        self.set_button.clicked.connect(self.on_set_button_clicked)
+
+        self.cmd_full_button.clicked.connect(lambda: self.cmd_button_clicked(1))
+        self.cmd_disable_button.clicked.connect(lambda: self.cmd_button_clicked(0))
+
         
+########       
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
@@ -93,6 +108,53 @@ class MainWindow(QMainWindow, form_class):
         self.initialize()
         self.connection_setting()
 
+        self.MAX_VELOCITY = 50  # 최대 속도값
+        self.MIN_VELOCITY = 20    # 최소 속도값
+#####
+
+    def increase_target_velocity(self):
+        self.setting_target_vel.setVisible(True)
+        self.name_adjustvelocity.setVisible(True)
+        self.label_kmh3.setVisible(True)
+        self.down_button.setDisabled(False)
+        current_value = int(self.setting_target_vel.text())
+        new_value = current_value + 5
+        if new_value <= self.MAX_VELOCITY:
+            self.setting_target_vel.setText(str(new_value))
+        else:
+            self.up_button.setDisabled(True)
+        # self.blink_timer.start(500) 
+
+    def decrease_target_velocity(self):
+        self.setting_target_vel.setVisible(True)
+        self.name_adjustvelocity.setVisible(True)
+        self.label_kmh3.setVisible(True)
+        self.up_button.setDisabled(False)
+        current_value = int(self.setting_target_vel.text())
+        new_value = current_value - 5
+        if new_value >= self.MIN_VELOCITY:
+            self.setting_target_vel.setText(str(new_value))
+        else:
+            self.down_button.setDisabled(True)
+        # self.blink_timer.start(500) 
+
+    def toggle_visibility(self):
+        self.blink_status = not self.blink_status
+        self.setting_target_vel.setVisible(self.blink_status)
+
+    def on_set_button_clicked(self):
+        # self.blink_timer.stop() 
+        target_velocity = self.setting_target_vel.text() 
+        self.info_target_vel.setText(target_velocity)
+
+        self.setting_target_vel.setVisible(False)
+        self.name_adjustvelocity.setVisible(False)
+        self.label_kmh3.setVisible(False)
+
+        self.up_button.setDisabled(False)
+        self.down_button.setDisabled(False)
+
+#####
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
             self.tick[sec] = time.time()
@@ -150,9 +212,11 @@ class MainWindow(QMainWindow, form_class):
         self.car_name_combo_box.currentIndexChanged.connect(self.car_name_changed)
         self.map_name_combo_box.currentIndexChanged.connect(self.map_name_changed)
 
-        self.can_cmd_buttons = [self.cmd_disable_button, self.cmd_full_button, self.cmd_only_lat_button, self.cmd_only_long_button]
-        for i in range(4):
-            self.can_cmd_buttons[i].clicked.connect(lambda state, idx=i: self.cmd_button_clicked(idx))
+        # self.can_cmd_buttons = [self.cmd_disable_button, self.cmd_full_button, self.cmd_only_lat_button, self.cmd_only_long_button]
+        self.can_cmd_buttons = [self.cmd_disable_button, self.cmd_full_button]
+        
+        # for i in range(2):
+        #     self.can_cmd_buttons[i].clicked.connect(lambda state, idx=i: self.cmd_button_clicked(idx))
 
         self.scenario1_button.clicked.connect(lambda state, idx=1:  self.scenario_button_clicked(idx))
         self.scenario2_button.clicked.connect(lambda state, idx=2:  self.scenario_button_clicked(idx))
@@ -304,9 +368,40 @@ class MainWindow(QMainWindow, form_class):
         self.blinker_r_label.setHidden(True)
 
         self.gear_label_list = [self.gear_p_label, self.gear_r_label, self.gear_n_label, self.gear_d_label]
+#################
+        self.gear_list = [self.gear_p, self.gear_r, self.gear_n, self.gear_d]
+
 
         self.tl_label4_list = [self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
         self.tl_label1_list = [self.label_37, self.label_39, self.label_40, self.label_42]
+###############
+    # def gear_change(self, gear_signal):
+    #     if gear_signal == self.gear_p:
+    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+    #     if gear_signal == self.gear_r:
+    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+    #     if gear_signal == self.gear_n:
+    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+    #     if gear_signal == self.gear_d:
+    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+    def gear_change(self, gear_signal):
+        # 모든 기어 레이블의 배경색을 초기화합니다.
+        default_style = "background-color : none;"
+        self.gear_p.setStyleSheet(default_style)
+        self.gear_r.setStyleSheet(default_style)
+        self.gear_n.setStyleSheet(default_style)
+        self.gear_d.setStyleSheet(default_style)
+        
+        # 활성화된 기어에 따라 해당 레이블의 배경색을 설정합니다.
+        if gear_signal == self.gear_p:
+            self.gear_p.setStyleSheet("background-color : #FC6C6C;")
+        elif gear_signal == self.gear_r:
+            self.gear_r.setStyleSheet("background-color : #DAA520;")
+        elif gear_signal == self.gear_n:
+            self.gear_n.setStyleSheet("background-color : #FC6C6C;")
+        elif gear_signal == self.gear_d:
+            self.gear_d.setStyleSheet("background-color : #008081;")
+
 
     def clear_layout(self, layout):
         for i in range(layout.count()):
@@ -550,11 +645,17 @@ class MainWindow(QMainWindow, form_class):
 
     def cmd_button_clicked(self, idx):
         self.can_cmd = idx
-        for i in range(1, 4):
+        for i in range(0, 2):
             self.can_cmd_buttons[i].setDisabled(i != idx)
         if idx == 0:
             for button in self.can_cmd_buttons:
+                self.state_screen.setText("MANUAL DRIVE MODE")
                 button.setEnabled(True)
+        if idx ==1:
+            for button in self.can_cmd_buttons:
+                self.state_screen.setText("AUTOMATIC DRIVE MODE")
+                button.setEnabled(True)
+
 
     def scenario_button_clicked(self, idx):
         self.scenario = idx
@@ -595,7 +696,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_y_label.setText(f"{self.angle_difference(self.target_yaw, self.CS.yawRate):.2f} deg") # Heading Error :  + clock wise error, - counter clock wise error
         self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
         self.check_mode(self.CS.cruiseState)
-
+        self.info_cur_vel.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
 
             self.imu_widget.updateRP(self.CS.rollRate, self.CS.pitchRate, self.CS.yawRate)
@@ -623,6 +724,9 @@ class MainWindow(QMainWindow, form_class):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             self.info_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
             self.info_velocity_label.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
+            ###########
+            self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
+
             self.info_car_lat_label.setText(f"lat : {self.CS.position.latitude:.4f}")
             self.info_car_lng_label.setText(f"lng : {self.CS.position.longitude:.4f}")
             self.info_car_alt_label.setText(f"alt : {self.CS.position.altitude:.4f}")
@@ -635,6 +739,10 @@ class MainWindow(QMainWindow, form_class):
             self.info_goal_alt_label.setText(f"alt : {self.goal_alt:.5f}")
 
             [self.gear_label_list[i].setStyleSheet("QLabel{color:rgb(19, 99, 223);}") if self.CS.gearShifter == i else self.gear_label_list[i].setStyleSheet("QLabel{color: rgb(223, 246, 255);}") for i in range(4)]
+            
+            ##################
+            [self.gear_list[i].setStyleSheet("QLabel{color:rgb(19, 99, 223);}") if self.CS.gearShifter == i else self.gear_list[i].setStyleSheet("QLabel{color: rgb(223, 246, 255);}") for i in range(4)]
+
 
             if self.CS.buttonEvent.leftBlinker == 1:
                 self.blinker_l_label.setHidden(False)

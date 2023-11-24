@@ -2,7 +2,7 @@ import rospy
 import math
 import time
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int8
 from geometry_msgs.msg import PoseArray, Pose
 
 from selfdrive.planning.libs.planner_utils import *
@@ -44,10 +44,16 @@ class LongitudinalPlanner:
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
+        
+        rospy.Subscriber('/mobinha/planning/max_v', Int8, self.max_v_cb)
+        
         self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_traffic_light_marker = rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
 
+    def max_v_cb(self, msg):
+        self.rel_v = msg.data
+        
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z, pose.orientation.x, pose.orientation.y)for pose in msg.poses]
 

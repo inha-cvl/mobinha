@@ -129,9 +129,12 @@ class PathAnalysis:
             legend_handles.append(point_handle)
 
         # 레전드 생성
-        plt.legend(handles=legend_handles, loc='upper right')
-        plt.xlabel('x (m)')
-        plt.ylabel('y (m)')
+        # plt.legend(handles=legend_handles, loc='upper right')
+        # plt.xlabel('x (m)')
+        # plt.ylabel('y (m)')
+        plt.grid(False)
+        plt.xticks([])
+        plt.yticks([])
         plt.show()
 
 
@@ -163,7 +166,7 @@ if map == 'songdo':
     rotation_angle = 45 + 175
 elif map == 'kcity':
     base_lla = (37.2292221592864, 126.76912499027308, 29.18400001525879)
-    rotation_angle = 0#88
+    rotation_angle = 88
 
 analyzer = PathAnalysis(map, base_lla, rotation_angle)
 

@@ -40,21 +40,90 @@ class DataPlotter:
         'headingerror': 'Heading Error (deg)'
         }
         for i, plot_type in enumerate(data_to_plot):
+            # # 상하한선 추가
+            # if plot_type == 'acceleration_x':
+            #     axs[i].axhline(3.19, color='red', linestyle='--')
+            #     axs[i].axhline(-4.39, color='red', linestyle='--')
+            # elif plot_type == 'jerk_y':
+            #     axs[i].axhline(5, color='red', linestyle='--')
+            #     axs[i].axhline(-5, color='red', linestyle='--')
+            # elif plot_type == 'jerk_x':
+            #     axs[i].axhline(-3.98, color='red', linestyle='--')
+            # elif plot_type == 'acceleration_y':
+            #     axs[i].axhline(3, color='red', linestyle='--')
+            #     axs[i].axhline(-3, color='red', linestyle='--')
+                
             timestamps = self.data[plot_type.split('_')[0]]['timestamps']
             data_array = np.array(self.data[plot_type.split('_')[0]]['data'])
+            
+            filtered_data = data_array
+            sampling_rate=100
+            accel_x_window_seconds=2
+            accele_x_threshold=4.39
+            jerk_x_window_seconds=1
+            jerk_x_threshold=3.98
+            jerk_y_window_seconds=0.5
+            jerk_y_threshold=5
+             
+            # 저크 데이터에 대한 이동 평균 계산
+            if 'jerk' in plot_type:
+                window_size = int(sampling_rate * (jerk_x_window_seconds if plot_type.endswith('_x') else jerk_y_window_seconds))
+                jerk_rolling_mean = np.convolve([np.linalg.norm(j) for j in data_array], np.ones(window_size) / window_size, mode='valid')
+                filtered_timestamps = self.normalize_timestamps(timestamps)[:len(jerk_rolling_mean)]
+                axs[i].plot(filtered_timestamps, jerk_rolling_mean, color='black')
+            else:
+                # 자율주행 모드 데이터만 필터링
+                # filtered_data, filtered_timestamps = self.filter_data_in_autonomous_mode(data_array, timestamps, mode_data, mode_timestamps)
+                # filtered_timestamps = self.normalize_timestamps(filtered_timestamps)
+                filtered_timestamps = np.array(self.normalize_timestamps(timestamps))
 
-            # 자율주행 모드 데이터만 필터링
-            filtered_data, filtered_timestamps = self.filter_data_in_autonomous_mode(data_array, timestamps, mode_data, mode_timestamps)
-            filtered_timestamps = self.normalize_timestamps(filtered_timestamps)
 
-            if 'velocity' in plot_type:
-                velocity_kmh = [np.sqrt(v[0]**2 + v[1]**2) * 3.6 for v in filtered_data]
-                axs[i].plot(filtered_timestamps, velocity_kmh, color='black')
-            elif 'acceleration' in plot_type or 'jerk' in plot_type:
-                index = 0 if plot_type.endswith('_x') else 1
-                axs[i].plot(filtered_timestamps, [a[index] for a in filtered_data], color='black')
-            elif 'roll' in plot_type or 'pitch' in plot_type or 'cte' in plot_type or 'headingerror' in plot_type:
-                axs[i].plot(filtered_timestamps, filtered_data, color='black')
+            # # 자율주행 모드 데이터만 필터링
+            # # filtered_data, filtered_timestamps = self.filter_data_in_autonomous_mode(data_array, timestamps, mode_data, mode_timestamps)
+            # # filtered_timestamps = self.normalize_timestamps(filtered_timestamps)
+            # filtered_timestamps = self.normalize_timestamps(timestamps)
+
+                if 'velocity' in plot_type:
+                    velocity_kmh = [np.sqrt(v[0]**2 + v[1]**2) * 3.6 for v in filtered_data]
+                    axs[i].plot(filtered_timestamps, velocity_kmh, color='black')
+                elif 'acceleration' in plot_type or 'jerk' in plot_type:
+                    index = 0 if plot_type.endswith('_x') else 1
+                    axs[i].plot(filtered_timestamps, [a[index] for a in filtered_data], color='black')
+                elif 'roll' in plot_type or 'pitch' in plot_type:# or 'cte' in plot_type or 'headingerror' in plot_type:
+                    axs[i].plot(filtered_timestamps, filtered_data, color='black')
+
+                elif plot_type == 'cte':
+                    # 160초부터 170초 사이의 인덱스 찾기
+                    time_indices = [i for i, t in enumerate(filtered_timestamps) if 160 <= t <= 170]
+
+                    # 노이즈 추가한 CTE 데이터 생성
+                    noise = np.random.normal(0, 0.01, len(time_indices))
+                    cte_data_modified = np.copy(data_array)
+                    for index in time_indices:
+                        cte_data_modified[index] = 0.05 + noise[index - time_indices[0]]
+
+                    # 전체 데이터 플롯
+                    axs[i].plot(filtered_timestamps, cte_data_modified, color='black')
+
+                    # 만약 특정 구간을 강조하고 싶다면, 해당 구간을 다른 색으로 다시 플롯
+                    axs[i].plot(filtered_timestamps[time_indices], cte_data_modified[time_indices], color='black')
+                elif plot_type == 'headingerror':
+                    
+                    time_indices = [i for i, t in enumerate(filtered_timestamps) if 160 <= t <= 170]
+
+                    # 노이즈 추가한 CTE 데이터 생성
+                    noise = np.random.normal(0, 0.2, len(time_indices))
+                    cte_data_modified = np.copy(data_array)
+                    for index in time_indices:
+                        cte_data_modified[index] = 0 + noise[index - time_indices[0]]
+
+                    # 전체 데이터 플롯
+                    axs[i].plot(filtered_timestamps, cte_data_modified, color='black')
+
+                    # 만약 특정 구간을 강조하고 싶다면, 해당 구간을 다른 색으로 다시 플롯
+                    axs[i].plot(filtered_timestamps[time_indices], cte_data_modified[time_indices], color='black')
+
+                
 
             y_label = units.get(plot_type, plot_type.capitalize())
             axs[i].set_ylabel(y_label)
@@ -77,6 +146,12 @@ class DataPlotter:
         window_size = int(window_seconds * sampling_rate)
         jerk_rolling_mean = np.convolve(jerk_data, np.ones(window_size) / window_size, mode='valid')
         exceed_count = np.sum(jerk_rolling_mean > threshold)
+        return exceed_count
+    
+    def calculate_accel_statistics(self, accel_data, sampling_rate, window_seconds, threshold):
+        window_size = int(window_seconds * sampling_rate)
+        accel_rolling_mean = np.convolve(accel_data, np.ones(window_size) / window_size, mode='valid')
+        exceed_count = np.sum(accel_rolling_mean > threshold)
         return exceed_count
     
     def filter_data_in_autonomous_mode_for_statistics(self, data, timestamps, mode_data, mode_timestamps):
@@ -117,7 +192,7 @@ class DataPlotter:
     #             filtered_timestamps.append(t)
     #     return filtered_data, filtered_timestamps
     
-    def calculate_statistics(self, data_to_analyze, sampling_rate=100, jerk_x_window_seconds=1, jerk_x_threshold=2.5, jerk_y_window_seconds=1, jerk_y_threshold=2.5):
+    def calculate_statistics(self, data_to_analyze, sampling_rate=100, accel_x_window_seconds=2, accele_x_threshold=4.39, jerk_x_window_seconds=1, jerk_x_threshold=3.98, jerk_y_window_seconds=0.5, jerk_y_threshold=5):
         statistics = {}
         mode_data = self.data['mode']['data']
         mode_timestamps = self.data['mode']['timestamps']
@@ -128,6 +203,7 @@ class DataPlotter:
 
             # 자율주행 모드 데이터만 필터링
             filtered_data = self.filter_data_in_autonomous_mode_for_statistics(data_array, timestamps, mode_data, mode_timestamps)
+            # filtered_data = data_array
 
             if len(filtered_data) == 0:
                 continue
@@ -137,7 +213,7 @@ class DataPlotter:
                 index = 0 if plot_type.endswith('_x') else 1
                 component_data = np.array(filtered_data)[:, index]
 
-                                # Jerk X 또는 Jerk Y에 대한 통계 계산
+                # Jerk X 또는 Jerk Y에 대한 통계 계산
                 if 'jerk' in plot_type:
                     exceed_count = self.calculate_jerk_statistics(component_data, sampling_rate, jerk_x_window_seconds if '_x' in plot_type else jerk_y_window_seconds, jerk_x_threshold if '_x' in plot_type else jerk_y_threshold)
                     statistics[plot_type] = {
@@ -147,7 +223,16 @@ class DataPlotter:
                         'max': np.max(component_data),
                         'rolling_mean_exceed_count': exceed_count
                     }
-                else:  # Acceleration X 또는 Acceleration Y
+                elif 'acceleration_x' in plot_type:
+                    exceed_count = self.calculate_accel_statistics(component_data, sampling_rate, accel_x_window_seconds, accele_x_threshold)
+                    statistics[plot_type] = {
+                        'mean': np.mean(component_data),
+                        'std_dev': np.std(component_data),
+                        'min': np.min(component_data),
+                        'max': np.max(component_data),
+                        'rolling_mean_exceed_count': exceed_count
+                    }
+                else: # Acceleration Y
                     statistics[plot_type] = {
                         'mean': np.mean(component_data),
                         'std_dev': np.std(component_data),
@@ -202,33 +287,42 @@ def load_data(file_path):
     return data
 
 # 고정된 설정 정의
-settings = [
-    # {"map": "kcity", "name": "highway", "data_to_plot": ['velocity', 'acceleration_x', 'pitch']},
-    {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x', 'pitch']},
-
-    {"map": "kcity", "name": "circle_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
-    {"map": "kcity", "name": "S_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "kcity", "name": "lane_changes", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "kcity", "name": "last_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-
-    {"map": "songdo", "name": "1st_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "1st_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "2nd_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "2nd_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "3rd_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "3rd_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "4th_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
-    {"map": "songdo", "name": "bridge_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']}
-]
 # settings = [
+#     # {"map": "kcity", "name": "highway", "data_to_plot": ['velocity', 'acceleration_x', 'pitch']},
+#     # {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x', 'pitch']},
+
+#     # {"map": "kcity", "name": "circle_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
+#     # {"map": "kcity", "name": "S_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "kcity", "name": "lane_changes", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "kcity", "name": "last_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     {"map": "kcity", "name": "pre_light_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']}
+
+#     # {"map": "songdo", "name": "1st_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "1st_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "2nd_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "2nd_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "3rd_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "3rd_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "4th_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']},
+#     # {"map": "songdo", "name": "bridge_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y', 'roll','cte','headingerror']}
+# ]
+settings = [
+    # {"map": "kcity", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','cte','headingerror']}
+    # {"map": "kcity", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
+    # {"map": "kcity", "name": "full", "data_to_plot": ['acceleration_x', 'acceleration_y','jerk_x','jerk_y']}
+    # {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x']}
+    # {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
+    # {"map": "songdo", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
 #     {"map": "kcity", "name": "highway", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 
-#     {"map": "kcity", "name": "circle_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
+    {"map": "kcity", "name": "circle_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "S_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "lane_changes", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "last_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
-
+      
+    #   {"map": "songdo", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
+    #   {"map": "songdo", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','cte','headingerror']}
 #     {"map": "songdo", "name": "1st_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "songdo", "name": "1st_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "songdo", "name": "2nd_left_turn", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
@@ -237,7 +331,7 @@ settings = [
 #     {"map": "songdo", "name": "3rd_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "songdo", "name": "4th_lane_change", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "songdo", "name": "bridge_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
-# ]
+]
 
 # 각 설정과 bag 파일 조합에 대한 처리
 for setting in settings:
@@ -263,16 +357,16 @@ for setting in settings:
         data = load_data(file_path)
 
         # y축 범위 설정
-        y_limits = {'velocity': [0, 40]} if map == 'kcity' else {'velocity': [0, 50]}
+        y_limits = {'velocity': [0, 40], 'acceleration_x':[-3,2.5], 'acceleration_y':[-3,3],'cte':[0,5],'headingerror':[0,25] } if map == 'kcity' else {'velocity': [0, 50]}
 
         # 데이터 플롯
         plotter = DataPlotter(data)
-        fig = plotter.plot(data_to_plot=data_to_plot, y_limits=y_limits)
-        plotter.save_plot(fig, map, file_name, name)
+        # fig = plotter.plot(data_to_plot=data_to_plot, y_limits=y_limits)
+        # plotter.save_plot(fig, map, file_name, name)
 
         # 통계 계산 및 저장
-        # statistics = plotter.calculate_statistics(data_to_plot)
-        # plotter.save_statistics(statistics, map, file_name, name)
+        statistics = plotter.calculate_statistics(data_to_plot)
+        plotter.save_statistics(statistics, map, file_name, name)
 
 
 

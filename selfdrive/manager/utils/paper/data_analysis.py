@@ -6,7 +6,7 @@ from novatel_oem7_msgs.msg import INSPVA
 from sensor_msgs.msg import Imu
 from shapely.geometry import Point, LineString
 from tqdm import tqdm 
-
+import csv
 
 def numpy_to_list(data):
     if isinstance(data, np.ndarray):
@@ -167,25 +167,66 @@ class PathDataAnalyzer:
         with open(f'./{self.map}/{bag_file}_data_{name}.json', 'w') as json_file:
             json.dump(data_to_save, json_file, indent=4)
 
+    def save_data_as_csv(self, data, bag_file):
+        csv_file_path = f'./{self.map}/{bag_file}_data_full.csv'
+
+        with open(csv_file_path, mode='w', newline='') as file:
+            csv_writer = csv.writer(file)
+            
+            # 헤더 작성
+            headers = ['timestamp', 'velocity_x', 'velocity_y', 'acceleration_x', 'acceleration_y', 'jerk_x', 'jerk_y', 'roll', 'pitch', 'vehicle_x', 'vehicle_y', 'vehicle_heading', 'mode', 'cte', 'heading_error']
+            csv_writer.writerow(headers)
+
+            # 데이터 길이에 따라 가장 긴 데이터 찾기
+            max_length = max(len(data['velocity']['timestamps']), len(data['acceleration']['timestamps']), len(data['jerk']['timestamps']), len(data['roll']['timestamps']), len(data['pitch']['timestamps']), len(data['vehicle']['timestamps']), len(data['mode']['timestamps']), len(data['cte']['timestamps']), len(data['headingerror']['timestamps']))
+
+            # 데이터 길이에 맞춰서 CSV 파일에 작성
+            for i in range(max_length):
+                row = [
+                    data['velocity']['timestamps'][i] if i < len(data['velocity']['timestamps']) else '',
+                    data['velocity']['data'][i][0] if i < len(data['velocity']['data']) else '',
+                    data['velocity']['data'][i][1] if i < len(data['velocity']['data']) else '',
+                    data['acceleration']['data'][i][0] if i < len(data['acceleration']['data']) else '',
+                    data['acceleration']['data'][i][1] if i < len(data['acceleration']['data']) else '',
+                    data['jerk']['data'][i][0] if i < len(data['jerk']['data']) else '',
+                    data['jerk']['data'][i][1] if i < len(data['jerk']['data']) else '',
+                    data['roll']['data'][i] if i < len(data['roll']['data']) else '',
+                    data['pitch']['data'][i] if i < len(data['pitch']['data']) else '',
+                    data['vehicle']['data'][i][0] if i < len(data['vehicle']['data']) else '',
+                    data['vehicle']['data'][i][1] if i < len(data['vehicle']['data']) else '',
+                    data['vehicle']['data'][i][2] if i < len(data['vehicle']['data']) else '',
+                    data['mode']['data'][i] if i < len(data['mode']['data']) else '',
+                    data['cte']['data'][i] if i < len(data['cte']['data']) else '',
+                    data['headingerror']['data'][i] if i < len(data['headingerror']['data']) else ''
+                ]
+                csv_writer.writerow(row)
 
 map = 'kcity'
 analyzer = PathDataAnalyzer(map)
+for bag_file in (['1-1.bag', '1-2.bag', '1-3.bag', '1-4.bag', 
+                 '2-1.bag', '2-2.bag', '2-3.bag', 
+                 '4-1.bag', '4-2.bag', '4-3.bag', 
+                 '5-1.bag', '5-2.bag', 
+                 '6-1.bag', '6-2.bag',
+                 'car2car1-1.bag', 'car2car2-1.bag', 'car2car2-2.bag',
+                 'car2car3-1.bag', 'car2car4-1.bag', 'car2car4-2.bag',
+                 'car2car5-1.bag', 'car2car6-1.bag']):
+
+
+    analyzer.save_data_as_csv(bag_file)
+map = 'songdo'
+analyzer = PathDataAnalyzer(map)
+for bag_file in tqdm(['1-1.bag', '2-2.bag', '2-3.bag', '4-1.bag', '5-1.bag', '6-1.bag', '6-2.bag']):
+    analyzer.save_data_as_csv(bag_file)
+    
 # for bag_file in tqdm(['1-1.bag', '1-2.bag', '1-3.bag', '1-4.bag', 
 #                  '2-1.bag', '2-2.bag', '2-3.bag', 
 #                  '4-1.bag', '4-2.bag', '4-3.bag', 
 #                  '5-1.bag', '5-2.bag', 
-#                  '6-1.bag', '6-2.bag',
-#                  'car2car1-1.bag', 'car2car2-1.bag', 'car2car2-2.bag',
-#                  'car2car3-1.bag', 'car2car4-1.bag', 'car2car4-2.bag',
-#                  'car2car5-1.bag', 'car2car6-1.bag']):
-
-#     analyzer.process_full_bag_file(bag_file)
+#                  '6-1.bag', '6-2.bag']):
     
-for bag_file in tqdm(['1-1.bag', '1-2.bag', '1-3.bag', '1-4.bag', 
-                 '2-1.bag', '2-2.bag', '2-3.bag', 
-                 '4-1.bag', '4-2.bag', '4-3.bag', 
-                 '5-1.bag', '5-2.bag', 
-                 '6-1.bag', '6-2.bag']):
+#     # analyzer.process_full_bag_file(bag_file)
+#     analyzer.save_data_as_csv(bag_file)
     
     # name = 'traffic_light'
     # start_point_gt = (466,1320,893)
@@ -197,10 +238,15 @@ for bag_file in tqdm(['1-1.bag', '1-2.bag', '1-3.bag', '1-4.bag',
     # end_point_gt = (363,1805)
     # analyzer.section_process_bag_file(bag_file, start_point_gt, end_point_gt, name)
 
-    name = 'circle_curve'
-    start_point_gt = (363,1820)
-    end_point_gt = (420,1866)
-    analyzer.section_process_bag_file(bag_file, start_point_gt, end_point_gt, name)
+    # name = 'circle_curve'
+    # start_point_gt = (363,1820)
+    # end_point_gt = (420,1866)
+    # analyzer.section_process_bag_file(bag_file, start_point_gt, end_point_gt, name)
+    
+    # name = 'pre_light_curve'
+    # start_point_gt = (469,1330)
+    # end_point_gt = (476,1474)
+    # analyzer.section_process_bag_file(bag_file, start_point_gt, end_point_gt, name)
 
 #     name = 'lane_changes'
 #     start_point_gt = (525,1792)
@@ -222,9 +268,7 @@ for bag_file in tqdm(['1-1.bag', '1-2.bag', '1-3.bag', '1-4.bag',
 #     analyzer.section_process_bag_file(bag_file, start_point_gt, end_point_gt, name)
 
 
-# map = 'songdo'
-# analyzer = PathDataAnalyzer(map)
-# for bag_file in tqdm(['1-1.bag', '2-2.bag', '2-3.bag', '4-1.bag', '5-1.bag', '6-1.bag', '6-2.bag']):
+
     
 #     analyzer.process_full_bag_file(bag_file)
 

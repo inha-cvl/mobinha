@@ -89,6 +89,7 @@ class MainWindow(QMainWindow, form_class):
         self.rviz_map_screen.setLayout(QVBoxLayout())
 
         self.player = QMediaPlayer()
+        self.is_sound_playing = False
 
         
 ########       
@@ -238,10 +239,12 @@ class MainWindow(QMainWindow, form_class):
             if sensor_status ==0:
                 warning_present = True
 
-        if warning_present:
+        if warning_present and not self.is_sound_playing:
             self.play_warning_sound(warn_sound)
+            self.is_sound_playing = True
         else:
             self.stop_warning_sound()
+            self.is_sound_playing= False
 
     
     def play_warning_sound(self, sound_path):

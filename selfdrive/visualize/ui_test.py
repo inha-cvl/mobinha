@@ -19,7 +19,7 @@ test_velocity = 50  # km/h
 target_vel = 30
 
 test_sensor_status = Int16MultiArray()
-test_sensor_status.data = [1, 0, 1, 1, 1, 1, 1, 1, 1]  
+test_sensor_status.data = [1, 1, 1, 1, 1, 1, 1, 1, 1]  
 
 # 테스트 값을 MainWindow 인스턴스에 설정
 main_window.info_cur_vel.setText(f"{test_velocity}")

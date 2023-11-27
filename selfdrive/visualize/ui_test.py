@@ -19,12 +19,12 @@ test_velocity = 50  # km/h
 target_vel = 30
 
 test_sensor_status = Int16MultiArray()
-test_sensor_status.data = [1, 0, 1, 0, 1, 0, 1]  
+test_sensor_status.data = [1, 0, 1, 1, 1, 1, 1, 1, 1]  
 
 # 테스트 값을 MainWindow 인스턴스에 설정
 main_window.info_cur_vel.setText(f"{test_velocity}")
 main_window.setting_target_vel.setText(f'{target_vel}')
-main_window.gear_change(main_window.gear_r)
+# main_window.gear_change(main_window.gear_r)
 main_window.senser_check_callback(test_sensor_status)
 
 

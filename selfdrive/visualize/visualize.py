@@ -13,7 +13,8 @@ from std_msgs.msg import String, Float32, Int8, Int16MultiArray, Float32MultiArr
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
+from PyQt5.QtCore import QUrl
 from PyQt5.QtCore import *
 from PyQt5 import uic
 import pyqtgraph as pg
@@ -87,6 +88,8 @@ class MainWindow(QMainWindow, form_class):
 
         self.rviz_map_screen.setLayout(QVBoxLayout())
 
+        self.player = QMediaPlayer()
+
         
 ########       
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
@@ -133,6 +136,8 @@ class MainWindow(QMainWindow, form_class):
         self.name_adjustvelocity.setVisible(True)
         self.label_kmh3.setVisible(True)
         self.down_button.setDisabled(False)
+        self.set_button.setDisabled(False)
+
         current_value = int(self.setting_target_vel.text())
         new_value = current_value + 5
         if new_value <= self.MAX_VELOCITY:
@@ -146,6 +151,8 @@ class MainWindow(QMainWindow, form_class):
         self.name_adjustvelocity.setVisible(True)
         self.label_kmh3.setVisible(True)
         self.up_button.setDisabled(False)
+        self.set_button.setDisabled(False)
+
         current_value = int(self.setting_target_vel.text())
         new_value = current_value - 5
         if new_value >= self.MIN_VELOCITY:
@@ -164,8 +171,10 @@ class MainWindow(QMainWindow, form_class):
         self.info_target_vel.setText(str(target_velocity)) 
 
         self.setting_target_vel.setVisible(False)
-        self.name_adjustvelocity.setVisible(False)
-        self.label_kmh3.setVisible(False)
+        # self.name_adjustvelocity.setVisible(False)
+        # self.label_kmh3.setVisible(False)
+        
+        self.set_button.setDisabled(True)
 
         self.up_button.setDisabled(False)
         self.down_button.setDisabled(False)
@@ -183,25 +192,67 @@ class MainWindow(QMainWindow, form_class):
         perception_warning = 7
         planning_warning = 8
 
+        warning_present = False
+        warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'
 
         for i, sensor_status in enumerate(msg.data):
             text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
             self.update_text_color(i, text_color)
+          
 
-            if i == camera1_warning and sensor_status ==1:
-                self.state_screen.setText("State Error : CAMERA")
-            elif i == lidar_warning and sensor_status ==1:
+            if i == camera1_warning and sensor_status ==0:
+                self.state_screen.setText("State Error : CAMERA1")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            if i == camera2_warning and sensor_status ==0:
+                self.state_screen.setText("State Error : CAMERA2")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            if i == camera3_warning and sensor_status ==0:
+                self.state_screen.setText("State Error : CAMERA3")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == lidar_warning and sensor_status ==0:
                 self.state_screen.setText("State Error : LIDAR")
-            elif i == gps_warning and sensor_status ==1:
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == gps_warning and sensor_status ==0:
                 self.state_screen.setText("State Error : GPS")
-            elif i == ins_warning and sensor_status ==1:
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == ins_warning and sensor_status ==0:
                 self.state_screen.setText("State Error : INS")
-            elif i == can_warning and sensor_status ==1:
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == can_warning and sensor_status ==0:
                 self.state_screen.setText("State Error : CAN")
-            elif i == perception_warning and sensor_status ==1:
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == perception_warning and sensor_status ==0:
                 self.state_screen.setText("State Error : PERCEPTION")
-            elif i == planning_warning and sensor_status ==1:
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == planning_warning and sensor_status ==0:
                 self.state_screen.setText("State Error : PLANNING")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            if sensor_status ==0:
+                warning_present = True
+
+        if warning_present:
+            self.play_warning_sound(warn_sound)
+        else:
+            self.stop_warning_sound()
+
+    
+    def play_warning_sound(self, sound_path):
+        
+        url = QUrl.fromLocalFile(sound_path)
+        content = QMediaContent(url)
+        self.player.setMedia(content)
+        self.player.play()
+
+    def stop_warning_sound(self):
+        self.player.stop()
 
     def update_text_color(self, sensor_index, color):
         sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
@@ -332,10 +383,6 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.load(config)
         manager = rviz_frame.getManager()
         self.map_view_manager = manager.getViewManager()
-        if type == 'map':
-            self.clear_layout(self.rviz_map_screen.layout())  # 기존 레이아웃을 정리합니다.
-            self.rviz_map_screen.layout().addWidget(rviz_frame) 
-            # self.rviz_map_screen.addWidget(rviz_frame)
 
         if type == 'map':
             config = rviz.Config()
@@ -344,10 +391,12 @@ class MainWindow(QMainWindow, form_class):
             manager = rviz_frame.getManager()
             self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
+            # self.clear_layout(self.rviz_layout_2)
+
             self.rviz_layout.addWidget(rviz_frame)
+            # self.rviz_layout_2.addWidget(rviz_frame)
+
             
-
-
         else:
             config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
@@ -436,38 +485,39 @@ class MainWindow(QMainWindow, form_class):
 
         self.gear_label_list = [self.gear_p_label, self.gear_r_label, self.gear_n_label, self.gear_d_label]
 #################
-        self.gear_list = [self.gear_p, self.gear_r, self.gear_n, self.gear_d]
+        # self.gear_list = [self.gear_p, self.gear_r, self.gear_n, self.gear_d]
 
 
         self.tl_label4_list = [self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
         self.tl_label1_list = [self.label_37, self.label_39, self.label_40, self.label_42]
 ###############
-    # def gear_change(self, gear_signal):
-    #     if gear_signal == self.gear_p:
-    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
-    #     if gear_signal == self.gear_r:
-    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
-    #     if gear_signal == self.gear_n:
-    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
-    #     if gear_signal == self.gear_d:
-    #         self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
     def gear_change(self, gear_signal):
-        # 모든 기어 레이블의 배경색을 초기화합니다.
-        default_style = "background-color : none;"
-        self.gear_p.setStyleSheet(default_style)
-        self.gear_r.setStyleSheet(default_style)
-        self.gear_n.setStyleSheet(default_style)
-        self.gear_d.setStyleSheet(default_style)
-        
-        # 활성화된 기어에 따라 해당 레이블의 배경색을 설정합니다.
         if gear_signal == self.gear_p:
-            self.gear_p.setStyleSheet("background-color : #FC6C6C;")
-        elif gear_signal == self.gear_r:
-            self.gear_r.setStyleSheet("background-color : #DAA520;")
-        elif gear_signal == self.gear_n:
-            self.gear_n.setStyleSheet("background-color : #FC6C6C;")
-        elif gear_signal == self.gear_d:
-            self.gear_d.setStyleSheet("background-color : #008081;")
+            self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+        if gear_signal == self.gear_r:
+            self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+        if gear_signal == self.gear_n:
+            self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+        if gear_signal == self.gear_d:
+            self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
+    
+    # def gear_change(self, gear_signal):
+    #     # 모든 기어 레이블의 배경색을 초기화합니다.
+    #     default_style = "background-color : none;"
+    #     self.gear_p.setStyleSheet(default_style)
+    #     self.gear_r.setStyleSheet(default_style)
+    #     self.gear_n.setStyleSheet(default_style)
+    #     self.gear_d.setStyleSheet(default_style)
+        
+    #     # 활성화된 기어에 따라 해당 레이블의 배경색을 설정합니다.
+    #     if gear_signal == self.gear_p:
+    #         self.gear_p.setStyleSheet("background-color : #FC6C6C;")
+    #     elif gear_signal == self.gear_r:
+    #         self.gear_r.setStyleSheet("background-color : #DAA520;")
+    #     elif gear_signal == self.gear_n:
+    #         self.gear_n.setStyleSheet("background-color : #FC6C6C;")
+    #     elif gear_signal == self.gear_d:
+    #         self.gear_d.setStyleSheet("background-color : #008081;")
 
 
     def clear_layout(self, layout):
@@ -716,11 +766,11 @@ class MainWindow(QMainWindow, form_class):
             self.can_cmd_buttons[i].setDisabled(i != idx)
         if idx == 0:
             for button in self.can_cmd_buttons:
-                self.state_screen.setText("MANUAL DRIVE MODE")
+                # self.state_screen.setText("MANUAL DRIVE MODE")
                 button.setEnabled(True)
         if idx ==1:
             for button in self.can_cmd_buttons:
-                self.state_screen.setText("AUTOMATIC DRIVE MODE")
+                # self.state_screen.setText("AUTOMATIC DRIVE MODE")
                 button.setEnabled(True)
 
 

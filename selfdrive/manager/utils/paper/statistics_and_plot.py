@@ -217,7 +217,7 @@ class DataPlotter:
                 if 'jerk' in plot_type:
                     exceed_count = self.calculate_jerk_statistics(component_data, sampling_rate, jerk_x_window_seconds if '_x' in plot_type else jerk_y_window_seconds, jerk_x_threshold if '_x' in plot_type else jerk_y_threshold)
                     statistics[plot_type] = {
-                        'mean': np.mean(component_data),
+                        'RMS': np.sqrt(np.mean(np.array(component_data)**2)),
                         'std_dev': np.std(component_data),
                         'min': np.min(component_data),
                         'max': np.max(component_data),
@@ -226,7 +226,7 @@ class DataPlotter:
                 elif 'acceleration_x' in plot_type:
                     exceed_count = self.calculate_accel_statistics(component_data, sampling_rate, accel_x_window_seconds, accele_x_threshold)
                     statistics[plot_type] = {
-                        'mean': np.mean(component_data),
+                        'RMS': np.sqrt(np.mean(np.array(component_data)**2)),
                         'std_dev': np.std(component_data),
                         'min': np.min(component_data),
                         'max': np.max(component_data),
@@ -234,7 +234,7 @@ class DataPlotter:
                     }
                 else: # Acceleration Y
                     statistics[plot_type] = {
-                        'mean': np.mean(component_data),
+                        'RMS': np.sqrt(np.mean(np.array(component_data)**2)),
                         'std_dev': np.std(component_data),
                         'min': np.min(component_data),
                         'max': np.max(component_data)
@@ -255,7 +255,7 @@ class DataPlotter:
             # 기본 통계치 계산
             else:
                 statistics[plot_type] = {
-                    'mean': np.mean(filtered_data),
+                    'rms': np.sqrt(np.mean(np.array(filtered_data)**2)),
                     'std_dev': np.std(filtered_data),
                     'min': np.min(filtered_data),
                     'max': np.max(filtered_data)
@@ -308,15 +308,15 @@ def load_data(file_path):
 # ]
 settings = [
     # {"map": "kcity", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','cte','headingerror']}
-    # {"map": "kcity", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
+    # {"map": "kcity", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
     # {"map": "kcity", "name": "full", "data_to_plot": ['acceleration_x', 'acceleration_y','jerk_x','jerk_y']}
     # {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x']}
     # {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
     # {"map": "songdo", "name": "full", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
-#     {"map": "kcity", "name": "highway", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
+    {"map": "kcity", "name": "highway", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']}
 #     {"map": "kcity", "name": "traffic_light", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 
-    {"map": "kcity", "name": "circle_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
+    # {"map": "kcity", "name": "circle_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "S_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "lane_changes", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},
 #     {"map": "kcity", "name": "last_curve", "data_to_plot": ['velocity', 'acceleration_x', 'acceleration_y','jerk_x','jerk_y', 'roll','pitch', 'cte','headingerror']},

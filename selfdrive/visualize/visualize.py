@@ -202,38 +202,38 @@ class MainWindow(QMainWindow, form_class):
           
 
             if i == camera1_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : CAMERA1")
+                self.state_screen.setText("WARNING : CAMERA1")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
             if i == camera2_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : CAMERA2")
+                self.state_screen.setText("WARNING : CAMERA2")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             if i == camera3_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : CAMERA3")
+                self.state_screen.setText("WARNING : CAMERA3")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             elif i == lidar_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : LIDAR")
+                self.state_screen.setText("WARNING : LIDAR")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             elif i == gps_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : GPS")
+                self.state_screen.setText("WARNING : GPS")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             elif i == ins_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : INS")
+                self.state_screen.setText("WARNING : INS")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             elif i == can_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : CAN")
+                self.state_screen.setText("WARNING : CAN")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             elif i == perception_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : PERCEPTION")
+                self.state_screen.setText("WARNING : PERCEPTION")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             elif i == planning_warning and sensor_status ==0:
-                self.state_screen.setText("State Error : PLANNING")
+                self.state_screen.setText("WARNING : PLANNING")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             if sensor_status ==0:
@@ -505,7 +505,6 @@ class MainWindow(QMainWindow, form_class):
             self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
     
     # def gear_change(self, gear_signal):
-    #     # 모든 기어 레이블의 배경색을 초기화합니다.
     #     default_style = "background-color : none;"
     #     self.gear_p.setStyleSheet(default_style)
     #     self.gear_r.setStyleSheet(default_style)
@@ -817,6 +816,8 @@ class MainWindow(QMainWindow, form_class):
         self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
         self.check_mode(self.CS.cruiseState)
         self.info_cur_vel.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
+        # self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
+
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
 
             self.imu_widget.updateRP(self.CS.rollRate, self.CS.pitchRate, self.CS.yawRate)
@@ -845,7 +846,6 @@ class MainWindow(QMainWindow, form_class):
             self.info_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
             self.info_velocity_label.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
             ###########
-            self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
 
             self.info_car_lat_label.setText(f"lat : {self.CS.position.latitude:.4f}")
             self.info_car_lng_label.setText(f"lng : {self.CS.position.longitude:.4f}")
@@ -861,7 +861,7 @@ class MainWindow(QMainWindow, form_class):
             [self.gear_label_list[i].setStyleSheet("QLabel{color:rgb(19, 99, 223);}") if self.CS.gearShifter == i else self.gear_label_list[i].setStyleSheet("QLabel{color: rgb(223, 246, 255);}") for i in range(4)]
             
             ##################
-            [self.gear_list[i].setStyleSheet("QLabel{color:rgb(19, 99, 223);}") if self.CS.gearShifter == i else self.gear_list[i].setStyleSheet("QLabel{color: rgb(223, 246, 255);}") for i in range(4)]
+            # [self.gear_list[i].setStyleSheet("QLabel{color:rgb(19, 99, 223);}") if self.CS.gearShifter == i else self.gear_list[i].setStyleSheet("QLabel{color: rgb(223, 246, 255);}") for i in range(4)]
 
 
             if self.CS.buttonEvent.leftBlinker == 1:

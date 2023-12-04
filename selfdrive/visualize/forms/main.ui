@@ -4171,11 +4171,14 @@ border-color: rgb(71,181,255);</string>
                 <bold>true</bold>
                </font>
               </property>
+              <property name="styleSheet">
+               <string notr="true">background-color : green;</string>
+              </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
               <property name="text">
-               <string>NO ERROR</string>
+               <string>CONNECT</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>

@@ -76,8 +76,8 @@ class MainWindow(QMainWindow, form_class):
         self.cmd_disable_button.clicked.connect(lambda: self.cmd_button_clicked(0))
 
         self.label_cam1 = self.findChild(QLabel, 'warn_camera1')
-        self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
-        self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
+        # self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
+        # self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
 
         self.label_lidar = self.findChild(QLabel, 'warn_lidar')
         self.label_gps = self.findChild(QLabel, 'warn_gps')
@@ -86,7 +86,7 @@ class MainWindow(QMainWindow, form_class):
         self.label_perception = self.findChild(QLabel, 'warn_perception')
         self.label_planning = self.findChild(QLabel, 'warn_planning')
 
-        self.rviz_map_screen.setLayout(QVBoxLayout())
+        # self.rviz_map_screen.setLayoutQVBoxLayout())
 
         self.player = QMediaPlayer()
         self.is_sound_playing = False
@@ -204,35 +204,35 @@ class MainWindow(QMainWindow, form_class):
             if i == camera1_warning and sensor_status ==0:
                 self.state_screen.setText("WARNING : CAMERA1")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-            if i == camera2_warning and sensor_status ==0:
-                self.state_screen.setText("WARNING : CAMERA2")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # if i == camera2_warning and sensor_status ==0:
+            #     self.state_screen.setText("WARNING : CAMERA2")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            if i == camera3_warning and sensor_status ==0:
-                self.state_screen.setText("WARNING : CAMERA3")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # if i == camera3_warning and sensor_status ==0:
+            #     self.state_screen.setText("WARNING : CAMERA3")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == lidar_warning and sensor_status ==0:
+            elif i == lidar_warning and sensor_status ==1:
                 self.state_screen.setText("WARNING : LIDAR")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == gps_warning and sensor_status ==0:
+            elif i == gps_warning and sensor_status ==1:
                 self.state_screen.setText("WARNING : GPS")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == ins_warning and sensor_status ==0:
+            elif i == ins_warning and sensor_status ==1:
                 self.state_screen.setText("WARNING : INS")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == can_warning and sensor_status ==0:
+            elif i == can_warning and sensor_status ==1:
                 self.state_screen.setText("WARNING : CAN")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == perception_warning and sensor_status ==0:
+            elif i == perception_warning and sensor_status ==1:
                 self.state_screen.setText("WARNING : PERCEPTION")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == planning_warning and sensor_status ==0:
+            elif i == planning_warning and sensor_status ==1:
                 self.state_screen.setText("WARNING : PLANNING")
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
@@ -258,7 +258,9 @@ class MainWindow(QMainWindow, form_class):
         self.player.stop()
 
     def update_text_color(self, sensor_index, color):
-        sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        # sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        sensors = [self.label_cam1, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        
         sensor = sensors[sensor_index]
         sensor.setStyleSheet(f"color : {color}")
 

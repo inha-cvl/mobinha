@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1888</width>
-    <height>1030</height>
+    <height>1021</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -3398,54 +3398,24 @@ border-color: rgb(71,181,255);</string>
         <string>License</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_20">
-        <item row="1" column="0">
+        <item row="0" column="0">
          <layout class="QHBoxLayout" name="horizontalLayout_6">
           <item>
            <layout class="QGridLayout" name="gridLayout_21">
-            <item row="1" column="0">
+            <item row="0" column="0">
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
                <layout class="QGridLayout" name="rviz_layout_2">
-                <item row="0" column="0" colspan="2">
-                 <spacer name="verticalSpacer_14">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item row="2" column="0" colspan="2">
-                 <widget class="QLabel" name="rviz_map_screen">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="rviz_map_layout">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                     <horstretch>0</horstretch>
-                    <verstretch>5</verstretch>
+                    <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                  <property name="font">
-                   <font>
-                    <family>Ubuntu Condensed</family>
-                    <pointsize>24</pointsize>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true"/>
-                  </property>
-                  <property name="frameShape">
-                   <enum>QFrame::Box</enum>
-                  </property>
                   <property name="text">
-                   <string>MAP</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                   <string/>
                   </property>
                  </widget>
                 </item>
@@ -3731,7 +3701,7 @@ color: #00AAFF;
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-color: #00AAFF;
+color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
@@ -3754,7 +3724,7 @@ color: #00AAFF;
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-color: #00AAFF;
+color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">

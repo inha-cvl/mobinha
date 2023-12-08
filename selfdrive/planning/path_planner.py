@@ -579,7 +579,7 @@ class PathPlanner:
 
                 forward_path_viz = ForwardPathViz(trajectory)
                 self.pub_forward_path.publish(forward_path_viz)
-                # self.pub_blinkiker.publish(blinker)
+                self.pub_blinkiker.publish(blinker)
 
                 pose = Pose()
                 pose.position.x = 1

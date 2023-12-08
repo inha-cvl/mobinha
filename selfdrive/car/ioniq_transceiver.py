@@ -48,8 +48,8 @@ class IoniqTransceiver():
         self.last_mode_2_time = 0
         self.force_mode_2 = False
         self.blinker = {'left':0, 'right': 0}
-        # self.PA_Enable_Status = 0
-        # self.LON_Enable_Status = 0
+        self.PA_Enable_Status = 0
+        self.LON_Enable_Status = 0
         self.prev_control_state = self.control_state.copy()
 
         rospy.on_shutdown(self.cleanup)

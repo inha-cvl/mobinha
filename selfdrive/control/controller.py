@@ -113,20 +113,16 @@ class Controller:
         CS = sm.CS
         vector3 = self.get_init_acuator()
         if self.local_path != None:
+            flagHybrid = True
+            flagstanley = False
+            if flagHybrid:
+                wheel_angle, lah_pt = self.purepursuit.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte, flagHybrid)
+            elif flagstanley:
+                wheel_angle = self.stanley.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
+            else:
+                wheel_angle, lah_pt = self.purepursuit.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte, flagHybrid)
             
-            wheel_angle, lah_pt = self.purepursuit.run(
-                CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte)
-            
-            # print("PP wheel_angle:",wheel_angle)
-
-            wheel_angle = self.stanley.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
-
-            # print("stanley wheel_angle:",wheel_angle)
-
             steer = wheel_angle*self.steer_ratio
-            # print("origin steer:",steer)
-            # steer = self.limit_steer_change(steer)
-            # print("limit steer:",steer)
             steer = self.limit_steer_change(steer)
 
             lah_viz = LookAheadViz(lah_pt)

@@ -67,10 +67,11 @@ class PurePursuit:
         new_y = (in_x - my_x) * sin(-yaw) + (in_y - my_y)*cos(-yaw)
         return (new_x, new_y)
 
-    def run(self, vEgo, path, position, yawRate, cte):
+    def run(self, vEgo, path, position, yawRate, cte, hybridFlag):
         lfd = self.Lfc+self.k*vEgo
         lfd = np.clip(lfd, 4, 60)
-        # lfd = 20
+        if not hybridFlag:
+            lfd = 20
         steering_angle = 0.
         lx, ly = path[0]
         for point in path:
@@ -83,7 +84,8 @@ class PurePursuit:
                 if dis >= lfd:
                     theta = np.arctan2(rotated_diff[1]-self.avoid_gain, rotated_diff[0])
                     steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
-                    steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 3 else steering_angle
+                    if hybridFlag:
+                        steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 3 else steering_angle
                     lx = point[0]
                     ly = point[1]
                     break

@@ -95,7 +95,7 @@ class LongitudinalPlanner:
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(4, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
-    def get_dynamic_gain(self, error, ttc, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
+    def get_dynamic_gain(self, error, ttc, flagLimitDecel, kp=0.1/HZ, ki=0.0/HZ, kd=0.08/HZ):
         self.integral += error*(1/HZ)
         self.integral = max(-5, min(self.integral, 5))
         derivative = (error - self.last_error)/(1/HZ) #  frame calculate.
@@ -110,7 +110,10 @@ class LongitudinalPlanner:
             else:  # 낮은 충돌 위험
                 max_speed_change_rate = 3 / HZ
 
-        deltaV = np.clip(pid_gain, -max_speed_change_rate, max_speed_change_rate)
+        if flagLimitDecel:
+            deltaV = np.clip(pid_gain, -max_speed_change_rate, max_speed_change_rate)
+        else:
+            deltaV = pid_gain        
         return deltaV
         # if error < 0:
         #     return max(0/HZ, min(1.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
@@ -177,12 +180,12 @@ class LongitudinalPlanner:
         #     target_v = max(0, self.target_v - gain)
         # return target_v
 
-    def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego):
+    def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego, flagLimitDecel):
         target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
         follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
         ttc = min_s / self.rel_v if self.rel_v != 0 else min_s# minus value is collision case
         self.follow_error = follow_distance-min_s
-        deltaV = self.get_dynamic_gain(self.follow_error, ttc)
+        deltaV = self.get_dynamic_gain(self.follow_error, ttc, flagLimitDecel)
 
         # 목표 속도에 gain 적용
         new_target_v = self.target_v + deltaV
@@ -255,6 +258,8 @@ class LongitudinalPlanner:
         return min(static_s1, static_s2)
 
     def run(self, sm, pp=0, local_path=None):
+        flagCurveDecel = True
+        flagLimitDecel = True
         CS = sm.CS
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
@@ -262,13 +267,15 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
-                # local_curv_v = calculate_v_by_centripetal_acceleration(self.lane_information, self.ref_v, CS.vEgo)
-                # local_curv_v = self.max_v*KPH_TO_MPS
+                if flagCurveDecel:
+                    local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
+                    # local_curv_v = calculate_v_by_centripetal_acceleration(self.lane_information, self.ref_v, CS.vEgo)
+                else:
+                    local_curv_v = self.max_v*KPH_TO_MPS
                 static_d = self.check_static_object(local_path, local_idx) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
-                target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
+                target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo, flagLimitDecel)
                 self.target_v = min(target_v_static, target_v_dynamic)
             else:
                 self.target_v = CS.vEgo

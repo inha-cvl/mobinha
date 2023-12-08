@@ -110,11 +110,11 @@ class Controller:
         return vector3
     
     def run(self, sm):
+        flagHybrid = True
+        flagstanley = False
         CS = sm.CS
         vector3 = self.get_init_acuator()
         if self.local_path != None:
-            flagHybrid = True
-            flagstanley = False
             if flagHybrid:
                 wheel_angle, lah_pt = self.purepursuit.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte, flagHybrid)
             elif flagstanley:

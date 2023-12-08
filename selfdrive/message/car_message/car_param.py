@@ -5,7 +5,7 @@ class MapParam(NamedTuple):
     path: str = ''
     tileSize: float = 5.0
     cutDist: float = 15.0
-    precision: float = 1.0
+    precision: float = 0.5
     baseLatitude: float = 37.39657805498484
     baseLongitude: float = 126.6321430873685
     baseAltitude: float = 7.369

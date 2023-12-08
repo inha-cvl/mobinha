@@ -110,23 +110,24 @@ class Controller:
         return vector3
     
     def run(self, sm):
-        flagHybrid = True
+        flagHybrid = False
         flagstanley = False
         CS = sm.CS
         vector3 = self.get_init_acuator()
         if self.local_path != None:
             if flagHybrid:
                 wheel_angle, lah_pt = self.purepursuit.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte, flagHybrid)
+                lah_viz = LookAheadViz(lah_pt)
+                self.pub_lah.publish(lah_viz)
             elif flagstanley:
                 wheel_angle = self.stanley.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate)
             else:
                 wheel_angle, lah_pt = self.purepursuit.run(CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte, flagHybrid)
+                lah_viz = LookAheadViz(lah_pt)
+                self.pub_lah.publish(lah_viz)
             
             steer = wheel_angle*self.steer_ratio
             steer = self.limit_steer_change(steer)
-
-            lah_viz = LookAheadViz(lah_pt)
-            self.pub_lah.publish(lah_viz)
 
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)

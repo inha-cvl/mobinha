@@ -468,46 +468,48 @@ class PathPlanner:
                                             self.renewal_path_cnt = 0
                                         return pp, self.local_path
                         elif blinker == 2 and get_look_a_head_id and 1.8<obs[2]<4.05 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
-                            vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
-                            targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
-                            safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
-                            print("d: ", d)
-                            print("targetmove: ", targetcarmovingdistance)
-                            print(safedistance)
-                            print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
-                            if safedistance < 10:
-                                safedistance = 10 # 5 * 2 : front and back 
-                            safe_space = (safedistance/2)
-                            obs_distance = (obs[1] - self.l_idx)*self.IDX_TO_M
-                            if targetcarmovingdistance + obs_distance - safe_space < d < targetcarmovingdistance + obs_distance + safe_space:
-                                
-                                #get renewable local path
-                                renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
-                                                                       self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
-                                self.lidar_bsd = [0, 1]
-                                if renew_path != None:
-                                    for i, renew_pt in enumerate(renew_path):
-                                        self.local_path[lane_change_point-renew_a+i]=renew_pt
-                                        self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
-                                    if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
-                                        force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
-                                        print("right BSD")
-                                        for i, force_pt in enumerate(force_interpolate_path):
-                                            self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
-                                        self.renewal_path_in_progress = True
-                                        self.renewal_path_cnt += 1
-                                        self.renewal_path_timer = time.time()
-                                        break
+                            _, _, _, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
+                            if isCarInRoad:
+                                vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
+                                targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
+                                safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
+                                print("d: ", d)
+                                print("targetmove: ", targetcarmovingdistance)
+                                print(safedistance)
+                                print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
+                                if safedistance < 10:
+                                    safedistance = 10 # 5 * 2 : front and back 
+                                safe_space = (safedistance/2)
+                                obs_distance = (obs[1] - self.l_idx)*self.IDX_TO_M
+                                if targetcarmovingdistance + obs_distance - safe_space < d < targetcarmovingdistance + obs_distance + safe_space:
+                                    
+                                    #get renewable local path
+                                    renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
+                                                                        self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
+                                    self.lidar_bsd = [0, 1]
+                                    if renew_path != None:
+                                        for i, renew_pt in enumerate(renew_path):
+                                            self.local_path[lane_change_point-renew_a+i]=renew_pt
+                                            self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
+                                        if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
+                                            force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
+                                            print("right BSD")
+                                            for i, force_pt in enumerate(force_interpolate_path):
+                                                self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
+                                            self.renewal_path_in_progress = True
+                                            self.renewal_path_cnt += 1
+                                            self.renewal_path_timer = time.time()
+                                            break
+                                        else:
+                                            pass
                                     else:
-                                        pass
-                                else:
-                                    print("Take Over Request")
-                                    pp = 4
-                                    if pp == 4:
-                                        self.renewal_path_cnt += 1
-                                    if self.renewal_path_cnt > 30:
-                                        self.renewal_path_cnt = 0
-                                    return pp, self.local_path
+                                        print("Take Over Request")
+                                        pp = 4
+                                        if pp == 4:
+                                            self.renewal_path_cnt += 1
+                                        if self.renewal_path_cnt > 30:
+                                            self.renewal_path_cnt = 0
+                                        return pp, self.local_path
                 elif self.renewal_path_cnt >= 2:
                     print("Take Over Request(continuos 2 times)")
                     pp = 4

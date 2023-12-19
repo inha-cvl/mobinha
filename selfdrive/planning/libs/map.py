@@ -12,6 +12,8 @@ class LaneletMap:
         self.precision = map_data['precision']
         self.for_viz = map_data['for_vis']
         self.basella = map_data['base_lla']
+        self.surfacemarks = map_data['surfacemarks']
+        self.stoplines = map_data['stoplines']
 
 
 class TileMap:

@@ -110,25 +110,26 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     return avoid_path
 
 
-def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
-    crosswalk = []
-    for id_, data in lanelets.items():
-        if id_ == now_lane_id:
-            if len(data['crosswalk']) > 0:
-                crosswalks = data['crosswalk'][0]
-                if isinstance(crosswalks[0], list):
-                    for arr in crosswalks:
-                        crosswalk.extend(arr)
-                else:
-                    crosswalk.append(crosswalks)
+def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point):
+    stopline = []
+    sl_id = None
+    if len(lanelets[nowID]['stoplineID']) > 0:
+        sl_id = lanelets[nowID]['stoplineID']
+    else:
+        for lanelet_id in head_lane_ids:
+            if len(lanelets[lanelet_id]['stoplineID']) > 0:
+                sl_id = lanelets[lanelet_id]['stoplineID']
+                break
+    if sl_id is not None:
+        stopline = stoplines[sl_id[0]]
 
-    now_cw_idx = math.inf
+    now_sl_idx = math.inf
 
-    for cw_wp in crosswalk:
-        idx = local_point.query(cw_wp, 1)[1]
-        if idx < now_cw_idx:
-            now_cw_idx = idx
-    return now_cw_idx
+    for sl_wp in stopline:
+        idx = local_point.query(sl_wp, 1)[1]
+        if idx < now_sl_idx:
+            now_sl_idx = idx
+    return now_sl_idx, stopline
 
 
 def filter_same_points(points):
@@ -811,6 +812,17 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 
     return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
 
+def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
+    polygon_points = []
+    if len(lanelets[nowID]['crosswalkID']) > 0:
+        lanelet_id = nowID
+    else:
+        for lanelet_id in head_lane_ids:
+            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
+                break
+    for s_id in lanelets[lanelet_id]['crosswalkID']:
+        polygon_points.extend(surfacemarks[s_id])
+    return polygon_points
 # import rospy
 # from visualization_msgs.msg import Marker
 

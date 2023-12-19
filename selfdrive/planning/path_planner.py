@@ -78,6 +78,8 @@ class PathPlanner:
         self.prevRoadPolygon_pub = rospy.Publisher('/prevRoadPolygon', Marker, queue_size=10)
         self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
         self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
+        self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
+        self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -354,7 +356,7 @@ class PathPlanner:
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.next_head_lane_id)
-                cw_s = get_nearest_crosswalk(self.lmap.lanelets, self.now_head_lane_id, local_point)
+                stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.head_lane_ids, local_point)
 
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
@@ -555,7 +557,7 @@ class PathPlanner:
                 pose = Pose()
                 pose.position.x = int(splited_local_id)
                 pose.position.y = get_direction_number(self.lmap.lanelets, splited_local_id, forward_direction)
-                pose.position.z = cw_s
+                pose.position.z = stopline_s
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
                 pose.orientation.z = lane_change_point
@@ -590,15 +592,19 @@ class PathPlanner:
                 # local_path my theta
                 target_heading = estimate_theta(self.local_path, self.l_idx) * 180 / np.pi
                 pose.orientation.x = target_heading
-                # if self.yaw is not None:
-                #     self.prev_yaw = self.yaw  # Update the previous yaw value
-                # else:
-                #     self.yaw = self.prev_yaw  # Use the previous yaw value if current yaw is not defined
-                # pose.orientation.x = self.yaw[self.l_idx] * 180 / np.pi
                 # CTE
                 pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
                 self.pub_goal_object.publish(pose)
 
+                # crosswalkViz
+                crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.head_lane_ids)
+                crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
+                self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
+
+                # stoplineViz
+                stoplinePolygonmarker = StopLineViz(stopline_wps)
+                self.stoplinePolygon_pub.publish(stoplinePolygonmarker)
+                
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'
             pp = 1

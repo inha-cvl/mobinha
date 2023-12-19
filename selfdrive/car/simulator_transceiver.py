@@ -51,7 +51,7 @@ class SimulatorTransceiver:
         #songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         #right turn course
-        self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
+        # self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
 

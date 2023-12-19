@@ -356,7 +356,7 @@ class PathPlanner:
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.next_head_lane_id)
-                stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.head_lane_ids, local_point)
+                stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
 
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
@@ -597,7 +597,7 @@ class PathPlanner:
                 self.pub_goal_object.publish(pose)
 
                 # crosswalkViz
-                crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.head_lane_ids)
+                crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
                 crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
 

@@ -164,8 +164,14 @@ class LongitudinalPlanner:
         return target_v
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
-        stop_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
-            6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
+        # stop_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
+        #     6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13]]
+        stop_list = [[7, 8, 9, 10, 14], # straight
+                [6, 7, 8, 10, 12, 13, 14], # left
+                [7, 8, 9, 10, 12, 14], # right
+                [7, 8, 10,  12, 14], # left lane change
+                [7, 8, 10,  12, 14], # right lane change
+                [6, 7, 8, 10, 12, 14]] # u turn
         if traffic_light in stop_list[forward_direction]:  # Stop Sign
             return False
         else: # Go sign

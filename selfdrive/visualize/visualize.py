@@ -417,7 +417,9 @@ class MainWindow(QMainWindow, form_class):
             return
         
         tl_cls = msg.poses[0].position.y
-        tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
+        # tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
+        tl_cls_list = [[7, 9, 10], [10, 8, 12, 14], [11, 9, 13], [11, 6,  12, 13]]
+        
         tl_detect_cls = [i for i, cls in enumerate(tl_cls_list) if tl_cls in cls]
         for i in range(4):
             self.tl_label4_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)

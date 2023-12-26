@@ -104,8 +104,6 @@ class IoniqTransceiver():
             self.blinker = {**self.blinker, 'left':1, 'right':0}
         elif msg.data == 2: # right blinker
             self.blinker = {**self.blinker, 'left':0, 'right':1}
-        elif msg.data == 3: # emergency blinker
-            self.blinker = {**self.blinker, 'left':1, 'right':1}
         else:
             self.blinker = {**self.blinker, 'left':0, 'right':0}
 

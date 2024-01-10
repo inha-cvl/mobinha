@@ -514,7 +514,7 @@ class NGII2LANELET:
                                             right_data[1] = lanelets[id_]['laneNo']
                                 # island right
                                 else:
-                                    if lanelets[id_]['adjacentRight'] is not None and lanelets[id_]['adjacentLeft'] is not None and lanelets[id_]['laneNo'] == 1:
+                                    if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None and lanelets[id_]['laneNo'] == 1:
                                         right_data = [id_, lanelets[id_]['laneNo']]
                             if right_data is not None:
                                 lanelets[right_data[0]]['rightTurn'] = True

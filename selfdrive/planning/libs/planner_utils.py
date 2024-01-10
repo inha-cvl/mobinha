@@ -353,7 +353,24 @@ def get_direction_number(lanelet, splited_id, forward_direction):  # lanlet, 0, 
         direction_number = direction_dir[forward_direction]
     return direction_number
 
-
+def get_forward_direction(lanelets, now_id, head_lane_ids):  # (global_path, i, ws=200):
+    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
+    # self.head_lane_ids, now id
+    head_lane_ids.insert(0, now_id)
+    for id_ in head_lane_ids:
+        if lanelets[id_]['intersection']:
+            if lanelets[id_]['leftTurn']:
+                return 'L'
+            elif lanelets[id_]['rightTurn']:
+                return 'R'
+            else:
+                return 'S'
+            
+        if not lanelets[id_]['leftTurn'] and not lanelets[id_]['rightTurn'] and len(lanelets[id_]['crosswalkID']) > 0:
+            return 'S'
+        if lanelets[id_]['rightTurn']:
+            return 'R'
+    
 def find_nearest_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
@@ -609,33 +626,6 @@ def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_poin
         return None,None
     
     return renew_path, renew_ids
-
-def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
-    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
-    link = lanelets[next_id]
-    p = (link['waypoints'][len(link['waypoints'])//5][0],
-         link['waypoints'][len(link['waypoints'])//5][1])
-    q = (link['waypoints'][len(link['waypoints'])//2][0],
-         link['waypoints'][len(link['waypoints'])//2][1])
-    r = (link['waypoints'][len(link['waypoints'])//5*4][0],
-         link['waypoints'][len(link['waypoints'])//5*4][1])
-
-    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
-
-    if link['uTurn']:
-        return 'U'
-    if link['rightTurn']:
-        return 'R'
-    if link['leftTurn']:
-        return 'L'
-    threshold = 10
-    if -threshold < val < threshold:
-        return 'S'  # collinear
-    elif val <= -threshold:
-        return 'L'  # left turn
-    elif val >= threshold:
-        return 'R'  # right turn
-
 
 def set_lane_ids(lst):
     lst = [elem.split("_")[0] for elem in lst]

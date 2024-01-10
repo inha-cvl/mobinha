@@ -11,16 +11,14 @@ from selfdrive.visualize.rviz_utils import *
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
-
+HZ = 10
 
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
 
-
 def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
-
 
 def lanelet_matching(tile, tile_size, t_pt):
     row = int(t_pt[0] // tile_size)
@@ -31,7 +29,6 @@ def lanelet_matching(tile, tile_size, t_pt):
 
     for i in range(-1, 2):
         for j in range(-1, 2):
-
             selected_tile = tile.get((row+i, col+j))
             if selected_tile is not None:
                 for id_, data in selected_tile.items():
@@ -41,28 +38,37 @@ def lanelet_matching(tile, tile_size, t_pt):
                             min_dist = dist
                             l_id = id_
                             l_idx = data['idx'][idx]
-
     if l_id is not None:
         return (l_id, l_idx)
     else:
         return None
 
-
 def get_my_neighbor(lanelets, my_id):
-    l_id = lanelets[my_id]['adjacentLeft']
-    if l_id != None:
-        l_front_id = lanelets[l_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
-    else:
-        l_front_id = None
-    #TODO: have to look left_front, right_front
-    #lanelets[l_id]['successor']
-    r_id = lanelets[my_id]['adjacentRight']
-    if r_id != None:
-        r_front_id = lanelets[r_id]['successor'][0] if len(lanelets[my_id]['successor']) > 0 else None
-    else:
-        r_front_id = None
-    return ((l_id,l_front_id),(r_id,r_front_id))
+    
+    def get_front_id(current_id):
+        """Helper function to get the front id for a given lanelet id."""
+        if current_id is not None and lanelets[current_id]['successor'] is not None:
+            if set(lanelets[current_id]['successor']) & set(lanelets[my_id]['successor']):
+                return None
+            else:
+                if len(lanelets[current_id]['successor']) == 1:
+                    return lanelets[current_id]['successor'][0]
+                elif len(lanelets[current_id]['successor']) > 1:
+                    for id in lanelets[current_id]['successor']:
+                        if lanelets[id]['laneNo'] == lanelets[current_id]['laneNo']:
+                            return id
+        return None
 
+    # Initialize lanelet ids
+    l_id, l_front_id, r_id, r_front_id = None, None, None, None
+    
+    l_id = lanelets[my_id]['adjacentLeft']
+    l_front_id = get_front_id(l_id)
+    
+    r_id = lanelets[my_id]['adjacentRight']
+    r_front_id = get_front_id(r_id)
+
+    return ((l_id, l_front_id), (r_id, r_front_id))
 
 def exchange_waypoint(target, now):
     exchange_waypoints = []
@@ -77,7 +83,6 @@ def exchange_waypoint(target, now):
         exchange_waypoints.append(change_pt)
 
     return exchange_waypoints
-
 
 def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
 
@@ -105,25 +110,26 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     return avoid_path
 
 
-def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
-    crosswalk = []
-    for id_, data in lanelets.items():
-        if id_ == now_lane_id:
-            if len(data['crosswalk']) > 0:
-                crosswalks = data['crosswalk'][0]
-                if isinstance(crosswalks[0], list):
-                    for arr in crosswalks:
-                        crosswalk.extend(arr)
-                else:
-                    crosswalk.append(crosswalks)
+def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point):
+    stopline = []
+    sl_id = None
+    if len(lanelets[nowID]['stoplineID']) > 0:
+        sl_id = lanelets[nowID]['stoplineID']
+    else:
+        for lanelet_id in head_lane_ids:
+            if len(lanelets[lanelet_id]['stoplineID']) > 0:
+                sl_id = lanelets[lanelet_id]['stoplineID']
+                break
+    if sl_id is not None:
+        stopline = stoplines[sl_id[0]]
 
-    now_cw_idx = math.inf
+    now_sl_idx = math.inf
 
-    for cw_wp in crosswalk:
-        idx = local_point.query(cw_wp, 1)[1]
-        if idx < now_cw_idx:
-            now_cw_idx = idx
-    return now_cw_idx
+    for sl_wp in stopline:
+        idx = local_point.query(sl_wp, 1)[1]
+        if idx < now_sl_idx:
+            now_sl_idx = idx
+    return now_sl_idx, stopline
 
 
 def filter_same_points(points):
@@ -140,14 +146,12 @@ def filter_same_points(points):
 
 
 def interpolate(points, precision):
-
     points = filter_same_points(points)
     if len(points) < 2:
         return points, None, None, None
-
     wx, wy = zip(*points)
-    itp = QuadraticSplineInterpolate(list(wx), list(wy))
 
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
     s = []
     yaw = []
@@ -164,14 +168,67 @@ def interpolate(points, precision):
         yaw.append(dyaw)
         k.append(dk)
 
-    return itp_points, s, yaw, k
+    return itp_points, itp.s[-1], yaw, k
 
+from scipy.interpolate import UnivariateSpline
+
+def ref_interpolate_2d(points, precision, smoothing=0):
+    points = filter_same_points(points)
+    wx, wy = zip(*points)
+
+    # Create a cumulative distance array
+    dist = [0.0]
+    for i in range(1, len(wx)):
+        dist.append(dist[-1] + np.sqrt((wx[i] - wx[i-1])**2 + (wy[i] - wy[i-1])**2))
+    total_distance = dist[-1]
+
+    # Use 2nd order (quadratic) UnivariateSpline for interpolation
+    sx = UnivariateSpline(dist, wx, k=2, s=smoothing)
+    sy = UnivariateSpline(dist, wy, k=2, s=smoothing)
+
+    # Generate interpolated points
+    itp_points = []
+    for d in np.arange(0, total_distance, precision):
+        itp_points.append((float(sx(d)), float(sy(d))))
+
+    return itp_points, total_distance
+
+from scipy.ndimage import gaussian_filter1d
+
+def gaussian_smoothing_2d(points, sigma=1):
+    wx, wy = zip(*points)
+    smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
+    smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
+    
+    return list(zip(smoothed_wx, smoothed_wy))
+
+def smooth_compute_yaw_and_curvature(points, precision):
+    # Apply Gaussian smoothing
+    smoothed_path = gaussian_smoothing_2d(points)
+    
+    # Extract x and y from smoothed path
+    wx, wy = zip(*smoothed_path)
+    
+    # Create an interpolator object
+    itp = QuadraticSplineInterpolate(list(wx), list(wy))
+    
+    yaw = []
+    k = []
+    
+    # Compute yaw and curvature for each point in the smoothed path
+    for ds in np.arange(0.0, itp.s[-1], precision):
+        yaw.append(itp.calc_yaw(ds))
+        k.append(itp.calc_curvature(ds))
+        
+    return smoothed_path, yaw, k
 
 def ref_interpolate(points, precision):
     points = filter_same_points(points)
     wx, wy = zip(*points)
+
     itp = QuadraticSplineInterpolate(list(wx), list(wy))
     itp_points = []
+
     for ds in np.arange(0.0, itp.s[-1], precision):
         x, y = itp.calc_position(ds)
         itp_points.append((float(x), float(y)))
@@ -182,10 +239,17 @@ def ref_interpolate(points, precision):
 def id_interpolate(non_intp, intp, non_intp_id):
     itp_ids = []
     non_intp_idx = 0
+    tmp_non_intp_idx = 0
     for wp in intp:
         calc_non_intp_idx = calc_idx(non_intp, wp)
-        if calc_non_intp_idx > non_intp_idx:
+
+        if abs(calc_non_intp_idx - tmp_non_intp_idx) < 50:
             non_intp_idx = calc_non_intp_idx
+            tmp_non_intp_idx = non_intp_idx
+            
+        # if calc_non_intp_idx > non_intp_idx:
+            # non_intp_idx = calc_non_intp_idx
+
         n_id = non_intp_id[non_intp_idx]
         itp_ids.append(n_id)
     return itp_ids
@@ -255,20 +319,6 @@ def dijkstra(graph, start, finish):
 
     return None
 
-
-def filter_same_points(points):
-    filtered_points = []
-    pre_pt = None
-
-    for pt in points:
-        if pre_pt is None or pt != pre_pt:
-            filtered_points.append(pt)
-
-        pre_pt = pt
-
-    return filtered_points
-
-
 def node_to_waypoints2(lanelet, shortest_path):
     final_path = []
     final_id_path = []
@@ -303,7 +353,19 @@ def get_direction_number(lanelet, splited_id, forward_direction):  # lanlet, 0, 
         direction_number = direction_dir[forward_direction]
     return direction_number
 
-
+def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
+    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
+    # self.head_lane_ids, now id
+    
+    if lanelets[next_id]['uTurn']:
+        return 'U'
+    elif lanelets[next_id]['rightTurn']:
+        return 'R'
+    elif lanelets[next_id]['leftTurn']:
+        return 'L'
+    else:
+        return 'S'
+    
 def find_nearest_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
@@ -347,9 +409,9 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     # Determine the multiplier based on cur_v
     if 0*KPH_TO_MPS <= cur_v < 20*KPH_TO_MPS:
-        coeffect = 0.05
+        coeffect = 0.09
     elif 20*KPH_TO_MPS <= cur_v < 30*KPH_TO_MPS:
-        coeffect = 0.08
+        coeffect = 0.11
     else:
         coeffect = 0.15
 
@@ -359,49 +421,71 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     return return_v * KPH_TO_MPS
 
-def calculate_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
-    max_curvature = 160
+def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph, kph, mps
+    #lane information -> [1]:forward direction, [3]:curvature
+    max_curvature = 600
     min_curvature = 0
-    if forward_curvature < min_curvature:
-        forward_curvature = min_curvature
-    elif forward_curvature > max_curvature:
-        forward_curvature = max_curvature
+    if lane_information[3] < min_curvature:
+        lane_information[3] = min_curvature
+    elif lane_information[3] > max_curvature:
+        lane_information[3] = max_curvature
     
-    normalized_curvature = (forward_curvature - min_curvature) / (max_curvature - min_curvature)
+    normalized_curvature = (lane_information[3] - min_curvature) / (max_curvature - min_curvature)
 
-    decel = -min_v + (ref_v - min_v) * (1 - normalized_curvature)
+    decel = (ref_v - min_v) * (1 - normalized_curvature)
     return_v = ref_v - decel
+    # print("return-v:", return_v, "cur_v:",cur_v)
+    if lane_information[3] < max_curvature:
+        if cur_v - return_v*KPH_TO_MPS > 5/HZ: # smooth deceleration
+            return_v = cur_v*MPS_TO_KPH - (5/HZ*MPS_TO_KPH)
+            # print("decel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+        elif cur_v*MPS_TO_KPH > min_v and return_v*KPH_TO_MPS - cur_v > 5/HZ: # smooth acceleration
+            return_v = cur_v*MPS_TO_KPH + (5/HZ*MPS_TO_KPH)
+            # print("accel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+    if return_v > ref_v:
+        return_v = ref_v
 
-    if return_v > ref_v*MPS_TO_KPH:
-        return_v = ref_v*MPS_TO_KPH
-
+    # if lane_information[1]==1:
+    #     return_v = min(return_v, max(return_v, 25))    
     return return_v*KPH_TO_MPS
 
 
 def get_a_b_for_curv(min, ignore):
-    a = -90 / (min-ignore)
-    b = 60-(ignore*a)
+    # a = -90 / (min-ignore)
+    # b = 60-(ignore*a)
+    a = 4.05
+    b = -26.25
     return a, b
 
 def get_a_b_for_blinker(min, ignore):
-    a = -40/(min-ignore)
-    b = 60-(ignore*a)
+    # a = -40/(min-ignore)
+    # b = 60-(ignore*a)
+    a = 3.957
+    b = 10
     return a,b
 
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo):
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX):#, local_id, change_target_id, change_lane_flag): 
+    #TODO: CHECK FLAG     
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx+20)))
+    lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
         lf = len(ids)-1
-    
     next_id = ids[lf].split('_')[0]
-    if next_id in my_neighbor_id[0] or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+
+    if next_id in my_neighbor_id[0]:
+        # or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
         return 1, next_id
     elif next_id in my_neighbor_id[1]:
         return 2, next_id
-        
+    
+    # if change_lane_flag:  # if flag is True, keep the blinker on
+    #     if change_target_id in my_neighbor_id[0]:
+    #         return 1 , change_target_id
+    #     elif change_target_id in my_neighbor_id[1]:
+    #         return 2, change_target_id
+
     return 0, None
 
 
@@ -411,15 +495,18 @@ def compare_id(lh_id, my_neighbor_id):
     else:
         return True
 
-def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
-    ws = int(70+(1.5*vEgo))
-    a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
+def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id, next_id, M_TO_IDX):
+    # ws = int((1.5*vEgo)+70)
+    # ws = int(14.4*vEgo+80)
+    ws = int(1.014*vEgo**2 - 0.776*vEgo + 95)
+    # a, b = get_a_b_for_curv(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     x = []
     y = []
     trajectory = []
     id_list = None
 
-    lf = int(min(idx+60, max(idx+(a*vEgo+b), idx-30)))
+    #lf = int(min(idx+60, max(idx+(a*vEgo+b)*M_TO_IDX, idx-30))) # -15m~30m
+    lf = int(idx-40)
     if lf < 0:
         lf = 0
     elif lf > len(path)-1:
@@ -459,8 +546,9 @@ def get_forward_curvature(idx, path, yawRate, vEgo, blinker, lanelets, now_id):
         curvature = 1000
 
     if lanelets[now_id]['uTurn'] == True:
-        curvature = -20
-        
+        curvature = 0
+    # if (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+    #     curvature = 500
     return curvature, rot_x, rot_y, trajectory
 
 def get_lane_change_point(ids, idx, my_neighbor_id):
@@ -502,32 +590,37 @@ def get_renew_path(ids, change_direction, lane_change_idx, lanelets, local_path_
     
     return before_path+renew_path, before_ids+renew_ids
 
-def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
-    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
-    link = lanelets[next_id]
-    p = (link['waypoints'][len(link['waypoints'])//5][0],
-         link['waypoints'][len(link['waypoints'])//5][1])
-    q = (link['waypoints'][len(link['waypoints'])//2][0],
-         link['waypoints'][len(link['waypoints'])//2][1])
-    r = (link['waypoints'][len(link['waypoints'])//5*4][0],
-         link['waypoints'][len(link['waypoints'])//5*4][1])
-
-    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
-
-    if link['uTurn']:
-        return 'U'
-    if link['rightTurn']:
-        return 'R'
-    if link['leftTurn']:
-        return 'L'
-    threshold = 10
-    if -threshold < val < threshold:
-        return 'S'  # collinear
-    elif val <= -threshold:
-        return 'L'  # left turn
-    elif val >= threshold:
-        return 'R'  # right turn
-
+def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_point2point):
+    target_lane_id = None
+    renew_path = None
+    # renew_id = None
+    lanechange_point_idx = (30+30)*2
+    if change_direction == 1 : #Left
+        target_lane_id = lanelets[ids[l_idx+lanechange_point_idx].split('_')[0]]['adjacentLeft']
+        if target_lane_id == None:
+            return None,None
+    elif change_direction == 2 :
+        target_lane_id = lanelets[ids[l_idx+lanechange_point_idx].split('_')[0]]['adjacentRight']
+        if target_lane_id == None:
+            return None,None
+    else:
+        return None,None
+    
+    # before_ids = []
+    renew_ids = []
+    if target_lane_id != None:
+        #local_path_point2point = local_path_point2point[:idx+2]
+        # before_lane_id = ids[l_idx+130-15].split('_')[0]
+        # before_path = exchange_waypoint(lanelets[before_lane_id]['waypoints'], local_path_before_now)
+        # for _ in range(len(before_path)):
+        #     before_ids.append(before_lane_id)
+        renew_path = exchange_waypoint(lanelets[target_lane_id]['waypoints'], local_path_point2point)
+        for _ in range(len(renew_path)):
+            renew_ids.append(target_lane_id)
+    else:
+        return None,None
+    
+    return renew_path, renew_ids
 
 def set_lane_ids(lst):
     lst = [elem.split("_")[0] for elem in lst]
@@ -539,3 +632,205 @@ def set_lane_ids(lst):
             lane_ids.append(lst[i])
 
     return lane_ids
+
+def findMyLinkIdx(lanelets, l_id, ego_x, ego_y):
+    my_link_wps = KDTree(lanelets[l_id]['waypoints'])
+    link_idx = my_link_wps.query((ego_x, ego_y), 1)[1]
+    return link_idx
+
+def removeVegetationFromRoadside(lanelets, l_id, link_idx):
+    lane_no = lanelets[l_id]['laneNo']
+    length = lanelets[l_id]['length']
+    my_distance = lanelets[l_id]['s'][link_idx]
+    left_id = lanelets[l_id]['adjacentLeft']
+    succ_id = lanelets[l_id]['successor'][0] if len(lanelets[l_id]['successor']) > 0 else None
+    pre_id = lanelets[l_id]['predecessor'][0] if len(lanelets[l_id]['predecessor']) > 0 else None
+    succ_pre_cnt = len(lanelets[succ_id]['predecessor']) if succ_id else 1
+    pre_left_id = lanelets[pre_id]['adjacentLeft'] if pre_id else None
+
+    if lane_no == 1 and left_id and (lanelets[left_id]['laneNo'] == 91 or lanelets[left_id]['laneNo'] == 92):
+        if succ_pre_cnt >= 2 and my_distance > length - 40:
+            lane_position = 1
+        elif pre_left_id and lanelets[pre_left_id]['laneNo'] == 91:
+            lane_position = 2
+        elif my_distance < 20:
+            lane_position = 1
+        else:
+            lane_position = 2 # [2] | |@| |
+    elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
+        lane_position = 1
+    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None):
+        lane_position = 3
+    else:
+        lane_position = 2
+    
+    return lane_position
+
+
+def extract_path_info(local_path, local_id, lanelets):
+    yaw_list = []
+    radius_list = []
+    k_list = []
+    
+    for idx, id_str in enumerate(local_id):
+        # Extract lanelet_id and waypoint_idx from local_id
+        lanelet_id, waypoint_idx = map(int, id_str.split('_'))
+        
+        # Access corresponding yaw, radius, and k values using lanelet_id and waypoint_idx
+        yaw = lanelets[str(lanelet_id)]['yaw'][waypoint_idx]
+        k = lanelets[str(lanelet_id)]['k'][waypoint_idx]
+        radius = 1 / k if k != 0 else float('inf')
+        
+        # Append these values to new lists
+        yaw_list.append(yaw)
+        radius_list.append(radius)
+        k_list.append(k)
+        
+    return yaw_list, radius_list, k_list
+
+def calculate_cte(pointA, pointB, pointP):
+    Ax, Ay = pointA
+    Bx, By = pointB
+    Px, Py = pointP
+
+    numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+    denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+    # return numerator / denominator if denominator != 0 else 0
+    cte = numerator / denominator if denominator != 0 else 0
+    # Calculate cross product to find the sign
+    cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+    
+    if cross_product > 0:
+        return -cte  # Point P is on the left side of line AB
+    elif cross_product < 0:
+        return cte  # Point P is on the right side of line AB
+    else:
+        return 0  # Point P is on the line AB
+
+def estimate_theta(path, index):
+    point_current = path[index]
+    point_next = path[index + 1] if index + 1 < len(path) else path[index]
+    
+    dx = point_next[0] - point_current[0]
+    dy = point_next[1] - point_current[1]
+    
+    theta = np.arctan2(dy, dx)
+    
+    return theta
+
+def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextID):
+                                # prevLeftBound, prevRightBound, 
+                                # nowLeftBound, nowRightBound, nextLeftBound, nextRightBound):
+    def find_edge_id(flag, adjacent_id, lanelets):
+        if flag == 'l':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentLeft'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentLeft']
+        elif flag == 'r':
+            while adjacent_id is not None:
+                if lanelets[adjacent_id]['adjacentRight'] is None:
+                    break
+                adjacent_id = lanelets[adjacent_id]['adjacentRight']
+        return adjacent_id
+    
+    def get_direction(chunk):
+        start = chunk[0]
+        end = chunk[-1]
+        return (end[0] - start[0], end[1] - start[1])
+    def sort_key(chunk, all_chunks):
+        directions = [get_direction(c) for c in all_chunks]
+        avg_direction = (sum(d[0] for d in directions) / len(directions), sum(d[1] for d in directions) / len(directions))
+        start = chunk[0]
+        return start[0] * avg_direction[0] + start[1] * avg_direction[1]
+    def get_ordered_chunks(chunks):
+        sorted_chunks = sorted(chunks, key=lambda chunk: sort_key(chunk, chunks))
+        return sorted_chunks
+        
+    def create_and_flatten_polygon(leftBound, rightBound):
+        if leftBound is None or rightBound is None:
+            return []
+        
+        ordered_leftBound = get_ordered_chunks(leftBound)
+        ordered_rightBound = get_ordered_chunks(rightBound)
+
+        # Flatten the coordinates inside the chunks
+        flat_ordered_left = [coord for sublist in ordered_leftBound for coord in sublist]
+        # Flatten the coordinates inside the chunks and then reverse their order
+        flat_ordered_right = [coord for sublist in ordered_rightBound for coord in sublist][::-1]
+        
+        # Create the polygon using the flattened coordinates
+        polygon = flat_ordered_left + flat_ordered_right
+        return polygon
+    
+    def is_point_inside_polygon(pt, poly):
+        x, y = pt
+        oddNodes = False
+        j = len(poly) - 1  # The last vertex is the 'previous' one to start with
+
+        for i in range(len(poly)):
+            xi, yi = poly[i]
+            xj, yj = poly[j]
+            if yi < y and yj >= y or yj < y and yi >= y:
+                if xi + (y - yi) / (yj - yi) * (xj - xi) < x:
+                    oddNodes = not oddNodes
+            j = i
+        return oddNodes
+
+    # Finding the most left and right boundaries for each lanelet ID
+    prevLeftBound = lanelet[find_edge_id('l', prevID, lanelet)]['leftBound'] if prevID else None
+    prevRightBound = lanelet[find_edge_id('r', prevID, lanelet)]['rightBound'] if prevID else None
+    nowLeftBound = lanelet[find_edge_id('l', nowID, lanelet)]['leftBound'] if nowID else None
+    nowRightBound = lanelet[find_edge_id('r', nowID, lanelet)]['rightBound'] if nowID else None
+    nextLeftBound = lanelet[find_edge_id('l', nextID, lanelet)]['leftBound'] if nextID else None
+    nextRightBound = lanelet[find_edge_id('r', nextID, lanelet)]['rightBound'] if nextID else None
+
+    # Create and flatten polygons for each road
+    prev_polygon_flat = create_and_flatten_polygon(prevLeftBound, prevRightBound)
+    now_polygon_flat = create_and_flatten_polygon(nowLeftBound, nowRightBound)
+    next_polygon_flat = create_and_flatten_polygon(nextLeftBound, nextRightBound)
+
+    # Determine if the obstacle is inside any of the flattened road polygons
+    road1_result = is_point_inside_polygon(obstacle_position, prev_polygon_flat) if prev_polygon_flat else False
+    road2_result = is_point_inside_polygon(obstacle_position, now_polygon_flat) if now_polygon_flat else False
+    road3_result = is_point_inside_polygon(obstacle_position, next_polygon_flat) if next_polygon_flat else False
+
+    return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
+
+def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
+    polygon_points = []
+    if len(lanelets[nowID]['crosswalkID']) > 0:
+        lanelet_id = nowID
+    else:
+        for lanelet_id in head_lane_ids:
+            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
+                break
+    for s_id in lanelets[lanelet_id]['crosswalkID']:
+        polygon_points.extend(surfacemarks[s_id])
+    return polygon_points
+# import rospy
+# from visualization_msgs.msg import Marker
+
+# def create_road_marker(polygon_coords, marker_id, color, frame_id="world"):
+#     marker = Marker()
+#     marker.header.frame_id = frame_id
+#     marker.header.stamp = rospy.Time.now()
+#     marker.id = marker_id
+#     marker.type = Marker.LINE_STRIP
+#     marker.action = Marker.ADD
+    
+#     # Define the marker scale, color, etc.
+#     marker.scale.x = 0.5  # Width of the line
+#     marker.color.a = 1.0  # Opacity
+#     marker.color.r = color[0]
+#     marker.color.g = color[1]
+#     marker.color.b = color[2]
+    
+#     for coord in polygon_coords:
+#         marker.points.append(Point(x=coord[0], y=coord[1], z=0))
+#         # point = marker.points.append()
+#         # point.x = coord[0]
+#         # point.y = coord[1]
+#         # point.z = 0  # Assuming the roads are flat
+    
+#     return marker

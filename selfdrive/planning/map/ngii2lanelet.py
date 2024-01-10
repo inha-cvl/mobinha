@@ -501,27 +501,35 @@ class NGII2LANELET:
 
                         if 'R' in lanelets[new_id]['direction']:
                             right_data = None
+                            
                             for id_ in lanelets[new_id]['successor']:
-                                if right_data is None:
-                                    right_data = [
-                                        id_, lanelets[id_]['laneNo']]
+                                # normal right
+                                if lanelets[id_]['intersection']:
+                                    if right_data is None:
+                                        right_data = [
+                                            id_, lanelets[id_]['laneNo']]
+                                    else:
+                                        if right_data[1] < lanelets[id_]['laneNo']:
+                                            right_data[0] = id_
+                                            right_data[1] = lanelets[id_]['laneNo']
+                                # island right
                                 else:
-                                    if right_data[1] < lanelets[id_]['laneNo']:
-                                        right_data[0] = id_
-                                        right_data[1] = lanelets[id_]['laneNo']
+                                    if lanelets[id_]['adjacentRight'] is not None and lanelets[id_]['adjacentLeft'] is not None and lanelets[id_]['laneNo'] == 1:
+                                        right_data = [id_, lanelets[id_]['laneNo']]
                             if right_data is not None:
                                 lanelets[right_data[0]]['rightTurn'] = True
-                        
+                            
                         if 'L' in lanelets[new_id]['direction']:
                             left_data = None
                             for id_ in lanelets[new_id]['successor']:
-                                if left_data is None:
-                                    left_data = [
-                                        id_, lanelets[id_]['laneNo']]
-                                else:
-                                    if left_data[1] > lanelets[id_]['laneNo']:
-                                        left_data[0] = id_
-                                        left_data[1] = lanelets[id_]['laneNo']
+                                if lanelets[id_]['intersection']:
+                                    if left_data is None:
+                                        left_data = [
+                                            id_, lanelets[id_]['laneNo']]
+                                    else:
+                                        if left_data[1] > lanelets[id_]['laneNo']:
+                                            left_data[0] = id_
+                                            left_data[1] = lanelets[id_]['laneNo']
                             if left_data is not None:
                                 lanelets[left_data[0]]['leftTurn'] = True
 

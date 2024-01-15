@@ -11,10 +11,6 @@ from selfdrive.visualize.rviz_utils import *
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
-'''
-if self.lane_information[1] == 2:
-    not all stop and only stop front of crosswalk
-'''
 
 class LongitudinalPlanner:
     def __init__(self, CP):
@@ -211,7 +207,19 @@ class LongitudinalPlanner:
                 if left-goal_offset < 90*self.M_TO_IDX:
                     static_s1 = left-goal_offset
         # [2] = Traffic Light
-        if self.traffic_light_obstacle is not None:
+        if self.lane_information[1] == 2: # Right Turn
+        # not all stop and only stop front of crosswalk
+        # disturb = [0, 0], [0, 1], [1, 0], [1, 1] # [0] = car, [1] = pedestrian
+            disturb = [0, 0]
+            if disturb == [0, 0]:
+                pass
+            elif disturb == [0, 1]:
+                static_s2 = 5*self.M_TO_IDX
+            elif disturb == [1, 0]:
+                static_s2 = 5*self.M_TO_IDX
+            elif disturb == [1, 1]:
+                static_s2 = 5*self.M_TO_IDX
+        elif self.traffic_light_obstacle is not None:
             can_go = False
             if len(self.traffic_light_obstacle) > 0:
                 tlobs = self.traffic_light_obstacle[0]

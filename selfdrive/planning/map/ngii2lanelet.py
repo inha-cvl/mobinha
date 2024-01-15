@@ -530,6 +530,9 @@ class NGII2LANELET:
                                         if left_data[1] > lanelets[id_]['laneNo']:
                                             left_data[0] = id_
                                             left_data[1] = lanelets[id_]['laneNo']
+                                        elif str(lanelets[id_]['laneNo'])[0] == '9':
+                                            left_data[0] = id_
+                                            left_data[1] = lanelets[id_]['laneNo']
                             if left_data is not None:
                                 lanelets[left_data[0]]['leftTurn'] = True
 

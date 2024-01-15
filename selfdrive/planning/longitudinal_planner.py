@@ -11,6 +11,10 @@ from selfdrive.visualize.rviz_utils import *
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
+'''
+if self.lane_information[1] == 2:
+    not all stop and only stop front of crosswalk
+'''
 
 class LongitudinalPlanner:
     def __init__(self, CP):

@@ -509,10 +509,10 @@ class NGII2LANELET:
                                         right_data = [
                                             id_, lanelets[id_]['laneNo']]
                                     else:
-                                        if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None:
+                                        if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None and not str(right_data[1])[0] == '9':
                                             right_data[0] = id_
                                             right_data[1] = lanelets[id_]['laneNo']
-                                        elif right_data[1] < lanelets[id_]['laneNo'] and not str(left_data[1])[0] == '9':
+                                        elif right_data[1] < lanelets[id_]['laneNo'] and not str(right_data[1])[0] == '9':
                                             right_data[0] = id_
                                             right_data[1] = lanelets[id_]['laneNo']
                                 # island right

@@ -598,6 +598,7 @@ class PathPlanner:
 
                 # crosswalkViz
                 crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
+                print(crosswalkPoints)
                 crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
 

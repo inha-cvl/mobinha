@@ -10,9 +10,9 @@ dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/tl_simulator.ui")[0]
 
 '''
-[4]Green3 [6]Red3 [8]Yellow3
-[9]Green4 [10]Red4 [11]Yellow4
-[12]Red Arrow4 [13]Red Yellow4 [14]Arrow Green4
+[13]Green3 [7]Red3 [8]Yellow3
+[13]Green4 [7]Red4 [8]Yellow4
+[9]Red Arrow4 [10]Red Yellow4 [11]Arrow Green4
 '''
 
 class TLSimulator(QMainWindow, form_class):
@@ -25,15 +25,15 @@ class TLSimulator(QMainWindow, form_class):
         #ROS Topic set
         self.pub_bounding_box = rospy.Publisher('/mobinha/perception/camera/bounding_box', PoseArray, queue_size=1)
         self.tl_list = {
-            6:self.red_3,
+            7:self.red_3,
             8:self.yellow_3,
-            4:self.green_3,
-            10:self.red_4,
-            11:self.yellow_4,
-            9:self.green_4,
-            13:self.red_yellow_4,
-            12:self.red_arrow_4,
-            14:self.arrow_green_4
+            13:self.green_3,
+            7:self.red_4,
+            8:self.yellow_4,
+            13:self.green_4,
+            10:self.red_yellow_4,
+            9:self.red_arrow_4,
+            11:self.arrow_green_4
         }
         self.initialize()
 

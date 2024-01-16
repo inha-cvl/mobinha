@@ -19,17 +19,6 @@ class BlinkerSimulator(QMainWindow, form_class):
 
         #ROS Topic set
         self.pub_blinker = rospy.Publisher('/turnsignal', Int8, queue_size=1)
-        # self.tl_list = {
-        #     6:self.red_3,
-        #     8:self.yellow_3,
-        #     4:self.green_3,
-        #     10:self.red_4,
-        #     11:self.yellow_4,
-        #     9:self.green_4,
-        #     13:self.red_yellow_4,
-        #     12:self.red_arrow_4,
-        #     14:self.arrow_green_4
-        # }
         self.initialize()
 
     def initialize(self):

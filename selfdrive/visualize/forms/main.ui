@@ -4403,6 +4403,7 @@ border-color: rgb(71,181,255);</string>
     <addaction name="actionTopic_List"/>
     <addaction name="actionTraffic_Light_Simulator"/>
     <addaction name="actionBlinker_Simulator"/>
+    <addaction name="actionRight_Turn_Situation_Simulator"/>
    </widget>
    <addaction name="menuMonitoring"/>
   </widget>
@@ -4454,6 +4455,11 @@ border-color: rgb(71,181,255);</string>
   <action name="actionBlinker_Simulator">
    <property name="text">
     <string>Blinker Simulator</string>
+   </property>
+  </action>
+  <action name="actionRight_Turn_Situation_Simulator">
+   <property name="text">
+    <string>Right Turn Situation Simulator</string>
    </property>
   </action>
  </widget>

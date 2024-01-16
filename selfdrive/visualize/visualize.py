@@ -26,6 +26,7 @@ import selfdrive.visualize.libs.imugl as imugl
 from simple_writer import SimpleWriter
 from tl_simulator import TLSimulator
 from blinker_simulator import BlinkerSimulator
+from right_turn_simulator import RTISimulator
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
@@ -115,6 +116,10 @@ class MainWindow(QMainWindow, form_class):
         blinker_simulator = BlinkerSimulator(self)
         blinker_simulator.show()
 
+    def right_turn_simulator_toggled(self):
+        right_turn_simulator = RTISimulator(self)
+        right_turn_simulator.show()
+
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
         rospy.set_param('map_name', self.map_name)
@@ -143,6 +148,7 @@ class MainWindow(QMainWindow, form_class):
         self.actionTopic_List.triggered.connect(self.setting_topic_list_toggled)
         self.actionTraffic_Light_Simulator.triggered.connect(self.tl_simulator_toggled)
         self.actionBlinker_Simulator.triggered.connect(self.blinker_simulator_toggled)
+        self.actionRight_Turn_Situation_Simulator.triggered.connect(self.right_turn_simulator_toggled)
         self.initialize_button.clicked.connect(self.initialize_button_clicked)
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)

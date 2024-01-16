@@ -356,10 +356,9 @@ def get_direction_number(lanelet, splited_id, forward_direction):  # lanlet, 0, 
 def get_forward_direction(lanelets, now_id, head_lane_ids):  # (global_path, i, ws=200):
     # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
     lane_ids = [now_id]+head_lane_ids
-
     for id_ in lane_ids:
         
-        if not lanelets[id_]['leftTurn'] and not lanelets[id_]['rightTurn'] and len(lanelets[id_]['crosswalkID']) > 0:
+        if not lanelets[id_]['leftTurn'] and not lanelets[id_]['rightTurn'] and len(lanelets[id_]['crosswalkID']) > 1:
             return 'S'
 
         if lanelets[id_]['intersection']:

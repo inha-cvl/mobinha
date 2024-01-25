@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray
+from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -80,6 +80,7 @@ class PathPlanner:
         self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
+        self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -264,24 +265,6 @@ class PathPlanner:
 
             pp = 0
 
-            # import json
-            # # Creating a dictionary to store the data
-            # data = {
-            #     'non_intp_path': non_intp_path,
-            #     'non_intp_id': non_intp_id,
-            #     'head_lane_ids': head_lane_ids,
-            #     'global_path': global_path,
-            #     'global_id': global_id
-            # }
-
-            # # Convert the dictionary to a JSON string
-            # json_data = json.dumps(data, indent=4)
-
-            # # Save the JSON string to a file
-            # filename = "./waypoints_data.json"
-            # with open(filename, "w") as file:
-            #     file.write(json_data)
-
         elif self.state == 'MOVE':
 
             idx = calc_idx(self.global_path, (CS.position.x, CS.position.y))
@@ -406,15 +389,7 @@ class PathPlanner:
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
                 self.lidar_bsd = [0, 0]
-                # for obs in self.around_obstacle:
-                    # prevRoadPolygon, nowRoadPolygon, nextRoadPolygon, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
-                    
-                #     prevRoadPolygonmarker = create_road_marker(prevRoadPolygon, marker_id=1, color=(0,0,1))
-                #     nowRoadPolygonmarker = create_road_marker(nowRoadPolygon, marker_id=2, color=(0,1,0))
-                #     nextRoadPolygonmarker = create_road_marker(nextRoadPolygon, marker_id=3, color=(1,0,0))
-                #     self.prevRoadPolygon_pub.publish(prevRoadPolygonmarker)
-                #     self.nowRoadPolygon_pub.publish(nowRoadPolygonmarker)
-                #     self.nextRoadPolygon_pub.publish(nextRoadPolygonmarker)
+
                 if blinker != 0 and not self.renewal_path_in_progress:
                     # look a head's idx's id == lane id => stop looking BSD
                     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
@@ -597,9 +572,14 @@ class PathPlanner:
                 self.pub_goal_object.publish(pose)
 
                 # crosswalkViz
-                crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
+                crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
                 crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
+
+                if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
+                    self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))
+                else:
+                    self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,0]))
 
                 # stoplineViz
                 stoplinePolygonmarker = StopLineViz(stopline_wps)

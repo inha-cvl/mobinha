@@ -41,7 +41,9 @@ class LongitudinalPlanner:
         self.closest_tracked = None
         self.closest_untracked = None
 
-        self.right_turn_situation = (1,1)
+        self.right_turn_situation = (0,0)
+        self.right_turn_situation_real = (0,0)
+        self.waiting_at_crosswalk = False
 
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
@@ -49,6 +51,7 @@ class LongitudinalPlanner:
         rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         rospy.Subscriber('/crosswalkPolygon', Marker, self.crosswalk_cb)
         rospy.Subscriber('/mobinha/planning/right_turn_situation', Int8MultiArray, self.right_turn_situation_cb)
+        rospy.Subscriber('/mobinha/planning/right_turn_situation_real', Int8MultiArray, self.right_turn_situation_real_cb)
         self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_traffic_light_marker = rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
@@ -78,6 +81,8 @@ class LongitudinalPlanner:
 
     def right_turn_situation_cb(self, msg):
         self.right_turn_situation = msg.data
+    def right_turn_situation_real_cb(self, msg):
+        self.right_turn_situation_real = msg.data
 
     def find_closest_point(self, current_location, waypoints):
         closest_point = None
@@ -218,7 +223,7 @@ class LongitudinalPlanner:
                         return dynamic_s
         return dynamic_s
     
-    def check_static_object(self, local_path, local_s, veh_pose):
+    def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
         tl_offset = 7*self.M_TO_IDX
@@ -236,14 +241,23 @@ class LongitudinalPlanner:
             # self.right_turn_situation = [0, 0], [0, 1], [1, 0], [1, 1] # [0] = car, [1] = pedestrian
             if self.lane_information[1] == 2: # Right Turn
                 min_distance = self.find_closest_point(veh_pose, self.crosswalk)
-
-                if self.right_turn_situation == (0,0):
-                    pass
-                elif self.right_turn_situation == (0, 1):
-                    static_s2 = min_distance*self.M_TO_IDX-cw_offset
-                elif self.right_turn_situation == (1, 0):
-                    static_s2 = min_distance*self.M_TO_IDX-cw_offset
-                elif self.right_turn_situation == (1, 1):
+                # static_s2 = min_distance*self.M_TO_IDX-cw_offset
+                
+                # if static_s2 < 1 and not self.waiting_at_crosswalk:
+                #     self.waiting_at_crosswalk = True
+                #     self.wait_time_start = time.time()
+                # # 차량 속도가 0이고 1초가 지난 경우
+                # if v_ego < 0.1 and self.waiting_at_crosswalk:
+                #     if time.time() - self.wait_time_start > 2:
+                #         self.waiting_at_crosswalk = False
+                
+                # if not self.waiting_at_cro
+                
+                
+                if self.right_turn_situation == (0,0) and self.right_turn_situation_real == (0,0):
+                    static_s2 = 90*self.M_TO_IDX
+                elif self.right_turn_situation_real == (0,1) or self.right_turn_situation == (0, 1) \
+                    or self.right_turn_situation == (1, 0) or self.right_turn_situation == (1,1):
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
             else:
                 can_go = False
@@ -269,7 +283,7 @@ class LongitudinalPlanner:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
                 local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
-                static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
+                static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
                 target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)

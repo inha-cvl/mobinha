@@ -670,7 +670,8 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
             lane_position = 2 # [2] | |@| |
     elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
         lane_position = 1
-    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None):
+    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None) \
+        or (lane_no == 5 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 6 and lanelets[l_id]['adjacentRight'] == None):
         lane_position = 3
     else:
         lane_position = 2
@@ -816,9 +817,10 @@ def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
         for lanelet_id in head_lane_ids:
             if len(lanelets[lanelet_id]['crosswalkID']) > 0:
                 break
+    crosswalk_ids = lanelets[lanelet_id]['crosswalkID']
     for s_id in lanelets[lanelet_id]['crosswalkID']:
         polygon_points.extend(surfacemarks[s_id])
-    return polygon_points
+    return crosswalk_ids, polygon_points
 # import rospy
 # from visualization_msgs.msg import Marker
 
@@ -845,3 +847,28 @@ def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
 #         # point.z = 0  # Assuming the roads are flat
     
 #     return marker
+
+def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
+    def is_point_inside_polygon(point, polygon):
+        x, y = point
+        inside = False
+
+        for i in range(len(polygon)):
+            x1, y1 = polygon[i]
+            x2, y2 = polygon[(i + 1) % len(polygon)]
+            if y > min(y1, y2) and y <= max(y1, y2) and x <= max(x1, x2):
+                if y1 != y2:
+                    xinters = (y - y1) * (x2 - x1) / (y2 - y1) + x1
+                if x1 == x2 or x <= xinters:
+                    inside = not inside
+
+        return inside
+    for obs in obstacle_list:
+        point = (obs[3], obs[4])  # Assuming obs[3] is x and obs[4] is y
+        for s_id in crosswalk_ids:
+            polygon_points = surfacemarks[s_id]
+            if is_point_inside_polygon(point, polygon_points):
+                return True  # Return True if any obstacle is inside any polygon
+
+    return False  # Return False if no obstacle is inside any polygon
+            

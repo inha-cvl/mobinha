@@ -234,7 +234,7 @@ class NGII2LANELET:
             ori_id = a2_link.ID
             new_id = ori2new[ori_id]
             # if not lanelets[new_id]['intersection']:
-            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinkID)
+            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinKID)
             lanelets[new_id]['adjacentRight'] = ori2new.get(a2_link.R_LinkID)
             # else:
                 # lanelets[new_id]['adjacentLeft'] = None
@@ -288,13 +288,35 @@ class NGII2LANELET:
                     data['group'] = None
         
         for a2_link in tqdm(ngii.a2_link, desc="link2crosswalk_id_matching: ", total=len(ngii.a2_link)):
+            def calculate_distance(coord1, coord2):
+                return math.sqrt((coord2[0] - coord1[0])**2 + (coord2[1] - coord1[1])**2)
+            def extend_and_reduce_line(coordinates, extension_meters=1):
+                """
+                주어진 좌표 리스트의 시작점과 끝점을 주어진 미터 단위로 늘린다.
+                """
+                if len(coordinates) < 2:
+                    raise ValueError("좌표는 최소 두 개 이상 필요합니다.")
+                # 시작점에서의 거리에 따라 좌표 제거
+                start_first = coordinates[0]
+                filtered_coordinates = [coord for coord in coordinates if calculate_distance(start_first, coord) > extension_meters]
+                # 끝점 처리 (라인 늘림)
+                if len(filtered_coordinates) > 1:
+                    end_first = filtered_coordinates[-2]
+                    end_second = filtered_coordinates[-1]
+                    end_bearing = math.atan2(end_second[1] - end_first[1], end_second[0] - end_first[0])
+                    new_end = [end_second[0] + extension_meters * math.cos(end_bearing),
+                            end_second[1] + extension_meters * math.sin(end_bearing)]
+                    filtered_coordinates[-1] = new_end
+                    
+                return filtered_coordinates
+            
             if a2_link.Length == 0:
                 continue
 
             ori_id = a2_link.ID
             new_id = ori2new[ori_id]
-
-            link = LineString(lanelets[new_id]['waypoints'])
+            extended_link = extend_and_reduce_line(lanelets[new_id]['waypoints'])
+            link = LineString(extended_link)
 
             for b3_surfacemark in ngii.b3_surfacemark:
                 polygon = []
@@ -311,28 +333,24 @@ class NGII2LANELET:
                         lanelets[new_id]['crosswalkID'].append(b3_surfacemark.ID)
         
         for a2_link in tqdm(ngii.a2_link, desc="link2stopline_id_matching: ", total=len(ngii.a2_link)):
-            def extend_line(coordinates, extension_meters=3):
+            def extend_line(coordinates, extension_meters=1):
                 """
                 주어진 좌표 리스트의 시작점과 끝점을 주어진 미터 단위로 늘린다.
                 """
-                # 좌표가 최소 두 개 이상 필요
                 if len(coordinates) < 2:
                     raise ValueError("좌표는 최소 두 개 이상 필요합니다.")
-
                 # 시작점 처리
                 start_first = coordinates[0]
                 start_second = coordinates[1]
                 start_bearing = math.atan2(start_second[1] - start_first[1], start_second[0] - start_first[0])
                 new_start = [start_first[0] - extension_meters * math.cos(start_bearing),
                             start_first[1] - extension_meters * math.sin(start_bearing)]
-
                 # 끝점 처리
                 end_first = coordinates[-2]
                 end_second = coordinates[-1]
                 end_bearing = math.atan2(end_second[1] - end_first[1], end_second[0] - end_first[0])
                 new_end = [end_second[0] + extension_meters * math.cos(end_bearing),
                         end_second[1] + extension_meters * math.sin(end_bearing)]
-
                 # 새로운 좌표 리스트 생성
                 new_coordinates = [new_start] + coordinates + [new_end]
 
@@ -417,12 +435,6 @@ class NGII2LANELET:
 
                     stoplines[stopline_id] = lines
                     for_vis.append([lines, 'stop_line'])
-
-        for id_, data in lanelets.items():
-            if data['length'] < 35.0:
-                yaw_err = get_yaw_error(data['yaw'][0], data['yaw'][-1])
-                if abs(math.degrees(yaw_err)) > 150:
-                    data['uTurn'] = True
             
         for id_, data in lanelets.items():
             data['leftChange'] = [True for _ in range(len(data['waypoints']))]
@@ -538,6 +550,14 @@ class NGII2LANELET:
                                             left_data[1] = lanelets[id_]['laneNo']
                             if left_data is not None:
                                 lanelets[left_data[0]]['leftTurn'] = True
+
+        for id_, data in lanelets.items():
+            if data['length'] < 35.0:
+                yaw_err = get_yaw_error(data['yaw'][0], data['yaw'][-1])
+                if abs(math.degrees(yaw_err)) > 150:
+                    data['uTurn'] = True
+                elif math.degrees(yaw_err) > 50:
+                    data['rightTurn'] = True
 
         for n, c1_trafficlight in tqdm(enumerate(ngii.c1_trafficlight), desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
             obj_id = c1_trafficlight.ID

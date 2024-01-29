@@ -201,40 +201,40 @@ class MainWindow(QMainWindow, form_class):
             self.update_text_color(i, text_color)
           
 
-            if i == camera1_warning and sensor_status ==0:
-                self.state_screen.setText("WARNING : CAMERA1")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-            # if i == camera2_warning and sensor_status ==0:
-            #     self.state_screen.setText("WARNING : CAMERA2")
+            # if i == camera1_warning and sensor_status ==0:
+            #     self.state_screen.setText("WARNING : CAMERA1")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # # if i == camera2_warning and sensor_status ==0:
+            # #     self.state_screen.setText("WARNING : CAMERA2")
+            # #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            # # if i == camera3_warning and sensor_status ==0:
+            # #     self.state_screen.setText("WARNING : CAMERA3")
+            # #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            # elif i == lidar_warning and sensor_status ==1:
+            #     self.state_screen.setText("WARNING : LIDAR")
             #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            # if i == camera3_warning and sensor_status ==0:
-            #     self.state_screen.setText("WARNING : CAMERA3")
+            # elif i == gps_warning and sensor_status ==1:
+            #     self.state_screen.setText("WARNING : GPS")
             #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == lidar_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : LIDAR")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # elif i == ins_warning and sensor_status ==1:
+            #     self.state_screen.setText("WARNING : INS")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == gps_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : GPS")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # elif i == can_warning and sensor_status ==1:
+            #     self.state_screen.setText("WARNING : CAN")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == ins_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : INS")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # elif i == perception_warning and sensor_status ==1:
+            #     self.state_screen.setText("WARNING : PERCEPTION")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
-            elif i == can_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : CAN")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == perception_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : PERCEPTION")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == planning_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : PLANNING")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # elif i == planning_warning and sensor_status ==1:
+            #     self.state_screen.setText("WARNING : PLANNING")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
 
             if sensor_status ==0:
                 warning_present = True
@@ -312,6 +312,8 @@ class MainWindow(QMainWindow, form_class):
     def reset_rviz(self):
         self.lidar_layout.itemAt(0).widget().reset()
         self.rviz_layout.itemAt(0).widget().reset()
+        self.rviz_layout2.itemAt(0).widget().reset()
+
 
     def connection_setting(self):
         self.actionTopic_List.triggered.connect(self.setting_topic_list_toggled)
@@ -378,6 +380,40 @@ class MainWindow(QMainWindow, form_class):
                 
                 QCoreApplication.processEvents()
 
+    # def rviz_frame(self, type):
+    #     rviz_frame = rviz.VisualizationFrame()
+    #     rviz_frame.setSplashPath("")
+    #     rviz_frame.initialize()
+    #     reader = rviz.YamlConfigReader()
+    #     config = rviz.Config()
+    #     reader.readFile(config, dir_path+"/forms/main.rviz")
+    #     rviz_frame.load(config)
+    #     manager = rviz_frame.getManager()
+    #     self.map_view_manager = manager.getViewManager()
+
+    #     if type == 'map':
+    #         config = rviz.Config()
+    #         reader.readFile(config, dir_path+"/forms/main.rviz")
+    #         rviz_frame.load(config)
+    #         manager = rviz_frame.getManager()
+    #         self.map_view_manager = manager.getViewManager()
+    #         self.clear_layout(self.rviz_layout)
+    #         # self.clear_layout(self.rviz_layout_2)
+
+    #         self.rviz_layout.addWidget(rviz_frame)
+    #         # self.rviz_layout_2.addWidget(rviz_frame)
+
+    #     else:
+    #         config = rviz.Config()
+    #         reader.readFile(config, dir_path+"/forms/lidar.rviz")
+    #         rviz_frame.load(config)
+    #         rviz_frame.setMenuBar(None)
+    #         rviz_frame.setStatusBar(None)
+    #         manager = rviz_frame.getManager()
+    #         self.lidar_view_manager = manager.getViewManager()
+    #         self.clear_layout(self.lidar_layout)
+    #         self.lidar_layout.addWidget(rviz_frame)
+                
     def rviz_frame(self, type):
         rviz_frame = rviz.VisualizationFrame()
         rviz_frame.setSplashPath("")
@@ -387,31 +423,26 @@ class MainWindow(QMainWindow, form_class):
         reader.readFile(config, dir_path+"/forms/main.rviz")
         rviz_frame.load(config)
         manager = rviz_frame.getManager()
-        self.map_view_manager = manager.getViewManager()
 
         if type == 'map':
-            config = rviz.Config()
-            reader.readFile(config, dir_path+"/forms/main.rviz")
-            rviz_frame.load(config)
-            manager = rviz_frame.getManager()
             self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
-            # self.clear_layout(self.rviz_layout_2)
-
             self.rviz_layout.addWidget(rviz_frame)
-            # self.rviz_layout_2.addWidget(rviz_frame)
 
-            
+        elif type == 'license':
+            self.map_view_manager = manager.getViewManager()
+            self.clear_layout(self.rviz_layout_2)
+            self.rviz_layout_2.addWidget(rviz_frame)
+
         else:
-            config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
             rviz_frame.load(config)
             rviz_frame.setMenuBar(None)
             rviz_frame.setStatusBar(None)
-            manager = rviz_frame.getManager()
             self.lidar_view_manager = manager.getViewManager()
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
+
 
     def imu_frame(self):
         self.imu_widget = imugl.ImuGL()
@@ -770,11 +801,14 @@ class MainWindow(QMainWindow, form_class):
             self.can_cmd_buttons[i].setDisabled(i != idx)
         if idx == 0:
             for button in self.can_cmd_buttons:
-                # self.state_screen.setText("MANUAL DRIVE MODE")
+                self.state_screen.setText("MANUAL DRIVE MODE")
+                self.state_screen.setStyleSheet("background-color: red;")
                 button.setEnabled(True)
         if idx ==1:
             for button in self.can_cmd_buttons:
-                # self.state_screen.setText("AUTOMATIC DRIVE MODE")
+                self.state_screen.setText("AUTOMATIC DRIVE MODE")
+                self.state_screen.setStyleSheet("background-color: green;")
+
                 button.setEnabled(True)
 
 

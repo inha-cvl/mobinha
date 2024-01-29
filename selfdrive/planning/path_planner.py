@@ -145,7 +145,7 @@ class PathPlanner:
                     rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
                     self.get_goal = 0
                     self.state = 'WAITING'
-                    return None, None
+                    return None, None, None
 
                 goal_lanelets = lanelet_matching(self.tmap.tiles, self.tmap.tile_size, goal_pt)
                 if goal_lanelets is not None:
@@ -155,7 +155,7 @@ class PathPlanner:
                     rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
                     self.get_goal = 0
                     self.state = 'WAITING'
-                    return None, None
+                    return None, None, None
 
                 e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
                 g_node = node_matching(self.lmap.lanelets, g_id, g_idx)
@@ -229,8 +229,13 @@ class PathPlanner:
             self.temp_pt = [CS.position.x, CS.position.y]
 
             non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath()
-            if non_intp_path == None and non_intp_id == None:
-                pass
+            if non_intp_path is None or non_intp_id is None:
+                rospy.logerr('An error occurred, unable to process path. Returning to WAITING state.')
+                self.state = 'WAITING'
+                self.get_goal = 0
+                pp = 3
+                return pp, None
+
             self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids)
             if non_intp_path is not None:
                 self.state = 'MOVE'

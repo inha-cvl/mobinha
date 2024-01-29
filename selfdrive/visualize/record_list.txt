@@ -1,12 +1,6 @@
-/gmsl_camera/dev/video0/compressed
-/gmsl_camera/dev/video1/compressed
-/gmsl_camera/dev/video2/compressed
-/hesai/pandar
+/mobinha/car/mode
 /mobinha/car/gear
+/mobinha/car/ego_actuators
+/mobinha/car/gateway
 /mobinha/car/velocity
-/mobinha/perception/lidar/cluster_box
-/novatel/oem7/inspva
-/rosout
-/rosout_agg
-/tf
-/tf_static
+/mobinha/car/rpm

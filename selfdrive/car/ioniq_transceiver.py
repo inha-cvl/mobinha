@@ -4,7 +4,7 @@ import can
 import cantools
 import time
 import datetime
-
+import math
 import rospy
 from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
@@ -30,6 +30,7 @@ class IoniqTransceiver():
         self.pub_ego_actuators = rospy.Publisher('/mobinha/car/ego_actuators', Vector3, queue_size=1)
         self.pub_gateway = rospy.Publisher('/mobinha/car/gateway', Int8MultiArray, queue_size=1)
         self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
+        self.pub_rpm = rospy.Publisher('/mobinha/car/rpm', Float32, queue_size=1)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
@@ -140,6 +141,9 @@ class IoniqTransceiver():
                 self.velocity_FL = res['Gway_Wheel_Velocity_FL']
                 self.rcv_velocity = (self.velocity_RR + self.velocity_RL)/7.2
                 self.pub_velocity.publish(Float32(self.rcv_velocity))
+                wheel_diameter = 0.4826 + 0.12925*2
+                rpm = self.rcv_velocity/3.6*60 / (math.pi*wheel_diameter)
+                self.pub_rpm.publish(Float32(rpm))
 
             if (data.arbitration_id == 368):
                 res = self.db.decode_message(data.arbitration_id, data.data)

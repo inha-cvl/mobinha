@@ -214,15 +214,6 @@ class MainWindow(QMainWindow, form_class):
 
 
     def senser_check_callback(self, msg):
-        camera1_warning = 0
-        camera2_warning = 1
-        camera3_warning = 2
-        lidar_warning = 3
-        gps_warning = 4
-        ins_warning = 5
-        can_warning = 6
-        perception_warning = 7
-        planning_warning = 8
 
         warning_present = False
         warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'

@@ -3517,36 +3517,6 @@ color: #00AAFF;
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="1">
-                 <widget class="QLabel" name="warn_camera2">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <family>Ubuntu Condensed</family>
-                    <pointsize>20</pointsize>
-                    <weight>75</weight>
-                    <italic>false</italic>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QLabel {
-color: #FC6C6C;
-}</string>
-                  </property>
-                  <property name="text">
-                   <string>CAMERA 2</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
                 <item row="2" column="2">
                  <widget class="QLabel" name="warn_gps">
                   <property name="sizePolicy">
@@ -3571,29 +3541,6 @@ color: #00AAFF;
                   </property>
                   <property name="text">
                    <string>GPS</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="2">
-                 <widget class="QLabel" name="warn_camera3">
-                  <property name="font">
-                   <font>
-                    <family>Ubuntu Condensed</family>
-                    <pointsize>20</pointsize>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QLabel {
-color: #FC6C6C;
-}</string>
-                  </property>
-                  <property name="text">
-                   <string>CAMERA 3</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -3700,6 +3647,12 @@ color: #00AAFF;
                 </item>
                 <item row="4" column="0">
                  <widget class="QLabel" name="warn_camera1">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="font">
                    <font>
                     <family>Ubuntu Condensed</family>
@@ -3713,10 +3666,24 @@ color: #00AAFF;
                    <string notr="true">QLabel {color: #00AAFF;}</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 1</string>
+                   <string>CAMERA</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLabel" name="label_44">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="2">
+                 <widget class="QLabel" name="label_46">
+                  <property name="text">
+                   <string/>
                   </property>
                  </widget>
                 </item>

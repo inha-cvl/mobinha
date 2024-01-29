@@ -279,7 +279,6 @@ class LongitudinalPlanner:
         return min(static_s1, static_s2)
 
     def run(self, sm, pp=0, local_path=None):
-        print(self.max_v, self.ref_v)
         CS = sm.CS
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))

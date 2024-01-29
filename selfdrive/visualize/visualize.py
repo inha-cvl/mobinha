@@ -91,6 +91,8 @@ class MainWindow(QMainWindow, form_class):
         self.player = QMediaPlayer()
         self.is_sound_playing = False
 
+        self.last_gateway_time = rospy.get_time()
+
         
 ########       
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
@@ -109,6 +111,11 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
+
+        rospy.Subscriber('/mobinha/car/gateway_time', Float32, self.emergency_button)
+        rospy.Subscriber('/mobinha/car/gateway', Int16MultiArray, self.tor_signal)
+
+
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         rospy.Subscriber('/sensor_check', Int16MultiArray, self.senser_check_callback)
@@ -135,6 +142,24 @@ class MainWindow(QMainWindow, form_class):
 
         self.gridLayout_21.setRowStretch(0, 1)  # Set stretch factor for the row containing verticalLayout_4
         self.gridLayout_21.setRowStretch(1, 1)
+
+    def emergency_button(self, msg):
+        current_time = rospy.get_time()
+        # 메시지가 수신되면 last_gateway_time 업데이트
+        self.last_gateway_time = current_time
+
+    def check_emergency_button(self):
+        # 현재 시간과 마지막으로 메시지를 받은 시간을 비교
+        if rospy.get_time() - self.last_gateway_time > 5:  # 예: 5초 동안 메시지가 없으면
+            self.state_screen.setText("MANUAL DRIVE MODE")
+            self.state_screen.setStyleSheet("background-color: red;")
+
+    def tor_signal(self, msg):
+        if any(value == 1 for value in msg.data):
+            self.state_screen.setText("MANUAL DRIVE MODE")
+            self.state_screen.setStyleSheet("background-color: red;")
+
+
 #####
 
     def increase_target_velocity(self):
@@ -205,42 +230,6 @@ class MainWindow(QMainWindow, form_class):
             text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
             self.update_text_color(i, text_color)
           
-
-            # if i == camera1_warning and sensor_status ==0:
-            #     self.state_screen.setText("WARNING : CAMERA1")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-            # # if i == camera2_warning and sensor_status ==0:
-            # #     self.state_screen.setText("WARNING : CAMERA2")
-            # #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # # if i == camera3_warning and sensor_status ==0:
-            # #     self.state_screen.setText("WARNING : CAMERA3")
-            # #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # elif i == lidar_warning and sensor_status ==1:
-            #     self.state_screen.setText("WARNING : LIDAR")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # elif i == gps_warning and sensor_status ==1:
-            #     self.state_screen.setText("WARNING : GPS")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # elif i == ins_warning and sensor_status ==1:
-            #     self.state_screen.setText("WARNING : INS")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # elif i == can_warning and sensor_status ==1:
-            #     self.state_screen.setText("WARNING : CAN")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # elif i == perception_warning and sensor_status ==1:
-            #     self.state_screen.setText("WARNING : PERCEPTION")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            # elif i == planning_warning and sensor_status ==1:
-            #     self.state_screen.setText("WARNING : PLANNING")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
             if sensor_status ==0:
                 warning_present = True
 
@@ -359,6 +348,7 @@ class MainWindow(QMainWindow, form_class):
 
     def visualize_update(self):
         while self.system_state:
+            self.check_emergency_button()
             if self.timer(0.1):
                 self.pub_state.publish(String(self.state))
                 self.pub_can_cmd.publish(Int8(self.can_cmd))
@@ -683,6 +673,7 @@ class MainWindow(QMainWindow, form_class):
     def gateway_state_cb(self, msg):
         if msg.data == 0 and self.car_name == 'IONIQ':
             self.media_thread.get_mode = 5
+
 
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:

@@ -139,7 +139,7 @@ class MainWindow(QMainWindow, form_class):
         self.connection_setting()
 
         self.MAX_VELOCITY = 50  # 최대 속도값
-        self.MIN_VELOCITY = 20    # 최소 속도값
+        self.MIN_VELOCITY = 5    # 최소 속도값
 
         self.gridLayout_21.setRowStretch(0, 1)  # Set stretch factor for the row containing verticalLayout_4
         self.gridLayout_21.setRowStretch(1, 1)
@@ -216,7 +216,7 @@ class MainWindow(QMainWindow, form_class):
     def senser_check_callback(self, msg):
 
         warning_present = False
-        warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'
+        warn_sound = './sounds/bsd.wav'
 
         for i, sensor_status in enumerate(msg.data):
             text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"

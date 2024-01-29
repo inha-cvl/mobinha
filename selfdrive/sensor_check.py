@@ -174,7 +174,7 @@ def main():
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video0/compressed', CompressedImage, 20)
-    lidar = SensorCheck('/ground_removed_cloud', PointCloud2, 6)
+    lidar = SensorCheck('/ground_removed_cloud', PointCloud2, 3)
     gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 1.0, 1.0)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 40)
     can = CanCheck('/mobinha/car/gateway_state',Int8)

@@ -63,7 +63,7 @@ class IONIQ:
         self.alv_cnt = self.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.enable, 'PA_StrAngCmd': self.steering,
                    'LON_Enable': self.enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
-                   'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset}
+                   'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset, 'TURN_SIG_LEFT': 0, 'TURN_SIG_RIGHT':0}
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
         self.reset_trigger()

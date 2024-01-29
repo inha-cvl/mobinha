@@ -49,7 +49,7 @@ class LongitudinalPlanner:
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
-        rospy.Subscriber('/mobinha/planning/max_v', Int8, self.max_v_cb)
+        rospy.Subscriber('/mobinha/visualize/max_v', Int8, self.max_v_cb)
         rospy.Subscriber('/crosswalkPolygon', Marker, self.crosswalk_cb)
         rospy.Subscriber('/mobinha/planning/right_turn_situation', Int8MultiArray, self.right_turn_situation_cb)
         rospy.Subscriber('/mobinha/planning/right_turn_situation_real', Int8MultiArray, self.right_turn_situation_real_cb)
@@ -58,7 +58,7 @@ class LongitudinalPlanner:
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
 
     def max_v_cb(self, msg):
-        self.rel_v = msg.data
+        self.max_v = msg.data
         
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z, pose.orientation.x, pose.orientation.y)for pose in msg.poses]
@@ -279,6 +279,7 @@ class LongitudinalPlanner:
         return min(static_s1, static_s2)
 
     def run(self, sm, pp=0, local_path=None):
+        print(self.max_v, self.ref_v)
         CS = sm.CS
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))

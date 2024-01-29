@@ -113,10 +113,10 @@ class StateMaster:
     def checker(self):
         gateway_state = Int8()
         if self.mode == 1: # normal
-            if time.time() - self.gateway_time < 1:
+            # if time.time() - self.gateway_time < 1:
                 gateway_state.data = 1
-            else: # abnormal
-                gateway_state.data = 0
+            # else: # abnormals
+            #     gateway_state.data = 0
         else:
             gateway_state.data = 1
                 

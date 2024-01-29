@@ -121,6 +121,8 @@ class MainWindow(QMainWindow, form_class):
         self.pub_max_v = rospy.Publisher('/mobinha/visualize/max_v', Int8, queue_size=1)
 
         self.rviz_frame('map')
+        self.rviz_frame('license')
+
         self.rviz_frame('lidar')
         self.imu_frame()
         self.information_frame()
@@ -130,6 +132,9 @@ class MainWindow(QMainWindow, form_class):
 
         self.MAX_VELOCITY = 50  # 최대 속도값
         self.MIN_VELOCITY = 20    # 최소 속도값
+
+        self.gridLayout_21.setRowStretch(0, 1)  # Set stretch factor for the row containing verticalLayout_4
+        self.gridLayout_21.setRowStretch(1, 1)
 #####
 
     def increase_target_velocity(self):
@@ -380,40 +385,6 @@ class MainWindow(QMainWindow, form_class):
                 
                 QCoreApplication.processEvents()
 
-    # def rviz_frame(self, type):
-    #     rviz_frame = rviz.VisualizationFrame()
-    #     rviz_frame.setSplashPath("")
-    #     rviz_frame.initialize()
-    #     reader = rviz.YamlConfigReader()
-    #     config = rviz.Config()
-    #     reader.readFile(config, dir_path+"/forms/main.rviz")
-    #     rviz_frame.load(config)
-    #     manager = rviz_frame.getManager()
-    #     self.map_view_manager = manager.getViewManager()
-
-    #     if type == 'map':
-    #         config = rviz.Config()
-    #         reader.readFile(config, dir_path+"/forms/main.rviz")
-    #         rviz_frame.load(config)
-    #         manager = rviz_frame.getManager()
-    #         self.map_view_manager = manager.getViewManager()
-    #         self.clear_layout(self.rviz_layout)
-    #         # self.clear_layout(self.rviz_layout_2)
-
-    #         self.rviz_layout.addWidget(rviz_frame)
-    #         # self.rviz_layout_2.addWidget(rviz_frame)
-
-    #     else:
-    #         config = rviz.Config()
-    #         reader.readFile(config, dir_path+"/forms/lidar.rviz")
-    #         rviz_frame.load(config)
-    #         rviz_frame.setMenuBar(None)
-    #         rviz_frame.setStatusBar(None)
-    #         manager = rviz_frame.getManager()
-    #         self.lidar_view_manager = manager.getViewManager()
-    #         self.clear_layout(self.lidar_layout)
-    #         self.lidar_layout.addWidget(rviz_frame)
-                
     def rviz_frame(self, type):
         rviz_frame = rviz.VisualizationFrame()
         rviz_frame.setSplashPath("")
@@ -423,26 +394,38 @@ class MainWindow(QMainWindow, form_class):
         reader.readFile(config, dir_path+"/forms/main.rviz")
         rviz_frame.load(config)
         manager = rviz_frame.getManager()
+        self.map_view_manager = manager.getViewManager()
 
         if type == 'map':
+            config = rviz.Config()
+            reader.readFile(config, dir_path+"/forms/main.rviz")
+            rviz_frame.load(config)
+            manager = rviz_frame.getManager()
             self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
-            self.rviz_layout.addWidget(rviz_frame)
 
+            self.rviz_layout.addWidget(rviz_frame)
         elif type == 'license':
+            config = rviz.Config()
+            reader.readFile(config, dir_path+"/forms/main.rviz")
+            rviz_frame.load(config)
+            manager = rviz_frame.getManager()
             self.map_view_manager = manager.getViewManager()
-            self.clear_layout(self.rviz_layout_2)
-            self.rviz_layout_2.addWidget(rviz_frame)
+            self.clear_layout(self.rviz_layout2)
+
+            self.rviz_layout2.addWidget(rviz_frame)
+            rviz_frame.setFixedSize(800, 500) 
 
         else:
+            config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
             rviz_frame.load(config)
             rviz_frame.setMenuBar(None)
             rviz_frame.setStatusBar(None)
+            manager = rviz_frame.getManager()
             self.lidar_view_manager = manager.getViewManager()
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
-
 
     def imu_frame(self):
         self.imu_widget = imugl.ImuGL()

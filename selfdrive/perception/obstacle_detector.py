@@ -36,7 +36,9 @@ class ObstacleDetector:
         self.frames_of_same_light = 0
         self.frames_of_diffrent_light = 0
         self.allowed_unrecognized_frames = 0
-        self.go_signals = [4, 9, 12, 14]
+        # self.go_signals = [4, 9, 12, 14]
+        self.go_signals = [6, 9, 11, 12, 13]
+
 
         self.direction_number = 0
         self.lane_change_point = 0
@@ -174,12 +176,12 @@ class ObstacleDetector:
         if current_light is None:
             return []
 
-        if current_light[0] == 4 or current_light[0] == 9:
-            current_light[0] = 4
-        elif current_light[0] == 6 or current_light[0] == 10:
-            current_light[0] = 6
-        elif current_light[0] == 8 or current_light[0] == 11:
-            current_light[0] = 8
+        # if current_light[0] == 4 or current_light[0] == 9:
+        #     current_light[0] = 4
+        # elif current_light[0] == 6 or current_light[0] == 10:
+        #     current_light[0] = 6
+        # elif current_light[0] == 8 or current_light[0] == 11:
+        #     current_light[0] = 8
 
         if self.last_observed_light and current_light[0] == self.last_observed_light[0]:
             self.frames_of_same_light += 1

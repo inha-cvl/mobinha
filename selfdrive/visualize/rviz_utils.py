@@ -114,6 +114,12 @@ def CrosswalkViz(waypoints):
         marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
     return marker
 
+def StopLineViz(waypoints):
+    marker = Line('stopline', 999, 0.4, (1.0, 1.0, 0.0, 1.0))
+    for _, pt in enumerate(waypoints):
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
+    return marker
+
 def LocalPathSelectedViz(path):
     waypoints = zip(path.x, path.y)
     return LocalPath(waypoints, 999, 0.1, 0.2, (0.0, 1.0, 0.0, 1.0))

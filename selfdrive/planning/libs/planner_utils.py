@@ -110,25 +110,26 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     return avoid_path
 
 
-def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
-    crosswalk = []
-    for id_, data in lanelets.items():
-        if id_ == now_lane_id:
-            if len(data['crosswalk']) > 0:
-                crosswalks = data['crosswalk'][0]
-                if isinstance(crosswalks[0], list):
-                    for arr in crosswalks:
-                        crosswalk.extend(arr)
-                else:
-                    crosswalk.append(crosswalks)
+def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point):
+    stopline = []
+    sl_id = None
+    if len(lanelets[nowID]['stoplineID']) > 0:
+        sl_id = lanelets[nowID]['stoplineID']
+    else:
+        for lanelet_id in head_lane_ids:
+            if len(lanelets[lanelet_id]['stoplineID']) > 0:
+                sl_id = lanelets[lanelet_id]['stoplineID']
+                break
+    if sl_id is not None:
+        stopline = stoplines[sl_id[0]]
 
-    now_cw_idx = math.inf
+    now_sl_idx = math.inf
 
-    for cw_wp in crosswalk:
-        idx = local_point.query(cw_wp, 1)[1]
-        if idx < now_cw_idx:
-            now_cw_idx = idx
-    return now_cw_idx
+    for sl_wp in stopline:
+        idx = local_point.query(sl_wp, 1)[1]
+        if idx < now_sl_idx:
+            now_sl_idx = idx
+    return now_sl_idx, stopline
 
 
 def filter_same_points(points):
@@ -352,7 +353,30 @@ def get_direction_number(lanelet, splited_id, forward_direction):  # lanlet, 0, 
         direction_number = direction_dir[forward_direction]
     return direction_number
 
+def get_forward_direction(lanelets, now_id, head_lane_ids):  # (global_path, i, ws=200):
+    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
+    lane_ids = [now_id]+head_lane_ids
+    for id_ in lane_ids:
+        
+        if not lanelets[id_]['leftTurn'] and not lanelets[id_]['rightTurn'] and len(lanelets[id_]['crosswalkID']) > 1:
+            return 'S'
 
+        if lanelets[id_]['intersection']:
+            if lanelets[id_]['leftTurn']:
+
+                return 'L'
+            elif lanelets[id_]['rightTurn']:
+
+                return 'R'
+            else:
+
+                return 'S'
+            
+        if lanelets[id_]['rightTurn']:
+            return 'R'
+        
+    return 'S'
+ 
 def find_nearest_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
@@ -609,33 +633,6 @@ def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_poin
     
     return renew_path, renew_ids
 
-def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
-    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
-    link = lanelets[next_id]
-    p = (link['waypoints'][len(link['waypoints'])//5][0],
-         link['waypoints'][len(link['waypoints'])//5][1])
-    q = (link['waypoints'][len(link['waypoints'])//2][0],
-         link['waypoints'][len(link['waypoints'])//2][1])
-    r = (link['waypoints'][len(link['waypoints'])//5*4][0],
-         link['waypoints'][len(link['waypoints'])//5*4][1])
-
-    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
-
-    if link['uTurn']:
-        return 'U'
-    if link['rightTurn']:
-        return 'R'
-    if link['leftTurn']:
-        return 'L'
-    threshold = 10
-    if -threshold < val < threshold:
-        return 'S'  # collinear
-    elif val <= -threshold:
-        return 'L'  # left turn
-    elif val >= threshold:
-        return 'R'  # right turn
-
-
 def set_lane_ids(lst):
     lst = [elem.split("_")[0] for elem in lst]
 
@@ -673,7 +670,8 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
             lane_position = 2 # [2] | |@| |
     elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
         lane_position = 1
-    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None):
+    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None) \
+        or (lane_no == 5 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 6 and lanelets[l_id]['adjacentRight'] == None):
         lane_position = 3
     else:
         lane_position = 2
@@ -811,6 +809,18 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 
     return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
 
+def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
+    polygon_points = []
+    if len(lanelets[nowID]['crosswalkID']) > 0:
+        lanelet_id = nowID
+    else:
+        for lanelet_id in head_lane_ids:
+            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
+                break
+    crosswalk_ids = lanelets[lanelet_id]['crosswalkID']
+    for s_id in lanelets[lanelet_id]['crosswalkID']:
+        polygon_points.extend(surfacemarks[s_id])
+    return crosswalk_ids, polygon_points
 # import rospy
 # from visualization_msgs.msg import Marker
 
@@ -837,3 +847,28 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 #         # point.z = 0  # Assuming the roads are flat
     
 #     return marker
+
+def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
+    def is_point_inside_polygon(point, polygon):
+        x, y = point
+        inside = False
+
+        for i in range(len(polygon)):
+            x1, y1 = polygon[i]
+            x2, y2 = polygon[(i + 1) % len(polygon)]
+            if y > min(y1, y2) and y <= max(y1, y2) and x <= max(x1, x2):
+                if y1 != y2:
+                    xinters = (y - y1) * (x2 - x1) / (y2 - y1) + x1
+                if x1 == x2 or x <= xinters:
+                    inside = not inside
+
+        return inside
+    for obs in obstacle_list:
+        point = (obs[3], obs[4])  # Assuming obs[3] is x and obs[4] is y
+        for s_id in crosswalk_ids:
+            polygon_points = surfacemarks[s_id]
+            if is_point_inside_polygon(point, polygon_points):
+                return True  # Return True if any obstacle is inside any polygon
+
+    return False  # Return False if no obstacle is inside any polygon
+            

@@ -36,11 +36,6 @@ BS_:
 BU_:
 
 
-BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
- SG_ Gway_Steering_Tq : 8|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Gway_Steering_Status : 16|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ gway_stat : 1|7@1+ (1,0) [0|0] "" Vector__XXX
-
 BO_ 1312 GWAY1: 8 Vector__XXX
  SG_ Gway_Cluster_Odometer : 0|24@1+ (0.1,0) [0|0] "km" Vector__XXX
 
@@ -48,7 +43,7 @@ BO_ 304 GWAY2: 8 Vector__XXX
  SG_ Gway_Lateral_Accel_Speed : 0|16@1+ (0.000127465,-4.17677) [0|0] "g" Vector__XXX
  SG_ Gway_Brake_Cylinder_Pressure : 32|12@1+ (0.1,0) [0|0] "Bar" Vector__XXX
  SG_ Gway_Longitudinal_Accel_Speed : 16|16@1+ (0.000127465,-4.17677) [0|0] "g" Vector__XXX
- SG_ Gway_Yaw_Rate_Sensor : 48|16@1+ (0.005,-163.84) [0|0] "¢ª/s" Vector__XXX
+ SG_ Gway_Yaw_Rate_Sensor : 48|16@1+ (0.005,-163.84) [0|0] "ï¿½ï¿½/s" Vector__XXX
 
 BO_ 640 GWAY3: 8 Vector__XXX
  SG_ Gway_Wheel_Velocity_FL : 0|14@1+ (0.03125,0) [0|0] "km/h" Vector__XXX
@@ -74,6 +69,8 @@ BO_ 528 Control: 8 Vector__XXX
  SG_ Target_Accel : 44|12@1+ (0.1,0) [0|100] "%" Vector__XXX
  SG_ Alive_cnt : 56|8@1+ (1,0) [0|255] "" Vector__XXX
  SG_ Reset_Flag : 24|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ TURN_SIG_LEFT : 5|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ TURN_SIG_RIGHT : 6|1@1+ (1,0) [0|1] "" Vector__XXX
 
 BO_ 784 Safety_Control: 8 Vector__XXX
  SG_ Accel_Override : 0|8@1+ (1,0) [0|0] "" Vector__XXX
@@ -87,6 +84,11 @@ BO_ 641 GWAY3_1: 8 Vector__XXX
  SG_ WHL_PlsFRVal : 8|8@1+ (0.5,0) [0|0] "pulse count" Vector__XXX
  SG_ WHL_PlsRLVal : 16|8@1+ (0.5,0) [0|0] "pulse count" Vector__XXX
  SG_ WHL_PlsRRVal : 24|8@1+ (0.5,0) [0|0] "pulse count" Vector__XXX
+
+BO_ 529 GWAY_Status: 8 Vector__XXX
+ SG_ PA_Enable_Status : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ LON_Enable_Status : 8|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ GWAY_Alive_CNT : 56|8@1+ (1,0) [0|0] "" Vector__XXX
 
 
 

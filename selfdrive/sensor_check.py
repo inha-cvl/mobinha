@@ -91,6 +91,7 @@ class INSCheck:
         self.last_seq = 0
         self.message_count = 0
         self.lat = 0.0
+        self.pre_lat = 0.0
         self.hz = 0.0
         self.hz_thresh = hz_thresh
 
@@ -103,11 +104,12 @@ class INSCheck:
         self.message_count += 1
         
     def get_hz(self):
-        if self.current_time != self.last_time and self.current_seq != self.last_seq and self.lat != 0.0:
+        if self.current_time != self.last_time and self.current_seq != self.last_seq and self.lat != 0.0 and self.pre_lat != self.lat:
             self.hz = self.message_count / (self.current_time - self.last_time).to_sec()
             self.message_count = 0
             self.last_time = self.current_time
             self.last_seq = self.current_seq
+            self.pre_lat = self.lat
         else:
             self.hz = 0.0
         return self.hz
@@ -121,7 +123,7 @@ class INSCheck:
 class CanCheck:
     def __init__(self, topic_name, msg_type):
         self.current_time = rospy.Time.now()
-        self.state = 0
+        self.state = 1
         
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
 
@@ -130,7 +132,7 @@ class CanCheck:
         self.state = msg.data
     
     def check(self):
-        if (rospy.Time.now() - self.current_time).to_sec() < 0.5:
+        if (rospy.Time.now() - self.current_time).to_sec() < 1:
             return self.state
         else:
             return 0
@@ -243,14 +245,14 @@ def main():
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video1/compressed', CompressedImage, 20)
-    lidar = SensorCheck('/ground_removed_cloud', PointCloud2, 6)
-    gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 1.0, 1.0)
+    lidar = SensorCheck('/hesai/pandar', PointCloud2, 2)
+    gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 0.5, 0.5)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 40)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     #perception = PerceptionCheck('/mobinha/perception_state', Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)
     object = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 10)
-    cluster = ClusterCheck('/mobinha/perception/lidar/track_box', BoundingBoxArray, 5)
+    cluster = ClusterCheck('/mobinha/perception/lidar/track_box', BoundingBoxArray, 3)
     
     sensor_check = Int16MultiArray()
 

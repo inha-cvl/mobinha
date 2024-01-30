@@ -82,7 +82,7 @@ class IoniqTransceiver():
         
         if 0 in self.sensor_state_list:
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
-            self.reset_trigger()
+            # self.reset_trigger()
         
         self.control_state = state 
     

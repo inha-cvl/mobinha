@@ -180,6 +180,8 @@ def main():
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     perception = PerceptionCheck('/mobinha/perception_state', Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)
+
+    
     
     sensor_check = Int16MultiArray()
 

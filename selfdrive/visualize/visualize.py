@@ -222,8 +222,7 @@ class MainWindow(QMainWindow, form_class):
     #     self.player.setMedia(content)
     #     self.player.play()
 
-    def stop_warning_sound(self):
-        self.player.stop()
+
 
     def update_text_color(self, sensor_index, color):
         # sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
@@ -782,12 +781,21 @@ class MainWindow(QMainWindow, form_class):
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
         return diff
+    
     def play_warning_sound(self, sound_path):
+        playlist = QMediaPlaylist()
         url = QUrl.fromLocalFile(sound_path)
-        content = QMediaContent(url)
-        self.player.setMedia(content)
-        self.player.setLoopCount(QMediaPlayer.Infinite)  # 무한 반복 재생 설정
+        playlist.addMedia(QMediaContent(url))
+        playlist.setPlaybackMode(QMediaPlaylist.Loop)  # 무한 반복 모드 설정
+
+        self.player.setPlaylist(playlist)
         self.player.play()
+        
+    def stop_warning_sound(self):
+        if self.player.playlist():
+            self.player.playlist().stop()
+            self.player.playlist().clear()
+        self.player.stop()
     
     def senser_check_callback(self, msg):
 

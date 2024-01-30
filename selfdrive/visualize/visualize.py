@@ -215,12 +215,12 @@ class MainWindow(QMainWindow, form_class):
         self.pub_max_v.publish(Int8(data=target_velocity))
 
     
-    def play_warning_sound(self, sound_path):
+    # def play_warning_sound(self, sound_path):
         
-        url = QUrl.fromLocalFile(sound_path)
-        content = QMediaContent(url)
-        self.player.setMedia(content)
-        self.player.play()
+    #     url = QUrl.fromLocalFile(sound_path)
+    #     content = QMediaContent(url)
+    #     self.player.setMedia(content)
+    #     self.player.play()
 
     def stop_warning_sound(self):
         self.player.stop()
@@ -782,6 +782,12 @@ class MainWindow(QMainWindow, form_class):
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
         return diff
+    def play_warning_sound(self, sound_path):
+        url = QUrl.fromLocalFile(sound_path)
+        content = QMediaContent(url)
+        self.player.setMedia(content)
+        self.player.setLoopCount(QMediaPlayer.Infinite)  # 무한 반복 재생 설정
+        self.player.play()
     
     def senser_check_callback(self, msg):
 
@@ -794,7 +800,7 @@ class MainWindow(QMainWindow, form_class):
           
             if sensor_status ==0:
                 self.warning_present = True
-                
+
         mode_label = self.get_mode_label(self.CS.cruiseState)
         if mode_label == "Auto" and self.warning_present:
 

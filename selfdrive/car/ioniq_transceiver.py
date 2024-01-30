@@ -246,5 +246,5 @@ class IoniqTransceiver():
             self.pub_gateway.publish(self.gateway)
             self.pub_gateway_time.publish(Float64(time.time()))
         self.receiver()
-        print(self.PA_Enable_Status, self.LON_Enable_Status)
+        # print(self.PA_Enable_Status, self.LON_Enable_Status)
         

@@ -803,6 +803,8 @@ class MainWindow(QMainWindow, form_class):
                 self.media_thread.get_mode = mode
             if mode == 2:
                 self.cmd_button_clicked(0) #act like click disable button
+            if mode == 3:
+                self.cmd_button_clicked(0)
     
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180

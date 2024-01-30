@@ -246,7 +246,7 @@ class MainWindow(QMainWindow, form_class):
                 self.is_sound_playing = True
             self.state_screen.setText("[ERROR] Manual Mode")
             self.state_screen.setStyleSheet("background-color: #FC6C6C;")
-        elif mode_label != "Auto" or not self.warning_present:
+        elif not self.warning_present:
             self.stop_warning_sound()
             self.is_sound_playing = False
 
@@ -819,16 +819,15 @@ class MainWindow(QMainWindow, form_class):
         self.info_cur_vel.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
         # self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
 
-        mode_label = self.get_mode_label(self.CS.cruiseState)
+        mode_label = self.get_mode_label_license(self.CS.cruiseState)
         if self.warning_present:
             pass
         else:
             self.state_screen.setText(f"{mode_label} Mode")
             if mode_label == "Auto":
-                self.state_screen.setStyleSheet("") 
+                self.state_screen.setStyleSheet("background-color: #008299;") 
             elif mode_label == "Manual":
-                self.state_screen.setStyleSheet("background-color: green;")  
-                self.state_screen.setStyleSheet("background-color: red;")  
+                self.state_screen.setStyleSheet("background-color: #747474;")  
 
         # self.check_mode(self.CS.cruiseState)
       
@@ -964,4 +963,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

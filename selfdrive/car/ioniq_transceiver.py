@@ -102,6 +102,9 @@ class IoniqTransceiver():
                 self.mode = 2  # override mode
                 self.last_mode_2_time = current_time  # 현재 시간을 저장
                 self.force_mode_2 = True  # mode를 강제로 2로 유지
+            
+        if 0 in self.sensor_state_list:
+            self.mode = 3
 
         self.pub_mode.publish(Int8(self.mode))
 
@@ -243,4 +246,5 @@ class IoniqTransceiver():
             self.pub_gateway.publish(self.gateway)
             self.pub_gateway_time.publish(Float64(time.time()))
         self.receiver()
+        print(self.PA_Enable_Status, self.LON_Enable_Status)
         

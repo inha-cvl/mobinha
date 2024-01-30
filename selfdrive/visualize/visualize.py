@@ -93,6 +93,8 @@ class MainWindow(QMainWindow, form_class):
         self.is_sound_playing = False
 
         self.last_gateway_time = rospy.get_time()
+        self.warning_present = False
+
 
         
 ########       
@@ -212,9 +214,6 @@ class MainWindow(QMainWindow, form_class):
         self.down_button.setDisabled(False)
         self.pub_max_v.publish(Int8(data=target_velocity))
 
-
-
-
     
     def play_warning_sound(self, sound_path):
         
@@ -233,27 +232,15 @@ class MainWindow(QMainWindow, form_class):
         sensor = sensors[sensor_index]
         sensor.setStyleSheet(f"color : {color}")
 
-    # def driving_mode_check(self, msg):
-    #     if msg.data == 1:
-    #         self.state_screen.setText("MANUAL DRIVE MODE")
-    #         self.state_screen.setStyleSheet("")
-    #     elif msg.data == 0:
-    #         self.state_screen.setText("AUTOMATIC DRIVE MODE")
-    #         self.state_screen.setStyleSheet("background-color : green;")
-
     def cmd_button_clicked(self, idx):
         self.can_cmd = idx
         for i in range(0, 2):
             self.can_cmd_buttons[i].setDisabled(i != idx)
         if idx == 0:
             for button in self.can_cmd_buttons:
-                # self.state_screen.setText("MANUAL DRIVE MODE")
-                # self.state_screen.setStyleSheet("background-color: green;")
                 button.setEnabled(True)
         if idx ==1:
             for button in self.can_cmd_buttons:
-                # self.state_screen.setText("AUTOMATIC DRIVE MODE")
-                # self.state_screen.setStyleSheet("")
                 button.setEnabled(True)
 
 #####
@@ -511,24 +498,6 @@ class MainWindow(QMainWindow, form_class):
         if gear_signal == self.gear_d:
             self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
     
-    # def gear_change(self, gear_signal):
-    #     default_style = "background-color : none;"
-    #     self.gear_p.setStyleSheet(default_style)
-    #     self.gear_r.setStyleSheet(default_style)
-    #     self.gear_n.setStyleSheet(default_style)
-    #     self.gear_d.setStyleSheet(default_style)
-        
-    #     # 활성화된 기어에 따라 해당 레이블의 배경색을 설정합니다.
-    #     if gear_signal == self.gear_p:
-    #         self.gear_p.setStyleSheet("background-color : #FC6C6C;")
-    #     elif gear_signal == self.gear_r:
-    #         self.gear_r.setStyleSheet("background-color : #DAA520;")
-    #     elif gear_signal == self.gear_n:
-    #         self.gear_n.setStyleSheet("background-color : #FC6C6C;")
-    #     elif gear_signal == self.gear_d:
-    #         self.gear_d.setStyleSheet("background-color : #008081;")
-
-
     def clear_layout(self, layout):
         for i in range(layout.count()):
             layout.itemAt(i).widget().close()
@@ -816,7 +785,7 @@ class MainWindow(QMainWindow, form_class):
     
     def senser_check_callback(self, msg):
 
-        warning_present = False
+        self.warning_present = False
         warn_sound = dir_path+"/sounds/bsd.wav"
 
         for i, sensor_status in enumerate(msg.data):
@@ -824,16 +793,17 @@ class MainWindow(QMainWindow, form_class):
             self.update_text_color(i, text_color)
           
             if sensor_status ==0:
-                warning_present = True
+                self.warning_present = True
+                
         mode_label = self.get_mode_label(self.CS.cruiseState)
-        if mode_label == "Auto" and warning_present:
+        if mode_label == "Auto" and self.warning_present:
 
             if not self.is_sound_playing:
                 self.play_warning_sound(warn_sound)
                 self.is_sound_playing = True
-            self.state_screen.setText("[ERROR] MANUAL MODE")
+            self.state_screen.setText("[ERROR] Manual Mode")
             self.state_screen.setStyleSheet("background-color: #FC6C6C;")
-        elif mode_label != "Auto" or not warning_present:
+        elif mode_label != "Auto" or not self.warning_present:
             self.stop_warning_sound()
             self.is_sound_playing = False
 
@@ -847,14 +817,18 @@ class MainWindow(QMainWindow, form_class):
         self.check_mode(self.CS.cruiseState)
         self.info_cur_vel.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
         # self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
+
         mode_label = self.get_mode_label(self.CS.cruiseState)
-        self.state_screen.setText(f"{mode_label} Mode")
-        if mode_label == "Auto":
-            self.state_screen.setStyleSheet("")  # Auto 모드일 때의 배경색
-        elif mode_label == "Manual":
-            self.state_screen.setStyleSheet("background-color: green;")  # Manual 모드일 때의 배경색
+        if self.warning_present:
+            pass
         else:
-            self.state_screen.setStyleSheet("background-color: red;")  # 기타 경우의 스타일 초기화
+            self.state_screen.setText(f"{mode_label} Mode")
+            if mode_label == "Auto":
+                self.state_screen.setStyleSheet("")  # Auto 모드일 때의 배경색
+            elif mode_label == "Manual":
+                self.state_screen.setStyleSheet("background-color: green;")  # Manual 모드일 때의 배경색
+            else:
+                self.state_screen.setStyleSheet("background-color: red;")  # 기타 경우의 스타일 초기화
 
         self.check_mode(self.CS.cruiseState)
       

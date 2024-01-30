@@ -242,21 +242,20 @@ def main():
     rospy.init_node('sensor_diagnostics')
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
-    cam = SensorCheck('/gmsl_camera/dev/video0/compressed', CompressedImage, 20)
+    cam = SensorCheck('/gmsl_camera/dev/video1/compressed', CompressedImage, 20)
     lidar = SensorCheck('/ground_removed_cloud', PointCloud2, 6)
     gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 1.0, 1.0)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 40)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     #perception = PerceptionCheck('/mobinha/perception_state', Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)
-    object = ObjectCheck('/mobinha/perception/cameraW/bounding_box', PoseArray, 10)
+    object = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 10)
     cluster = ClusterCheck('/mobinha/perception/lidar/track_box', BoundingBoxArray, 5)
-
     
     sensor_check = Int16MultiArray()
 
     while not rospy.is_shutdown():
-        
+
         # camera,lidar, gps, ins, can, perception, planning
         sensor_check.data = [cam.check(), lidar.check(), gps.check(), ins.check(), can.check(), 
                              int(object.check() == cluster.check() == 1), planning.check()]

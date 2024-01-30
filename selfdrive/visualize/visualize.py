@@ -113,8 +113,8 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
 
-        rospy.Subscriber('/mobinha/car/gateway_time', Float32, self.emergency_button)
-        rospy.Subscriber('/mobinha/car/gateway', Int16MultiArray, self.tor_signal)
+        # rospy.Subscriber('/mobinha/car/gateway_time', Float32, self.emergency_button)
+        # rospy.Subscriber('/mobinha/car/gateway', Int16MultiArray, self.tor_signal)
 
 
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
@@ -144,21 +144,21 @@ class MainWindow(QMainWindow, form_class):
         self.gridLayout_21.setRowStretch(0, 1)  # Set stretch factor for the row containing verticalLayout_4
         self.gridLayout_21.setRowStretch(1, 1)
 
-    def emergency_button(self, msg):
-        current_time = rospy.get_time()
-        # 메시지가 수신되면 last_gateway_time 업데이트
-        self.last_gateway_time = current_time
+    # def emergency_button(self, msg):
+    #     current_time = rospy.get_time()
+    #     # 메시지가 수신되면 last_gateway_time 업데이트
+    #     self.last_gateway_time = current_time
 
-    def check_emergency_button(self):
-        # 현재 시간과 마지막으로 메시지를 받은 시간을 비교
-        if rospy.get_time() - self.last_gateway_time > 5:  # 예: 5초 동안 메시지가 없으면
-            self.state_screen.setText("MANUAL DRIVE MODE")
-            self.state_screen.setStyleSheet("background-color: red;")
+    # def check_emergency_button(self):
+    #     # 현재 시간과 마지막으로 메시지를 받은 시간을 비교
+    #     if rospy.get_time() - self.last_gateway_time > 5:  # 예: 5초 동안 메시지가 없으면
+    #         self.state_screen.setText("MANUAL DRIVE MODE")
+    #         self.state_screen.setStyleSheet("background-color: green;")
 
-    def tor_signal(self, msg):
-        if any(value == 1 for value in msg.data):
-            self.state_screen.setText("MANUAL DRIVE MODE")
-            self.state_screen.setStyleSheet("background-color: red;")
+    # def tor_signal(self, msg):
+    #     if any(value == 1 for value in msg.data):
+    #         self.state_screen.setText("MANUAL DRIVE MODE")
+    #         self.state_screen.setStyleSheet("background-color: green;")
 
 
 #####
@@ -213,24 +213,7 @@ class MainWindow(QMainWindow, form_class):
         self.pub_max_v.publish(Int8(data=target_velocity))
 
 
-    def senser_check_callback(self, msg):
 
-        warning_present = False
-        warn_sound = dir_path+"/sounds/bsd.wav"
-
-        for i, sensor_status in enumerate(msg.data):
-            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
-            self.update_text_color(i, text_color)
-          
-            if sensor_status ==0:
-                warning_present = True
-
-        if warning_present and not self.is_sound_playing:
-            self.play_warning_sound(warn_sound)
-            self.is_sound_playing = True
-        else:
-            self.stop_warning_sound()
-            self.is_sound_playing= False
 
     
     def play_warning_sound(self, sound_path):
@@ -250,7 +233,28 @@ class MainWindow(QMainWindow, form_class):
         sensor = sensors[sensor_index]
         sensor.setStyleSheet(f"color : {color}")
 
+    # def driving_mode_check(self, msg):
+    #     if msg.data == 1:
+    #         self.state_screen.setText("MANUAL DRIVE MODE")
+    #         self.state_screen.setStyleSheet("")
+    #     elif msg.data == 0:
+    #         self.state_screen.setText("AUTOMATIC DRIVE MODE")
+    #         self.state_screen.setStyleSheet("background-color : green;")
 
+    def cmd_button_clicked(self, idx):
+        self.can_cmd = idx
+        for i in range(0, 2):
+            self.can_cmd_buttons[i].setDisabled(i != idx)
+        if idx == 0:
+            for button in self.can_cmd_buttons:
+                # self.state_screen.setText("MANUAL DRIVE MODE")
+                # self.state_screen.setStyleSheet("background-color: green;")
+                button.setEnabled(True)
+        if idx ==1:
+            for button in self.can_cmd_buttons:
+                # self.state_screen.setText("AUTOMATIC DRIVE MODE")
+                # self.state_screen.setStyleSheet("")
+                button.setEnabled(True)
 
 #####
     def timer(self, sec):
@@ -345,7 +349,7 @@ class MainWindow(QMainWindow, form_class):
 
     def visualize_update(self):
         while self.system_state:
-            self.check_emergency_button()
+            # self.check_emergency_button()
             if self.timer(0.1):
                 self.pub_state.publish(String(self.state))
                 self.pub_can_cmd.publish(Int8(self.can_cmd))
@@ -768,21 +772,6 @@ class MainWindow(QMainWindow, form_class):
             self.rosbag_proc.send_signal(subprocess.signal.SIGINT)
         self.state = 'OVER'
 
-    def cmd_button_clicked(self, idx):
-        self.can_cmd = idx
-        for i in range(0, 2):
-            self.can_cmd_buttons[i].setDisabled(i != idx)
-        if idx == 0:
-            for button in self.can_cmd_buttons:
-                self.state_screen.setText("MANUAL DRIVE MODE")
-                self.state_screen.setStyleSheet("background-color: red;")
-                button.setEnabled(True)
-        if idx ==1:
-            for button in self.can_cmd_buttons:
-                self.state_screen.setText("AUTOMATIC DRIVE MODE")
-                self.state_screen.setStyleSheet("background-color: green;")
-
-                button.setEnabled(True)
 
 
     def scenario_button_clicked(self, idx):
@@ -802,6 +791,15 @@ class MainWindow(QMainWindow, form_class):
             return "Override"
         else:
             return "Manual"
+    
+    def get_mode_label_license(self, mode):
+        if mode == 1:
+            return "Auto"
+       
+        elif mode == 2:
+            return "Take Over"
+        else:
+            return "Manual"
 
 
     def check_mode(self, mode):
@@ -815,6 +813,29 @@ class MainWindow(QMainWindow, form_class):
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
         return diff
+    
+    def senser_check_callback(self, msg):
+
+        warning_present = False
+        warn_sound = dir_path+"/sounds/bsd.wav"
+
+        for i, sensor_status in enumerate(msg.data):
+            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
+            self.update_text_color(i, text_color)
+          
+            if sensor_status ==0:
+                warning_present = True
+        mode_label = self.get_mode_label(self.CS.cruiseState)
+        if mode_label == "Auto" and warning_present:
+
+            if not self.is_sound_playing:
+                self.play_warning_sound(warn_sound)
+                self.is_sound_playing = True
+            self.state_screen.setText("[ERROR] MANUAL MODE")
+            self.state_screen.setStyleSheet("background-color: #FC6C6C;")
+        elif mode_label != "Auto" or not warning_present:
+            self.stop_warning_sound()
+            self.is_sound_playing = False
 
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
@@ -826,6 +847,17 @@ class MainWindow(QMainWindow, form_class):
         self.check_mode(self.CS.cruiseState)
         self.info_cur_vel.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
         # self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
+        mode_label = self.get_mode_label(self.CS.cruiseState)
+        self.state_screen.setText(f"{mode_label} Mode")
+        if mode_label == "Auto":
+            self.state_screen.setStyleSheet("")  # Auto 모드일 때의 배경색
+        elif mode_label == "Manual":
+            self.state_screen.setStyleSheet("background-color: green;")  # Manual 모드일 때의 배경색
+        else:
+            self.state_screen.setStyleSheet("background-color: red;")  # 기타 경우의 스타일 초기화
+
+        self.check_mode(self.CS.cruiseState)
+      
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
 

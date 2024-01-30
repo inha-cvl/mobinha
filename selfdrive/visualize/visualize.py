@@ -215,13 +215,40 @@ class MainWindow(QMainWindow, form_class):
         self.pub_max_v.publish(Int8(data=target_velocity))
 
     
-    # def play_warning_sound(self, sound_path):
-        
-    #     url = QUrl.fromLocalFile(sound_path)
-    #     content = QMediaContent(url)
-    #     self.player.setMedia(content)
-    #     self.player.play()
+    def play_warning_sound(self, sound_path):
+        url = QUrl.fromLocalFile(sound_path)
+        content = QMediaContent(url)
+        self.player.setMedia(content)
+        self.player.play()
 
+    def stop_warning_sound(self):
+        self.player.stop()
+
+    def senser_check_callback(self, msg):
+        if self.CS is None:
+            return
+
+        self.warning_present = False
+        warn_sound = dir_path+"/sounds/error.wav"
+
+        for i, sensor_status in enumerate(msg.data):
+            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
+            self.update_text_color(i, text_color)
+          
+            if sensor_status ==0:
+                self.warning_present = True
+
+        mode_label = self.get_mode_label(self.CS.cruiseState)
+        if mode_label == "Auto" and self.warning_present:
+
+            if not self.is_sound_playing:
+                self.play_warning_sound(warn_sound)
+                self.is_sound_playing = True
+            self.state_screen.setText("[ERROR] Manual Mode")
+            self.state_screen.setStyleSheet("background-color: #FC6C6C;")
+        elif mode_label != "Auto" or not self.warning_present:
+            self.stop_warning_sound()
+            self.is_sound_playing = False
 
 
     def update_text_color(self, sensor_index, color):
@@ -763,7 +790,6 @@ class MainWindow(QMainWindow, form_class):
     def get_mode_label_license(self, mode):
         if mode == 1:
             return "Auto"
-       
         elif mode == 2:
             return "Take Over"
         else:
@@ -781,45 +807,6 @@ class MainWindow(QMainWindow, form_class):
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
         return diff
-    
-    def play_warning_sound(self, sound_path):
-        playlist = QMediaPlaylist()
-        url = QUrl.fromLocalFile(sound_path)
-        playlist.addMedia(QMediaContent(url))
-        playlist.setPlaybackMode(QMediaPlaylist.Loop)  # 무한 반복 모드 설정
-
-        self.player.setPlaylist(playlist)
-        self.player.play()
-        
-    def stop_warning_sound(self):
-        if self.player.playlist():
-            self.player.playlist().stop()
-            self.player.playlist().clear()
-        self.player.stop()
-    
-    def senser_check_callback(self, msg):
-
-        self.warning_present = False
-        warn_sound = dir_path+"/sounds/bsd.wav"
-
-        for i, sensor_status in enumerate(msg.data):
-            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
-            self.update_text_color(i, text_color)
-          
-            if sensor_status ==0:
-                self.warning_present = True
-
-        mode_label = self.get_mode_label(self.CS.cruiseState)
-        if mode_label == "Auto" and self.warning_present:
-
-            if not self.is_sound_playing:
-                self.play_warning_sound(warn_sound)
-                self.is_sound_playing = True
-            self.state_screen.setText("[ERROR] Manual Mode")
-            self.state_screen.setStyleSheet("background-color: #FC6C6C;")
-        elif mode_label != "Auto" or not self.warning_present:
-            self.stop_warning_sound()
-            self.is_sound_playing = False
 
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
@@ -838,13 +825,12 @@ class MainWindow(QMainWindow, form_class):
         else:
             self.state_screen.setText(f"{mode_label} Mode")
             if mode_label == "Auto":
-                self.state_screen.setStyleSheet("")  # Auto 모드일 때의 배경색
+                self.state_screen.setStyleSheet("") 
             elif mode_label == "Manual":
-                self.state_screen.setStyleSheet("background-color: green;")  # Manual 모드일 때의 배경색
-            else:
-                self.state_screen.setStyleSheet("background-color: red;")  # 기타 경우의 스타일 초기화
+                self.state_screen.setStyleSheet("background-color: green;")  
+                self.state_screen.setStyleSheet("background-color: red;")  
 
-        self.check_mode(self.CS.cruiseState)
+        # self.check_mode(self.CS.cruiseState)
       
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:

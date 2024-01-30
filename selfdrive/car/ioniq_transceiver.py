@@ -6,7 +6,7 @@ import time
 import datetime
 import math
 import rospy
-from std_msgs.msg import Float32, Int8, Int8MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
+from std_msgs.msg import Float32, Int8, Int8MultiArray, Int16MultiArray, MultiArrayLayout, MultiArrayDimension, Float64
 from geometry_msgs.msg import Vector3
 
 class IoniqTransceiver():
@@ -32,6 +32,7 @@ class IoniqTransceiver():
         self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         self.pub_rpm = rospy.Publisher('/mobinha/car/rpm', Float32, queue_size=1)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
+        rospy.Subscriber('/sensor_check', Int16MultiArray, self.sensor_check_cb)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
@@ -52,6 +53,7 @@ class IoniqTransceiver():
         self.PA_Enable_Status = 0
         self.LON_Enable_Status = 0
         self.prev_control_state = self.control_state.copy()
+        self.sensor_state_list = [0, 0, 0, 0, 0, 0, 0]
 
         rospy.on_shutdown(self.cleanup)
 
@@ -78,11 +80,14 @@ class IoniqTransceiver():
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
         
+        if 0 in self.sensor_state_list:
+            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+            self.reset_trigger()
+        
         self.control_state = state 
     
     def check_mode(self):
         current_time = rospy.get_time()
-
         if self.force_mode_2 and current_time - self.last_mode_2_time < 2.0:
             # mode를 강제로 2로 2초 동안 유지
             self.mode = 2
@@ -107,6 +112,11 @@ class IoniqTransceiver():
             self.blinker = {**self.blinker, 'left':0, 'right':1}
         else:
             self.blinker = {**self.blinker, 'left':0, 'right':0}
+    
+    def sensor_check_cb(self, msg):
+        #sensor_check.data = [cam.check(), lidar.check(), gps.check(), ins.check(), can.check(), perception.check(), planning.check()]
+        self.sensor_state_list = msg.data # 1 normal, 0 error
+
 
     def target_actuators_cb(self, msg):
         self.target_actuators['steer'] = msg.x

@@ -171,7 +171,7 @@ class PlanningCheck:
        
 def main():
     rospy.init_node('sensor_diagnostics')
-    pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
+    pub = rospy.Publisher('/sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video0/compressed', CompressedImage, 20)
     lidar = SensorCheck('/ground_removed_cloud', PointCloud2, 3)
@@ -187,7 +187,7 @@ def main():
         sensor_check.data = [cam.check(), lidar.check(), gps.check(), ins.check(), can.check(), perception.check(), planning.check()]
         pub.publish(sensor_check)
 
-        rospy.sleep(1.0)  # 1초마다 출력
+        rospy.sleep(0.2)  # 5fps
         
     
 if __name__ == '__main__':

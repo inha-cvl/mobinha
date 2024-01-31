@@ -2,7 +2,7 @@ import rospy
 from sensor_msgs.msg import PointCloud2, CompressedImage
 from std_msgs.msg import Float32MultiArray, Int8, Int16MultiArray
 import numpy as np
-from novatel_oem7_msgs.msg import BESTPOS, BESTGNSSPOS, INSPVA
+from novatel_oem7_msgs.msg import BESTGNSSPOS, INSPVA
 from geometry_msgs.msg import PoseArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
@@ -246,8 +246,8 @@ def main():
     
     cam = SensorCheck('/gmsl_camera/dev/video1/compressed', CompressedImage, 20)
     lidar = SensorCheck('/hesai/pandar', PointCloud2, 2)
-    gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 0.5, 0.5)
-    ins = INSCheck('/novatel/oem7/inspva', INSPVA, 40)
+    gps = GPSCheck('/novatel/oem7/bestgnsspos', BESTGNSSPOS, 7, 1.0, 1.0)
+    ins = INSCheck('/novatel/oem7/inspva', INSPVA, 35)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     #perception = PerceptionCheck('/mobinha/perception_state', Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)

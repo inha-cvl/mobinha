@@ -229,9 +229,8 @@ class MainWindow(QMainWindow, form_class):
     def senser_check_callback(self, msg):
         if self.CS is None:
             return
-        previous_warning_present = self.warning_present
         self.warning_present = False
-        warn_sound = dir_path+"/sounds/error.wav"
+        self.all_sensors_ok = True
 
         for i, sensor_status in enumerate(msg.data):
             text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
@@ -239,18 +238,36 @@ class MainWindow(QMainWindow, form_class):
           
             if sensor_status ==0:
                 self.warning_present = True
+                self.all_sensors_ok = False
+        if self.warning_present:
+            if not self.is_sound_playing:
+                self.play_warning_sound(dir_path+"/sounds/200_extended_error.wav")
+                self.is_sound_playing = True
+        elif self.all_sensors_ok == True:
+            if self.is_sound_playing:
+                self.stop_warning_sound()
+                self.is_sound_playing = False
 
         mode_label = self.get_mode_label(self.CS.cruiseState)
         if mode_label == "Auto" and self.warning_present:
-
-            if not self.is_sound_playing:
-                self.play_warning_sound(warn_sound)
-                self.is_sound_playing = True
             self.state_screen.setText("[ERROR] Manual Mode")
             self.state_screen.setStyleSheet("background-color: #FC6C6C;")
-        elif not self.warning_present and previous_warning_present:
-            self.stop_warning_sound()
-            # self.is_sound_playing = False
+  
+
+    #     self.update_sound()
+
+    # def update_sound(self):
+    #     if self.state_screen.text() == "[ERROR] Manual Mode":
+    #         # "[ERROR] Manual Mode" 텍스트가 설정되어 있을 때
+    #         if not self.is_sound_playing:
+    #             self.play_warning_sound(dir_path+"/sounds/200_extended_error.wav")
+    #             self.is_sound_playing = True
+    #     elif self.state_screen.text() != "[ERROR] Manual Mode":
+    #         # "[ERROR] Manual Mode" 텍스트가 설정되어 있지 않을 때
+    #         if self.is_sound_playing:
+    #             self.stop_warning_sound()
+    #             self.is_sound_playing = False
+
 
 
     def update_text_color(self, sensor_index, color):

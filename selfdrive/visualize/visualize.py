@@ -222,12 +222,14 @@ class MainWindow(QMainWindow, form_class):
         self.player.play()
 
     def stop_warning_sound(self):
-        self.player.stop()
+        if self.is_sound_playing:
+            self.player.stop()
+            self.is_sound_playing = False
 
     def senser_check_callback(self, msg):
         if self.CS is None:
             return
-
+        previous_warning_present = self.warning_present
         self.warning_present = False
         warn_sound = dir_path+"/sounds/error.wav"
 
@@ -246,9 +248,9 @@ class MainWindow(QMainWindow, form_class):
                 self.is_sound_playing = True
             self.state_screen.setText("[ERROR] Manual Mode")
             self.state_screen.setStyleSheet("background-color: #FC6C6C;")
-        elif not self.warning_present:
+        elif not self.warning_present and previous_warning_present:
             self.stop_warning_sound()
-            self.is_sound_playing = False
+            # self.is_sound_playing = False
 
 
     def update_text_color(self, sensor_index, color):

@@ -2,7 +2,7 @@ import rospy
 from sensor_msgs.msg import PointCloud2, CompressedImage
 from std_msgs.msg import Float32MultiArray, Int8, Int16MultiArray
 import numpy as np
-from novatel_oem7_msgs.msg import BESTPOS, INSPVA
+from novatel_oem7_msgs.msg import BESTPOS, BESTGNSSPOS, INSPVA
 from geometry_msgs.msg import PoseArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 

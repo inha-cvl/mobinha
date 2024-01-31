@@ -137,7 +137,7 @@ class LongitudinalPlanner:
             return max(0/HZ, min(1.5/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         elif 0 > ttc > -3:
             # print("warn e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
-            return min(0/HZ, max(-7/HZ, -(kp*error + ki*self.integral + kd*derivative)))
+            return min(0/HZ, max(-8/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         else:
             # print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
@@ -230,7 +230,7 @@ class LongitudinalPlanner:
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
-        tl_offset = 7*self.M_TO_IDX
+        tl_offset = 8*self.M_TO_IDX
         cw_offset = 4*self.M_TO_IDX
         static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
         # [1] = Goal Object

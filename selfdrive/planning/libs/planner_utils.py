@@ -434,7 +434,7 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
 def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph, kph, mps
     #lane information -> [1]:forward direction, [3]:curvature
-    max_curvature = 600
+    max_curvature = 400
     min_curvature = 0
     if lane_information[3] < min_curvature:
         lane_information[3] = min_curvature

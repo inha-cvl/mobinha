@@ -238,14 +238,13 @@ class ClusterCheck:
             return 1
         else:
             return 0
-
-       
+        
 def main():
     rospy.init_node('sensor_diagnostics')
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video1/compressed', CompressedImage, 20)
-    lidar = SensorCheck('/hesai/pandar', PointCloud2, 2)
+    lidar = SensorCheck('/ground_removed_cloud', PointCloud2, 2)
     gps = GPSCheck('/novatel/oem7/bestgnsspos', BESTGNSSPOS, 7, 1.0, 1.0)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 35)
     can = CanCheck('/mobinha/car/gateway_state',Int8)

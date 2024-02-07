@@ -1,3 +1,0 @@
-float64 longitudinalVelocity
-float64 latitudinalVelocity
-float64 AngularVelocity

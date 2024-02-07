@@ -1,3 +1,0 @@
-# Control
-
-controller, pid, localizer

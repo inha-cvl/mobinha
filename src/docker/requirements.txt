@@ -1,0 +1,26 @@
+numpy==1.21.0
+pyyaml
+rospkg
+catkin-pkg
+utm
+pymap3d
+tqdm
+scipy
+geopandas
+matplotlib
+python-can
+cantools
+### if there is no cv2 then apt install it additionally
+
+#For IMU GL
+PyOpenGL
+PyOpenGL_accelerate
+pyqtgraph
+pywavefront
+
+# apt install python3-pyqt5.qtmultimedia libqt5multimedia5-plugins
+# apt install ros-noetic-jsk-recognition-msgs & apt install ros-noetic-jsk-rviz-plugins
+# apt install ros-${ROS_DISTRO}-novatel-oem7-driver
+
+## catkin_make the src file in morai_ws and source the devel/setup.bash before excute.sh
+

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Name=mobinha
+Commet=MOBINHA\n
+Icon=/home/inha/Documents/catkin_ws/src/mobinha/common/create_desktop_app/mobinha.svg
+Exec=bash -c "source /opt/ros/noetic/setup.bash && source /home/inha/Documents/catkin_ws/devel/setup.bash && export PYTHONPATH="$PYTHONPATH:/home/inha/Documents/catkin_ws/src/mobinha" && cd /home/inha/Documents/catkin_ws/src/mobinha/selfdrive/manager && /home/inha/Documents/catkin_ws/src/mobinha/selfdrive/manager/execute.sh;$SHELL "
+Categories=Application;
+

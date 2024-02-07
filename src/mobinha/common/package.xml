@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>common</name>
+  <version>0.0.1</version>
+  <description>The common package</description>
+
+  <maintainer email="cvlab.inhauniv@gmail.com">cvlab.inhauniv</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">https://github.com/inha-cvl/mobinha.git</url>
+
+  <author email="kka-na@inha.edu">Kana Kim</author>
+  <author email="jang@inha.edu">Kyeongjun Jang</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>

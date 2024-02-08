@@ -1,7 +1,14 @@
 <p align="center">
   <img height="50" src="/docs/image/logo.png"/>
 </p>
-#Pull the code from main branch
+# Pull the code from main branch
+## Catkin_Make "morai" folder
+## Build dockerfile
+## xhost +
+## In docker container "pip3 install /workspace/src/docker/requirements.txt"
+## apt install python3-pyqt5.qtmultimedia libqt5multimedia5-plugins
+## apt install ros-noetic-jsk-recognition-msgs & apt install ros-noetic-jsk-rviz-plugins
+## apt install ros-${ROS_DISTRO}-novatel-oem7-driver
 
 ## What is mobinha ?
 

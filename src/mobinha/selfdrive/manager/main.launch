@@ -1,0 +1,7 @@
+<launch>
+  <node pkg='car' type='car.py' name='Car' launch-prefix="bash -c 'sleep 5; $0 $@' " />
+  <node pkg='control' type='control.py' name='Control' launch-prefix="bash -c 'sleep 5; $0 $@' " />
+  <node pkg='planning' type='planning.py' name='Planning' launch-prefix="bash -c 'sleep 5; $0 $@' "/>
+  <node pkg='perception' type='perception.py' name='Perception' launch-prefix="bash -c 'sleep 5; $0 $@' "/>
+  <node pkg='rviz' type='rviz' args='-d $(find visualize)/main.rviz' name='RVIZ' />
+</launch>

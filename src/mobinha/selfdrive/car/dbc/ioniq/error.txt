@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "../car/car.py", line 84, in main
+    if t.transceiver() == 1:
+  File "../car/car.py", line 47, in transceiver
+    can.run(cm)
+  File "/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/ioniq_transceiver.py", line 203, in run
+    self.ioniq_control()
+  File "/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/ioniq_transceiver.py", line 181, in ioniq_control
+    msg = self.db.encode_message('Control', signals)
+  File "/home/inha/.local/lib/python3.8/site-packages/cantools/database/can/database.py", line 449, in encode_message
+    return message.encode(data, scaling, padding, strict)
+  File "/home/inha/.local/lib/python3.8/site-packages/cantools/database/can/message.py", line 938, in encode
+    self.assert_signals_encodable(data, scaling=scaling)
+  File "/home/inha/.local/lib/python3.8/site-packages/cantools/database/can/message.py", line 655, in assert_signals_encodable
+    used_signals = self.gather_signals(input_data)
+  File "/home/inha/.local/lib/python3.8/site-packages/cantools/database/can/message.py", line 543, in gather_signals
+    raise EncodeError(f'The signal "{signal.name}" is '
+cantools.database.errors.EncodeError: The signal "TURN_SIG_LEFT" is required for encoding.

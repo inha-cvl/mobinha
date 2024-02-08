@@ -1,6 +1,7 @@
 <p align="center">
   <img height="50" src="/docs/image/logo.png"/>
 </p>
+#Pull the code from main branch
 
 ## What is mobinha ?
 

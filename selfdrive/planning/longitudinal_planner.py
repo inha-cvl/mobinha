@@ -225,10 +225,8 @@ class LongitudinalPlanner:
     
     def can_depart(self, current_velocity):
         current_time = time.time()
-
         if self.departure_confirm_time is not None and current_time - self.departure_confirm_time < 10:
             return True
-
         if current_velocity < 0.1:
             if self.stop_time_start is None:
                 self.stop_time_start = current_time
@@ -239,11 +237,7 @@ class LongitudinalPlanner:
         else:
             self.stop_time_start = None
             self.departure_confirm_time = None
-
         return False
-
-
-
 
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)

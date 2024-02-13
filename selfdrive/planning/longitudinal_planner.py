@@ -226,20 +226,22 @@ class LongitudinalPlanner:
     def can_depart(self, current_velocity):
         current_time = time.time()
 
+        if self.departure_confirm_time is not None and current_time - self.departure_confirm_time < 10:
+            return True
+
         if current_velocity < 0.1:
             if self.stop_time_start is None:
                 self.stop_time_start = current_time
             else:
-                if current_time - self.stop_time_start > 1 and (self.departure_confirm_time is None or current_time - self.departure_confirm_time > 10):
+                if current_time - self.stop_time_start > 1:
+                    self.departure_confirm_time = current_time
                     return True
         else:
-            if self.departure_confirm_time is None:
-                self.departure_confirm_time = current_time
-            elif current_time - self.departure_confirm_time > 10:
-                self.stop_time_start = None
-                self.departure_confirm_time = None
+            self.stop_time_start = None
+            self.departure_confirm_time = None
 
         return False
+
 
 
 
@@ -283,7 +285,6 @@ class LongitudinalPlanner:
                             static_s2 = left_distance_to_stopline
                         if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
                             static_s2 = 90*self.M_TO_IDX
-            print("static_s2", static_s2)
         return min(static_s1, static_s2)
 
     def run(self, sm, pp=0, local_path=None):

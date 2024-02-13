@@ -43,7 +43,8 @@ class LongitudinalPlanner:
 
         self.right_turn_situation = (0,0)
         self.right_turn_situation_real = (0,0)
-        self.waiting_at_crosswalk = False
+        self.stop_time_start = None  # 정지 상태 시작 시간
+        self.departure_confirm_time = None  # 출발 확인 시간
 
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
@@ -212,8 +213,7 @@ class LongitudinalPlanner:
         if self.lidar_obstacle is not None:
             for lobs in self.lidar_obstacle:
                 if lobs[2] >= -1.45 and lobs[2] <= 1.45:  # object in my lane
-                    # dynamic_s = math.sqrt((lobs[5] - veh_pose[0])**2 + (lobs[6] - veh_pose[1])**2) - offset
-                    # dynamic_s = round(dynamic_s*self.M_TO_IDX,2)
+
                     dynamic_s = lobs[1]-offset-local_s
                     if lobs[4] > 1: # tracking
                         self.rel_v = lobs[3]
@@ -223,11 +223,31 @@ class LongitudinalPlanner:
                         return dynamic_s
         return dynamic_s
     
+    def can_depart(self, current_velocity):
+        current_time = time.time()
+
+        if current_velocity < 0.1:
+            if self.stop_time_start is None:
+                self.stop_time_start = current_time
+            else:
+                if current_time - self.stop_time_start > 1 and (self.departure_confirm_time is None or current_time - self.departure_confirm_time > 10):
+                    return True
+        else:
+            if self.departure_confirm_time is None:
+                self.departure_confirm_time = current_time
+            elif current_time - self.departure_confirm_time > 10:
+                self.stop_time_start = None
+                self.departure_confirm_time = None
+
+        return False
+
+
+
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
         tl_offset = 7*self.M_TO_IDX
-        cw_offset = 4*self.M_TO_IDX
+        cw_offset = 5*self.M_TO_IDX
         static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
         # [1] = Goal Object
         if self.goal_object is not None:
@@ -241,21 +261,12 @@ class LongitudinalPlanner:
             # self.right_turn_situation = [0, 0], [0, 1], [1, 0], [1, 1] # [0] = car, [1] = pedestrian
             if self.lane_information[1] == 2: # Right Turn
                 min_distance = self.find_closest_point(veh_pose, self.crosswalk)
-                # static_s2 = min_distance*self.M_TO_IDX-cw_offset
-                
-                # if static_s2 < 1 and not self.waiting_at_crosswalk:
-                #     self.waiting_at_crosswalk = True
-                #     self.wait_time_start = time.time()
-                # # 차량 속도가 0이고 1초가 지난 경우
-                # if v_ego < 0.1 and self.waiting_at_crosswalk:
-                #     if time.time() - self.wait_time_start > 2:
-                #         self.waiting_at_crosswalk = False
-                
-                # if not self.waiting_at_cro
-                
                 
                 if self.right_turn_situation == (0,0) and self.right_turn_situation_real == (0,0):
-                    static_s2 = 90*self.M_TO_IDX
+                    static_s2 = min_distance*self.M_TO_IDX-cw_offset
+                    if self.can_depart(v_ego):
+                        print("can_depart")
+                        static_s2 = 90*self.M_TO_IDX
                 elif self.right_turn_situation_real == (0,1) or self.right_turn_situation == (0, 1) \
                     or self.right_turn_situation == (1, 0) or self.right_turn_situation == (1,1):
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
@@ -272,6 +283,7 @@ class LongitudinalPlanner:
                             static_s2 = left_distance_to_stopline
                         if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
                             static_s2 = 90*self.M_TO_IDX
+            print("static_s2", static_s2)
         return min(static_s1, static_s2)
 
     def run(self, sm, pp=0, local_path=None):

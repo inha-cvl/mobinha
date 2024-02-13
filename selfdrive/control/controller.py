@@ -24,7 +24,7 @@ class Controller:
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
-        self.max_steer_change_rate = 8/20*self.steer_ratio
+        # self.max_steer_change_rate = 12/20*self.steer_ratio
         self.cte = 0
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
@@ -45,7 +45,7 @@ class Controller:
 
     def limit_steer_change(self, current_steer):
         steer_change = current_steer - self.prev_steer
-        steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
+        # steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
         limited_steer = self.prev_steer + steer_change
         self.prev_steer = limited_steer
         return limited_steer

@@ -242,7 +242,7 @@ class LongitudinalPlanner:
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
-        tl_offset = 7*self.M_TO_IDX
+        tl_offset = 5*self.M_TO_IDX # origin 7
         cw_offset = 5*self.M_TO_IDX
         static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
         # [1] = Goal Object
@@ -261,7 +261,7 @@ class LongitudinalPlanner:
                 if self.right_turn_situation == (0,0) and self.right_turn_situation_real == (0,0):
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
                     if self.can_depart(v_ego):
-                        print("can_depart")
+                        #print("can_depart")
                         static_s2 = 90*self.M_TO_IDX
                 elif self.right_turn_situation_real == (0,1) or self.right_turn_situation == (0, 1) \
                     or self.right_turn_situation == (1, 0) or self.right_turn_situation == (1,1):

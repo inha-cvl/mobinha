@@ -22,6 +22,9 @@ class StateMaster:
         self.CS = CS
         self.base_lla = [CP.mapParam.baseLatitude,CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
+        # mingu
+        self.timestamp = rospy.Time.now()
+
         self.v = 0.0
         self.pitch = 0.0
         self.roll = 0.0
@@ -80,6 +83,9 @@ class StateMaster:
             msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
 
     def novatel_cb(self, msg):
+        # mingu
+        self.timestamp = msg.header.stamp
+
         self.latitude = msg.latitude
         self.longitude = msg.longitude
         self.altitude = msg.height
@@ -88,8 +94,8 @@ class StateMaster:
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
-        #self.yaw = self.yaw - 0.3
-       
+        self.yaw = self.yaw - 2 # mingu
+        
     def velocity_cb(self, msg):
         self.v = msg.data
 
@@ -125,6 +131,9 @@ class StateMaster:
     def update(self):
         car_state = self.CS._asdict()
 
+        # mingu
+        car_state["timestamp"] = self.timestamp
+    
         car_state["vEgo"] = self.v
         car_state_position = car_state["position"]._asdict()
         car_state_position["x"] = self.x

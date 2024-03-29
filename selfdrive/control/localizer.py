@@ -17,15 +17,30 @@ class Localizer:
 
     def run(self, sm):
         CS = sm.CS
+
         quaternion = tf.transformations.quaternion_from_euler(
             math.radians(CS.rollRate), math.radians(CS.pitchRate), math.radians(CS.yawRate))  # RPY
         self.br.sendTransform(
-            (CS.position.x, CS.position.y, CS.position.z),
+            (CS.position.x + 0.8, CS.position.y, CS.position.z),
             (quaternion[0], quaternion[1],
                 quaternion[2], quaternion[3]),
             rospy.Time.now(),
             'ego_car',
             'world'
         )
+        
+        # mingu
+        self.br.sendTransform(
+            (1.06, 0, 1.2),
+            (0, 0,
+                0, 1),
+            rospy.Time.now(),
+            'Pandar64',
+            'ego_car'
+        )
+
+        # mingu
+        self.ego_car.header.stamp = CS.timestamp
+
         self.pub_ego_car.publish(self.ego_car)
         self.pub_enu_pose.publish(CS.position.x, CS.position.y, CS.yawRate)

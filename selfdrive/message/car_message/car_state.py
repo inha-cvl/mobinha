@@ -1,6 +1,5 @@
 from typing import NamedTuple
 
-
 class Positions(NamedTuple):
     x: float = 0.0
     y: float = 0.0
@@ -34,6 +33,10 @@ class ButtonEvent(NamedTuple):
 
 
 class CarState(NamedTuple):
+
+    # mingu
+    timestamp: float = 0.0
+
     vEgo: float = 0.0
     aEgo: float = 0.0
     position: Positions = Positions()

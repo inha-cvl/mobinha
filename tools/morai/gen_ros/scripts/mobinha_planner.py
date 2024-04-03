@@ -24,7 +24,7 @@ class MoraiPlanner():
         self.CM = None
         # publisher
         self.ctrl_pub = rospy.Publisher(
-            '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
+            '/ctrl_cmd_0', CtrlCmd, queue_size=1)  # Vehicl Control
         self.lamp_pub = rospy.Publisher('/lamps', Lamps, queue_size=1)
         self.obj_list_pub = rospy.Publisher(
             '/morai/object_list', PoseArray, queue_size=1)
@@ -85,8 +85,8 @@ class MoraiPlanner():
 
     def set_ctrl_cmd(self, ctrl_cmd):
         ctrl_cmd.steering = radians(self.CM.CC.actuators.steer)
-        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel*5, 100)*0.01
-        ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake*80/65, 100)*0.01
+        ctrl_cmd.accel = self.rmin(self.CM.CC.actuators.accel*5, 100)*0.007
+        ctrl_cmd.brake = self.rmin(self.CM.CC.actuators.brake*80/65, 100)*0.005
         # if 0 < self.CM.CC.actuators.brake/10*0.11 < 0.01:
         #     ctrl_cmd.brake = 0.003
         # else:
@@ -135,25 +135,23 @@ class MoraiPlanner():
 
         pose = Pose()
         st = data.trafficLightStatus
-        stt = 10
+        stt = 7
         if st == 1:  # Red
-            stt = 10
+            stt = 7
         elif st == 4:  # Yellow
-            stt = 11
+            stt = 8
         elif st == 16:  # Green
-            stt = 9
+            stt = 6
         elif st == 32:  # Green Left
-            stt = 12
-        elif st == 33:  # Red wotj Greem :left
-            stt = 12
+            stt = 11
+        elif st == 33:  # Red with Green left
+            stt = 9
         elif st == 48:  # Green with Green Left
-            stt = 14
+            stt = 11
         elif st == 20:  # Yellow with Green
             stt = 12
-        elif st == 36:  # Yellow with Green Left
-            stt = 12
         elif st == 5:  # Red with YUellow
-            stt = 13
+            stt = 10
 
         #cls, size, prob
         pose.position.x = stt

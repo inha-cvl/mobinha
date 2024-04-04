@@ -84,7 +84,7 @@ class StateMaster:
 
     def novatel_cb(self, msg):
         # mingu
-        self.timestamp = msg.header.stamp
+        self.timestamp = rospy.Time.now()
 
         self.latitude = msg.latitude
         self.longitude = msg.longitude

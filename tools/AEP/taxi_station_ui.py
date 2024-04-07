@@ -28,7 +28,6 @@ def publish_dest1():
     dest2_button.config(state=tk.NORMAL)
     dest3_button.config(state=tk.NORMAL)
     time.sleep(1)  # Wait for 2 seconds
-    publish_signal(0)
 
 def publish_dest2():
     publish_signal(2)
@@ -37,7 +36,6 @@ def publish_dest2():
     dest1_button.config(state=tk.NORMAL)
     dest3_button.config(state=tk.NORMAL)
     time.sleep(1)  # Wait for 2 seconds
-    publish_signal(0)
 
 def publish_dest3():
     publish_signal(3)
@@ -46,7 +44,6 @@ def publish_dest3():
     dest1_button.config(state=tk.NORMAL)
     dest2_button.config(state=tk.NORMAL)
     time.sleep(1)  # Wait for 2 seconds
-    publish_signal(0)
 
 def publish_signal(signal):
     signal_publisher.publish(signal)

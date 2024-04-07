@@ -5,6 +5,7 @@ import rospy
 import pymap3d as pm
 
 from std_msgs.msg import Float32
+from std_msgs.msg import Bool # 고실실
 from geometry_msgs.msg import Pose, PoseArray, Point
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
@@ -53,6 +54,9 @@ class ObstacleDetector:
         rospy.Subscriber('/morai/object_list', PoseArray, self.morai_object_list_cb)
         rospy.Subscriber('/morai/ego_topic', Pose, self.morai_ego_topic_cb)
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
+        # 고실실
+        rospy.Subscriber('gosilsil_flag', Bool, self.gosilsil_cb)
+        self.gosilsil_flag = True
     
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
         self.pub_text_marker = rospy.Publisher('/mobinha/perception/text_marker', MarkerArray, queue_size=1)
@@ -61,6 +65,10 @@ class ObstacleDetector:
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
         self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
         self.pub_avoid_gain = rospy.Publisher('/mobinha/avoid_gain', Float32, queue_size=1)
+
+    def gosilsil_cb(self, msg): # 고실실
+        self.gosilsil_flag = msg.data
+        print("SELF.GOSILSIL_FLAG = ", self.gosilsil_flag)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -82,7 +90,6 @@ class ObstacleDetector:
                 nx, ny = ObstacleUtils.object2enu(
                     (self.CS.position.x, self.CS.position.y, self.CS.yawRate), x, y)
                 objects.append([nx, ny, w, v_rel, track_id, sx, sy, sz, x, y])  # [2] heading [3] relative velocity [4] id
-
         self.lidar_object = objects
 
     def camera_bounding_box_cb(self, msg):
@@ -137,7 +144,7 @@ class ObstacleDetector:
                     if -50*self.M_TO_IDX < obj_s-car_idx < 90*self.M_TO_IDX and -4.1 < obj_d < 4.1 and obj[4] > 1: 
                         viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
 
-                #Forward Collision Warning
+                #Forward Collision Warning # 고실실
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*self.M_TO_IDX and obj_d > -1.5 and obj_d < 1.5:
                     obstacle_sd.append((obj_s, obj_d, obj[3], obj[4],obj[0]+dx, obj[1]+dy))
                 #BSD3 : Time Based Method
@@ -226,7 +233,13 @@ class ObstacleDetector:
 
     def run(self, CS):
         self.CS = CS
-
+        if self.gosilsil_flag: # 고실실
+            self.lidar_object = [[462.957, 1205.544, 0, 0, 0, 0, 0, 0, 0, 0]] # 고실실
+        else:
+            self.lidar_object = []
+            
+        print(self.lidar_object)
+        
         if self.local_path is not None:
             local_point = KDTree(self.local_path)
             car_idx = local_point.query(
@@ -239,13 +252,14 @@ class ObstacleDetector:
             for sd in obstacle_sd:
                 pose = Pose()
                 pose.position.x = 0  # 0:dynamic
-                pose.position.y = sd[0]
-                pose.position.z = sd[1]
+                pose.position.y = sd[0] # obj s
+                pose.position.z = sd[1] # obj d
                 pose.orientation.w = sd[2]# relative velocity
                 pose.orientation.z = sd[3] # track id
                 pose.orientation.x = sd[4] # enu x
                 pose.orientation.y = sd[5] # enu y
                 lidar_obstacle.poses.append(pose)
+
             # only my front near obstacle distance
             obstacle_distance = (
                 obstacle_sd[0][0]-car_idx)*self.IDX_TO_M if len(obstacle_sd) > 0 else -1

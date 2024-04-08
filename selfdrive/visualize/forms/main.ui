@@ -230,7 +230,7 @@ Long</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>3</string>
+         <string>대기</string>
         </property>
         <property name="shortcut">
          <string>3</string>
@@ -293,7 +293,7 @@ Long</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>2</string>
+         <string>거절</string>
         </property>
         <property name="shortcut">
          <string>2</string>
@@ -441,7 +441,7 @@ border-color: rgb(71,181,255);</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>1</string>
+         <string>수락</string>
         </property>
         <property name="shortcut">
          <string>1</string>

@@ -39,7 +39,6 @@ class MainWindow(QMainWindow, form_class):
         self.setupUi(self)
         self.car_name = str(self.car_name_combo_box.currentText())
         self.map_name = str(self.map_name_combo_box.currentText())
-
         self.CP = None
         self.CS = None
         self.CC = None
@@ -78,6 +77,8 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
+
+        rospy.Subscriber('/hlv_signal', Int8, self.scenario_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         self.state = 'WAITING'
@@ -100,7 +101,7 @@ class MainWindow(QMainWindow, form_class):
             return True
         else:
             return False
-    
+
     def setting_topic_list_toggled(self):
         simple_writer = SimpleWriter(self.record_list_file, self)
         simple_writer.show()
@@ -195,6 +196,7 @@ class MainWindow(QMainWindow, form_class):
                     self.CS = self.sm.CS
                     self.CC = self.cm.CC
                     self.display()
+                
                 elif self.state == 'OVER':
                     self.media_thread.status = False
                     self.over_cnt += 1
@@ -564,11 +566,22 @@ class MainWindow(QMainWindow, form_class):
             for button in self.can_cmd_buttons:
                 button.setEnabled(True)
 
+    def scenario_cb(self, msg):
+        scenario_idx = msg.data
+        if scenario_idx > 3 :
+            self.scenario = scenario_idx
+            module = importlib.import_module('selfdrive.visualize.routes.{}'.format('destination'))
+            scenario = getattr(module, 'destination_{}'.format(scenario_idx))
+            self.scenario_goal = scenario
+            self.goal_update = True
+            
+
     def scenario_button_clicked(self, idx):
         self.scenario = idx
-        module = importlib.import_module('selfdrive.visualize.routes.{}'.format(self.map_name))
+        module = importlib.import_module('selfdrive.visualize.routes.{}'.format('gosilsil'))
         scenario = getattr(module, 'scenario_{}'.format(idx))
         self.scenario_goal = scenario
+    
 
     def view_button_clicked(self, idx):
         if self.map_view_manager is not None:

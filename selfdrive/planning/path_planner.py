@@ -96,6 +96,13 @@ class PathPlanner:
         rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb)
         rospy.Subscriber('/turnsignal', Int8, self.blinker_cb)
 
+
+        # rospy.Subscriber('/mobinha/visualize/taxi_dest',PoseArray, self.taxi_destination_cb)
+
+        self.new_dest = False
+        self.taxi_destination_number = 0
+        self.goal_pts = []
+
     def blinker_cb(self, msg):
         self.turnsignal = msg.data
 
@@ -103,12 +110,22 @@ class PathPlanner:
         self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
         self.get_goal = True
 
+    # 얘는 처음에 돌다가 만다
     def scenario_goal_cb(self, msg):
         scenario_goal = []
         for pose in msg.poses:
             scenario_goal.append((pose.position.x, pose.position.y))
-        self.goal_pts = scenario_goal
-        self.get_goal = True
+
+        if len(self.goal_pts) != 0:
+            if self.goal_pts != scenario_goal:
+                self.goal_pts = scenario_goal
+                self.get_goal = True
+                self.state = 'READY'
+        else:
+            self.goal_pts = scenario_goal
+            self.get_goal = True
+
+
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
@@ -130,6 +147,8 @@ class PathPlanner:
         goal_pt = None
 
         for pt in self.goal_pts:
+            print("destination updated")
+            print(self.goal_pts)
             goal_pt = pt
             shortest_path = []
 

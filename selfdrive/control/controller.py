@@ -113,6 +113,7 @@ class Controller:
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             
+
             vector3.x = steer
             vector3.y = accel
             vector3.z = brake

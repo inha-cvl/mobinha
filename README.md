@@ -5,7 +5,7 @@
 ## What is mobinha ?
 
 mobinha is a self driving system implementation project of INHA university.
-mobinha performs the functions of Map-based self driving, Adaptive Cruise Control (ACC), Lane Keeping System (LKS)..
+mobinha performs the functions of Map-based self driving, Adaptive Cruise Control (ACC), Lane Keeping System (LKS).
 
 Directory Structure
 -----
@@ -20,4 +20,3 @@ Directory Structure
         ├── planning        
         ├── control 
         └── perception
-        

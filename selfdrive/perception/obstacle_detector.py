@@ -4,7 +4,11 @@ import time
 import rospy
 import pymap3d as pm
 
+<<<<<<< HEAD
 from std_msgs.msg import Float32, Int8
+=======
+from std_msgs.msg import Float32
+>>>>>>> 046b1635c108e7c49a5e2a02422aa9d8eeaa826e
 from std_msgs.msg import Bool # 고실실
 from geometry_msgs.msg import Pose, PoseArray, Point
 from jsk_recognition_msgs.msg import BoundingBoxArray
@@ -55,7 +59,11 @@ class ObstacleDetector:
         rospy.Subscriber('/morai/ego_topic', Pose, self.morai_ego_topic_cb)
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
         # 고실실
+<<<<<<< HEAD
         rospy.Subscriber('/hlv_signal', Int8, self.gosilsil_cb)
+=======
+        rospy.Subscriber('gosilsil_flag', Bool, self.gosilsil_cb)
+>>>>>>> 046b1635c108e7c49a5e2a02422aa9d8eeaa826e
         self.gosilsil_flag = True
     
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
@@ -66,12 +74,18 @@ class ObstacleDetector:
         self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
         self.pub_avoid_gain = rospy.Publisher('/mobinha/avoid_gain', Float32, queue_size=1)
 
+<<<<<<< HEAD
     # def gosilsil_cb(self, msg): # 고실실
     #     self.gosilsil_flag = msg.data
     #     print("SELF.GOSILSIL_FLAG = ", self.gosilsil_flag)
     def gosilsil_cb(self, msg): # 고실실
         if msg.data > 3:
             self.gosilsil_flag = False
+=======
+    def gosilsil_cb(self, msg): # 고실실
+        self.gosilsil_flag = msg.data
+        print("SELF.GOSILSIL_FLAG = ", self.gosilsil_flag)
+>>>>>>> 046b1635c108e7c49a5e2a02422aa9d8eeaa826e
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -241,6 +255,10 @@ class ObstacleDetector:
         else:
             self.lidar_object = []
             
+<<<<<<< HEAD
+=======
+        print(self.lidar_object)
+>>>>>>> 046b1635c108e7c49a5e2a02422aa9d8eeaa826e
         
         if self.local_path is not None:
             local_point = KDTree(self.local_path)

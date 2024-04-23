@@ -27,5 +27,7 @@ class Localizer:
             'ego_car',
             'world'
         )
+        self.br.sendTransform((1.06, 0, 1.22), (0, 0, 0, 1), rospy.Time.now(), 'Pandar64', 'ego_car')
+        
         self.pub_ego_car.publish(self.ego_car)
         self.pub_enu_pose.publish(CS.position.x, CS.position.y, CS.yawRate)

@@ -75,7 +75,7 @@ class ObstacleDetector:
         for obj in msg.boxes:
             x, y = obj.pose.position.x, obj.pose.position.y
             v_rel = obj.value
-            track_id = obj.seq # uint type 0:clustering 1~: tracking
+            track_id = obj.header.seq # uint type 0:clustering 1~: tracking
             w = obj.pose.orientation.z
             sx, sy, sz = obj.dimensions.x, obj.dimensions.y, obj.dimensions.z
             if self.CS is not None:

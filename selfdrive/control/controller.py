@@ -118,7 +118,9 @@ class Controller:
             vector3.z = brake
 
         if CS.cruiseState != 1:
-            vector3.x = CS.actuators.steer
+            ### for PID test
+            # vector3.x = CS.actuators.steer
+            vector3.x = 0
             vector3.y = CS.actuators.accel
             vector3.z = CS.actuators.brake
 

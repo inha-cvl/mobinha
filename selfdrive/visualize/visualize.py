@@ -29,7 +29,6 @@ import selfdrive.visualize.libs.imugl as imugl
 from simple_writer import SimpleWriter
 from tl_simulator import TLSimulator
 from blinker_simulator import BlinkerSimulator
-from right_turn_simulator import RTISimulator
 dir_path = str(os.path.dirname(os.path.realpath(__file__)))
 form_class = uic.loadUiType(dir_path+"/forms/main.ui")[0]
 
@@ -92,12 +91,7 @@ class MainWindow(QMainWindow, form_class):
         self.player = QMediaPlayer()
         self.is_sound_playing = False
 
-        self.last_gateway_time = rospy.get_time()
-        self.warning_present = False
-
-
-        
-########       
+           
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
@@ -109,16 +103,11 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/mobinha/planning/trajectory',PoseArray, self.trajectory_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         rospy.Subscriber('/mobinha/planning/lidar_bsd', Point, self.lidar_bsd_cb)
-        rospy.Subscriber('/gmsl_camera/dev/video0/compressed',CompressedImage, self.compressed_image_cb, 1)
-        rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
-        rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
+        #rospy.Subscriber('/gmsl_camera/dev/video0/compressed',CompressedImage, self.compressed_image_cb, 1)
+        #rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
+        #rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
-
-        # rospy.Subscriber('/mobinha/car/gateway_time', Float32, self.emergency_button)
-        # rospy.Subscriber('/mobinha/car/gateway', Int16MultiArray, self.tor_signal)
-
-
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         rospy.Subscriber('/sensor_check', Int16MultiArray, self.senser_check_callback)
@@ -129,40 +118,19 @@ class MainWindow(QMainWindow, form_class):
         self.pub_can_cmd = rospy.Publisher('/mobinha/visualize/can_cmd', Int8, queue_size=1)
         self.pub_scenario_goal = rospy.Publisher('/mobinha/visualize/scenario_goal', PoseArray, queue_size=1)
         self.pub_max_v = rospy.Publisher('/mobinha/visualize/max_v', Int8, queue_size=1)
-
+        
         self.rviz_frame('map')
-        self.rviz_frame('license')
-
         self.rviz_frame('lidar')
+        self.rviz_frame('license') # mingu
         self.imu_frame()
+
         self.information_frame()
         self.graph_frame()
         self.initialize()
         self.connection_setting()
 
         self.MAX_VELOCITY = 50  # 최대 속도값
-        self.MIN_VELOCITY = 0    # 최소 속도값
-
-        self.gridLayout_21.setRowStretch(0, 1)  # Set stretch factor for the row containing verticalLayout_4
-        self.gridLayout_21.setRowStretch(1, 1)
-
-    # def emergency_button(self, msg):
-    #     current_time = rospy.get_time()
-    #     # 메시지가 수신되면 last_gateway_time 업데이트
-    #     self.last_gateway_time = current_time
-
-    # def check_emergency_button(self):
-    #     # 현재 시간과 마지막으로 메시지를 받은 시간을 비교
-    #     if rospy.get_time() - self.last_gateway_time > 5:  # 예: 5초 동안 메시지가 없으면
-    #         self.state_screen.setText("MANUAL DRIVE MODE")
-    #         self.state_screen.setStyleSheet("background-color: green;")
-
-    # def tor_signal(self, msg):
-    #     if any(value == 1 for value in msg.data):
-    #         self.state_screen.setText("MANUAL DRIVE MODE")
-    #         self.state_screen.setStyleSheet("background-color: green;")
-
-
+        self.MIN_VELOCITY = 20    # 최소 속도값
 #####
 
     def increase_target_velocity(self):
@@ -214,6 +182,70 @@ class MainWindow(QMainWindow, form_class):
         self.down_button.setDisabled(False)
         self.pub_max_v.publish(Int8(data=target_velocity))
 
+
+    def senser_check_callback(self, msg):
+        camera1_warning = 0
+        camera2_warning = 1
+        camera3_warning = 2
+        lidar_warning = 3
+        gps_warning = 4
+        ins_warning = 5
+        can_warning = 6
+        perception_warning = 7
+        planning_warning = 8
+
+        warning_present = False
+        warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'
+
+        for i, sensor_status in enumerate(msg.data):
+            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
+            self.update_text_color(i, text_color)
+          
+            if i == camera1_warning and sensor_status ==0:
+                self.state_screen.setText("WARNING : CAMERA1")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+            # if i == camera2_warning and sensor_status ==0:
+            #     self.state_screen.setText("WARNING : CAMERA2")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            # if i == camera3_warning and sensor_status ==0:
+            #     self.state_screen.setText("WARNING : CAMERA3")
+            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == lidar_warning and sensor_status ==1:
+                self.state_screen.setText("WARNING : LIDAR")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == gps_warning and sensor_status ==1:
+                self.state_screen.setText("WARNING : GPS")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == ins_warning and sensor_status ==1:
+                self.state_screen.setText("WARNING : INS")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == can_warning and sensor_status ==1:
+                self.state_screen.setText("WARNING : CAN")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == perception_warning and sensor_status ==1:
+                self.state_screen.setText("WARNING : PERCEPTION")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            elif i == planning_warning and sensor_status ==1:
+                self.state_screen.setText("WARNING : PLANNING")
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+
+            if sensor_status ==0:
+                warning_present = True
+
+        if warning_present and not self.is_sound_playing:
+            self.play_warning_sound(warn_sound)
+            self.is_sound_playing = True
+        else:
+            self.stop_warning_sound()
+            self.is_sound_playing= False
+
     
     def play_warning_sound(self, sound_path):
         url = QUrl.fromLocalFile(sound_path)
@@ -222,53 +254,7 @@ class MainWindow(QMainWindow, form_class):
         self.player.play()
 
     def stop_warning_sound(self):
-        if self.is_sound_playing:
-            self.player.stop()
-            self.is_sound_playing = False
-
-    def senser_check_callback(self, msg):
-        if self.CS is None:
-            return
-        self.warning_present = False
-        self.all_sensors_ok = True
-
-        for i, sensor_status in enumerate(msg.data):
-            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
-            self.update_text_color(i, text_color)
-          
-            if sensor_status ==0:
-                self.warning_present = True
-                self.all_sensors_ok = False
-        if self.warning_present:
-            if not self.is_sound_playing:
-                self.play_warning_sound(dir_path+"/sounds/200_extended_error.wav")
-                self.is_sound_playing = True
-        elif self.all_sensors_ok == True:
-            if self.is_sound_playing:
-                self.stop_warning_sound()
-                self.is_sound_playing = False
-
-        mode_label = self.get_mode_label(self.CS.cruiseState)
-        if mode_label == "Auto" and self.warning_present:
-            self.state_screen.setText("[ERROR] Manual Mode")
-            self.state_screen.setStyleSheet("background-color: #FC6C6C;")
-  
-
-    #     self.update_sound()
-
-    # def update_sound(self):
-    #     if self.state_screen.text() == "[ERROR] Manual Mode":
-    #         # "[ERROR] Manual Mode" 텍스트가 설정되어 있을 때
-    #         if not self.is_sound_playing:
-    #             self.play_warning_sound(dir_path+"/sounds/200_extended_error.wav")
-    #             self.is_sound_playing = True
-    #     elif self.state_screen.text() != "[ERROR] Manual Mode":
-    #         # "[ERROR] Manual Mode" 텍스트가 설정되어 있지 않을 때
-    #         if self.is_sound_playing:
-    #             self.stop_warning_sound()
-    #             self.is_sound_playing = False
-
-
+        self.player.stop()
 
     def update_text_color(self, sensor_index, color):
         # sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
@@ -276,17 +262,6 @@ class MainWindow(QMainWindow, form_class):
         
         sensor = sensors[sensor_index]
         sensor.setStyleSheet(f"color : {color}")
-
-    def cmd_button_clicked(self, idx):
-        self.can_cmd = idx
-        for i in range(0, 2):
-            self.can_cmd_buttons[i].setDisabled(i != idx)
-        if idx == 0:
-            for button in self.can_cmd_buttons:
-                button.setEnabled(True)
-        if idx ==1:
-            for button in self.can_cmd_buttons:
-                button.setEnabled(True)
 
 #####
     def timer(self, sec):
@@ -311,10 +286,6 @@ class MainWindow(QMainWindow, form_class):
         blinker_simulator = BlinkerSimulator(self)
         blinker_simulator.show()
 
-    def right_turn_simulator_toggled(self):
-        right_turn_simulator = RTISimulator(self)
-        right_turn_simulator.show()
-
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
         rospy.set_param('map_name', self.map_name)
@@ -338,14 +309,12 @@ class MainWindow(QMainWindow, form_class):
     def reset_rviz(self):
         self.lidar_layout.itemAt(0).widget().reset()
         self.rviz_layout.itemAt(0).widget().reset()
-        self.rviz_layout2.itemAt(0).widget().reset()
-
+        self.rviz_layout_2.itemAt(0).widget().reset() # mingu
 
     def connection_setting(self):
         self.actionTopic_List.triggered.connect(self.setting_topic_list_toggled)
         self.actionTraffic_Light_Simulator.triggered.connect(self.tl_simulator_toggled)
         self.actionBlinker_Simulator.triggered.connect(self.blinker_simulator_toggled)
-        self.actionRight_Turn_Situation_Simulator.triggered.connect(self.right_turn_simulator_toggled)
         self.initialize_button.clicked.connect(self.initialize_button_clicked)
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)
@@ -381,7 +350,6 @@ class MainWindow(QMainWindow, form_class):
 
     def visualize_update(self):
         while self.system_state:
-            # self.check_emergency_button()
             if self.timer(0.1):
                 self.pub_state.publish(String(self.state))
                 self.pub_can_cmd.publish(Int8(self.can_cmd))
@@ -414,41 +382,39 @@ class MainWindow(QMainWindow, form_class):
         rviz_frame.initialize()
         reader = rviz.YamlConfigReader()
         config = rviz.Config()
-        reader.readFile(config, dir_path+"/forms/main.rviz")
-        rviz_frame.load(config)
+
         manager = rviz_frame.getManager()
         self.map_view_manager = manager.getViewManager()
 
         if type == 'map':
-            config = rviz.Config()
             reader.readFile(config, dir_path+"/forms/main.rviz")
             rviz_frame.load(config)
             manager = rviz_frame.getManager()
             self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout)
-
             self.rviz_layout.addWidget(rviz_frame)
-        elif type == 'license':
-            config = rviz.Config()
-            reader.readFile(config, dir_path+"/forms/main.rviz")
-            rviz_frame.load(config)
-            manager = rviz_frame.getManager()
-            self.map_view_manager = manager.getViewManager()
-            self.clear_layout(self.rviz_layout2)
-
-            self.rviz_layout2.addWidget(rviz_frame)
-            rviz_frame.setFixedSize(800, 500) 
-
-        else:
-            config = rviz.Config()
+        
+        elif type == 'lidar':
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
             rviz_frame.load(config)
-            rviz_frame.setMenuBar(None)
-            rviz_frame.setStatusBar(None)
+            #rviz_frame.setMenuBar(None)
+            #rviz_frame.setStatusBar(None)
             manager = rviz_frame.getManager()
             self.lidar_view_manager = manager.getViewManager()
             self.clear_layout(self.lidar_layout)
             self.lidar_layout.addWidget(rviz_frame)
+        
+        # mingu
+        elif type == 'license':
+            reader.readFile(config, dir_path+"/forms/main.rviz")
+            rviz_frame.load(config)
+            manager = rviz_frame.getManager()
+            self.map_view_manager = manager.getViewManager()
+            self.clear_layout(self.rviz_layout_2)
+            self.rviz_layout_2.addWidget(rviz_frame)
+
+
+
 
     def imu_frame(self):
         self.imu_widget = imugl.ImuGL()
@@ -526,13 +492,12 @@ class MainWindow(QMainWindow, form_class):
         self.blinker_r_label.setHidden(True)
 
         self.gear_label_list = [self.gear_p_label, self.gear_r_label, self.gear_n_label, self.gear_d_label]
-#################
+
         # self.gear_list = [self.gear_p, self.gear_r, self.gear_n, self.gear_d]
 
-
-        self.tl_label4_list = [self.tl_red_label, self.tl_yellow_label, self.tl_arrow_label, self.tl_green_label]
         self.tl_label1_list = [self.label_37, self.label_39, self.label_40, self.label_42]
-###############
+        self.tl_label2_list = [self.label_46, self.label_50, self.label_51, self.label_44]
+
     def gear_change(self, gear_signal):
         if gear_signal == self.gear_p:
             self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
@@ -543,6 +508,24 @@ class MainWindow(QMainWindow, form_class):
         if gear_signal == self.gear_d:
             self.gear_p_label.setStyleSheet("background-color : #FC6C6C;")
     
+    # def gear_change(self, gear_signal):
+    #     default_style = "background-color : none;"
+    #     self.gear_p.setStyleSheet(default_style)
+    #     self.gear_r.setStyleSheet(default_style)
+    #     self.gear_n.setStyleSheet(default_style)
+    #     self.gear_d.setStyleSheet(default_style)
+        
+    #     # 활성화된 기어에 따라 해당 레이블의 배경색을 설정합니다.
+    #     if gear_signal == self.gear_p:
+    #         self.gear_p.setStyleSheet("background-color : #FC6C6C;")
+    #     elif gear_signal == self.gear_r:
+    #         self.gear_r.setStyleSheet("background-color : #DAA520;")
+    #     elif gear_signal == self.gear_n:
+    #         self.gear_n.setStyleSheet("background-color : #FC6C6C;")
+    #     elif gear_signal == self.gear_d:
+    #         self.gear_d.setStyleSheet("background-color : #008081;")
+
+
     def clear_layout(self, layout):
         for i in range(layout.count()):
             layout.itemAt(i).widget().close()
@@ -639,26 +622,23 @@ class MainWindow(QMainWindow, form_class):
                 self.distance_label_s.setPixmap(self.acc_image_s_list[4])
 
 
-
     def traffic_light_obstacle_cb(self, msg):
         tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
         tl_off = "⬛️"
         if len(msg.poses) == 0:
             for i in range(4):
-                self.tl_label4_list[i].setText(tl_off)
                 self.tl_label1_list[i].setText(tl_off)
+                self.tl_label2_list[i].setText(tl_off)
             return 
         if self.state == 'OVER' or ( self.tabWidget.currentIndex() in [1, 2, 3] ):
             return
         
         tl_cls = msg.poses[0].position.y
-        # tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
-        tl_cls_list = [[7, 9, 10], [10, 8, 12, 14], [11, 9, 13], [11, 6,  12, 13]]
-        
+        tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
         tl_detect_cls = [i for i, cls in enumerate(tl_cls_list) if tl_cls in cls]
         for i in range(4):
-            self.tl_label4_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
             self.tl_label1_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
+            self.tl_label2_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
 
 
     def trajectory_cb(self, msg):
@@ -691,30 +671,29 @@ class MainWindow(QMainWindow, form_class):
         if msg.data == 0 and self.car_name == 'IONIQ':
             self.media_thread.get_mode = 5
 
-
     def lane_information_cb(self, msg):
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
             idx = int(msg.position.y)
             self.direction_text_label.setText(self.direction_message_list[idx])
             self.direction_image_label.setPixmap(self.direction_pixmap_list[idx])
 
-    def convert_to_qimage(self, data):
-        np_arr = np.frombuffer(data, np.uint8)
-        cv2_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        rgbImage = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgbImage.shape
-        bpl = ch * w
-        qtImage = QImage(rgbImage.data, w, h, bpl, QImage.Format_RGB888)
-        return qtImage.scaled(self.camera1_label.width(), self.camera1_label.height(), Qt.KeepAspectRatio)
+    # def convert_to_qimage(self, data):
+    #     np_arr = np.frombuffer(data, np.uint8)
+    #     cv2_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    #     rgbImage = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+    #     h, w, ch = rgbImage.shape
+    #     bpl = ch * w
+    #     qtImage = QImage(rgbImage.data, w, h, bpl, QImage.Format_RGB888)
+    #     return qtImage.scaled(self.camera1_label.width(), self.camera1_label.height(), Qt.KeepAspectRatio)
 
-    def compressed_image_cb(self, data,arg):
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
-            try:
-                qImage = self.convert_to_qimage(data.data)
-                label_list = [self.camera1_label, self.camera2_label, self.camera3_label]
-                label_list[arg-1].setPixmap(QPixmap.fromImage(qImage))
-            except:
-                pass
+    # def compressed_image_cb(self, data,arg):
+    #     if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
+    #         try:
+    #             qImage = self.convert_to_qimage(data.data)
+    #             label_list = [self.camera1_label, self.camera2_label, self.camera3_label]
+    #             label_list[arg-1].setPixmap(QPixmap.fromImage(qImage))
+    #         except:
+    #             pass
 
     def planning_state_cb(self, msg):
         if msg.data[0] == 1 and msg.data[1] == 1:
@@ -786,6 +765,18 @@ class MainWindow(QMainWindow, form_class):
             self.rosbag_proc.send_signal(subprocess.signal.SIGINT)
         self.state = 'OVER'
 
+    def cmd_button_clicked(self, idx):
+        self.can_cmd = idx
+        for i in range(0, 2):
+            self.can_cmd_buttons[i].setDisabled(i != idx)
+        if idx == 0:
+            for button in self.can_cmd_buttons:
+                # self.state_screen.setText("MANUAL DRIVE MODE")
+                button.setEnabled(True)
+        if idx ==1:
+            for button in self.can_cmd_buttons:
+                # self.state_screen.setText("AUTOMATIC DRIVE MODE")
+                button.setEnabled(True)
 
 
     def scenario_button_clicked(self, idx):
@@ -805,14 +796,6 @@ class MainWindow(QMainWindow, form_class):
             return "Override"
         else:
             return "Manual"
-    
-    def get_mode_label_license(self, mode):
-        if mode == 1:
-            return "Auto"
-        elif mode == 2:
-            return "Take Over"
-        else:
-            return "Manual"
 
 
     def check_mode(self, mode):
@@ -822,8 +805,6 @@ class MainWindow(QMainWindow, form_class):
                 self.media_thread.get_mode = mode
             if mode == 2:
                 self.cmd_button_clicked(0) #act like click disable button
-            if mode == 3:
-                self.cmd_button_clicked(0)
     
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
@@ -839,19 +820,6 @@ class MainWindow(QMainWindow, form_class):
         self.check_mode(self.CS.cruiseState)
         self.info_cur_vel.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
         # self.info_veloc_2.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
-
-        mode_label = self.get_mode_label_license(self.CS.cruiseState)
-        if self.warning_present:
-            pass
-        else:
-            self.state_screen.setText(f"{mode_label} Mode")
-            if mode_label == "Auto":
-                self.state_screen.setStyleSheet("background-color: #008299;") 
-            elif mode_label == "Manual":
-                self.state_screen.setStyleSheet("background-color: #747474;")  
-
-        # self.check_mode(self.CS.cruiseState)
-      
 
         if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
 
@@ -984,3 +952,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -304,7 +304,7 @@ class LongitudinalPlanner:
 
             ## manual
             ## case 1 : constant
-            self.target_v = 50 / 3.6 # km/h
+            self.target_v = 40 / 3.6 # km/h
 
             ## case 2 : sinusoidal
             # amplitude = 5

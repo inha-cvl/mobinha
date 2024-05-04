@@ -106,7 +106,7 @@ class APID:
 
         # print("P:{:4.2f} I:{:4.2f} D:{:4.2f}".format(Kp, Ki, Kd))
         
-        apid = self.ctrls[4]
+        apid = min(self.ctrls[4], 100)
         if apid>0:
             accel_val = apid
             brake_val = 0

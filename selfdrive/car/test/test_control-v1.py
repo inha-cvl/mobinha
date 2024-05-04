@@ -94,7 +94,7 @@ class IONIQ:
             self.temp_wheel = res['Gway_Steering_Angle']
         if self.timer(1):
             print("=================================================")
-            # print("input acl:", self.accel, " | input brake:", self.brake)  
+            print("input acl:", self.accel, " | input brake:", self.brake)  
             # print("safety:", self.safety_status, " | brake_active:", self.Gway_Brake_Active)
             print("acc:", self.Gway_Accel_Pedal_Position, " | brk:", self.Gway_Brake_Cylinder_Pressure)
             print("ovr(acl,brk,str):", self.acc_override, "|", self.brk_override, "|", self.steering_overide," | reset:", self.reset)

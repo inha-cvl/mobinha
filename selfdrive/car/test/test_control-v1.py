@@ -2,6 +2,8 @@ import can
 import cantools
 import threading
 import time
+from libs.pid import PID, APID
+from datetime import datetime
 
 class IONIQ:
     def __init__(self):
@@ -26,6 +28,9 @@ class IONIQ:
         self.Gway_Brake_Cylinder_Pressure = None
         
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
+        self.target_v = 0
+        self.current_v = 0
+        self.apid = APID()
 
     def reset_trigger(self):
         self.reset = 1
@@ -39,8 +44,8 @@ class IONIQ:
         
     def daemon(self):
         while 1:
-            self.longitudinal_cmd()
-            self.longitudinal_rcv()   
+            self.longitudinal_cmd() # update alive count, send CAN msg
+            self.longitudinal_rcv() # receive CAN msg, print out current values
             if self.acc_override or self.brk_override or self.steering_overide:
                 print("OVERRIDE")
                 # self.enable = 0
@@ -61,6 +66,13 @@ class IONIQ:
 
     def longitudinal_rcv(self):
         data = self.bus.recv()
+        if data.arbitration_id == 0x280:
+            res = self.db.decode_message(0x280, data.data)
+            self.velocity_FR = res['Gway_Wheel_Velocity_FR']
+            self.velocity_RL = res['Gway_Wheel_Velocity_RL']
+            self.velocity_RR = res['Gway_Wheel_Velocity_RR']
+            self.velocity_FL = res['Gway_Wheel_Velocity_FL']
+            self.current_v = (self.velocity_RR + self.velocity_RL)/7.2
         if data.arbitration_id == 368:
             res = self.db.decode_message(368, data.data)
             self.Gway_Accel_Pedal_Position = res['Gway_Accel_Pedal_Position']
@@ -87,25 +99,20 @@ class IONIQ:
             print("acc:", self.Gway_Accel_Pedal_Position, " | brk:", self.Gway_Brake_Cylinder_Pressure)
             print("ovr(acl,brk,str):", self.acc_override, "|", self.brk_override, "|", self.steering_overide," | reset:", self.reset)
             if self.enable:
-                    print("ENABLE")
+                print("ENABLE")
             else:
                 print("DISABLE")
+
     def sender(self, arb_id, msg):
         can_msg = can.Message(arbitration_id=arb_id,
                               data=msg, is_extended_id=False)
         self.bus.send(can_msg)
 
-    def controller(self):
+    def state_controller(self):
         while 1:
-            cmd = input('99: enable|88: disable|1001: reset\naccel:0~6|brake:-1~-20\n')
+            cmd = input('99: enable|88: disable|1001: reset\n1000: over\n')
             cmd = int(cmd)
-            if 0 <= cmd <= 6:
-                self.accel = float(cmd)*5
-                self.brake = 0
-            elif -20 <= cmd <= -1:
-                self.brake = -float(cmd)*5
-                self.accel = 0
-            elif cmd == 99: #enable
+            if cmd == 99: #enable
                 self.enable = 1
                 self.brake = 0
                 self.accel = 0
@@ -117,15 +124,46 @@ class IONIQ:
                 self.reset_trigger()
             elif cmd == 1000:
                 exit(0)
-            
+    
+    def set_target_v(self):
+        ## manual
+        ## case 1 : constant
+        self.target_v = 20 / 3.6 # km/h
+
+        ## case 2 : sinusoidal
+        # amplitude = 5
+        # offset = 20
+        # number = datetime.datetime.now().microsecond%1000000
+        # while number >= 10:
+        #     number //= 10
+        # self.target_v = offset + amplitude * np.sin(number*2*np.pi/9) / 3.6
+
+        ## case 3 : step
+        # amplitude = 5
+        # offset = 20
+        # number = datetime.datetime.now().second%10
+        # if number < 5:
+        #     step = 1
+        # else:
+        #     step = -1
+        # self.target_v = offset + amplitude*step / 3.6
+
+    def long_controller(self):
+        self.accel, self.brake = self.apid.run(self.target_v, self.current_v)
 
 if __name__ == '__main__':
     IONIQ = IONIQ()
     t1 = threading.Thread(target=IONIQ.daemon)
-    t2 = threading.Thread(target=IONIQ.controller)
+    t2 = threading.Thread(target=IONIQ.state_controller)
+    t3 = threading.Thread(target=IONIQ.set_target_v)
+    t4 = threading.Thread(target=IONIQ.long_controller)
 
     t1.start()
     t2.start()
+    t3.start()
+    t4.start()
 
     t1.join()
     t2.join()
+    t3.join()
+    t4.join()

@@ -1,0 +1,118 @@
+class PID:
+    def __init__(self, CP, dt=0.05):
+        self.K_P = 2.98
+        self.K_I = 2.38
+        self.K_D = 0.00
+        self.pre_error = 0.0
+        self.integral_error = 0.0
+        self.dt = dt
+
+    def run(self, target, current):
+        error = target - current 
+
+        derivative_error = (error - self.pre_error)/self.dt 
+        self.integral_error += error*self.dt
+        self.integral_error = max(-5, min(self.integral_error, 5)) 
+
+        pid = self.K_P*error + self.K_I*self.integral_error + self.K_D*derivative_error
+        pid = max(-100, min(pid, 100))  
+        self.pre_error = error
+        
+        if pid>0:
+            accel_val = pid
+            brake_val = 0
+        else:
+            accel_val = 0
+            brake_val = pid
+
+        return accel_val, brake_val
+
+
+# imported by JM
+import matplotlib.pyplot as plt
+
+class APID:
+    def __init__(self):
+        self.Kp = 0.8
+        self.Ki = 0.00
+        self.Kd = 0.00
+
+        self.dKp = 0
+        self.dKi = 0
+        self.dKd = 0
+
+        self.ddKp = 0
+        self.ddKi = 0
+        self.ddKd = 0
+
+        self.errs = [-1, -1, -1, -1, -1] # k-3, k-2, k-1, k, k+1 
+        self.outs = [-1, -1, -1, -1, -1]
+        self.ctrls = [-1, -1, -1, -1, -1]
+
+        self.lr = 0.01
+
+        self.cnt = 0
+
+        self.ref = 10
+        self.cur = 0
+    
+    def run(self, ref, cur):
+        # update
+        for i in range(3):
+            self.errs[i] = self.errs[i+1]
+            self.outs[i] = self.outs[i+1]
+            self.ctrls[i] = self.ctrls[i+1]
+        self.errs[3] = ref - cur
+        self.outs[3] = cur
+        self.ctrls[3] = self.ctrls[4]
+
+        if self.cnt < 3:
+            self.ctrls[4] = self.Kp*self.errs[3]
+            self.cnt += 1
+            Kp = self.Kp
+            Ki = self.Ki
+            Kd = self.Kd
+        else:
+            # ddK(k-1)
+            self.ddKp = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / (self.ctrls[1] - self.ctrls[0])) * \
+                        (self.errs[2] - self.errs[3])
+            self.ddKi = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / (self.ctrls[1] - self.ctrls[0])) * \
+                        (self.errs[2])
+            self.ddKd = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / (self.ctrls[1] - self.ctrls[0])) * \
+                        (self.errs[2] - 2*self.errs[1] + self.errs[0])
+            # dK(k)
+            self.dKp = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / (self.ctrls[2] - self.ctrls[1])) * \
+                        (self.errs[3] - self.errs[2])
+            self.dKi = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / (self.ctrls[2] - self.ctrls[1])) * \
+                        (self.errs[3])
+            self.dKd = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / (self.ctrls[2] - self.ctrls[1])) * \
+                        (self.errs[3] - 2*self.errs[2] + self.errs[1])
+            
+
+            # K(k+1)
+            Kp = self.Kp + self.dKp + self.ddKp
+            Ki = self.Ki + self.dKi + self.ddKi
+            Kd = self.Kd + self.dKd + self.ddKd
+            # print("dP:{:4.2f} dI:{:4.2f} dD:{:4.2f}".format(self.dKp + self.ddKp, self.dKi + self.ddKi, self.Kd + self.dKd + self.ddKd))
+
+            # control_amount
+            delta_u_k = (Kp * (self.errs[3] - self.errs[2])) + \
+                        (Ki * self.errs[3]) + \
+                        (Kd * (self.errs[3] - 2*self.errs[2] + self.errs[1]))
+
+            self.ctrls[4] = self.ctrls[3] + delta_u_k
+
+        self.cur += self.ctrls[4]
+
+        # print("P:{:4.2f} I:{:4.2f} D:{:4.2f}".format(Kp, Ki, Kd))
+        
+        apid = self.ctrls[4]
+        if apid>0:
+            accel_val = apid
+            brake_val = 0
+        else:
+            accel_val = 0
+            brake_val = apid
+
+        return accel_val, brake_val
+        # return self.ctrls[4]

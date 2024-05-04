@@ -48,7 +48,7 @@ class IONIQ:
             self.longitudinal_rcv() # receive CAN msg, print out current values
             if self.acc_override or self.brk_override or self.steering_overide:
                 print("OVERRIDE")
-                # self.enable = 0
+                self.enable = 0
                 # self.reset_trigger()
 
     def alive_counter(self, alv_cnt):
@@ -60,7 +60,9 @@ class IONIQ:
         self.alv_cnt = self.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.enable, 'PA_StrAngCmd': 0,
                    'LON_Enable': self.enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
-                   'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset}
+                   'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset,
+                   'TURN_SIG_LEFT': self.blinker['left'], 'TURN_SIG_RIGHT':self.blinker['right']
+                   }
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 
@@ -93,11 +95,11 @@ class IONIQ:
             res = self.db.decode_message(656, data.data)
             self.temp_wheel = res['Gway_Steering_Angle']
         if self.timer(1):
-            print("=================================================")
-            print("input acl:", self.accel, " | input brake:", self.brake)  
-            # print("safety:", self.safety_status, " | brake_active:", self.Gway_Brake_Active)
-            print("acc:", self.Gway_Accel_Pedal_Position, " | brk:", self.Gway_Brake_Cylinder_Pressure)
-            print("ovr(acl,brk,str):", self.acc_override, "|", self.brk_override, "|", self.steering_overide," | reset:", self.reset)
+            print(f"=================================================\n"+ \
+                  "input acl: {self.accel} | input brake: {self.brake}\n" + \
+                  "safety: {self.safety_status} | brake_active: {self.Gway_Brake_Active}\n" + \
+                  "acc: {self.Gway_Accel_Pedal_Position} | brk: {self.Gway_Brake_Cylinder_Pressure}\n" + \
+                  "ovr(acl,brk,str): {self.acc_override} | {self.brk_override} | {self.steering_overide}| reset: {self.reset}\n")
             if self.enable:
                 print("ENABLE")
             else:

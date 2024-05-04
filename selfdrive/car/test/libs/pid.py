@@ -57,6 +57,7 @@ class APID:
         self.cur = 0
     
     def run(self, ref, cur):
+        return 1.3, 0 # temp tmp
         # update
         for i in range(3):
             self.errs[i] = self.errs[i+1]

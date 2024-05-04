@@ -17,7 +17,7 @@ class PID:
         pid = self.K_P*error + self.K_I*self.integral_error + self.K_D*derivative_error
         pid = max(-100, min(pid, 100))  
         self.pre_error = error
-        
+        print(self.K_P, self.K_I, self.K_D)
         return pid
 
 

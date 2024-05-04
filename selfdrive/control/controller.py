@@ -4,7 +4,7 @@ from std_msgs.msg import Float32, Float32MultiArray
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
-from selfdrive.control.libs.pid import PID
+from selfdrive.control.libs.pid import PID, Apid
 import rospy
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.message.messaging import *
@@ -18,6 +18,7 @@ class Controller:
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
         self.pid = PID(CP.longitudinalTuning)
+        # self.pid = Apid(CP.longitudinalTuning)
         self.purepursuit = PurePursuit(CP)
         self.steer_ratio = CP.steerRatio
         self.target_v = 0.0

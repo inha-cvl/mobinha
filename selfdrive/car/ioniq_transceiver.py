@@ -181,6 +181,7 @@ class IoniqTransceiver():
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.PA_Enable_Status = res['PA_Enable_Status']
                 self.LON_Enable_Status = res['LON_Enable_Status']
+                print(self.PA_Enable_Status, self.LON_Enable_Status)
 
             if self.err_time is not None:
                 recovery_time = datetime.datetime.now() - self.err_time

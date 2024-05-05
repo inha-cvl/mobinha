@@ -55,9 +55,10 @@ class APID:
 
         self.ref = 10
         self.cur = 0
+
+        self.epsilon = 1e-4
     
     def run(self, ref, cur):
-        return 1.3, 0 # temp tmp
         # update
         for i in range(3):
             self.errs[i] = self.errs[i+1]
@@ -75,18 +76,28 @@ class APID:
             Kd = self.Kd
         else:
             # ddK(k-1)
-            self.ddKp = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / (self.ctrls[1] - self.ctrls[0])) * \
+            if (self.ctrls[1] - self.ctrls[0]) == 0:
+                tmp1 = 1000
+            else:
+                tmp1 = (self.ctrls[1] - self.ctrls[0])
+
+            self.ddKp = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / tmp1) * \
                         (self.errs[2] - self.errs[3])
-            self.ddKi = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / (self.ctrls[1] - self.ctrls[0])) * \
+            self.ddKi = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / tmp1) * \
                         (self.errs[2])
-            self.ddKd = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / (self.ctrls[1] - self.ctrls[0])) * \
+            self.ddKd = (-self.lr) * (-self.errs[2]) * ((self.outs[1] - self.outs[0]) / tmp1) * \
                         (self.errs[2] - 2*self.errs[1] + self.errs[0])
             # dK(k)
-            self.dKp = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / (self.ctrls[2] - self.ctrls[1])) * \
+            if (self.ctrls[2] - self.ctrls[1]) == 0:
+                tmp2 = 1000
+            else:
+                tmp2 = (self.ctrls[2] - self.ctrls[1])
+
+            self.dKp = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / tmp2) * \
                         (self.errs[3] - self.errs[2])
-            self.dKi = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / (self.ctrls[2] - self.ctrls[1])) * \
+            self.dKi = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / tmp2) * \
                         (self.errs[3])
-            self.dKd = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / (self.ctrls[2] - self.ctrls[1])) * \
+            self.dKd = (-self.lr) * (-self.errs[3]) * ((self.outs[2] - self.outs[1]) / tmp2) * \
                         (self.errs[3] - 2*self.errs[2] + self.errs[1])
             
 

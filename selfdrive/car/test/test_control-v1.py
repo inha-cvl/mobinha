@@ -10,7 +10,7 @@ class IONIQ:
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
-        self.accel = 0
+        self.accel = 0.1
         self.brake = 0
         self.steer = 0
 
@@ -50,7 +50,7 @@ class IONIQ:
             self.longitudinal_cmd() # update alive count, send CAN msg
             self.longitudinal_rcv() # receive CAN msg, print out current values
             if self.acc_override or self.brk_override or self.steering_overide:
-                print("OVERRIDE")
+                # print("OVERRIDE")
                 self.enable = 0
                 # self.reset_trigger()
 
@@ -66,6 +66,7 @@ class IONIQ:
                    'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset,
                    'TURN_SIG_LEFT': 0, 'TURN_SIG_RIGHT': 0
                    }
+        # print(signals)
         msg = self.db.encode_message('Control', signals)
         self.sender(0x210, msg)
 
@@ -97,12 +98,18 @@ class IONIQ:
         if data.arbitration_id == 656:
             res = self.db.decode_message(656, data.data)
             self.Gway_Steering_Angle = res['Gway_Steering_Angle']
+        if (data.arbitration_id == 529):
+            res = self.db.decode_message(data.arbitration_id, data.data)
+            self.PA_Enable_Status = res['PA_Enable_Status']
+            self.LON_Enable_Status = res['LON_Enable_Status']
+            # print("PA, LON en status :", self.PA_Enable_Status, self.LON_Enable_Status)
         if self.timer(1):
-            print(f"=================================================\n+ \
-                  input acl: {self.accel} | input brake: {self.brake}\n + \
-                  safety: {self.safety_status} | brake_active: {self.Gway_Brake_Active}\n + \
-                  acc: {self.Gway_Accel_Pedal_Position} | brk: {self.Gway_Brake_Cylinder_Pressure}\n + \
-                  ovr(acl,brk,str): {self.acc_override} | {self.brk_override} | {self.steering_overide}| reset: {self.reset}\n")
+            print(f"=================================================\n \
+                input acl: {self.accel} | input brake: {self.brake}\n  \
+                safety: {self.safety_status} | brake_active: {self.Gway_Brake_Active}\n  \
+                acc: {self.Gway_Accel_Pedal_Position} | brk: {self.Gway_Brake_Cylinder_Pressure}\n  \
+                ovr(acl,brk,str): {self.acc_override} | {self.brk_override} | {self.steering_overide}| reset: {self.reset}\n \
+                accel_pedal: {self.Gway_Accel_Pedal_Position}, brake_cylinder:{self.Gway_Brake_Cylinder_Pressure}")
             if self.enable:
                 print("ENABLE")
             else:
@@ -155,7 +162,10 @@ class IONIQ:
         # self.target_v = offset + amplitude*step / 3.6
 
     def long_controller(self):
-        self.accel, self.brake = self.apid.run(self.target_v, self.current_v)
+        while 1:
+            # self.accel, self.brake = self.apid.run(self.target_v, self.current_v)
+            self.accel, self.brake = 15, 0
+            # pass
 
 if __name__ == '__main__':
     IONIQ = IONIQ()

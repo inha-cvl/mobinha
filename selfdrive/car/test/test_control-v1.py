@@ -4,6 +4,8 @@ import threading
 import time
 from libs.pid import PID, APID
 from datetime import datetime
+import matplotlib.pyplot as plt
+from time import time
 
 class IONIQ:
     def __init__(self):
@@ -34,6 +36,16 @@ class IONIQ:
         self.target_v = 0
         self.current_v = 0
         self.apid = APID()
+
+        self.v_history = []
+        self.target_v_history = []
+        
+        # Plot 관련 초기화
+        self.time_stamps = []
+        self.current_v_history = []
+        self.target_v_history = []
+        self.error_history = []
+        self.run_time = time.time()
 
     def reset_trigger(self):
         self.reset = 1
@@ -137,7 +149,22 @@ class IONIQ:
                 self.reset_trigger()
             elif cmd == 1000:
                 exit(0)
-    
+
+    def long_controller(self):
+        while 1:
+            self.accel, self.brake = 15, 0  # 예시의 고정 값 대신 APID 로직 활용 가능
+            # 데이터 업데이트
+            self.v_history.append(self.current_v)
+            self.target_v_history.append(self.target_v)
+            time.sleep(0.02)  # 업데이트 속도 조절
+
+    def update_values(self):
+        current_time = time.time() - self.run_time
+        self.time_stamps.append(current_time)
+        self.current_v_history.append(self.current_v)
+        self.target_v_history.append(self.target_v)
+        self.error_history.append(abs(self.target_v - self.current_v))
+
     def set_target_v(self):
         ## manual
         ## case 1 : constant
@@ -161,11 +188,24 @@ class IONIQ:
         #     step = -1
         # self.target_v = offset + amplitude*step / 3.6
 
-    def long_controller(self):
-        while 1:
-            # self.accel, self.brake = self.apid.run(self.target_v, self.current_v)
-            self.accel, self.brake = 15, 0
-            # pass
+    def plot_velocity(self):
+        plt.ion()  # 대화형 모드 활성화
+        fig, ax = plt.subplots()
+        line1, = ax.plot(self.v_history, 'r-', label='Current Velocity')
+        line2, = ax.plot(self.target_v_history, 'g-', label='Target Velocity')
+        ax.legend()
+
+        while True:
+            line1.set_ydata(self.v_history)
+            line2.set_ydata(self.target_v_history)
+            line1.set_xdata(range(len(self.v_history)))
+            line2.set_xdata(range(len(self.target_v_history)))
+
+            ax.relim()
+            ax.autoscale_view()
+
+            plt.draw()
+            plt.pause(0.1)  # 0.1초 간격으로 업데이트
 
 if __name__ == '__main__':
     IONIQ = IONIQ()
@@ -173,13 +213,16 @@ if __name__ == '__main__':
     t2 = threading.Thread(target=IONIQ.state_controller)
     t3 = threading.Thread(target=IONIQ.set_target_v)
     t4 = threading.Thread(target=IONIQ.long_controller)
+    t5 = threading.Thread(target=IONIQ.plot_velocity)
 
     t1.start()
     t2.start()
     t3.start()
     t4.start()
+    t5.start()
 
     t1.join()
     t2.join()
     t3.join()
     t4.join()
+    # t5.join() 없는게맞음

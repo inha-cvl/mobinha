@@ -5,16 +5,16 @@ import time
 from libs.pid import PID, APID
 from datetime import datetime
 import matplotlib.pyplot as plt
-from time import time
-
+import time
+import numpy as np
 class IONIQ:
     def __init__(self):
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
-        self.accel = 0.1
+        self.accel = 0
         self.brake = 0
-        self.steer = 0
+        self.steer = 0.5
 
         self.enable = 0
         self.alv_cnt = 0
@@ -36,11 +36,9 @@ class IONIQ:
         self.target_v = 0
         self.current_v = 0
         self.apid = APID()
-
-        self.v_history = []
-        self.target_v_history = []
         
         # Plot 관련 초기화
+        self.plot_lock = threading.Lock()
         self.time_stamps = []
         self.current_v_history = []
         self.target_v_history = []
@@ -61,7 +59,7 @@ class IONIQ:
         while 1:
             self.longitudinal_cmd() # update alive count, send CAN msg
             self.longitudinal_rcv() # receive CAN msg, print out current values
-            if self.acc_override or self.brk_override or self.steering_overide:
+            if self.acc_override or self.brk_override or self.steering_overide: 
                 # print("OVERRIDE")
                 self.enable = 0
                 # self.reset_trigger()
@@ -152,60 +150,76 @@ class IONIQ:
 
     def long_controller(self):
         while 1:
-            self.accel, self.brake = 15, 0  # 예시의 고정 값 대신 APID 로직 활용 가능
-            # 데이터 업데이트
-            self.v_history.append(self.current_v)
-            self.target_v_history.append(self.target_v)
-            time.sleep(0.02)  # 업데이트 속도 조절
+            if self.enable:
+                # self.accel, self.brake = 15, 0 
+                self.accel, self.brake = self.apid.run(self.target_v, self.current_v)   
+                time.sleep(0.01)
+            
 
     def update_values(self):
-        current_time = time.time() - self.run_time
-        self.time_stamps.append(current_time)
-        self.current_v_history.append(self.current_v)
-        self.target_v_history.append(self.target_v)
-        self.error_history.append(abs(self.target_v - self.current_v))
+        with self.plot_lock:
+            current_time = time.time() - self.run_time
+            self.time_stamps.append(current_time)
+            self.current_v_history.append(self.current_v*3.6)
+            self.target_v_history.append(self.target_v*3.6)
+            self.error_history.append(abs(self.target_v - self.current_v)*3.6)
+
+            for arr in [self.time_stamps, self.current_v_history, self.target_v_history, self.error_history]:
+                if len(arr) > 100:
+                    arr.pop(0)
+    
 
     def set_target_v(self):
         ## manual
-        ## case 1 : constant
-        self.target_v = 20 / 3.6 # km/h
+        while 1:
+            ## case 1 : constant
+            # self.target_v = 20 / 3.6 # km/h
 
-        ## case 2 : sinusoidal
-        # amplitude = 5
-        # offset = 20
-        # number = datetime.datetime.now().microsecond%1000000
-        # while number >= 10:
-        #     number //= 10
-        # self.target_v = offset + amplitude * np.sin(number*2*np.pi/9) / 3.6
+            ## case 2 : sinusoidal
+            # amplitude = 5
+            # offset = 20
+            # number = datetime.now().microsecond%10000000
+            # while number >= 10:
+            #     number //= 10
+            # self.target_v = offset + amplitude * np.sin(number*2*np.pi/9) / 3.6
 
-        ## case 3 : step
-        # amplitude = 5
-        # offset = 20
-        # number = datetime.datetime.now().second%10
-        # if number < 5:
-        #     step = 1
-        # else:
-        #     step = -1
-        # self.target_v = offset + amplitude*step / 3.6
+            ## case 3 : step
+            amplitude = 5
+            offset = 20
+            number = datetime.now().second%20
+            if number < 10:
+                step = 1
+            else:
+                step = -1
+            self.target_v = (offset + amplitude*step) / 3.6
 
     def plot_velocity(self):
         plt.ion()  # 대화형 모드 활성화
         fig, ax = plt.subplots()
-        line1, = ax.plot(self.v_history, 'r-', label='Current Velocity')
-        line2, = ax.plot(self.target_v_history, 'g-', label='Target Velocity')
-        ax.legend()
+        target_line, = ax.plot(self.time_stamps, self.target_v_history, label='Target Velocity')
+        current_line, = ax.plot(self.time_stamps, self.current_v_history, label='Current Velocity')
+        error_line, = ax.plot(self.time_stamps, self.error_history, label='Error')
+        plt.legend(loc='upper left')
+
 
         while True:
-            line1.set_ydata(self.v_history)
-            line2.set_ydata(self.target_v_history)
-            line1.set_xdata(range(len(self.v_history)))
-            line2.set_xdata(range(len(self.target_v_history)))
+            self.update_values()
+
+            target_line.set_ydata(self.target_v_history)
+            target_line.set_xdata(self.time_stamps)
+
+            current_line.set_ydata(self.current_v_history)
+            current_line.set_xdata(self.time_stamps)
+
+            error_line.set_ydata(self.error_history)
+            error_line.set_xdata(self.time_stamps)
 
             ax.relim()
             ax.autoscale_view()
 
+            plt.grid(True)
             plt.draw()
-            plt.pause(0.1)  # 0.1초 간격으로 업데이트
+            plt.pause(0.01)  # 0.1초 간격으로 업데이트
 
 if __name__ == '__main__':
     IONIQ = IONIQ()

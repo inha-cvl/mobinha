@@ -14,7 +14,7 @@ class IONIQ:
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
         self.accel = 0
         self.brake = 0
-        self.steer = 0.5
+        self.steer = 1
 
         self.enable = 0
         self.alv_cnt = 0
@@ -152,7 +152,7 @@ class IONIQ:
         while 1:
             if self.enable:
                 # self.accel, self.brake = 15, 0 
-                self.accel, self.brake = self.apid.run(self.target_v, self.current_v)   
+                self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
                 time.sleep(0.01)
             
 
@@ -185,7 +185,7 @@ class IONIQ:
 
             ## case 3 : step
             amplitude = 5
-            offset = 20
+            offset = 40
             number = datetime.now().second%20
             if number < 10:
                 step = 1

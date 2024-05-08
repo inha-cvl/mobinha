@@ -239,6 +239,8 @@ class LongitudinalPlanner:
             self.departure_confirm_time = None
         return False
 
+###temp
+
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX

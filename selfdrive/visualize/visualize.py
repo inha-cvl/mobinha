@@ -76,8 +76,8 @@ class MainWindow(QMainWindow, form_class):
         self.cmd_disable_button.clicked.connect(lambda: self.cmd_button_clicked(0))
 
         self.label_cam1 = self.findChild(QLabel, 'warn_camera1')
-        # self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
-        # self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
+        self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
+        self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
 
         self.label_lidar = self.findChild(QLabel, 'warn_lidar')
         self.label_gps = self.findChild(QLabel, 'warn_gps')
@@ -86,12 +86,14 @@ class MainWindow(QMainWindow, form_class):
         self.label_perception = self.findChild(QLabel, 'warn_perception')
         self.label_planning = self.findChild(QLabel, 'warn_planning')
 
+
+        self.sensors = [self.label_cam1, self.label_cam2, self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+
         # self.rviz_map_screen.setLayoutQVBoxLayout())
 
         self.player = QMediaPlayer()
         self.is_sound_playing = False
 
-           
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
@@ -110,7 +112,8 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
-        rospy.Subscriber('/sensor_check', Int16MultiArray, self.senser_check_callback)
+        rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
+        rospy.Subscriber('/sensor_check', Int16MultiArray, self.sensor_check_callback)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -182,11 +185,13 @@ class MainWindow(QMainWindow, form_class):
         self.down_button.setDisabled(False)
         self.pub_max_v.publish(Int8(data=target_velocity))
 
+    def blinker_cb(self, msg):
+        pass
 
-    def senser_check_callback(self, msg):
+    def sensor_check_callback(self, msg):
         camera1_warning = 0
-        camera2_warning = 1
-        camera3_warning = 2
+        #camera2_warning = 1
+        #camera3_warning = 2
         lidar_warning = 3
         gps_warning = 4
         ins_warning = 5
@@ -195,48 +200,31 @@ class MainWindow(QMainWindow, form_class):
         planning_warning = 8
 
         warning_present = False
-        warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'
-
+        #warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'
+        warn_sound = dir_path + "/sounds/bsd.wav"
+        
         for i, sensor_status in enumerate(msg.data):
             text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
             self.update_text_color(i, text_color)
-          
-            if i == camera1_warning and sensor_status ==0:
-                self.state_screen.setText("WARNING : CAMERA1")
+
+            if sensor_status == 1:
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-            # if i == camera2_warning and sensor_status ==0:
-            #     self.state_screen.setText("WARNING : CAMERA2")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+                if i == camera1_warning:
+                    self.state_screen.setText("WARNING : CAMERA1")
+                elif i == lidar_warning:
+                    self.state_screen.setText("WARNING : LIDAR")
+                elif i == gps_warning:
+                    self.state_screen.setText("WARNING : GPS")
+                elif i == ins_warning:
+                    self.state_screen.setText("WARNING : INS")
+                elif i == can_warning:
+                    self.state_screen.setText("WARNING : CAN")
+                elif i == perception_warning:
+                    self.state_screen.setText("WARNING : CAN")
+                elif i == planning_warning and sensor_status == 1:
+                    self.state_screen.setText("WARNING : PLANNING")
 
-            # if i == camera3_warning and sensor_status ==0:
-            #     self.state_screen.setText("WARNING : CAMERA3")
-            #     self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == lidar_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : LIDAR")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == gps_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : GPS")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == ins_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : INS")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == can_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : CAN")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == perception_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : PERCEPTION")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            elif i == planning_warning and sensor_status ==1:
-                self.state_screen.setText("WARNING : PLANNING")
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-
-            if sensor_status ==0:
+            else:
                 warning_present = True
 
         if warning_present and not self.is_sound_playing:
@@ -246,7 +234,6 @@ class MainWindow(QMainWindow, form_class):
             self.stop_warning_sound()
             self.is_sound_playing= False
 
-    
     def play_warning_sound(self, sound_path):
         url = QUrl.fromLocalFile(sound_path)
         content = QMediaContent(url)
@@ -256,12 +243,8 @@ class MainWindow(QMainWindow, form_class):
     def stop_warning_sound(self):
         self.player.stop()
 
-    def update_text_color(self, sensor_index, color):
-        # sensors = [self.label_cam1,self.label_cam2,self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
-        sensors = [self.label_cam1, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
-        
-        sensor = sensors[sensor_index]
-        sensor.setStyleSheet(f"color : {color}")
+    def update_text_color(self, sensor_index, color): 
+        self.sensors[sensor_index].setStyleSheet(f"color : {color}")
 
 #####
     def timer(self, sec):
@@ -634,7 +617,8 @@ class MainWindow(QMainWindow, form_class):
             return
         
         tl_cls = msg.poses[0].position.y
-        tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
+        #tl_cls_list = [[6, 10, 12, 13, 15], [8, 11, 13, 16], [12, 14], [4, 9, 14, 17]]
+        tl_cls_list = [[7, 9, 10], [10, 8, 12, 14], [11, 9, 13], [11, 6,  12, 13]]
         tl_detect_cls = [i for i, cls in enumerate(tl_cls_list) if tl_cls in cls]
         for i in range(4):
             self.tl_label1_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)

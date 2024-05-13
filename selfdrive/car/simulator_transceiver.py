@@ -43,13 +43,13 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
         self.gear = 0
 
-        self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
+        #self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
         # ans bakery
-        # self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
+        self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
         #kcity highway 
         # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
         #kcity right turn urban
-        # self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
+        #self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
         #songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         #right turn course
@@ -72,6 +72,7 @@ class SimulatorTransceiver:
                       orientation.z, orientation.w)
         self.roll, self.pitch, yaw = tf.transformations.euler_from_quaternion(
             quaternion)
+
         self.ego.set(x, y, yaw)
 
     def can_cmd(self, canCmd):

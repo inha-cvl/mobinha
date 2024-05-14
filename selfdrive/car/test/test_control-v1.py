@@ -173,7 +173,7 @@ class IONIQ:
         ## manual
         while 1:
             ## case 1 : constant
-            # self.target_v = 20 / 3.6 # km/h
+            self.target_v = 15 / 3.6 # km/h
 
             ## case 2 : sinusoidal
             # amplitude = 5
@@ -184,14 +184,14 @@ class IONIQ:
             # self.target_v = offset + amplitude * np.sin(number*2*np.pi/9) / 3.6
 
             ## case 3 : step
-            amplitude = 5
-            offset = 40
-            number = datetime.now().second%20
-            if number < 10:
-                step = 1
-            else:
-                step = -1
-            self.target_v = (offset + amplitude*step) / 3.6
+            # amplitude = 5
+            # offset = 40
+            # number = datetime.now().second%20
+            # if number < 10:
+            #     step = 1
+            # else:
+            #     step = -1
+            # self.target_v = (offset + amplitude*step) / 3.6
 
     def plot_velocity(self):
         plt.ion()  # 대화형 모드 활성화

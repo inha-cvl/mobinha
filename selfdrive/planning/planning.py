@@ -56,6 +56,11 @@ class Planning:
                     sm.update()
                     pp, local_path = path_planner.run(sm)
                     lgp = longitudinal_planner.run(sm, pp, local_path)
+
+                    array = Int16MultiArray()
+                    array.data = [pp, lgp]
+                    self.pub_planning_State.publish(array)
+
                 if pp == 2 and lgp == 2:
                     time.sleep(1)
                     #print("[{}] For Restart, please initialize".format(self.__class__.__name__))
@@ -69,9 +74,6 @@ class Planning:
             else:
                 time.sleep(0.1)
 
-            array = Int16MultiArray()
-            array.data = [pp, lgp]
-            self.pub_planning_State.publish(array)
 
     def init(self):
         self.need_init = False

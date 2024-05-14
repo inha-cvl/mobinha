@@ -63,6 +63,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
         self.target_yaw = 0
         self.cte = 0
+        self.sensor_status_color = []
 ######33
         self.blink_timer = QTimer(self)
         self.blink_timer.timeout.connect(self.toggle_visibility)
@@ -75,6 +76,9 @@ class MainWindow(QMainWindow, form_class):
         self.cmd_full_button.clicked.connect(lambda: self.cmd_button_clicked(1))
         self.cmd_disable_button.clicked.connect(lambda: self.cmd_button_clicked(0))
 
+        self.left_blinker = self.findChild(QLabel, 'left_blinker')
+        self.right_blinker = self.findChild(QLabel, 'right_blinker')
+        
         self.label_cam1 = self.findChild(QLabel, 'warn_camera1')
         self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
         self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
@@ -86,8 +90,8 @@ class MainWindow(QMainWindow, form_class):
         self.label_perception = self.findChild(QLabel, 'warn_perception')
         self.label_planning = self.findChild(QLabel, 'warn_planning')
 
-
         self.sensors = [self.label_cam1, self.label_cam2, self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        self.blinker = 0
 
         # self.rviz_map_screen.setLayoutQVBoxLayout())
 
@@ -113,7 +117,7 @@ class MainWindow(QMainWindow, form_class):
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
-        rospy.Subscriber('/sensor_check', Int16MultiArray, self.sensor_check_callback)
+        rospy.Subscriber('/sensor_check', Int16MultiArray, self.sensor_check_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -185,66 +189,22 @@ class MainWindow(QMainWindow, form_class):
         self.down_button.setDisabled(False)
         self.pub_max_v.publish(Int8(data=target_velocity))
 
+    # TO-DO
     def blinker_cb(self, msg):
-        pass
-
-    def sensor_check_callback(self, msg):
-        camera1_warning = 0
-        #camera2_warning = 1
-        #camera3_warning = 2
-        lidar_warning = 3
-        gps_warning = 4
-        ins_warning = 5
-        can_warning = 6
-        perception_warning = 7
-        planning_warning = 8
-
-        warning_present = False
-        #warn_sound = '/home/da0/ui_ws/src/mobinha/selfdrive/visualize/sounds/bsd.wav'
-        warn_sound = dir_path + "/sounds/bsd.wav"
-        
-        for i, sensor_status in enumerate(msg.data):
-            text_color = "#00AAFF" if sensor_status ==1 else "#FC6C6C"
-            self.update_text_color(i, text_color)
-
-            if sensor_status == 1:
-                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
-                if i == camera1_warning:
-                    self.state_screen.setText("WARNING : CAMERA1")
-                elif i == lidar_warning:
-                    self.state_screen.setText("WARNING : LIDAR")
-                elif i == gps_warning:
-                    self.state_screen.setText("WARNING : GPS")
-                elif i == ins_warning:
-                    self.state_screen.setText("WARNING : INS")
-                elif i == can_warning:
-                    self.state_screen.setText("WARNING : CAN")
-                elif i == perception_warning:
-                    self.state_screen.setText("WARNING : CAN")
-                elif i == planning_warning and sensor_status == 1:
-                    self.state_screen.setText("WARNING : PLANNING")
-
-            else:
-                warning_present = True
-
-        if warning_present and not self.is_sound_playing:
-            self.play_warning_sound(warn_sound)
-            self.is_sound_playing = True
+        if msg.data == 0:
+            self.blinker = 0
+        elif msg.data == 1:
+            self.blinker = 1
+        elif msg.data == 2:
+            self.blinker = 2
         else:
-            self.stop_warning_sound()
-            self.is_sound_playing= False
+            pass
 
-    def play_warning_sound(self, sound_path):
-        url = QUrl.fromLocalFile(sound_path)
-        content = QMediaContent(url)
-        self.player.setMedia(content)
-        self.player.play()
-
-    def stop_warning_sound(self):
-        self.player.stop()
-
-    def update_text_color(self, sensor_index, color): 
-        self.sensors[sensor_index].setStyleSheet(f"color : {color}")
+    def sensor_check_cb(self, msg):     
+        self.sensor_status_color.clear()
+        for i, sensor_status in enumerate(msg.data):
+            text_color = "#00AAFF;" if sensor_status==1 else "#FC6C6C;"
+            self.sensor_status_color.append(text_color)
 
 #####
     def timer(self, sec):
@@ -355,7 +315,6 @@ class MainWindow(QMainWindow, form_class):
                         print("[Visualize] Over")
                         sys.exit(0)
                 # elif self.state == 'TOR':
-
                 
                 QCoreApplication.processEvents()
 
@@ -395,9 +354,6 @@ class MainWindow(QMainWindow, form_class):
             self.map_view_manager = manager.getViewManager()
             self.clear_layout(self.rviz_layout_2)
             self.rviz_layout_2.addWidget(rviz_frame)
-
-
-
 
     def imu_frame(self):
         self.imu_widget = imugl.ImuGL()
@@ -508,7 +464,6 @@ class MainWindow(QMainWindow, form_class):
     #     elif gear_signal == self.gear_d:
     #         self.gear_d.setStyleSheet("background-color : #008081;")
 
-
     def clear_layout(self, layout):
         for i in range(layout.count()):
             layout.itemAt(i).widget().close()
@@ -604,7 +559,7 @@ class MainWindow(QMainWindow, form_class):
             else:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[4])
 
-
+    
     def traffic_light_obstacle_cb(self, msg):
         tl_on_list = ["🔴", "🟡", "⬅️", "🟢"]
         tl_off = "⬛️"
@@ -762,7 +717,6 @@ class MainWindow(QMainWindow, form_class):
                 # self.state_screen.setText("AUTOMATIC DRIVE MODE")
                 button.setEnabled(True)
 
-
     def scenario_button_clicked(self, idx):
         self.scenario = idx
         module = importlib.import_module('selfdrive.visualize.routes.{}'.format(self.map_name))
@@ -781,7 +735,6 @@ class MainWindow(QMainWindow, form_class):
         else:
             return "Manual"
 
-
     def check_mode(self, mode):
         if self.mode != mode:
             self.mode = mode
@@ -793,6 +746,59 @@ class MainWindow(QMainWindow, form_class):
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
         return diff
+
+    def update_sensor_check(self, colors):
+        camera1_warning = 0
+        #camera2_warning = 1
+        #camera3_warning = 2
+        lidar_warning = 3
+        gps_warning = 4
+        ins_warning = 5
+        can_warning = 6
+        perception_warning = 7
+        planning_warning = 8
+
+        warning_state = 0
+        for i, text_color in enumerate(colors):
+            #self.update_text_color(i, text_color)
+            self.sensors[i].setStyleSheet(f"color : {text_color}")
+
+            if text_color == "#FC6C6C;" and warning_state == 0:
+                self.state_screen.setStyleSheet("background-color : #FC6C6C;")
+                if i == camera1_warning:
+                    self.state_screen.setText("WARNING :\nCAMERA1")
+                elif i == lidar_warning:
+                    self.state_screen.setText("WARNING :\nLIDAR")
+                elif i == gps_warning:
+                    self.state_screen.setText("WARNING :\nGPS")
+                elif i == ins_warning:
+                    self.state_screen.setText("WARNING :\nINS")
+                elif i == can_warning:
+                    self.state_screen.setText("WARNING :\nCAN")
+                elif i == perception_warning:
+                    self.state_screen.setText("WARNING :\nPERCEPTION")
+                elif i == planning_warning:
+                    self.state_screen.setText("WARNING :\nPLANNING")
+                warning_state += 1
+            
+        if warning_state == 0:
+            self.state_screen.setStyleSheet("background-color : #008000;")
+            self.state_screen.setText("ALL CONNETED")
+            self.media_thread.get_mode = 1
+        else:
+            self.media_thread.get_mode = 5
+        
+    def update_blinker(self, blinker):
+        if blinker == 0:
+            self.left_blinker.setStyleSheet(f"color : #ffffff;")
+            self.right_blinker.setStyleSheet(f"color : #ffffff;")
+        elif blinker == 1:
+            self.right_blinker.setStyleSheet(f"color : #df1354;")
+        elif blinker == 2:
+            self.left_blinker.setStyleSheet(f"color : #df1354;")
+            self.right_blinker.setStyleSheet(f"color : #df1354;")
+        else:
+            pass            
 
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
@@ -850,7 +856,6 @@ class MainWindow(QMainWindow, form_class):
             ##################
             # [self.gear_list[i].setStyleSheet("QLabel{color:rgb(19, 99, 223);}") if self.CS.gearShifter == i else self.gear_list[i].setStyleSheet("QLabel{color: rgb(223, 246, 255);}") for i in range(4)]
 
-
             if self.CS.buttonEvent.leftBlinker == 1:
                 self.blinker_l_label.setHidden(False)
                 self.blinker_r_label.setHidden(True)
@@ -864,11 +869,15 @@ class MainWindow(QMainWindow, form_class):
                 self.blinker_l_label.setHidden(True)
                 self.blinker_r_label.setHidden(True)
 
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 5:
+            # sensor_check
+            self.update_sensor_check(self.sensor_status_color)
+            self.update_blinker(self.blinker)
+                
 
 def signal_handler(sig, frame):
     QApplication.quit()
     sys.exit(0)
-
 
 class MediaThread(QThread):
     def __init__(self):
@@ -900,12 +909,13 @@ class MediaThread(QThread):
                 
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
-                player.play()
+
             if self.planning_state == 4:
                 url = dir_path+"/sounds/planning-tor.wav"
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
-                player.play()
+
+            player.play()
                 
             time.sleep(1)
 

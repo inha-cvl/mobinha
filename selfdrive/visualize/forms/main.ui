@@ -5180,7 +5180,7 @@ border-color: rgb(71,181,255);</string>
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color: rgb(88, 93, 99);</string>
+                 <string notr="true">color: rgb(51,196, 136);</string>
                 </property>
                 <property name="text">
                  <string>⬛️</string>

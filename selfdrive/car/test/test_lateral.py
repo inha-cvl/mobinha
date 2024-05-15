@@ -66,10 +66,12 @@ class IONIQ:
             geo_path[i][0], geo_path[i][1], 0, self.base_lat, self.base_lon, 0)
             self.path.append((x,y))
 
-        plt.plot([el[0] for el in self.path], [el[1] for el in self.path], "r", label="path")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
+        self.prev_steer = 0
+        # plt.scatter(self.path[1048][0], self.path[1048][1])
+        # plt.plot([el[0] for el in self.path], [el[1] for el in self.path], "r", label="path")
+        # plt.legend()
+        # plt.grid(True)
+        # plt.show()
 
         self.purepursuit = PurePursuit(self.path)
         
@@ -220,7 +222,9 @@ class IONIQ:
                 '''
 
                 wheel_angle = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
-                self.steer = int(wheel_angle[0]*13.5)  
+                threshold = 399
+                self.steer = int(self.limit_steer_change(min(max(int(wheel_angle[0]*13.5), -threshold), threshold)))
+                print(self.steer)
                 time.sleep(0.01)
 
             # print("target steer : ", self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte))
@@ -295,6 +299,7 @@ class IONIQ:
         # self.altitude = msg.height
         self.x, self.y, self.z = pymap3d.geodetic2enu(
             msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
+        # print(self.x, self.y)
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
@@ -314,6 +319,7 @@ class IONIQ:
         else:
             pt1 = self.path[min_idx]
 
+        print(min_idx)
         return min_idx
     
     def calculate_cte(self, position):
@@ -336,7 +342,15 @@ class IONIQ:
             return cte  # Point P is on the right side of line AB
         else:
             return 0  # Point P is on the line AB
-
+        
+    def limit_steer_change(self, current_steer):
+        max_steer_change_rate = 2
+        steer_change = current_steer - self.prev_steer
+        steer_change = np.clip(steer_change, -max_steer_change_rate, max_steer_change_rate)
+        limited_steer = self.prev_steer + steer_change
+        self.prev_steer = limited_steer
+        return limited_steer
+    
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C! Exiting gracefully...')
     rospy.signal_shutdown('Exiting')

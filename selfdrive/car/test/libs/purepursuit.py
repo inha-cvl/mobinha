@@ -12,7 +12,7 @@ class PurePursuit:
         self.L = 3
 
     def run(self, vEgo, path, position, yawRate, cte):
-        lfd = 10 + 1*vEgo/3.6
+        lfd = 5 + 1*vEgo/3.6
         lfd = np.clip(lfd, 4, 60)
         steering_angle = 0.
         lx, ly = path[0]

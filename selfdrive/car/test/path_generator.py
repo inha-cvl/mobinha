@@ -47,6 +47,8 @@ class GPSLogger:
             if distance >= 0.5:  # 50cm 이상인 경우에만 저장
                 self.path.append((self.latitude, self.longitude))
                 self.last_saved_point = (self.latitude, self.longitude)
+        
+        print("path length:", len(self.path))
 
     def save_path_to_file(self, filename):
         # 리스트를 파일로 저장
@@ -62,6 +64,7 @@ class GPSLogger:
         plt.plot([el[0] for el in self.path], [el[1] for el in self.path], "r", label="path")
         plt.legend()
         plt.grid(True)
+        plt.show()
         rospy.signal_shutdown("Path saved")
 
 if __name__ == "__main__":

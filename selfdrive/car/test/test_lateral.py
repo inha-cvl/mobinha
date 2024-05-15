@@ -12,10 +12,12 @@ from std_msgs.msg import Float32, Int8
 from novatel_oem7_msgs.msg import INSPVA
 import rospy
 import pymap3d
+import signal
+import sys
 
 class IONIQ:
     def __init__(self):
-        rospy.init_node("/test_lateral")
+        rospy.init_node("testLateral")
 
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
@@ -46,9 +48,15 @@ class IONIQ:
         self.current_v = 0
         self.apid = APID()
 
-        # TODO
-        path = with open ## json으로 저장된 path
-        self.purepursuit = PurePursuit(path)
+        self.path = []
+        with open('path_log.txt', 'r') as file:
+            lines = file.readlines() 
+
+        for line in lines:
+            stripped_line = line.strip()
+            lat, long = stripped_line.split(',')
+            self.path.append((float(lat), float(long)))
+        self.purepursuit = PurePursuit(self.path)
         
         # Plot 관련 초기화
         self.plot_lock = threading.Lock()
@@ -81,7 +89,7 @@ class IONIQ:
             return False
         
     def daemon(self):
-        while 1:
+        while not rospy.is_shutdown():
             self.longitudinal_cmd() # update alive count, send CAN msg
             self.longitudinal_rcv() # receive CAN msg, print out current values
             if self.acc_override or self.brk_override or self.steering_overide: 
@@ -152,7 +160,7 @@ class IONIQ:
         self.bus.send(can_msg)
 
     def state_controller(self):
-        while 1:
+        while not rospy.is_shutdown():
             cmd = input('99: PA |88: LON |77: ALL\n \
                         1001: reset\n1000: over\n')
             cmd = int(cmd)
@@ -181,20 +189,21 @@ class IONIQ:
                 exit(0)
 
     def controller(self):
-        while 1:
+        while not rospy.is_shutdown():
             if self.LON_enable:
                 self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
                 time.sleep(0.01)
+            self.position = (self.latitude, self.longitude)
+            cte = self.calculate_cte(self.path[0], self.path[1], (self.position))
             if self.PA_enable:
                 '''
                 TODO
                 CTE, vEgo를 추가적으로 고려한 pure pursuit 구현
                 '''
-                position = (self.latitude, self.longitude)
-                cte = self.calculate_cte(self.path[0], self.path[1], (self.position))
-                self.steer = self.purepursuit.run(self, self.current_v, self.path, position, self.yaw, cte)
 
-            print("target steer : ", self.purepursuit.run(self, self.current_v, self.path, position, self.yaw, cte))
+                self.steer = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
+
+            print("target steer : ", self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte))
             
     def update_values(self):
         with self.plot_lock:
@@ -210,7 +219,7 @@ class IONIQ:
     
     def set_target_v(self):
         ## manual
-        while 1:
+        while not rospy.is_shutdown():
             ## case 1 : constant
             self.target_v = 15 / 3.6 # km/h
 
@@ -241,7 +250,7 @@ class IONIQ:
         plt.legend(loc='upper left')
 
 
-        while True:
+        while not rospy.is_shutdown():
             self.update_values()
 
             target_line.set_ydata(self.target_v_history)
@@ -264,13 +273,13 @@ class IONIQ:
         self.latitude = msg.latitude
         self.longitude = msg.longitude
         self.altitude = msg.height
-        self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+        # self.x, self.y, self.z = pymap3d.geodetic2enu(
+        #     msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
 
-    def calculate_cte(pointA, pointB, pointP):
+    def calculate_cte(self,pointA, pointB, pointP):
         Ax, Ay = pointA
         Bx, By = pointB
         Px, Py = pointP
@@ -288,7 +297,15 @@ class IONIQ:
             return cte  # Point P is on the right side of line AB
         else:
             return 0  # Point P is on the line AB
+
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C! Exiting gracefully...')
+    rospy.signal_shutdown('Exiting')
+    sys.exit(0)
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
+
     IONIQ = IONIQ()
     t1 = threading.Thread(target=IONIQ.daemon)
     t2 = threading.Thread(target=IONIQ.state_controller)
@@ -306,4 +323,4 @@ if __name__ == '__main__':
     t2.join()
     t3.join()
     t4.join()
-    # t5.join() 없는게맞음
+    # t5.join()

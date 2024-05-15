@@ -1,4 +1,5 @@
 import math
+import time
 
 import heapq as hq
 import numpy as np
@@ -12,6 +13,11 @@ from selfdrive.visualize.rviz_utils import *
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
+
+blinker_start_time = None
+blinker_minimum_duration = 2  # 최소 블링커 지속 시간 (초)
+blinker_status = 0  # 현재 블링커 상태 (0: 꺼짐, 1: 좌, 2: 우)
+blinker_target_id = None
 
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)

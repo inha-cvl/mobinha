@@ -14,6 +14,7 @@ import rospy
 import pymap3d
 import signal
 import sys
+import matplotlib.pyplot as plt
 
 class IONIQ:
     def __init__(self):
@@ -48,17 +49,29 @@ class IONIQ:
         self.current_v = 0
         self.apid = APID()
 
-        self.path = []
+        geo_path = []
         with open('path_log.txt', 'r') as file:
             lines = file.readlines() 
 
         for line in lines:
             stripped_line = line.strip()
             lat, long = stripped_line.split(',')
-            self.path.append((float(lat), float(long)))
+            geo_path.append((float(lat), float(long)))
+        self.base_lat = geo_path[0][0]
+        self.base_lon = geo_path[0][1]
+
+        self.path = []
+        for i in range(len(geo_path)):
+            x, y, _ = pymap3d.geodetic2enu(
+            geo_path[i][0], geo_path[i][1], 0, self.base_lat, self.base_lon, 0)
+            self.path.append((x,y))
+
+        plt.plot([el[0] for el in self.path], [el[1] for el in self.path], "r", label="path")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
         self.purepursuit = PurePursuit(self.path)
-        self.base_lat = self.path[0][0]
-        self.base_lon = self.path[0][1]
         
         # Plot 관련 초기화
         self.plot_lock = threading.Lock()
@@ -94,8 +107,10 @@ class IONIQ:
         while not rospy.is_shutdown():
             self.longitudinal_cmd() # update alive count, send CAN msg
             self.longitudinal_rcv() # receive CAN msg, print out current values
-            if self.acc_override or self.brk_override or self.steering_overide: 
+            # if self.acc_override or self.brk_override or self.steering_overide: 
+            if self.acc_override or self.brk_override: 
                 self.LON_enable = 0
+            if self.steering_overide:
                 self.PA_enable = 0
 
     def alive_counter(self, alv_cnt):
@@ -146,7 +161,7 @@ class IONIQ:
             res = self.db.decode_message(data.arbitration_id, data.data)
             self.PA_Enable_Status = res['PA_Enable_Status']
             self.LON_Enable_Status = res['LON_Enable_Status']
-            print(f"PA enable status : {self.PA_Enable_Status}\nLON enable status : {self.LON_Enable_Status}")
+            # print(f"PA enable status : {self.PA_Enable_Status}\nLON enable status : {self.LON_Enable_Status}")
         if self.timer(1):
             print(f"=================================================\n \
                 input acl: {self.accel} | input brake: {self.brake}\n  \
@@ -197,17 +212,18 @@ class IONIQ:
                 time.sleep(0.01)
 
             self.position = (self.x, self.y)
-            cte = self.calculate_cte(self.path[0], self.path[1], (self.position))
+            cte = self.calculate_cte(self.position)
             if self.PA_enable:
                 '''
                 TODO
                 CTE, vEgo를 추가적으로 고려한 pure pursuit 구현
                 '''
 
-                self.steer = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
+                wheel_angle = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
+                self.steer = int(wheel_angle[0]*13.5)  
                 time.sleep(0.01)
 
-            print("target steer : ", self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte))
+            # print("target steer : ", self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte))
             
     def update_values(self):
         with self.plot_lock:
@@ -225,7 +241,7 @@ class IONIQ:
         ## manual
         while not rospy.is_shutdown():
             ## case 1 : constant
-            self.target_v = 15 / 3.6 # km/h
+            self.target_v = 5 / 3.6 # km/h
 
             ## case 2 : sinusoidal
             # amplitude = 5

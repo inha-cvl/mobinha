@@ -501,6 +501,50 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
     elif next_id_1 in my_neighbor_id[1]:
         return 2, next_id_1
     
+    # 다음링크가 포켓차로일 때
+    elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.1 and lanelets[next_id_1]['leftTurn'] == True and next_id_1 != '5':
+        print(next_id_1)
+        print("case1")
+        return 1, next_id_1
+    
+    # 다음링크가 회전차로일 때
+    elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.35 and lanelets[next_id_2]['intersection'] == True:
+        print(next_id_2)
+        print("case2")
+        return 1, next_id_2
+
+    # 다음링크가 yaw값이 변할 때
+    # elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.1:
+    #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
+    #     if lanelets[next_id_2]['intersection'] == True or lanelets[next_id_2]['leftTurn'] == True:
+    #         print(next_id_2)
+    #         print("case1")
+    #         return 1, next_id_2
+
+    # 다음링크가 yaw값이 많이 변할 때
+    # elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.1:
+    #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
+    #     if lanelets[next_id_2]['laneNo'] != lanelets[splited_local_id]['laneNo'] or lanelets[next_id_2]['leftTurn'] == True:
+    #         print(next_id_2)
+    #         return 1, next_id_2
+    
+    # 현재링크가 yaw값이 변할 때
+    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.1: # and lanelets[splited_local_id]['intersection'] == True:
+        # 현재링크가 좌회전 및 좌회전 가능차로일 때
+        if lanelets[splited_local_id]['laneNo'] in left_turn_lane and splited_local_id != '5':
+            print(splited_local_id)
+            print("case3")
+            return 1, next_id_2
+        else:
+            print("case4")
+            return 2, next_id_2
+        
+    # elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.1:
+    #     if lanelets[splited_local_id]['laneNo'] == 91:
+    #         return 1, next_id_2
+    #     elif lanelets[splited_local_id]['adjacentRight'] == None:
+    #         return 2, next_id_2
+
     # if change_lane_flag:  # if flag is True, keep the blinker on
     #     if change_target_id in my_neighbor_id[0]:
     #         return 1 , change_target_id

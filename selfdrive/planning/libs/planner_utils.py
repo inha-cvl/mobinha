@@ -476,12 +476,19 @@ def get_a_b_for_blinker(min, ignore):
     return a,b
 
 
+blinker_start_time = None
+blinker_minimum_duration = 2  # 최소 블링커 지속 시간(s)
+blinker_status = 0  # 현재 블링커 상태 (0: 꺼짐, 1: 좌, 2: 우)
+blinker_target_id = None
+
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id):#, local_id, change_target_id, change_lane_flag): 
-    #TODO: CHECK FLAG     
+    #TODO: CHECK FLAG    
+    global blinker_start_time, blinker_status, blinker_target_id
+ 
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
-    ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance
-    left_turn_lane = [1, 2, 91]
+    ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
+    # left_turn_lane = [1, 2, 91]
 
     if lf < 0:
         lf = 0
@@ -495,31 +502,36 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
         ld = len(ids)-1
     next_id_2 = ids[ld].split('_')[0]
 
+    # 차선 변경할 때
     if next_id_1 in my_neighbor_id[0]:
         # or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        print("now Lchange")
         return 1, next_id_1
     elif next_id_1 in my_neighbor_id[1]:
+        print("now Rchange")
         return 2, next_id_1
     
-    # 다음링크가 포켓차로일 때
-    elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.1 and lanelets[next_id_1]['leftTurn'] == True and next_id_1 != '5':
-        print(next_id_1)
-        print("case1")
-        return 1, next_id_1
-    
     # 다음링크가 회전차로일 때
-    elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.35 and lanelets[next_id_2]['intersection'] == True:
-        print(next_id_2)
-        print("case2")
-        return 1, next_id_2
-
-    # 다음링크가 yaw값이 변할 때
-    # elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.1:
-    #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
-    #     if lanelets[next_id_2]['intersection'] == True or lanelets[next_id_2]['leftTurn'] == True:
-    #         print(next_id_2)
-    #         print("case1")
-    #         return 1, next_id_2
+    elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.5 and lanelets[next_id_2]['intersection'] == True:
+        if lanelets[next_id_2]['rightTurn'] == True:
+            print(next_id_2)
+            print("next Rturn")
+            return 2, next_id_2
+        else:
+            print(next_id_2)
+            print("next Lturn")
+            return 1, next_id_2
+        
+    # 다음링크가 포켓차로일 때
+    elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.25 and lanelets[splited_local_id]['direction'] != None:
+        if lanelets[next_id_1]['direction'] == 'L':
+            print(next_id_1)
+            print("next Lpocket")
+            return 1, next_id_1
+        else:  # lanelets[next_id_1]['direction'] == 'R'
+            print(next_id_1)
+            print("next Rpocket")
+            return 2, next_id_2
 
     # 다음링크가 yaw값이 많이 변할 때
     # elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.1:
@@ -528,22 +540,31 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
     #         print(next_id_2)
     #         return 1, next_id_2
     
-    # 현재링크가 yaw값이 변할 때
-    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.1: # and lanelets[splited_local_id]['intersection'] == True:
-        # 현재링크가 좌회전 및 좌회전 가능차로일 때
-        if lanelets[splited_local_id]['laneNo'] in left_turn_lane and splited_local_id != '5':
+    # 현재링크가 회전차로일 때
+    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.5 and lanelets[splited_local_id]['intersection'] == True:
+        # 현재링크가 우회전일 때
+        if lanelets[splited_local_id]['rightTurn'] == True: # and splited_local_id != '5':
             print(splited_local_id)
-            print("case3")
-            return 1, next_id_2
-        else:
-            print("case4")
+            print("now Rturn")
             return 2, next_id_2
-        
-    # elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.1:
-    #     if lanelets[splited_local_id]['laneNo'] == 91:
-    #         return 1, next_id_2
-    #     elif lanelets[splited_local_id]['adjacentRight'] == None:
-    #         return 2, next_id_2
+        # 현재링크가 좌회전일 때
+        else:
+            print(splited_local_id)
+            print("now Lturn")
+            return 1, next_id_2
+    
+     # 현재링크가 포켓차로일 때
+    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.25 and lanelets[splited_local_id]['direction'] != None:
+        # 현재링크가 좌포켓일 때
+        if lanelets[splited_local_id]['direction'] == 'L': # and splited_local_id != '5':
+            print(splited_local_id)
+            print("now Lpocket")
+            return 1, next_id_1
+        # 현재링크가 우포켓일 때
+        elif lanelets[splited_local_id]['direction'] == 'R' and lanelets[splited_local_id]['laneNo'] >= lanelets[next_id_1]['laneNo']:
+            print(splited_local_id)
+            print("now Rpocket")
+            return 2, next_id_1
 
     # if change_lane_flag:  # if flag is True, keep the blinker on
     #     if change_target_id in my_neighbor_id[0]:

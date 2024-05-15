@@ -110,26 +110,25 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
     return avoid_path
 
 
-def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point):
-    stopline = []
-    sl_id = None
-    if len(lanelets[nowID]['stoplineID']) > 0:
-        sl_id = lanelets[nowID]['stoplineID']
-    else:
-        for lanelet_id in head_lane_ids:
-            if len(lanelets[lanelet_id]['stoplineID']) > 0:
-                sl_id = lanelets[lanelet_id]['stoplineID']
-                break
-    if sl_id is not None:
-        stopline = stoplines[sl_id[0]]
+def get_nearest_crosswalk(lanelets, now_lane_id, local_point):
+    crosswalk = []
+    for id_, data in lanelets.items():
+        if id_ == now_lane_id:
+            if len(data['crosswalk']) > 0:
+                crosswalks = data['crosswalk'][0]
+                if isinstance(crosswalks[0], list):
+                    for arr in crosswalks:
+                        crosswalk.extend(arr)
+                else:
+                    crosswalk.append(crosswalks)
 
-    now_sl_idx = math.inf
+    now_cw_idx = math.inf
 
-    for sl_wp in stopline:
-        idx = local_point.query(sl_wp, 1)[1]
-        if idx < now_sl_idx:
-            now_sl_idx = idx
-    return now_sl_idx, stopline
+    for cw_wp in crosswalk:
+        idx = local_point.query(cw_wp, 1)[1]
+        if idx < now_cw_idx:
+            now_cw_idx = idx
+    return now_cw_idx
 
 
 def filter_same_points(points):
@@ -353,30 +352,7 @@ def get_direction_number(lanelet, splited_id, forward_direction):  # lanlet, 0, 
         direction_number = direction_dir[forward_direction]
     return direction_number
 
-def get_forward_direction(lanelets, now_id, head_lane_ids):  # (global_path, i, ws=200):
-    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
-    lane_ids = [now_id]+head_lane_ids
-    for id_ in lane_ids:
-        
-        if not lanelets[id_]['leftTurn'] and not lanelets[id_]['rightTurn'] and len(lanelets[id_]['crosswalkID']) > 1:
-            return 'S'
 
-        if lanelets[id_]['intersection']:
-            if lanelets[id_]['leftTurn']:
-
-                return 'L'
-            elif lanelets[id_]['rightTurn']:
-
-                return 'R'
-            else:
-
-                return 'S'
-            
-        if lanelets[id_]['rightTurn']:
-            return 'R'
-        
-    return 'S'
- 
 def find_nearest_idx(pts, pt):
     min_dist = float('inf')
     min_idx = 0
@@ -475,22 +451,75 @@ def get_a_b_for_blinker(min, ignore):
     b = 10
     return a,b
 
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX):#, local_id, change_target_id, change_lane_flag): 
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id):#, local_id, change_target_id, change_lane_flag): 
     #TODO: CHECK FLAG     
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
+    ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance
+    left_turn_lane = [1, 2, 91]
+
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
         lf = len(ids)-1
-    next_id = ids[lf].split('_')[0]
+    next_id_1 = ids[lf].split('_')[0]
 
-    if next_id in my_neighbor_id[0]:
+    if ld < 0:
+        ld = 0
+    elif ld > len(ids)-1:
+        ld = len(ids)-1
+    next_id_2 = ids[ld].split('_')[0]
+
+    if next_id_1 in my_neighbor_id[0]:
         # or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
-        return 1, next_id
-    elif next_id in my_neighbor_id[1]:
-        return 2, next_id
+        return 1, next_id_1
+    elif next_id_1 in my_neighbor_id[1]:
+        return 2, next_id_1
     
+    # 다음링크가 포켓차로일 때
+    elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.1 and lanelets[next_id_1]['leftTurn'] == True and next_id_1 != '5':
+        print(next_id_1)
+        print("case1")
+        return 1, next_id_1
+    
+    # 다음링크가 회전차로일 때
+    elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.35 and lanelets[next_id_2]['intersection'] == True:
+        print(next_id_2)
+        print("case2")
+        return 1, next_id_2
+
+    # 다음링크가 yaw값이 변할 때
+    # elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.1:
+    #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
+    #     if lanelets[next_id_2]['intersection'] == True or lanelets[next_id_2]['leftTurn'] == True:
+    #         print(next_id_2)
+    #         print("case1")
+    #         return 1, next_id_2
+
+    # 다음링크가 yaw값이 많이 변할 때
+    # elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.1:
+    #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
+    #     if lanelets[next_id_2]['laneNo'] != lanelets[splited_local_id]['laneNo'] or lanelets[next_id_2]['leftTurn'] == True:
+    #         print(next_id_2)
+    #         return 1, next_id_2
+    
+    # 현재링크가 yaw값이 변할 때
+    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.1: # and lanelets[splited_local_id]['intersection'] == True:
+        # 현재링크가 좌회전 및 좌회전 가능차로일 때
+        if lanelets[splited_local_id]['laneNo'] in left_turn_lane and splited_local_id != '5':
+            print(splited_local_id)
+            print("case3")
+            return 1, next_id_2
+        else:
+            print("case4")
+            return 2, next_id_2
+        
+    # elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.1:
+    #     if lanelets[splited_local_id]['laneNo'] == 91:
+    #         return 1, next_id_2
+    #     elif lanelets[splited_local_id]['adjacentRight'] == None:
+    #         return 2, next_id_2
+
     # if change_lane_flag:  # if flag is True, keep the blinker on
     #     if change_target_id in my_neighbor_id[0]:
     #         return 1 , change_target_id
@@ -633,6 +662,33 @@ def get_lane_change_path(ids, change_direction, l_idx, lanelets, local_path_poin
     
     return renew_path, renew_ids
 
+def get_forward_direction(lanelets, next_id):  # (global_path, i, ws=200):
+    # return direction - 0:straight, 1:left, 2:right,3:left lane change, 4:right lane change, 5:U-turn
+    link = lanelets[next_id]
+    p = (link['waypoints'][len(link['waypoints'])//5][0],
+         link['waypoints'][len(link['waypoints'])//5][1])
+    q = (link['waypoints'][len(link['waypoints'])//2][0],
+         link['waypoints'][len(link['waypoints'])//2][1])
+    r = (link['waypoints'][len(link['waypoints'])//5*4][0],
+         link['waypoints'][len(link['waypoints'])//5*4][1])
+
+    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+
+    if link['uTurn']:
+        return 'U'
+    if link['rightTurn']:
+        return 'R'
+    if link['leftTurn']:
+        return 'L'
+    threshold = 10
+    if -threshold < val < threshold:
+        return 'S'  # collinear
+    elif val <= -threshold:
+        return 'L'  # left turn
+    elif val >= threshold:
+        return 'R'  # right turn
+
+
 def set_lane_ids(lst):
     lst = [elem.split("_")[0] for elem in lst]
 
@@ -670,8 +726,7 @@ def removeVegetationFromRoadside(lanelets, l_id, link_idx):
             lane_position = 2 # [2] | |@| |
     elif (lane_no == 1 and lanelets[l_id]['adjacentLeft'] == None) or lane_no == 91:
         lane_position = 1
-    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None) \
-        or (lane_no == 5 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 6 and lanelets[l_id]['adjacentRight'] == None):
+    elif (lane_no == 3 and lanelets[l_id]['adjacentRight'] == None) or (lane_no == 4 and lanelets[l_id]['adjacentRight'] == None):
         lane_position = 3
     else:
         lane_position = 2
@@ -809,18 +864,6 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 
     return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
 
-def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
-    polygon_points = []
-    if len(lanelets[nowID]['crosswalkID']) > 0:
-        lanelet_id = nowID
-    else:
-        for lanelet_id in head_lane_ids:
-            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
-                break
-    crosswalk_ids = lanelets[lanelet_id]['crosswalkID']
-    for s_id in lanelets[lanelet_id]['crosswalkID']:
-        polygon_points.extend(surfacemarks[s_id])
-    return crosswalk_ids, polygon_points
 # import rospy
 # from visualization_msgs.msg import Marker
 
@@ -847,28 +890,3 @@ def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
 #         # point.z = 0  # Assuming the roads are flat
     
 #     return marker
-
-def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
-    def is_point_inside_polygon(point, polygon):
-        x, y = point
-        inside = False
-
-        for i in range(len(polygon)):
-            x1, y1 = polygon[i]
-            x2, y2 = polygon[(i + 1) % len(polygon)]
-            if y > min(y1, y2) and y <= max(y1, y2) and x <= max(x1, x2):
-                if y1 != y2:
-                    xinters = (y - y1) * (x2 - x1) / (y2 - y1) + x1
-                if x1 == x2 or x <= xinters:
-                    inside = not inside
-
-        return inside
-    for obs in obstacle_list:
-        point = (obs[3], obs[4])  # Assuming obs[3] is x and obs[4] is y
-        for s_id in crosswalk_ids:
-            polygon_points = surfacemarks[s_id]
-            if is_point_inside_polygon(point, polygon_points):
-                return True  # Return True if any obstacle is inside any polygon
-
-    return False  # Return False if no obstacle is inside any polygon
-            

@@ -57,6 +57,8 @@ class IONIQ:
             lat, long = stripped_line.split(',')
             self.path.append((float(lat), float(long)))
         self.purepursuit = PurePursuit(self.path)
+        self.base_lat = self.path[0][0]
+        self.base_lon = self.path[0][1]
         
         # Plot 관련 초기화
         self.plot_lock = threading.Lock()
@@ -68,9 +70,9 @@ class IONIQ:
 
         # sensor data subscribe
         rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
-        self.latitude = 0
-        self.longitude = 0
-        self.altitude = 0
+        # self.latitude = 0
+        # self.longitude = 0
+        # self.altitude = 0
         self.x, self.y, self.z = 0, 0, 0
         self.roll = 0
         self.pitch = 0
@@ -193,7 +195,8 @@ class IONIQ:
             if self.LON_enable:
                 self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
                 time.sleep(0.01)
-            self.position = (self.latitude, self.longitude)
+
+            self.position = (self.x, self.y)
             cte = self.calculate_cte(self.path[0], self.path[1], (self.position))
             if self.PA_enable:
                 '''
@@ -202,6 +205,7 @@ class IONIQ:
                 '''
 
                 self.steer = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
+                time.sleep(0.01)
 
             print("target steer : ", self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte))
             
@@ -270,19 +274,38 @@ class IONIQ:
             plt.pause(0.01)  # 0.1초 간격으로 업데이트
     
     def novatel_cb(self, msg):
-        self.latitude = msg.latitude
-        self.longitude = msg.longitude
-        self.altitude = msg.height
-        # self.x, self.y, self.z = pymap3d.geodetic2enu(
-        #     msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+        # self.latitude = msg.latitude
+        # self.longitude = msg.longitude
+        # self.altitude = msg.height
+        self.x, self.y, self.z = pymap3d.geodetic2enu(
+            msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
 
-    def calculate_cte(self,pointA, pointB, pointP):
-        Ax, Ay = pointA
-        Bx, By = pointB
-        Px, Py = pointP
+    def calc_idx(self, pt):
+        min_dist = float('inf')
+        min_idx = 0
+
+        for idx, pt1 in enumerate(self.path):
+            dist = np.sqrt((pt[0]-pt1[0])**2+(pt[1]-pt1[1])**2)
+            if dist < min_dist:
+                min_dist = dist
+                min_idx = idx
+
+        if min_idx == len(self.path) - 1:
+            pt1 = self.path[min_idx-1]
+        else:
+            pt1 = self.path[min_idx]
+
+        return min_idx
+    
+    def calculate_cte(self, position):
+        
+        idx = self.calc_idx(position)
+        Ax, Ay = self.path[idx]
+        Bx, By = self.path[idx+1]
+        Px, Py = position
 
         numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
         denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)

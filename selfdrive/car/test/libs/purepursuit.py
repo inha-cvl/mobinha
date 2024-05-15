@@ -16,11 +16,16 @@ class PurePursuit:
         lfd = np.clip(lfd, 4, 60)
         steering_angle = 0.
         lx, ly = path[0]
+        
         for point in path:
             diff = np.asarray((point[0]-position[0], point[1]-position[1]))
-            rotation_matrix = np.array(
-                ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), (np.sin(-radians(yawRate)), np.cos(-radians(yawRate)))))
-            rotated_diff = rotation_matrix.dot(diff)
+            # rotation_matrix = np.array(
+            #     ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), (np.sin(-radians(yawRate)), np.cos(-radians(yawRate)))))
+            # rotated_diff = rotation_matrix.dot(diff)
+            diff = np.array([point[0] - position[0], point[1] - position[1]])
+            rotated_diff_x = diff[0] * cos(radians(yawRate)) + diff[1] * sin(radians(yawRate))
+            rotated_diff_y = -diff[0] * sin(radians(yawRate)) + diff[1] * cos(radians(yawRate))
+            rotated_diff = (rotated_diff_x, rotated_diff_y)
             if rotated_diff[0] > 0:
                 dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
                 if dis >= lfd:

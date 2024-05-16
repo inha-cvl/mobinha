@@ -55,7 +55,7 @@ class ObstacleDetector:
         rospy.Subscriber('/morai/ego_topic', Pose, self.morai_ego_topic_cb)
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
         # 고실실
-        rospy.Subscriber('/hlv_signal', Int8, self.gosilsil_cb)
+        rospy.Subscriber('/gosilsil_signal', Int8, self.gosilsil_cb)
         self.gosilsil_flag = True
     
         self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
@@ -124,8 +124,8 @@ class ObstacleDetector:
         self.morai_ego_v = msg.orientation.w
 
     def get_lidar_objects(self, local_point, car_idx):
-        dx = self.CS.position.x - self.morai_local_point[0] if self.is_morai else 0
-        dy = self.CS.position.y - self.morai_local_point[1] if self.is_morai else 0
+        dx = 0 #self.CS.position.x - self.morai_local_point[0] if self.is_morai else 0
+        dy = 0 #self.CS.position.y - self.morai_local_point[1] if self.is_morai else 0
 
         viz_obstacle = []
         obstacle_sd = []

@@ -43,7 +43,7 @@ class APID:
         self.window_size = 4
         self.Kp = 40
         self.Ki = 12 / self.window_size
-        self.Kd = 20
+        self.Kd = 16    
         self.lr = 0.001 # 0.0001
         self.error_history = []
 
@@ -149,15 +149,19 @@ class APID:
         #     brake_val = -output
         # output = max(-100, min(self.ctrls[4], 100))
 
-        accel_lim = 80
+        accel_lim = 40
         brake_lim = 50
+        if self.error < 2/3.6:
+            output *= 0.9
         if output>0:
             accel_val = min(output, accel_lim)
             brake_val = 0
         else:
             accel_val = 0
             brake_val = min(-output, brake_lim)
-
+        if self.error < 2:
+            accel_val *= 0.8
+            brake_val *= 0.2
         # print(accel_val)
         return accel_val, brake_val
         # return self.ctrls[4]

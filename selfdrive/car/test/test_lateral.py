@@ -104,10 +104,13 @@ class IONIQ:
         while not rospy.is_shutdown():
             self.longitudinal_cmd() # update alive count, send CAN msg
             self.longitudinal_rcv() # receive CAN msg, print out current values
-            if self.acc_override or self.brk_override: 
-                self.LON_enable = 0
-            if self.steering_overide:
+            # if self.acc_override or self.brk_override: 
+            #     self.LON_enable = 0
+            # if self.steering_overide:
+            #     self.PA_enable = 0
+            if self.acc_override or self.brk_override or self.steering_overide:
                 self.PA_enable = 0
+                self.LON_enable = 0 
 
     def alive_counter(self, alv_cnt):
         alv_cnt += 1
@@ -202,7 +205,6 @@ class IONIQ:
         while not rospy.is_shutdown():
             if self.LON_enable:
                 self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
-                time.sleep(0.01)
 
             self.position = (self.x, self.y)
             self.cte = self.calculate_cte(self.position)
@@ -212,9 +214,9 @@ class IONIQ:
                 # plt.plot(lx, ly, 'ro')
                 threshold = 449
                 self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
-                print(self.cte  )
-                print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
-                if abs(self.steer - self.prev_steer) > 200 and self.prev_steer != 0:
+                print(f"CTE:{self.cte:.2f}")
+                # print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
+                if abs(self.steer - self.prev_steer) > 150 and self.prev_steer != 0:
                     print("error occurred")
                     print("steer", self.steer)
                     print("prev", self.prev_steer)
@@ -227,19 +229,19 @@ class IONIQ:
                 self.prev_steer = self.steer
                 self.prev_idx = self.idx
                 # print(self.steer)
-                time.sleep(0.01)
-                ''' ## 1
-                v : 1.85, pos: -20.17. 27.63, heading: -144.85, target: -23.78, 22.88, idx: 82
-                243
-                v : 1.85, pos: -20.25. 27.57, heading: -144.26, target: -23.78, 22.88, idx: 82
-                242
-                v : 1.85, pos: -20.27. 27.56, heading: -143.92, target: -23.78, 22.88, idx: 82
-                449
-                v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
-                '''
-                ## v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479
-                ## ver2
-                # v : 1.8446180555555556, pos: -20.396328791938615. 27.43853350614983, heading: -143.58772961264225, target: 0.11273516760735534, -0.5387912950040479, idx: 83
+            time.sleep(0.01)
+            ''' ## 1
+            v : 1.85, pos: -20.17. 27.63, heading: -144.85, target: -23.78, 22.88, idx: 82
+            243
+            v : 1.85, pos: -20.25. 27.57, heading: -144.26, target: -23.78, 22.88, idx: 82
+            242
+            v : 1.85, pos: -20.27. 27.56, heading: -143.92, target: -23.78, 22.88, idx: 82
+            449
+            v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
+            '''
+            ## v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479
+            ## ver2
+            # v : 1.8446180555555556, pos: -20.396328791938615. 27.43853350614983, heading: -143.58772961264225, target: 0.11273516760735534, -0.5387912950040479, idx: 83
 
     def update_values(self):
         with self.plot_lock:
@@ -255,7 +257,7 @@ class IONIQ:
     
     def set_target_v(self):
         while not rospy.is_shutdown():
-            self.target_v = 5 / 3.6
+            self.target_v = 50 / 3.6
 
     def plot_velocity(self):
         plt.ion()

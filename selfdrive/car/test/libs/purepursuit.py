@@ -14,7 +14,9 @@ class PurePursuit:
 
     def run(self, vEgo, path, position, yawRate, cte):
        
-        lfd = 4 + 1.5 * vEgo / 3.6  
+        lfd = 6 + 2.3 * vEgo**0.8 / 3.6  
+        print(f"       lfd:{lfd:.2f}")
+        print(f"                  vEgo:{vEgo*3.6:.2f}")
         lfd = np.clip(lfd, 4, 60)  
         steering_angle = 0.  
         lx, ly = path[0] 
@@ -28,7 +30,7 @@ class PurePursuit:
             if dis >= lfd: 
                 theta = np.arctan2(rotated_diff[1], rotated_diff[0]) 
                 steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
-                # steering_angle = steering_angle + np.arctan2(0.1 * cte, vEgo) if vEgo > 6 else steering_angle
+                steering_angle = steering_angle + np.arctan2(0.2 * cte, vEgo) if vEgo > 6 else steering_angle
                 lx = point[0]  
                 ly = point[1]  
                 break
@@ -41,9 +43,8 @@ class PurePursuit:
             steering_angle = alpha * steering_angle + (1 - alpha) * self.prev_angle
             self.prev_angle = steering_angle
 
-        # low speed improvement
-        factor = 1
+        factor = 1.0
         if vEgo < 25:
-            factor = 1.2
+            factor = 1.3
         return degrees(factor*steering_angle), (lx, ly) 
     

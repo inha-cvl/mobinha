@@ -67,6 +67,8 @@ class IONIQ:
         
         self.prev_steer = 0
 
+        self.cte = 0
+
         self.purepursuit = PurePursuit(self.path)
         
         # Plot 관련 초기화
@@ -203,16 +205,19 @@ class IONIQ:
                 time.sleep(0.01)
 
             self.position = (self.x, self.y)
-            cte = self.calculate_cte(self.position)
+            self.cte = self.calculate_cte(self.position)
             if self.PA_enable:
                 
-                wheel_angle, (lx, ly) = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
+                wheel_angle, (lx, ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
+                # plt.plot(lx, ly, 'ro')
                 threshold = 449
                 self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
-                print(self.steer)
+                print(self.cte  )
                 print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
-                if abs(self.steer - self.prev_steer) > 100:
+                if abs(self.steer - self.prev_steer) > 200 and self.prev_steer != 0:
                     print("error occurred")
+                    print("steer", self.steer)
+                    print("prev", self.prev_steer)
                     exit(0)
                     # print(f"v : {self.prev_current_v:.2f}, pos: {self.prev_position[0]:.2f}. {self.prev_position[1]:.2f}, heading: {self.prev_yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.prev_idx}")
                     # print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
@@ -278,6 +283,7 @@ class IONIQ:
             plt.grid(True)
             plt.draw()
             plt.pause(0.01)
+            
     
     def plot_position(self):
         plt.ion()

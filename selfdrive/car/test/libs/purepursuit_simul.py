@@ -22,7 +22,7 @@ def run(vEgo, position, yawRate, cte=0):
         geo_path[i][0], geo_path[i][1], 0, base_lat, base_lon, 0)
         path.append((x,y))
 
-    lfd = 5 + 1 * vEgo / 3.6  
+    lfd = 5 + 2* vEgo / 3.6  
     lfd = np.clip(lfd, 4, 60) 
     steering_angle = 0.  
     lx, ly = path[0] 

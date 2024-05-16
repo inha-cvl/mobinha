@@ -21,7 +21,9 @@ class PurePursuit:
         for point in path:
             diff = np.asarray((point[0]-position[0], point[1]-position[1]))
             rotation_matrix = np.array(
-                ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), (np.sin(-radians(yawRate)),  np.cos(-radians(yawRate)))))
+                ((np.cos(radians(yawRate)), -np.sin(radians(yawRate))), (np.sin(radians(yawRate)),  np.cos(radians(yawRate)))))
+                # ((np.cos(radians(yawRate)), -np.sin(radians(yawRate))), 
+                # (np.sin(radians(yawRate)), np.cos(radians(yawRate)))))
             rotated_diff = rotation_matrix.dot(diff)
             if rotated_diff[0] > 0: 
                 dis = np.linalg.norm(rotated_diff-np.array([0, 0]))

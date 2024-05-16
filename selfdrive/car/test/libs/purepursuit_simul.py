@@ -4,7 +4,8 @@ import pymap3d
 
 def run(vEgo, position, yawRate, cte=0):
     geo_path = []
-    with open('/home/jourmain/mobinha/selfdrive/car/test/libs/path_log.txt', 'r') as file:
+    # with open('/home/jourmain/mobinha/selfdrive/car/test/libs/path_log.txt', 'r') as file:
+    with open('path_log.txt', 'r') as file:
         lines = file.readlines() 
 
     for line in lines:
@@ -41,11 +42,13 @@ def run(vEgo, position, yawRate, cte=0):
                 break
     return degrees(steering_angle), (lx, ly)  # Return the steering angle in degrees and the target point
 if __name__ == "__main__":
-    v =1.8489583333333333
-    pos = (-20.275103792422193, 27.635642078066144)
-    heading = -144.01293900697044
+    v =1.8446180555555556
+    pos = (-20.396328791938615, 27.43853350614983)
+    heading = -143.58772961264225
     target = (0.11273516760735534, -0.5387912950040479)
     print(run(v, pos, heading))
 
     # vEgo, path, position, yawRate, cte
     #v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479
+#     v : 1.8446180555555556, pos: -20.396328791938615. 27.43853350614983, heading: -143.58772961264225, target: 0.11273516760735534, -0.5387912950040479, idx: 83
+# error occurred

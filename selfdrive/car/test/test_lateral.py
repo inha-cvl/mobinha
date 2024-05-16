@@ -204,15 +204,18 @@ class IONIQ:
             cte = self.calculate_cte(self.position)
             if self.PA_enable:
                 
-                wheel_angle = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
+                wheel_angle, (lx, ly) = self.purepursuit.run(self.current_v, self.path, self.position, self.yaw, cte)
                 threshold = 449
-                self.steer = int(self.limit_steer_change(min(max(int(wheel_angle[0]*13.5), -threshold), threshold)))
-
+                self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
+                print(self.steer)
                 if abs(self.steer - self.prev_steer) > 100:
-                    print(f"v : {self.current_v}, pos: {self.position}, heading: {self.yaw}")
+                    print(f"v : {self.current_v}, pos: {self.position}, heading: {self.yaw}, target: {lx}, {ly}")
                 self.prev_steer = self.steer
                 # print(self.steer)
                 time.sleep(0.01)
+
+                ## v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479
+
     
     def update_values(self):
         with self.plot_lock:
@@ -284,7 +287,7 @@ class IONIQ:
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
-        print(self.yaw)
+        # print(self.yaw)
 
 
     def calc_idx(self, pt):

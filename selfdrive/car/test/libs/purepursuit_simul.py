@@ -1,81 +1,51 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+from math import sin, cos, atan2, radians, degrees
+import pymap3d
 
-class PurePursuit:
-    def __init__(self, lookahead_distance, waypoints):
-        self.lookahead_distance = lookahead_distance
-        self.waypoints = waypoints
-        self.current_waypoint_index = 0
+def run(vEgo, position, yawRate, cte=0):
+    geo_path = []
+    with open('/home/jourmain/mobinha/selfdrive/car/test/libs/path_log.txt', 'r') as file:
+        lines = file.readlines() 
 
-    def find_target_point(self, position):
-        for i in range(self.current_waypoint_index, len(self.waypoints)):
-            distance = np.linalg.norm(self.waypoints[i] - position)
-            if distance >= self.lookahead_distance:
-                self.current_waypoint_index = i
-                return self.waypoints[i]
-        return self.waypoints[-1]
+    for line in lines:
+        stripped_line = line.strip()
+        lat, long = stripped_line.split(',')
+        geo_path.append((float(lat), float(long)))
+    base_lat = geo_path[0][0]
+    base_lon = geo_path[0][1]
 
-    def compute_steering(self, position, heading):
-        target_point = self.find_target_point(position)
-        dx = target_point[0] - position[0]
-        dy = target_point[1] - position[1]
-        angle_to_target = np.arctan2(dy, dx)
-        angle_diff = angle_to_target - heading
-        return angle_diff, target_point
+    path = []
+    for i in range(len(geo_path)):
+        x, y, _ = pymap3d.geodetic2enu(
+        geo_path[i][0], geo_path[i][1], 0, base_lat, base_lon, 0)
+        path.append((x,y))
 
-def simulate_pure_pursuit(initial_position, initial_heading, lookahead_distance, waypoints, speed, dt):
-    pp = PurePursuit(lookahead_distance, waypoints)
-    position = np.array(initial_position)
-    heading = initial_heading
-    trajectory = [position]
+    lfd = 5 + 1 * vEgo / 3.6  
+    lfd = np.clip(lfd, 4, 60) 
+    steering_angle = 0.  
+    lx, ly = path[0] 
+    for point in path:
+        diff = np.asarray((point[0] - position[0], point[1] - position[1]))
+        rotation_matrix = np.array(
+            ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), 
+                (np.sin(-radians(yawRate)), np.cos(-radians(yawRate)))))
+        rotated_diff = rotation_matrix.dot(diff)
+        if rotated_diff[0] > 0: 
+            dis = np.linalg.norm(rotated_diff - np.array([0, 0]))
+            if dis >= lfd: 
+                theta = np.arctan2(rotated_diff[1], rotated_diff[0]) 
+                steering_angle = np.arctan2(2 * 3 * np.sin(theta), lfd)
+                # steering_angle = steering_angle + np.arctan2(0.1 * cte, vEgo) if vEgo > 6 else steering_angle
+                lx = point[0]  
+                ly = point[1]  
+                break
+    return degrees(steering_angle), (lx, ly)  # Return the steering angle in degrees and the target point
+if __name__ == "__main__":
+    v =1.8489583333333333
+    pos = (-20.275103792422193, 27.635642078066144)
+    heading = -144.01293900697044
+    target = (0.11273516760735534, -0.5387912950040479)
+    print(run(v, pos, heading))
 
-    while np.linalg.norm(position - waypoints[-1]) >= lookahead_distance:
-        steering_angle, target_point = pp.compute_steering(position, heading)
-        heading += steering_angle * dt
-        position[0] += speed * np.cos(heading) * dt
-        position[1] += speed * np.sin(heading) * dt
-        trajectory.append(position.copy())
-    
-    return np.array(trajectory), pp
-
-# Define parameters
-lookahead_distance = 2.0
-waypoints = np.array([[0, 0], [5, 5], [10, 0], [15, 5], [20, 0]])
-initial_position = [0, 0]
-initial_heading = 0.0
-speed = 1.0
-dt = 0.1
-
-# Simulate pure pursuit
-trajectory, pp = simulate_pure_pursuit(initial_position, initial_heading, lookahead_distance, waypoints, speed, dt)
-
-# Plotting and Animation
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(waypoints[:, 0], waypoints[:, 1], 'ro-', label='Waypoints')
-trajectory_line, = ax.plot([], [], 'b-', label='Trajectory')
-vehicle_dot, = ax.plot([], [], 'bo')
-target_dot, = ax.plot([], [], 'go', label='Target Point')
-ax.legend()
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_title('Pure Pursuit Path Tracking')
-ax.grid(True)
-ax.axis('equal')
-
-def init():
-    trajectory_line.set_data([], [])
-    vehicle_dot.set_data([], [])
-    target_dot.set_data([], [])
-    return trajectory_line, vehicle_dot, target_dot
-
-def update(frame):
-    position = trajectory[frame]
-    vehicle_dot.set_data(position[0], position[1])
-    target_point = pp.find_target_point(position)
-    target_dot.set_data(target_point[0], target_point[1])
-    trajectory_line.set_data(trajectory[:frame+1, 0], trajectory[:frame+1, 1])
-    return trajectory_line, vehicle_dot, target_dot
-
-ani = animation.FuncAnimation(fig, update, frames=len(trajectory), init_func=init, blit=True, interval=100)
-plt.show()
+    # vEgo, path, position, yawRate, cte
+    #v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479

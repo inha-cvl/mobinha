@@ -210,7 +210,8 @@ class IONIQ:
                 threshold = 449
                 self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
                 print(self.steer)
-                print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
+                print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
+                # print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
                 if abs(self.steer - self.prev_steer) > 100:
                     # print(f"v : {self.prev_current_v:.2f}, pos: {self.prev_position[0]:.2f}. {self.prev_position[1]:.2f}, heading: {self.prev_yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.prev_idx}")
                     # print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
@@ -224,16 +225,15 @@ class IONIQ:
                 time.sleep(0.01)
                 '''
                 v : 1.85, pos: -20.17. 27.63, heading: -144.85, target: -23.78, 22.88, idx: 82
-243
-v : 1.85, pos: -20.25. 27.57, heading: -144.26, target: -23.78, 22.88, idx: 82
-242
-v : 1.85, pos: -20.27. 27.56, heading: -143.92, target: -23.78, 22.88, idx: 82
-449
-v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
+                243
+                v : 1.85, pos: -20.25. 27.57, heading: -144.26, target: -23.78, 22.88, idx: 82
+                242
+                v : 1.85, pos: -20.27. 27.56, heading: -143.92, target: -23.78, 22.88, idx: 82
+                449
+                v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
                 '''
                 ## v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479
 
-    
     def update_values(self):
         with self.plot_lock:
             current_time = time.time() - self.run_time
@@ -297,7 +297,6 @@ v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
 
             plt.pause(0.01)
     
-    
     def novatel_cb(self, msg):
         self.x, self.y, self.z = pymap3d.geodetic2enu(
             msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
@@ -305,7 +304,6 @@ v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
         # print(self.yaw)
-
 
     def calc_idx(self, pt):
         min_dist = float('inf')

@@ -210,9 +210,10 @@ class IONIQ:
                 threshold = 449
                 self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
                 print(self.steer)
+                print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
                 if abs(self.steer - self.prev_steer) > 100:
-                    print(f"v : {self.prev_current_v:.2f}, pos: {self.prev_position[0]:.2f}. {self.prev_position[1]:.2f}, heading: {self.prev_yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.prev_idx}")
-                    print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
+                    # print(f"v : {self.prev_current_v:.2f}, pos: {self.prev_position[0]:.2f}. {self.prev_position[1]:.2f}, heading: {self.prev_yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.prev_idx}")
+                    # print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
                     exit(0)
                 self.prev_current_v = self.current_v
                 self.prev_position = self.position
@@ -221,7 +222,15 @@ class IONIQ:
                 self.prev_idx = self.idx
                 # print(self.steer)
                 time.sleep(0.01)
-
+                '''
+                v : 1.85, pos: -20.17. 27.63, heading: -144.85, target: -23.78, 22.88, idx: 82
+243
+v : 1.85, pos: -20.25. 27.57, heading: -144.26, target: -23.78, 22.88, idx: 82
+242
+v : 1.85, pos: -20.27. 27.56, heading: -143.92, target: -23.78, 22.88, idx: 82
+449
+v : 1.86, pos: -20.37. 27.49, heading: -143.47, target: 0.11, -0.54, idx: 83
+                '''
                 ## v : 1.8489583333333333, pos: (-20.275103792422193, 27.635642078066144), heading: -144.01293900697044, target: 0.11273516760735534, -0.5387912950040479
 
     

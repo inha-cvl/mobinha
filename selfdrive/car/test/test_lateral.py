@@ -104,13 +104,15 @@ class IONIQ:
         while not rospy.is_shutdown():
             self.longitudinal_cmd() # update alive count, send CAN msg
             self.longitudinal_rcv() # receive CAN msg, print out current values
-            # if self.acc_override or self.brk_override: 
-            #     self.LON_enable = 0
-            # if self.steering_overide:
-            #     self.PA_enable = 0
-            if self.acc_override or self.brk_override or self.steering_overide:
+            # lat or long
+            if self.acc_override or self.brk_override: 
+                self.LON_enable = 0
+            if self.steering_overide:
                 self.PA_enable = 0
-                self.LON_enable = 0 
+            ## for all test
+            # if self.acc_override or self.brk_override or self.steering_overide:
+            #     self.PA_enable = 0
+            #     self.LON_enable = 0 
 
     def alive_counter(self, alv_cnt):
         alv_cnt += 1
@@ -215,8 +217,9 @@ class IONIQ:
                 threshold = 449
                 self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
                 print(f"CTE:{self.cte:.2f}")
+                # print("STEER : ", self.steer)
                 # print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
-                if abs(self.steer - self.prev_steer) > 150 and self.prev_steer != 0:
+                if abs(self.steer - self.prev_steer) > 70 and self.prev_steer != 0:
                     print("error occurred")
                     print("steer", self.steer)
                     print("prev", self.prev_steer)
@@ -257,7 +260,7 @@ class IONIQ:
     
     def set_target_v(self):
         while not rospy.is_shutdown():
-            self.target_v = 50 / 3.6
+            self.target_v = 15 / 3.6
 
     def plot_velocity(self):
         plt.ion()

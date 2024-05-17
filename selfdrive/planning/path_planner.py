@@ -12,6 +12,7 @@ from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
 
+import tf2_ros
 
 class PathPlanner:
     def __init__(self, CP):
@@ -61,6 +62,13 @@ class PathPlanner:
         self.look_a_head_pos = [0,0]
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
+
+        self.tf_ego2rl = None # minchan
+        self.tf_ego2rl = None
+        self.tf_ego2rl = None
+        self.tf_ego2rl = None
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.pub_lanelet_map = rospy.Publisher('/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
         self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
@@ -208,6 +216,17 @@ class PathPlanner:
     def run(self, sm):
         CS = sm.CS
         pp = 0
+
+        try:
+            self.transform = self.tf_buffer.lookup_transform('world', 'ego_car', rospy.Time(0))
+            self.tf_ego2fl = self.tf_buffer.lookup_transform('world', 'fl', rospy.Time(0))
+            self.tf_ego2fr = self.tf_buffer.lookup_transform('world', 'fr', rospy.Time(0))
+            self.tf_ego2rl = self.tf_buffer.lookup_transform('world', 'rl', rospy.Time(0))
+            self.tf_ego2rr = self.tf_buffer.lookup_transform('world', 'rr', rospy.Time(0))
+
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            #rospy.logerr("TF error: %s", str(e))
+            pass
 
         if self.state == 'WAITING':
             time.sleep(1)
@@ -574,6 +593,15 @@ class PathPlanner:
                 pose.orientation.x = target_heading
                 # CTE
                 pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
+                a = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y))
+                b = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y))
+                c = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y))
+                d = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y))
+                print(a)
+                print(b)
+                print(c)
+                print(d)
+                # calculate_cte_wheel(a,b,c,d)
                 self.pub_goal_object.publish(pose)
 
                 # crosswalkViz

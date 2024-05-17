@@ -60,6 +60,7 @@ class MainWindow(QMainWindow, form_class):
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
         self.target_yaw = 0
         self.cte = 0
+        self.gosilsil_get_ready = False
         
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
@@ -77,6 +78,7 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
+        rospy.Subscriber('/gosilsil_call_button', Int8, self.gosilsil_button_cb)
 
         rospy.Subscriber('/hlv_signal', Int8, self.scenario_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
@@ -86,6 +88,7 @@ class MainWindow(QMainWindow, form_class):
         self.pub_state = rospy.Publisher('/mobinha/visualize/system_state', String, queue_size=1)
         self.pub_can_cmd = rospy.Publisher('/mobinha/visualize/can_cmd', Int8, queue_size=1)
         self.pub_scenario_goal = rospy.Publisher('/mobinha/visualize/scenario_goal', PoseArray, queue_size=1)
+        self.pub_gosilsil_signal = rospy.Publisher("/gosilsil_signal", Int8, queue_size=1)
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
@@ -120,6 +123,21 @@ class MainWindow(QMainWindow, form_class):
     def right_turn_simulator_toggled(self):
         right_turn_simulator = RTISimulator(self)
         right_turn_simulator.show()
+    
+    def gosilsil_button_cb(self, msg):
+
+        self.gosilsil_button = msg.data
+        if self.gosilsil_get_ready:
+            if self.gosilsil_button == 0:
+                self.status_label.setText("Waiting for Call")
+            elif self.gosilsil_button == 1 :
+                self.status_label.setText("Catch a Call!")
+            elif self.gosilsil_button == 2:
+                self.status_label.setText("Set Destination1")
+            elif self.gosilsil_button == 5:
+                self.status_label.setText("Go")
+                self.pub_gosilsil_signal.publish(Int8(4))
+
 
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
@@ -508,10 +526,12 @@ class MainWindow(QMainWindow, form_class):
             self.media_thread.planning_state = 2
 
         elif msg.data[0] == 3:
+            
             self.status_label.setText("Insert Goal")
             self.scenario1_button.setEnabled(True)
             self.scenario2_button.setEnabled(True)
             self.scenario3_button.setEnabled(True)
+            self.gosilsil_get_ready = True
             self.media_thread.planning_state = 3
 
         elif msg.data[0] == 4:

@@ -724,13 +724,21 @@ def calculate_cte(pointA, pointB, pointP):
     else:
         return 0  # Point P is on the line AB
 
-def calculate_cte_wheel(cte_fl, cte_fr, cte_rl, cte_rr):
-    dep = 0
-    if cte_fl < -1.35 or cte_rl < -1.35 or cte_fr > 1.35 or cte_rr > 1.35:
-        dep = 1
-    else:
-        dep = 0
-    return dep  # 바퀴와 경로사이 거리 1.35 초과시 1
+def lane_leaning(cte_fl, cte_fr, cte_rl, cte_rr):
+    lane_leaning = 0
+    reach = 1.4
+    if max(abs(cte_fl), abs(cte_rl), abs(cte_fr) ,abs(cte_rr)) > reach:
+        lane_leaning = 1
+
+    return lane_leaning  # 바퀴와 경로사이 거리 1.35 초과시 1
+
+def lane_departure(cte_fl, cte_fr, cte_rl, cte_rr):
+    lane_departure = 0
+    reach = 1.6
+    if max(abs(cte_fl), abs(cte_rl), abs(cte_fr) ,abs(cte_rr)) > reach:
+        lane_departure = 1
+
+    return lane_departure  # 바퀴와 경로사이 거리 1.35 초과시 1
 
 
 def estimate_theta(path, index):

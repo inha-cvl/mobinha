@@ -63,10 +63,10 @@ class PathPlanner:
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
 
-        self.tf_ego2rl = None # minchan
+        self.tf_ego2fl = None # minchan
+        self.tf_ego2fr = None
         self.tf_ego2rl = None
-        self.tf_ego2rl = None
-        self.tf_ego2rl = None
+        self.tf_ego2rr = None
         self.tf_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -593,15 +593,18 @@ class PathPlanner:
                 pose.orientation.x = target_heading
                 # CTE
                 pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
-                a = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y))
-                b = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y))
-                c = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y))
-                d = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y))
-                print(a)
-                print(b)
-                print(c)
-                print(d)
-                # calculate_cte_wheel(a,b,c,d)
+
+                fl = calculate_cte(self.local_path[self.l_idx+3], self.local_path[self.l_idx+4], (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y))
+                fr = calculate_cte(self.local_path[self.l_idx+3], self.local_path[self.l_idx+4], (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y))
+                rl = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y))
+                rr = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y))
+
+                print(f"fl is {fl}")
+                print(f"fr is {fr}")
+                print(f"rl is {rl}")
+                print(f"rr is {rr}")
+                
+                # lane_leaning(fl,fr,rl,rr)
                 self.pub_goal_object.publish(pose)
 
                 # crosswalkViz

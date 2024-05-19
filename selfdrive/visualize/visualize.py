@@ -918,10 +918,9 @@ class MediaThread(QThread):
                 url = dir_path+"/sounds/planning-tor.wav"
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
-                
+
             player.play()
-            
-                
+    
             time.sleep(1)
 
 def main():

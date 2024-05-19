@@ -4639,7 +4639,7 @@ color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 2</string>
+                   <string>CAMERA 2(NO USE)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -4662,7 +4662,7 @@ color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 3</string>
+                   <string>CAMERA 3(NO USE)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>

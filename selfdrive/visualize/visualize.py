@@ -780,16 +780,16 @@ class MainWindow(QMainWindow, form_class):
                 elif i == planning_warning:
                     self.state_screen.setText("WARNING :\nPLANNING")
                 warning_state += 1
-            
+                
         if warning_state == 0:
             self.state_screen.setStyleSheet("background-color : #008000;")
             self.state_screen.setText("ALL CONNETED")
-        # else:
-        #     if self.media_thread.planning_state == 1:
-        #         #self.media_thread.get_mode = 5
-        #         self.cmd_button_clicked(0)
-    
+        else:
+            if self.CS.cruiseState == 1: # self.media_thread.planning_state
+                self.media_thread.get_mode = 2
+            
 
+    
     def update_blinker(self, blinker):
         if blinker == 0:
             self.left_blinker.setStyleSheet(f"color : #ffffff;")
@@ -878,7 +878,6 @@ class MainWindow(QMainWindow, form_class):
             self.update_sensor_check(self.sensor_status_color)
             self.update_blinker(self.blinker)
                 
-
 def signal_handler(sig, frame):
     QApplication.quit()
     sys.exit(0)

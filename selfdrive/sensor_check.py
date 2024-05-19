@@ -240,8 +240,7 @@ def main():
         # 1 : problem / 0 : no problem
         sensor_check.data = [cam.check(), 1, 1, lidar.check(), gps.check(), ins.check(), can.check(), 
                              int(tl.check() == cluster.check() == 1), planning.check()]
-        # sensor_check.data = [cam.check(), 1, 1, 1, 1, 1, 1, 
-        #                      int(tl.check() == cluster.check() == 1), 1]
+        #sensor_check.data = [cam.check(), 1, 1, 1, 1, 1, 1, 1, 1]
         pub.publish(sensor_check)
         rospy.sleep(0.2) # 5hz
         

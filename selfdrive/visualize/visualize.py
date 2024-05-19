@@ -784,13 +784,12 @@ class MainWindow(QMainWindow, form_class):
         if warning_state == 0:
             self.state_screen.setStyleSheet("background-color : #008000;")
             self.state_screen.setText("ALL CONNETED")
-        else:
-            if self.media_thread.planning_state == 1:
-                self.media_thread.get_mode = 5
-                self.cmd_button_clicked(0)
+        # else:
+        #     if self.media_thread.planning_state == 1:
+        #         #self.media_thread.get_mode = 5
+        #         self.cmd_button_clicked(0)
     
 
-        
     def update_blinker(self, blinker):
         if blinker == 0:
             self.left_blinker.setStyleSheet(f"color : #ffffff;")
@@ -919,8 +918,9 @@ class MediaThread(QThread):
                 url = dir_path+"/sounds/planning-tor.wav"
                 media = QMediaContent(QUrl.fromLocalFile(url))
                 player.setMedia(media)
-
+                
             player.play()
+            
                 
             time.sleep(1)
 

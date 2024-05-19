@@ -520,14 +520,8 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
         print("now Rchange")
         return 2, next_id_1
     
-    # 다음링크가 로터리 진입일 때
-    if next1_curvature > 0.25 and len(lanelets[splited_local_id]['successor']) < 2 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True:
-        print(f"{splited_local_id} -> {next_id_1}")
-        print("next rotary in")
-        return 1, next_id_1
-    
-    # 다음링크가 회전차로일 때
-    elif next2_curvature > 0.5 and lanelets[next_id_2]['intersection'] == True:
+    # 다음링크가 회전차로일 때(580 예외 case 추후 수정 예정)
+    if next2_curvature > 0.5 and lanelets[next_id_2]['intersection'] == True and len(lanelets[next_id_2]['successor']) < 2 and next_id_2 != '580':
         # 다음링크가 우회전일 때
         if lanelets[next_id_2]['rightTurn'] == True:
             print(next_id_2)
@@ -538,6 +532,12 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print(next_id_2)
             print("next Lturn")
             return 1, next_id_2
+        
+    # 다음링크가 로터리 진입일 때
+    elif next1_curvature > 0.25 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True and lanelets[splited_local_id]['intersection'] == False:
+        print(f"{splited_local_id} -> {next_id_1}")
+        print("next rotary in")
+        return 1, next_id_1
         
     # 다음링크가 포켓차로일 때
     elif next1_curvature > 0.25 and len(lanelets[next_id_1]['direction']) > 0:  # len(lanelets[next_id_1]['direction']) == 1
@@ -560,14 +560,13 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
     #         return 1, next_id_2
 
     # 현재링크가 로터리, 다음링크가 로터리 진출차로일 때
-    print(f"{abs(max(lanelets["477"]['yaw']) - min(lanelets["477"]['yaw']))} and {abs(max(lanelets["377"]['yaw']) - min(lanelets["377"]['yaw']))}") 
-    if current_curvature > 0.25 and len(lanelets[splited_local_id]['successor']) > 1 and lanelets[splited_local_id]['intersection'] == True and next1_curvature < current_curvature: 
+    if current_curvature > 0.25 and len(lanelets[splited_local_id]['successor']) > 1 and lanelets[splited_local_id]['intersection'] == True and current_curvature > next1_curvature: 
         print(f"{splited_local_id} -> {next_id_1}")
         print("next rotary out")
         return 2, next_id_1
     
-    # 현재링크가 회전차로일 때
-    elif current_curvature > 0.5 and lanelets[splited_local_id]['intersection'] == True:
+    # 현재링크가 회전차로일 때(580 예외 case 추후 수정 예정)
+    elif current_curvature > 0.5 and lanelets[splited_local_id]['intersection'] == True and len(lanelets[splited_local_id]['successor']) < 2 and splited_local_id != '580':
         # 현재링크가 우회전일 때
         if lanelets[splited_local_id]['rightTurn'] == True: # and splited_local_id != '5':
             print(splited_local_id)

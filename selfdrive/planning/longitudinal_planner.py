@@ -301,5 +301,7 @@ class LongitudinalPlanner:
                     lgp = 2
             else:
                 lgp = 1
+            
+            self.target_v = 30
 
         return lgp

@@ -4,7 +4,7 @@ from std_msgs.msg import Float32, Float32MultiArray
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
-from selfdrive.control.libs.pid import PID
+from selfdrive.control.libs.pid import PID, APID
 import rospy
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.message.messaging import *
@@ -18,13 +18,15 @@ class Controller:
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
         self.pid = PID(CP.longitudinalTuning)
+        self.apid = APID()
         self.purepursuit = PurePursuit(CP)
         self.steer_ratio = CP.steerRatio
         self.target_v = 0.0
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
-        self.max_steer_change_rate = 8/20*self.steer_ratio
+        self.max_steer_change_rate = self.steer_ratio
+        # self.max_steer_change_rate = 8/20*self.steer_ratio
         self.cte = 0
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
@@ -70,25 +72,6 @@ class Controller:
 
     def lane_information_cb(self, msg):
         self.l_idx = msg.orientation.y
-
-    def calc_accel_brake_pressure(self, pid, cur_v, pitch):
-        th_a = 4 # 0~20 * gain -> 0~100 accel
-        th_b = 13 # 0~20 * gain -> 0~100 brake
-        gain = 5
-        val_data = max(-th_b, min(th_a, pid))
-        if val_data > 0.:
-            accel_val = val_data*gain
-            brake_val = 0.0
-        elif val_data <= 0.:
-            accel_val = 0.0
-            if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
-                brake_val = -val_data*gain
-            elif pitch < -2.5:
-                brake_val = 45
-            else:
-                brake_val = 32
-        
-        return accel_val, brake_val
     
     def get_init_acuator(self):
         vector3 = Vector3()
@@ -104,18 +87,20 @@ class Controller:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte)
             
-            steer = wheel_angle*self.steer_ratio
-            steer = self.limit_steer_change(steer)
+            threshold = 449
+            steer = int(min(max(int(wheel_angle*self.steer_ratio), -threshold), threshold))
 
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
 
-            pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
-            accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
+            ### the velocity is m/s, target_v and CS.vEgo is m/s
+            accel, brake = self.apid.run(self.target_v / 3.6, CS.vEgo) 
             
             vector3.x = steer
             vector3.y = accel
             vector3.z = brake
+
+            # print("from controller", steer, accel, brake)
 
         if CS.cruiseState != 1:
             vector3.x = CS.actuators.steer

@@ -10,7 +10,7 @@ class IONIQ:
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
         self.accel = 0
         self.enable = 0
-        self.brake = 0
+        self.brake = 0  
         self.temp_wheel = 0
         self.alv_cnt = 0
         self.reset = 0
@@ -39,9 +39,9 @@ class IONIQ:
         else:
             return False
         
-    def daemon(self):
+    def daemon(self): # send & receive CAN msg
         while 1:
-            self.longitudinal_cmd()
+            self.longitudinal_cmd() 
             self.longitudinal_rcv()
 
     def alive_counter(self, alv_cnt):
@@ -55,27 +55,27 @@ class IONIQ:
                    'LON_Enable': self.enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
                    'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
-        self.sender(0x210, msg)
+        self.sender(0x210, msg) # BO_ 528 Control in dbc
         self.reset = 0
 
-    def longitudinal_rcv(self):
+    def longitudinal_rcv(self): # get information for control
         data = self.bus.recv()
         if data.arbitration_id == 368:
             res = self.db.decode_message(368, data.data)
-            self.Gway_Accel_Pedal_Position = res['Gway_Accel_Pedal_Position']
-            self.Gway_GearSelDisp = res['Gway_GearSelDisp']
+            self.Gway_Accel_Pedal_Position = res['Gway_Accel_Pedal_Position'] # accel pedal gauge : (0~100) [%]
+            self.Gway_GearSelDisp = res['Gway_GearSelDisp'] # gear status from gear module (0x00 : PARK, 0x05:DRIVE, 0x06:NEUTRAL, 0x07:REVERSE) ()
         if data.arbitration_id == 608:
             res = self.db.decode_message(608, data.data)
-            self.Gway_Brake_Active = res['Gway_Brake_Active']
+            self.Gway_Brake_Active = res['Gway_Brake_Active'] # brake status from brake module (0~255)
         if data.arbitration_id == 304:
             res = self.db.decode_message(304, data.data)
-            self.Gway_Brake_Cylinder_Pressure = res['Gway_Brake_Cylinder_Pressure']
+            self.Gway_Brake_Cylinder_Pressure = res['Gway_Brake_Cylinder_Pressure'] # what?
         if data.arbitration_id == 784:
             res = self.db.decode_message(784, data.data)
             self.acc_override = res['Accel_Override']
             self.brk_override = res['Break_Override']
             self.steering_overide = res['Steering_Overide']
-            self.safety_status = res['Safety_Status']
+            self.safety_status = res['Safety_Status'] # what?
         if data.arbitration_id == 656:
             res = self.db.decode_message(656, data.data)
             self.temp_wheel = res['Gway_Steering_Angle']
@@ -90,7 +90,7 @@ class IONIQ:
                               data=msg, is_extended_id=False)
         self.bus.send(can_msg)
 
-    def controller(self):
+    def controller(self): # control by cmd line
         while 1:
             if self.enable:
                 print("ENABLE")
@@ -114,6 +114,8 @@ class IONIQ:
                 self.reset_trigger()
             elif cmd == 1000:
                 exit(0)
+            else:
+                print("\n\nWrong input !\n\n")
 
 if __name__ == '__main__':
     IONIQ = IONIQ()

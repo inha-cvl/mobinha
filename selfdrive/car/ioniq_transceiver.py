@@ -113,6 +113,8 @@ class IoniqTransceiver():
             self.blinker = {**self.blinker, 'left':1, 'right':0}
         elif msg.data == 2: # right blinker
             self.blinker = {**self.blinker, 'left':0, 'right':1}
+        elif msg.data == 3:
+            self.blinker = {**self.blinker, 'left':1, 'right':1}
         else:
             self.blinker = {**self.blinker, 'left':0, 'right':0}
     
@@ -192,6 +194,7 @@ class IoniqTransceiver():
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.PA_Enable_Status = res['PA_Enable_Status']
                 self.LON_Enable_Status = res['LON_Enable_Status']
+                print(self.PA_Enable_Status, self.LON_Enable_Status)
 
             if self.err_time is not None:
                 recovery_time = datetime.datetime.now() - self.err_time

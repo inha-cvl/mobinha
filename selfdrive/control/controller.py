@@ -4,7 +4,11 @@ from std_msgs.msg import Float32, Float32MultiArray
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
+<<<<<<< HEAD
 from selfdrive.control.libs.pid import PID, APID
+=======
+from selfdrive.control.libs.pid import PID, Apid
+>>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
 import rospy
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.message.messaging import *
@@ -18,15 +22,23 @@ class Controller:
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
         self.pid = PID(CP.longitudinalTuning)
+<<<<<<< HEAD
         self.apid = APID()
+=======
+        # self.pid = Apid(CP.longitudinalTuning)
+>>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
         self.purepursuit = PurePursuit(CP)
         self.steer_ratio = CP.steerRatio
         self.target_v = 0.0
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
+<<<<<<< HEAD
         self.max_steer_change_rate = self.steer_ratio
         # self.max_steer_change_rate = 8/20*self.steer_ratio
+=======
+        # self.max_steer_change_rate = 12/20*self.steer_ratio
+>>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
         self.cte = 0
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
@@ -47,7 +59,7 @@ class Controller:
 
     def limit_steer_change(self, current_steer):
         steer_change = current_steer - self.prev_steer
-        steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
+        # steer_change = np.clip(steer_change, -self.max_steer_change_rate, self.max_steer_change_rate)
         limited_steer = self.prev_steer + steer_change
         self.prev_steer = limited_steer
         return limited_steer
@@ -103,7 +115,9 @@ class Controller:
             # print("from controller", steer, accel, brake)
 
         if CS.cruiseState != 1:
-            vector3.x = CS.actuators.steer
+            ### for PID test
+            # vector3.x = CS.actuators.steer
+            vector3.x = 0
             vector3.y = CS.actuators.accel
             vector3.z = CS.actuators.brake
 

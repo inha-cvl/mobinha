@@ -230,7 +230,7 @@ def main():
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 20)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)
-    tl = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 10)
+    tl = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 1)
     cluster = ClusterCheck('/mobinha/perception/lidar/track_box', BoundingBoxArray, 3)
     
     sensor_check = Int16MultiArray()

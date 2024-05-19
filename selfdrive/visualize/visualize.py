@@ -191,14 +191,14 @@ class MainWindow(QMainWindow, form_class):
 
     # TO-DO
     def blinker_cb(self, msg):
-        if msg.data == 0:
+        if msg.data == 0: # no
             self.blinker = 0
-        elif msg.data == 1:
+        elif msg.data == 1: # left
             self.blinker = 1
-        elif msg.data == 2:
+        elif msg.data == 2: # right
             self.blinker = 2
-        else:
-            pass
+        elif msg.data == 3: # both
+            self.blinker = 2
 
     def sensor_check_cb(self, msg):     
         self.sensor_status_color.clear()
@@ -251,7 +251,7 @@ class MainWindow(QMainWindow, form_class):
 
     def reset_rviz(self):
         self.lidar_layout.itemAt(0).widget().reset()
-        self.rviz_layout.itemAt(0).widget().reset()
+        #self.rviz_layout.itemAt(0).widget().reset()
         self.rviz_layout_2.itemAt(0).widget().reset() # mingu
 
     def connection_setting(self):
@@ -333,8 +333,8 @@ class MainWindow(QMainWindow, form_class):
             rviz_frame.load(config)
             manager = rviz_frame.getManager()
             self.map_view_manager = manager.getViewManager()
-            self.clear_layout(self.rviz_layout)
-            self.rviz_layout.addWidget(rviz_frame)
+            #self.clear_layout(self.rviz_layout)
+            #self.rviz_layout.addWidget(rviz_frame)
         
         elif type == 'lidar':
             reader.readFile(config, dir_path+"/forms/lidar.rviz")
@@ -784,17 +784,22 @@ class MainWindow(QMainWindow, form_class):
         if warning_state == 0:
             self.state_screen.setStyleSheet("background-color : #008000;")
             self.state_screen.setText("ALL CONNETED")
-            self.media_thread.get_mode = 1
         else:
-            self.media_thread.get_mode = 5
+            if self.media_thread.planning_state == 1:
+                self.media_thread.get_mode = 5
+                self.cmd_button_clicked(0)
+    
+
         
     def update_blinker(self, blinker):
         if blinker == 0:
             self.left_blinker.setStyleSheet(f"color : #ffffff;")
             self.right_blinker.setStyleSheet(f"color : #ffffff;")
         elif blinker == 1:
-            self.right_blinker.setStyleSheet(f"color : #df1354;")
+            self.left_blinker.setStyleSheet(f"color : #df1354;")
         elif blinker == 2:
+            self.right_blinker.setStyleSheet(f"color : #df1354;")
+        elif blinker == 3:
             self.left_blinker.setStyleSheet(f"color : #df1354;")
             self.right_blinker.setStyleSheet(f"color : #df1354;")
         else:

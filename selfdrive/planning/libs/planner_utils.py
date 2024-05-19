@@ -485,15 +485,11 @@ blinker_minimum_duration = 2  # 최소 블링커 지속 시간(s)
 blinker_status = 0  # 현재 블링커 상태 (0: 꺼짐, 1: 좌, 2: 우)
 blinker_target_id = None
 
-<<<<<<< HEAD
 # songdo + KCity ver.
-=======
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id):#, local_id, change_target_id, change_lane_flag): 
     #TODO: CHECK FLAG    
     global blinker_start_time, blinker_status, blinker_target_id
  
-<<<<<<< HEAD
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+40, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 10m ~ 20m
     ld = int(min(idx+120, max(idx+(a*vEgo+b)*M_TO_IDX, idx+30))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
@@ -608,8 +604,6 @@ def get_blinker_origin(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, split
     #TODO: CHECK FLAG    
     global blinker_start_time, blinker_status, blinker_target_id
  
-=======
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
     ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
@@ -638,45 +632,28 @@ def get_blinker_origin(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, split
     
     # 다음링크가 회전차로일 때
     elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.5 and lanelets[next_id_2]['intersection'] == True:
-<<<<<<< HEAD
         # 다음링크가 우회전일 때
-=======
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
         if lanelets[next_id_2]['rightTurn'] == True:
             print(next_id_2)
             print("next Rturn")
             return 2, next_id_2
-<<<<<<< HEAD
         # 다음링크가 좌회전일 때
-=======
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
         else:
             print(next_id_2)
             print("next Lturn")
             return 1, next_id_2
         
     # 다음링크가 포켓차로일 때
-<<<<<<< HEAD
     elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.25 and lanelets[next_id_1]['direction'] != None:
         # 다음링크가 좌포켓일 때
         if lanelets[next_id_1]['direction'] == 'R':
             print(next_id_1)
             print("next Rpocket")
-=======
-    elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.25 and lanelets[splited_local_id]['direction'] != None:
-        if lanelets[next_id_1]['direction'] == 'L':
-            print(next_id_1)
-            print("next Lpocket")
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
             return 1, next_id_1
         else:  # lanelets[next_id_1]['direction'] == 'R'
             print(next_id_1)
             print("next Rpocket")
-<<<<<<< HEAD
             return 2, next_id_1
-=======
-            return 2, next_id_2
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
 
     # 다음링크가 yaw값이 많이 변할 때
     # elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.1:

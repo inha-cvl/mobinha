@@ -44,7 +44,6 @@ class SimulatorTransceiver:
         self.gear = 0
 
         #self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
-<<<<<<< HEAD
         # ans bakery
         # self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
         #kcity highway 
@@ -55,19 +54,6 @@ class SimulatorTransceiver:
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         #right turn course
         # self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
-=======
-
-        # ans bakery
-        #self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
-        # kcity highway 
-        #self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
-        # kcity right turn urban
-        #self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
-        # songdo-site
-        #self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
-        # right turn course
-        self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
->>>>>>> d23bf83cd1d9092623318c586ce27e717dea87a5
         self.roll = 0.0
         self.pitch = 0.0
 

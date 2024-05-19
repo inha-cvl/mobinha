@@ -225,12 +225,12 @@ def main():
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video0/compressed', CompressedImage, 20)
-    lidar = SensorCheck('/cloud_segmentation/undistortioncloud', PointCloud2, 5)
+    lidar = SensorCheck('/cloud_segmentation/nonground', PointCloud2, 5)
     gps = GPSCheck('/novatel/oem7/bestgnsspos', BESTGNSSPOS, 7, 1.0, 1.0)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 20)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)
-    tl = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 10)
+    tl = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 1)
     cluster = ClusterCheck('/mobinha/perception/lidar/track_box', BoundingBoxArray, 3)
     
     sensor_check = Int16MultiArray()
@@ -240,8 +240,7 @@ def main():
         # 1 : problem / 0 : no problem
         sensor_check.data = [cam.check(), 1, 1, lidar.check(), gps.check(), ins.check(), can.check(), 
                              int(tl.check() == cluster.check() == 1), planning.check()]
-        # sensor_check.data = [cam.check(), 1, 1, 1, 1, 1, 1, 
-        #                      int(tl.check() == cluster.check() == 1), 1]
+        #sensor_check.data = [cam.check(), 1, 1, 1, 1, 1, 1, 1, 1]
         pub.publish(sensor_check)
         rospy.sleep(0.2) # 5hz
         

@@ -47,7 +47,7 @@ class SimulatorTransceiver:
         # ans bakery
         # self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
         #kcity highway 
-        # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
+        #self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
         #kcity right turn urban
         self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
         #songdo-site

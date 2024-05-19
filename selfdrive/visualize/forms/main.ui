@@ -183,17 +183,17 @@ border-color: rgb(71,181,255);</string>
         </property>
         <item>
          <property name="text">
+          <string>KCity</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>songdo</string>
          </property>
         </item>
         <item>
          <property name="text">
           <string>songdo-site</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>KCity</string>
          </property>
         </item>
         <item>
@@ -4639,7 +4639,7 @@ color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 2</string>
+                   <string>CAMERA 2(NO USE)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -4662,7 +4662,7 @@ color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 3</string>
+                   <string>CAMERA 3(NO USE)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>

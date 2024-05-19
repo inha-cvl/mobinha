@@ -93,30 +93,31 @@ class NGII2LANELET:
 
         a1_path = '%s/A1_NODE.shp'%(folder_path)
         a2_path = '%s/A2_LINK.shp'%(folder_path)
-        # a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
+        a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
         # a4_path = '%s/A4_SUBSIDIARYSECTION.shp'%(folder_path)
 
-        # b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
+        b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
         b2_path = '%s/B2_SURFACELINEMARK.shp'%(folder_path)
         b3_path = '%s/B3_SURFACEMARK.shp'%(folder_path)
 
         c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
-        # c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
-        # c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
-        # c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
+        c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
+        c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
+        c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
 
         ngii = NGIIParser(
             a1_path,
             a2_path,
-            # a3_path,
+            a3_path,
             # a4_path,
-            # b1_path, 
+            b1_path, 
             b2_path, 
             b3_path,
-            c1_path)
-            # c3_path,
-            # c4_path,
-            # c6_path)
+            c1_path,
+            c3_path,
+            c4_path,
+            c6_path
+            )
         self.base_lla = base_lla
         self.is_utm = is_utm
         self.generate_lanelet(ngii, precision, self.base_lla, self.is_utm)

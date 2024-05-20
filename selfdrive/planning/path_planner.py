@@ -15,6 +15,7 @@ from selfdrive.visualize.rviz_utils import *
 
 class PathPlanner:
     def __init__(self, CP):
+        self.current_blinker_state = (0, None)
         self.state = 'WAITING'
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
@@ -372,8 +373,10 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id) 
+
+                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
                                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
+                self.current_blinker_state = (blinker, target_id)
 
                 if blinker != 0 and self.blinker_target_id == None:
                     self.blinker_target_id = target_id

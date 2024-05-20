@@ -335,6 +335,6 @@ class LongitudinalPlanner:
             else:
                 lgp = 1
             
-            self.target_v = 50
+            self.target_v = 20
 
         return lgp

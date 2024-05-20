@@ -787,9 +787,11 @@ class MainWindow(QMainWindow, form_class):
         else:
             if self.CS.cruiseState == 1: # self.media_thread.planning_state
                 self.media_thread.get_mode = 2
+                self.cmd_button_clicked(0)
+                #self.CS.cruiseState = 2
+                #self.check_mode(2)
             
 
-    
     def update_blinker(self, blinker):
         if blinker == 0:
             self.left_blinker.setStyleSheet(f"color : #ffffff;")

@@ -32,7 +32,7 @@ class IoniqTransceiver():
         self.pub_gateway_time = rospy.Publisher('/mobinha/car/gateway_time', Float64, queue_size=1)
         self.pub_rpm = rospy.Publisher('/mobinha/car/rpm', Float32, queue_size=1)
         rospy.Subscriber('/mobinha/planning/blinker', Int8, self.blinker_cb)
-        rospy.Subscriber('/sensor_check', Int16MultiArray, self.sensor_check_cb)
+        #rospy.Subscriber('/sensor_check', Int16MultiArray, self.sensor_check_cb)
         #rospy.Subscriber( '/mobinha/control/target_actuators', Vector3, self.target_actuators_cb)
 
         #gatway info / 0: PA_Enable, 1: LON_Enable, 2: Accel_Override, 3: Break_Override, 4: Steering_Overide, 5: Reset_Flag
@@ -53,7 +53,7 @@ class IoniqTransceiver():
         self.PA_Enable_Status = 0
         self.LON_Enable_Status = 0
         self.prev_control_state = self.control_state.copy()
-        self.sensor_state_list = [0, 0, 0, 0, 0, 0, 0]
+        #self.sensor_state_list = [0, 0, 0, 0, 0, 0, 0]
 
         rospy.on_shutdown(self.cleanup)
 
@@ -80,8 +80,8 @@ class IoniqTransceiver():
             state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             self.reset_trigger()
         
-        if 0 in self.sensor_state_list:
-            state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
+        # if 0 in self.sensor_state_list:
+        #     state = {**state, 'steer_en': 0x0, 'acc_en': 0x0}
             # self.reset_trigger()
         
         self.control_state = state 
@@ -103,8 +103,8 @@ class IoniqTransceiver():
                 self.last_mode_2_time = current_time  # 현재 시간을 저장
                 self.force_mode_2 = True  # mode를 강제로 2로 유지
             
-        if 0 in self.sensor_state_list:
-            self.mode = 3
+        # if 0 in self.sensor_state_list:
+        #     self.mode = 3
 
         self.pub_mode.publish(Int8(self.mode))
 

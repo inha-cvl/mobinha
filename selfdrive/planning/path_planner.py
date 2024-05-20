@@ -293,7 +293,7 @@ class PathPlanner:
                     self.head_lane_ids = self.head_lane_ids[1:]
 
             if self.local_path is None or (self.local_path is not None and (len(self.local_path)-self.l_idx < self.l_nitt) and len(self.erase_global_path) > self.l_cut):
-                print(f'Here is local {self.local_path}')
+                #print(f'Here is local {self.local_path}')
                 eg_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))
                 local_path = []
                 local_id = []
@@ -336,7 +336,7 @@ class PathPlanner:
                 self.l_idx = self.l_tail
 
             if self.local_path is not None:
-                print(f'Here is Not local {self.local_path}')
+                #print(f'Here is Not local {self.local_path}')
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
                 if abs(l_idx-self.l_idx) <= 100:

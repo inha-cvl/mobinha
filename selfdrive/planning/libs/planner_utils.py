@@ -520,10 +520,10 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
         print("now Rchange")
         return 2, next_id_1
     
-    # 다음링크가 회전차로일 때(580 예외 case 추후 수정 예정)
+    # 다음링크가 회전차로일 때(580 예외 case, 우회전 노면표시 없는 곳 추후 수정 예정)
     if next2_curvature > 0.5 and lanelets[next_id_2]['intersection'] == True and len(lanelets[next_id_2]['successor']) < 2 and next_id_2 != '580':
         # 다음링크가 우회전일 때
-        if lanelets[next_id_2]['rightTurn'] == True:
+        if lanelets[next_id_2]['rightTurn'] == True or next_id_2 == '473' or next_id_2 == '605' or next_id_2 == '615':
             print(next_id_2)
             print("next Rturn")
             return 2, next_id_2
@@ -532,7 +532,12 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print(next_id_2)
             print("next Lturn")
             return 1, next_id_2
-        
+    
+    elif next_id_2 == '614':
+        print(next_id_2)
+        print("next *Rturn")
+        return 2, next_id_2
+    
     # 다음링크가 로터리 진입일 때
     elif next1_curvature > 0.25 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True and lanelets[splited_local_id]['intersection'] == False:
         print(f"{splited_local_id} -> {next_id_1}")
@@ -542,7 +547,7 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
     # 다음링크가 포켓차로일 때
     elif next1_curvature > 0.25 and len(lanelets[next_id_1]['direction']) > 0:  # len(lanelets[next_id_1]['direction']) == 1
         # 다음링크가 좌포켓일 때
-        if lanelets[next_id_1]['direction'] == 'L':
+        if lanelets[next_id_1]['direction'] == 'L' or next_id_1 == '411':
             print(next_id_1)
             print("next Rpocket")
             return 1, next_id_1
@@ -565,10 +570,10 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
         print("next rotary out")
         return 2, next_id_1
     
-    # 현재링크가 회전차로일 때(580 예외 case 추후 수정 예정)
+    # 현재링크가 회전차로일 때(580 예외 case, 우회전 노면표시 없는 곳 추후 수정 예정)
     elif current_curvature > 0.5 and lanelets[splited_local_id]['intersection'] == True and len(lanelets[splited_local_id]['successor']) < 2 and splited_local_id != '580':
         # 현재링크가 우회전일 때
-        if lanelets[splited_local_id]['rightTurn'] == True: # and splited_local_id != '5':
+        if lanelets[splited_local_id]['rightTurn'] == True or splited_local_id == '473' or splited_local_id == '605' or splited_local_id == '615':
             print(splited_local_id)
             print("now Rturn")
             return 2, next_id_2
@@ -577,11 +582,16 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print(splited_local_id)
             print("now Lturn")
             return 1, next_id_2
+        
+    elif splited_local_id == '614':
+        print(splited_local_id)
+        print("now *Rturn")
+        return 2, next_id_2
     
-    # 현재링크가 포켓차로일 때
+    # 현재링크가 포켓차로일 때('411'노면표시 없음)
     elif current_curvature > 0.25 and len(lanelets[splited_local_id]['direction']) > 0:
         # 현재링크가 좌포켓일 때
-        if lanelets[splited_local_id]['direction'] == 'L': # and splited_local_id != '5':
+        if lanelets[splited_local_id]['direction'] == 'L' or splited_local_id == '411':
             print(splited_local_id)
             print("now Lpocket")
             return 1, next_id_1
@@ -590,6 +600,12 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print(splited_local_id)
             print("now Rpocket")
             return 2, next_id_1
+    
+    # 현재링크가 좌로합류차로일 때(추후 알고리즘 추가 예정)
+    elif splited_local_id == '90':
+        print(splited_local_id)
+        print("now Lmerge")
+        return 1, next_id_1
 
     # if change_lane_flag:  # if flag is True, keep the blinker on
     #     if change_target_id in my_neighbor_id[0]:

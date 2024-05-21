@@ -102,6 +102,7 @@ class LongitudinalPlanner:
 
     def right_turn_situation_cb(self, msg):
         self.right_turn_situation = msg.data
+        
     def right_turn_situation_real_cb(self, msg):
         self.right_turn_situation_real = msg.data
 
@@ -140,8 +141,10 @@ class LongitudinalPlanner:
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
+    
     def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=4): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
+    
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(4, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 

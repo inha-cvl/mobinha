@@ -50,6 +50,8 @@ class SimulatorTransceiver:
         #self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
         #kcity right turn urban
         # self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
+        # kcity-xingyou
+        self.ego = Vehicle(351.149, 1096.453, math.radians(63), 0.0, 2.65)
         #songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         #right turn course
@@ -81,7 +83,7 @@ class SimulatorTransceiver:
         mode = 0
         if canCmd.enable:
             mode = 1
-        self.pub_mode.publish(Int8(mode))
+        self.pub_mode.publish(Int8(mode)) # logging
 
     def run(self, CM):
         CC = CM.CC
@@ -111,6 +113,7 @@ class SimulatorTransceiver:
         vector3.y = CC.actuators.accel
         vector3.z = CC.actuators.brake
         self.pub_ego_actuators.publish(vector3)
-        
+
+        # logging
         self.pub_novatel.publish(inspva) # if ros bag is used, not publish inspva
         self.pub_velocity.publish(Float32(v))

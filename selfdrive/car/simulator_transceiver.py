@@ -56,7 +56,11 @@ class SimulatorTransceiver:
         # right turn course
         #self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
         # Kcity AEP
-        self.ego = Vehicle(444.595, 1168.555, 1.040, 0.0, 2.65)
+        # self.ego = Vehicle(444.595, 1168.555, 1.040, 0.0, 2.65)
+
+        # Kcity license        
+        self.ego = Vehicle(400.464, 1190.089, 1.040, 0.0, 2.65)
+        
         self.roll = 0.0
         self.pitch = 0.0
 

@@ -10,6 +10,7 @@ from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 from shapely.geometry import LineString, Polygon
 from scipy.interpolate import splprep, splev
+from shapely.ops import unary_union
 
 def convert_2_360(angle):
     if angle >= 0 and angle <= math.pi:
@@ -93,7 +94,7 @@ class NGII2LANELET:
 
         a1_path = '%s/A1_NODE.shp'%(folder_path)
         a2_path = '%s/A2_LINK.shp'%(folder_path)
-        # a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
+        a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
         # a4_path = '%s/A4_SUBSIDIARYSECTION.shp'%(folder_path)
 
         # b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
@@ -108,7 +109,7 @@ class NGII2LANELET:
         ngii = NGIIParser(
             a1_path,
             a2_path,
-            # a3_path,
+            a3_path,
             # a4_path,
             # b1_path, 
             b2_path, 
@@ -199,6 +200,9 @@ class NGII2LANELET:
             lanelets[new_id]['leftType'] = []
             lanelets[new_id]['rightBound'] = []
             lanelets[new_id]['rightType'] = []
+            
+            ## school zone
+            lanelets[new_id]['schoolZone'] = []
             
             # lanelets[new_id]['ROI'] = []
 
@@ -310,6 +314,55 @@ class NGII2LANELET:
                     if intersects:
                         lanelets[new_id]['crosswalkID'].append(b3_surfacemark.ID)
         
+        
+        # for School Zone
+        schoolzone_list = []
+        for a3_drivewaysection in ngii.a3_drivewaysection:
+            polygon = []
+            for tx, ty, alt in a3_drivewaysection.geometry.exterior.coords:
+                x, y, z = self.to_cartesian(tx, ty, alt)
+                polygon.append((x, y))
+    
+            #check cross a2 link and a3 drivesection
+            polygon = Polygon(polygon)
+            schoolzone_list.append(polygon)
+            
+        schoolzone_list = [poly.buffer(0.01) for poly in schoolzone_list]
+        schoolzone_merged = unary_union(schoolzone_list)
+        schoolzone_merged_polygon = []
+        
+        for scx,scy in schoolzone_merged.exterior.coords:
+            schoolzone_merged_polygon.append((scx,scy))
+        schoolzone_merged_exterior = LineString(schoolzone_merged_polygon)
+        
+        
+        for a2_link in tqdm(ngii.a2_link, desc="link2schoolzone_id_matching: ", total=len(ngii.a2_link)):
+            if a2_link.Length == 0:
+                continue
+
+            ori_id = a2_link.ID
+            new_id = ori2new[ori_id]
+
+            link = LineString(lanelets[new_id]['waypoints'])
+            
+            # 겹치는 곳의 좌표
+            intersection = link.intersection(schoolzone_merged_exterior)
+            
+            # 겹치는지 여부
+            intersects = link.intersects(schoolzone_merged_exterior)
+            
+            
+            if intersects:
+                lanelets[new_id]['schoolZone'].append([intersection.x, intersection.y])
+                
+                print("a2_link ID : {}".format(ori_id))
+                print("intersection : {}".format(intersection))
+                
+    
+        
+        
+        
+                
         for a2_link in tqdm(ngii.a2_link, desc="link2stopline_id_matching: ", total=len(ngii.a2_link)):
             def extend_line(coordinates, extension_meters=3):
                 """

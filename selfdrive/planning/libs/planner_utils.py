@@ -821,6 +821,43 @@ def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
     for s_id in lanelets[lanelet_id]['crosswalkID']:
         polygon_points.extend(surfacemarks[s_id])
     return crosswalk_ids, polygon_points
+
+
+## head lane id는 걍 다 들어가 있음.
+def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_idx):
+    schoolzone_points = []
+
+    print("my link number is : ", nowID)
+    ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
+    further_lane_ids = head_lane_ids[:]
+    if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
+    print(further_lane_ids)
+    for further_link, lanelet_id in enumerate(further_lane_ids):
+        if len(lanelets[lanelet_id]['schoolZone']) > 0 and further_link < 5:
+            for point in lanelets[lanelet_id]['schoolZone']:
+                idx = local_point.query((point[0], point[1]), 1)[1]
+                if idx > present_idx:
+                    schoolzone_points.append((idx, point[0], point[1]))
+    
+    
+    schoolzone_info = {}
+    schoolzone_info['points'] = schoolzone_points
+    if len(schoolzone_points) > 1:
+        schoolzone_info['state'] = "ready"
+        schoolzone_info['remaining distance'] = 0.5*(min(schoolzone_points[0][0], schoolzone_points[1][0]) - present_idx)
+    elif len(schoolzone_points) == 1:
+        schoolzone_info['state'] = 'in'
+        schoolzone_info['remaining distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
+    elif len(schoolzone_points) == 0:
+        schoolzone_info['state'] = 'out'
+        schoolzone_info['remaining distance'] = None
+    print("============")
+    print(schoolzone_info)
+    print("============")
+    return schoolzone_points
+
+
+
 # import rospy
 # from visualization_msgs.msg import Marker
 

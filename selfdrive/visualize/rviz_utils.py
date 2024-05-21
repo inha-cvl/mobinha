@@ -114,6 +114,17 @@ def CrosswalkViz(waypoints):
         marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
     return marker
 
+def schoolzoneViz(points):
+    array = MarkerArray()
+    for i in range(len(points)):
+        x = round(points[i][1],1)
+        y = round(points[i][2],1)
+        color = [1.0, .0, .0, 1.0]
+        marker = Sphere('schoolzone', i, (x,y), 2.1, color)
+        marker.lifetime = rospy.Duration(1)
+        array.markers.append(marker)
+    return array
+
 def StopLineViz(waypoints):
     marker = Line('stopline', 999, 0.4, (1.0, 1.0, 0.0, 1.0))
     for _, pt in enumerate(waypoints):

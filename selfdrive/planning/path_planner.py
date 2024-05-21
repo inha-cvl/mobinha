@@ -81,6 +81,7 @@ class PathPlanner:
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
+        self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -599,6 +600,16 @@ class PathPlanner:
                 crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
                 crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
+
+                # schoolzone_viz
+                schoolzone_points = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx)
+                print(f"my node number is : {self.l_idx}") 
+                print("my position is : ", CS.position.x, CS.position.y)
+                
+                
+                print(schoolzone_points)
+                schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
+                self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
 
                 if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
                     self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))

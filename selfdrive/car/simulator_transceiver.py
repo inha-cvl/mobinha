@@ -49,11 +49,13 @@ class SimulatorTransceiver:
         #kcity highway 
         #self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
         #kcity right turn urban
-        self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
+        # self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
         #songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         #right turn course
         # self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
+        # # k-city-xingyou
+        self.ego = Vehicle(351.149, 1096.453, math.radians(90), 0.0, 2.65)
         self.roll = 0.0
         self.pitch = 0.0
 

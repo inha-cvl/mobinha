@@ -1,4 +1,6 @@
 import math
+from collections import deque
+from math import sqrt
 
 import heapq as hq
 import numpy as np
@@ -12,6 +14,8 @@ from selfdrive.visualize.rviz_utils import *
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
+
+
 
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
@@ -219,7 +223,7 @@ def smooth_compute_yaw_and_curvature(points, precision):
     for ds in np.arange(0.0, itp.s[-1], precision):
         yaw.append(itp.calc_yaw(ds))
         k.append(itp.calc_curvature(ds))
-        
+    
     return smoothed_path, yaw, k
 
 def ref_interpolate(points, precision):
@@ -432,11 +436,12 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
     return return_v * KPH_TO_MPS
 
-def calculate_v_by_curvature(idx, lanelets, ids, ref_v, min_v, vEgo, M_TO_IDX): # info, kph, kph, mps
 
-    a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
-    ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
+
+
+def calculate_v_by_curvature(idx, lanelets, ids, ref_v, min_v, vEgo, M_TO_IDX, queue, local_path): # info, kph, kph, mps
+
+    lf = int( idx+12) # 5m ~ 65m
     # left_turn_lane = [1, 2, 91]
 
     if lf < 0:
@@ -445,22 +450,15 @@ def calculate_v_by_curvature(idx, lanelets, ids, ref_v, min_v, vEgo, M_TO_IDX): 
         lf = len(ids)-1
     next_id_1 = ids[lf].split('_')[0]
 
-    if ld < 0:
-        ld = 0
-    elif ld > len(ids)-1:
-        ld = len(ids)-1
-    next_id_2 = ids[ld].split('_')[0]
-
-    a_little_far_yaw = lanelets[next_id_1]['yaw']
-    far_yaw = lanelets[next_id_2]['yaw']
-    yaw_variation = max(a_little_far_yaw) -min(a_little_far_yaw)
-    #lane information -> [1]:forward direction, [3]:curvature
-    print(f'yaw variation is {yaw_variation}')
-    if yaw_variation > 0.5:
-        target_v = 15 # min_v  #### 15km/h is proofed in k-city
+    yaw_temp = lanelets[next_id_1]['yaw'][:30] if len(lanelets[next_id_1]['yaw']) >30 else lanelets[next_id_1]['yaw']
+    yaw_variation = max(yaw_temp) - min(yaw_temp)
+    print(f'this is curve {yaw_variation}')
+    if yaw_variation > 0.27:
+        target_v = 15  # min_v  #### 15km/h is proofed in k-city
     else:
         target_v = ref_v 
-    return  target_v   ## -> km/h
+    
+    return target_v   ## -> km/h
 
 
 def get_a_b_for_curv(min, ignore):
@@ -948,3 +946,18 @@ def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
 
     return False  # Return False if no obstacle is inside any polygon
             
+
+
+
+class FixedSizeQueue:
+    def __init__(self, max_size):
+        self.queue = deque(maxlen=max_size)
+        self.max_size = max_size
+    
+    def add(self, item):
+        if len(self.queue) >= self.max_size:
+            self.queue.popleft()  # Remove the oldest item
+        self.queue.append(item)
+    
+    def get_queue(self):
+        return list(self.queue)

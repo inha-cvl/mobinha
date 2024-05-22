@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from selfdrive.visualize.rviz_utils import *
 import tf
+import tf2_ros
 import math
 import rospy
 from visualization_msgs.msg import Marker
@@ -27,6 +28,36 @@ class Localizer:
             'ego_car',
             'world'
         )
+        # INS부터 각 바퀴까지의 거리 정의
+        self.br.sendTransform(
+            (1.91, 0.94, 0),
+            (0,0,0,1),
+            rospy.Time.now(),
+            'fl',
+            'ego_car'
+        )
+        self.br.sendTransform(
+            (1.91, -0.94, 0),
+            (0,0,0,1),
+            rospy.Time.now(),
+            'fr',
+            'ego_car'
+        )
+        self.br.sendTransform(
+            (0, 0.94, 0),
+            (0,0,0,1),
+            rospy.Time.now(),
+            'rl',
+            'ego_car'
+        )
+        self.br.sendTransform(
+            (0, -0.94, 0),
+            (0,0,0,1),
+            rospy.Time.now(),
+            'rr',
+            'ego_car'
+        )
+        
         self.br.sendTransform((-0.5, 0, 1.2),(0, 0, 0, 1), rospy.Time.now(), 'Pandar64', 'ego_car')
 
         self.pub_ego_car.publish(self.ego_car)

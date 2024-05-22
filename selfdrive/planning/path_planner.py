@@ -215,6 +215,7 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
+                    
     def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
         result = 0
         lean_reach = 1.4

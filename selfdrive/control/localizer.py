@@ -28,7 +28,6 @@ class Localizer:
             'ego_car',
             'world'
         )
-<<<<<<< HEAD
         # INS부터 각 바퀴까지의 거리 정의
         self.br.sendTransform(
             (1.91, 0.94, 0),
@@ -59,9 +58,6 @@ class Localizer:
             'ego_car'
         )
         
-=======
-
->>>>>>> fb7e97d0de18cce2d4ef599c70be054349cd8825
         self.br.sendTransform((-0.5, 0, 1.2),(0, 0, 0, 1), rospy.Time.now(), 'Pandar64', 'ego_car')
 
         self.pub_ego_car.publish(self.ego_car)

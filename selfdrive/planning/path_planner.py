@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String
+from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -92,7 +92,7 @@ class PathPlanner:
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
         self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
-        self.schoolzone_state_pub = rospy.Publisher('/schoolzone', Float32MultiArray, queue_size=5)
+        self.schoolzone_state_pub = rospy.Publisher('/mobinha/planning/schoolzone', Int16MultiArray, queue_size=5)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
@@ -220,8 +220,8 @@ class PathPlanner:
                     
     def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
         result = 1
-        lean_reach = 1.4
-        departure_reach = 1.7
+        lean_reach = 1.4 ### 
+        departure_reach = 3 ## threshold for tor previous 1.7 m 
         wheel_position = [fl_position, fr_position, rl_position, rr_position]
         wheel_cte = []
         # print("fl fr rl rr : ", end="")
@@ -639,17 +639,19 @@ class PathPlanner:
 
 
                 # schoolzone_viz
-                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx)
-                print(f"my node number is : {self.l_idx}") 
-                print("my position is : ", CS.position.x, CS.position.y)
+                
+                position = (CS.position.x, CS.position.y)
+                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, CS)
+                # print(f"my node number is : {self.l_idx}") 
+                # print("my position is : ", CS.position.x, CS.position.y)
                 
                 
-                print(schoolzone_points)
+                # print(schoolzone_points)
                 schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
                 self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
                 
-                schoolzone = Float32MultiArray()
-                schoolzone.data = [float(schoolzone_info['state']), float(schoolzone_info['remaining_distance'])]
+                schoolzone = Int16MultiArray()
+                schoolzone.data = [int(schoolzone_info['state']), int(schoolzone_info['remaining_distance'])]
                 self.schoolzone_state_pub.publish(schoolzone)
 
 

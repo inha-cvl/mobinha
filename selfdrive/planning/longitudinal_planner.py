@@ -2,12 +2,15 @@ import rospy
 import math
 import time
 
-from std_msgs.msg import Float32, Int8MultiArray, Int8
+from std_msgs.msg import Float32, Int8MultiArray, Int8, String
 from geometry_msgs.msg import PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
 from selfdrive.planning.libs.planner_utils import *
+from selfdrive.planning.libs.velocity_planner import VELOCITY_PLANNER
 from selfdrive.visualize.rviz_utils import *
+
+from selfdrive.planning.libs.map import LaneletMap, TileMap
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -15,6 +18,9 @@ HZ = 10
 
 class LongitudinalPlanner:
     def __init__(self, CP):
+        self.lmap = LaneletMap(CP.mapParam.path)
+        self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+
         self.lidar_obstacle = None
         self.traffic_light_obstacle = None
         self.can_go_check_tick = -1
@@ -22,6 +28,7 @@ class LongitudinalPlanner:
         self.can_go_timer_start = None
         self.can_go_stored = False
         self.lane_information = None
+        self.local_id = None
         self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
         self.IDX_TO_M = CP.mapParam.precision
@@ -32,6 +39,11 @@ class LongitudinalPlanner:
         self.target_v = 0
         self.st_param = CP.stParam._asdict()
         self.sl_param = CP.slParam._asdict()
+
+        self.velo_pl = VELOCITY_PLANNER(target_velocity = self.max_v, max_velocity = self.max_v, current_velocity = 0)
+        # 假设在类的初始化方法中添加了以下两个属性
+        self.last_update_time = time.time()
+        self.update_interval = 0.2  # 5Hz的时间间隔为0.1秒
 
         self.last_error = 0
         self.follow_error = 0
@@ -45,9 +57,12 @@ class LongitudinalPlanner:
         self.right_turn_situation_real = (0,0)
         self.waiting_at_crosswalk = False
 
+        self.hist_yaw = 0
+
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
+        rospy.Subscriber('/mobinha/planning/local_id',String, self.local_id_cb)
         rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         rospy.Subscriber('/mobinha/visualize/max_v', Int8, self.max_v_cb)
         rospy.Subscriber('/crosswalkPolygon', Marker, self.crosswalk_cb)
@@ -68,7 +83,7 @@ class LongitudinalPlanner:
 
     def lane_information_cb(self, msg):
         # [0] id, [1] forward_direction, [2] stop line distance [3] forward_curvature
-        self.lane_information = [msg.position.x,msg.position.y, msg.position.z, msg.orientation.x]
+        self.lane_information = [msg.position.x,msg.position.y, msg.position.z, msg.orientation.x, msg.orientation.y]
 
         if self.lane_information[0] == 979 or self.lane_information[0] == 9:
             self.ref_v = 33
@@ -76,6 +91,10 @@ class LongitudinalPlanner:
             self.ref_v = 38
         else:
             self.ref_v = self.max_v
+
+    def local_id_cb(self, msg):
+        # [0] id, [1] forward_direction, [2] stop line distance [3] forward_curvature
+        self.local_id = msg.data.split(',')
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
@@ -85,6 +104,7 @@ class LongitudinalPlanner:
 
     def right_turn_situation_cb(self, msg):
         self.right_turn_situation = msg.data
+        
     def right_turn_situation_real_cb(self, msg):
         self.right_turn_situation_real = msg.data
 
@@ -106,12 +126,14 @@ class LongitudinalPlanner:
         elif s >= 1:
             out = 1
         else:
-            out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
+            # out = ((1+((s*(1-self.sl_param["mu"]))/(self.sl_param["mu"]*(1-s)))**-self.sl_param["v"])**-1).real
+            out = ((1+((s*(0.7))/(.3*(1-s)))**-0.7)**-1).real
         return out
 
     # static object
     def get_safe_obs_distance_s(self, v_ego, desired_ttc=2, comfort_decel=1.5, offset=5): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
+    
     def desired_follow_distance_s(self, v_ego):
         return max(5, self.get_safe_obs_distance_s(v_ego))
     
@@ -122,8 +144,10 @@ class LongitudinalPlanner:
         else:
             v_lead = v_lead
         return ((v_lead**2) / (2*comfort_decel))
+    
     def get_safe_obs_distance(self, v_ego, desired_ttc=4, comfort_decel=3, offset=4): # cur v = v ego (m/s), 2 sec, 2.5 decel (m/s^2)
         return ((v_ego ** 2) / (2 * comfort_decel) + desired_ttc * v_ego + offset)
+    
     def desired_follow_distance(self, v_ego, v_lead=0):
         return max(4, self.get_safe_obs_distance(v_ego) - self.get_stoped_equivalence_factor(v_lead)) 
 
@@ -142,7 +166,37 @@ class LongitudinalPlanner:
             # print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
+
+
+    def calculate_v_by_curvature(self, idx, lanelets, ids, hist_yaw,ref_v): # info, kph, kph, mps
+        target_v = ref_v 
+        ###
+        lf = int( idx+12) # 5m ~ 65m
+        # left_turn_lane = [1, 2, 91]
+
+        if lf < 0:
+            lf = 0
+        elif lf > len(ids)-1:
+            lf = len(ids)-1
+        next_id_1 = ids[lf].split('_')[0]
+        now_id = ids[idx].split('_')[0]
+        print(f'this is next_id_1 {next_id_1}')
+        print(f'this is now_id {now_id}')
+
+        yaw_temp = lanelets[next_id_1]['yaw'][:30] if len(lanelets[next_id_1]['yaw']) >30 else lanelets[next_id_1]['yaw']
+        yaw_variation = max(yaw_temp) - min(yaw_temp)
+        yaw_now = lanelets[now_id]['yaw']
+        for yaw_n in yaw_now:
+            diff_yaw = yaw_n - self.hist_yaw
+            print(f'this is yaw_n {yaw_n}')
+            print(f'this is diff_yaw {diff_yaw}')
+            print(f'this is curve {yaw_variation}')
+            self.hist_yaw = yaw_n
+            if yaw_variation > 0.27:
+                target_v = 15  # min_v  #### 15km/h is proofed in k-city
         
+            return target_v   ## -> km/h
+
     def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
             return 1.5 / HZ
@@ -169,31 +223,38 @@ class LongitudinalPlanner:
     
     def static_velocity_plan(self, cur_v, max_v, static_d):
         target_v, min_s = self.get_params(max_v, static_d) # input static d unit (idx), output min_s unit (m)
-        follow_distance = self.desired_follow_distance_s(cur_v) #output follow_distance unit (m)
-        ttc = min_s / cur_v if cur_v != 0 else min_s
-        self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
-        gain = self.get_static_gain(self.follow_error, ttc)
-        if self.follow_error < 0: # MINUS is ACCEL
-            target_v = min(max_v, self.target_v + gain)
-        else: # PLUS is DECEL
-            target_v = max(0, self.target_v - gain)
-        return target_v
+
+        ###Cloudn't understance====xingyou
+        # follow_distance = self.desired_follow_distance_s(cur_v) #output follow_distance unit (m)
+        # ttc = min_s / cur_v if cur_v != 0 else min_s
+        # self.follow_error = follow_distance-min_s # negative is acceleration. but if min_s is nearby 0, we need deceleration.
+        # gain = self.get_static_gain(self.follow_error, ttc)
+        # if self.follow_error < 0: # MINUS is ACCEL
+        #     target_v = min(max_v, self.target_v + gain)
+        # else: # PLUS is DECEL
+        #     target_v = max(0, self.target_v - gain)
+
+        print(f'here is the static {target_v}')
+        return target_v 
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego):
         target_v, min_s = self.get_params(max_v, dynamic_d) # input static d unit (idx), output min_s unit (m)
-        follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
-        ttc = min_s / self.rel_v if self.rel_v != 0 else min_s# minus value is collision case
-        self.follow_error = follow_distance-min_s
-        gain = self.get_dynamic_gain(self.follow_error, ttc)
-        if self.follow_error < 0: # MINUS is ACCEL
-            if v_ego < 0.4*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
-                target_v = min(max_v, self.target_v + 0.8/HZ)
-            else:
-                target_v = min(max_v, self.target_v + gain)
-        else: # PLUS is DECEL
-            target_v = max(0, self.target_v + gain)
+
+        ###Cloudn't understance====xingyou
+        # follow_distance = self.desired_follow_distance(cur_v, self.rel_v + cur_v) #output follow_distance unit (m)
+        # ttc = min_s / self.rel_v if self.rel_v != 0 else min_s# minus value is collision case
+        # self.follow_error = follow_distance - min_s
+        # gain = self.get_dynamic_gain(self.follow_error, ttc)
+        # if self.follow_error < 0: # MINUS is ACCEL
+        #     if v_ego < 0.4*MPS_TO_KPH and (self.rel_v + cur_v) < 15*KPH_TO_MPS:
+        #         target_v = min(max_v, self.target_v + 0.8/HZ)
+        #     else:
+        #         target_v = min(max_v, self.target_v + gain)
+        # else: # PLUS is DECEL
+        #     target_v = max(0, self.target_v + gain)
 
         return target_v
+
 
     def traffic_light_to_obstacle(self, traffic_light, forward_direction):
         # stop_list = [[6, 8, 10, 11, 12, 13], [4, 6, 8, 9, 10, 11, 13], [
@@ -227,73 +288,103 @@ class LongitudinalPlanner:
                         return dynamic_s
         return dynamic_s
     
-    def check_static_object(self, local_path, local_s, veh_pose, v_ego):
+    ## output is the distance from ego car to stopline 
+    def check_static_object(self, local_path, local_s, veh_pose, v_ego): 
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
-        tl_offset = 8*self.M_TO_IDX
+        tl_offset = 7*self.M_TO_IDX
         cw_offset = 4*self.M_TO_IDX
         static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
+        can_go = False
+        
+        left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
+
+        print(f'lane_information {self.lane_information[2]}')
+        print(f'Distacne {self.lane_information[2]-tl_offset-local_s}')
+        print(f'Unit {self.M_TO_IDX}')
+        print(f'tl_offset {tl_offset}')
+        print(f'local_s {local_s}') 
+        
         # [1] = Goal Object
         if self.goal_object is not None:
             left = (self.goal_object[1]-self.goal_object[2]) * self.M_TO_IDX
             if left <= local_len:
                 if left-goal_offset < 90*self.M_TO_IDX:
                     static_s1 = left-goal_offset
+                    
         # [2] = Traffic Light                
         if self.traffic_light_obstacle is not None:
             # not all stop and only stop front of crosswalk
             # self.right_turn_situation = [0, 0], [0, 1], [1, 0], [1, 1] # [0] = car, [1] = pedestrian
-            if self.lane_information[1] == 2: # Right Turn
-                min_distance = self.find_closest_point(veh_pose, self.crosswalk)
-                # static_s2 = min_distance*self.M_TO_IDX-cw_offset
-                
-                # if static_s2 < 1 and not self.waiting_at_crosswalk:
-                #     self.waiting_at_crosswalk = True
-                #     self.wait_time_start = time.time()
-                # # 차량 속도가 0이고 1초가 지난 경우
-                # if v_ego < 0.1 and self.waiting_at_crosswalk:
-                #     if time.time() - self.wait_time_start > 2:
-                #         self.waiting_at_crosswalk = False
-                
-                # if not self.waiting_at_cro
-                
-                
-                if self.right_turn_situation == (0,0) and self.right_turn_situation_real == (0,0):
-                    static_s2 = 90*self.M_TO_IDX
-                elif self.right_turn_situation_real == (0,1) or self.right_turn_situation == (0, 1) \
-                    or self.right_turn_situation == (1, 0) or self.right_turn_situation == (1,1):
+
+            ### judge the traffic light and go directly or stop
+            if len(self.traffic_light_obstacle) > 0:
+                tlobs = self.traffic_light_obstacle[0]
+                if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
+                    can_go = True
+
+
+        if self.lane_information[1] == 2: # Right Turn
+            min_distance = self.find_closest_point(veh_pose, self.crosswalk)
+
+            if not can_go:
+                if self.lane_information[2] < math.inf:
+                    left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
+                    if left_distance_to_stopline < 90*self.M_TO_IDX:
+                        static_s2 = left_distance_to_stopline
+                    if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
+                        static_s2 = 90*self.M_TO_IDX
+                        
+                if self.right_turn_situation == (0,0):
+                    pass
+                elif self.right_turn_situation == (0, 1):
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
-            else:
-                can_go = False
-                if len(self.traffic_light_obstacle) > 0:
-                    tlobs = self.traffic_light_obstacle[0]
-                    if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
-                        can_go = True
-                if not can_go:
-                    if self.lane_information[2] < math.inf:
-                        left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
-                        if left_distance_to_stopline < 90*self.M_TO_IDX:
-                            static_s2 = left_distance_to_stopline
-                        if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
-                            static_s2 = 90*self.M_TO_IDX
+                elif self.right_turn_situation == (1, 0):
+                    static_s2 = min_distance*self.M_TO_IDX-cw_offset
+                elif self.right_turn_situation == (1, 1):
+                    static_s2 = min_distance*self.M_TO_IDX-cw_offset
+        else:
+            ### Check distance with spot line to ours => self.lane_information[2] 
+            if not can_go:
+                if self.lane_information[2] < math.inf:
+                    left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
+                    if left_distance_to_stopline < 90*self.M_TO_IDX:
+                        static_s2 = left_distance_to_stopline
+                    if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
+                        static_s2 = 90*self.M_TO_IDX
+
         return min(static_s1, static_s2)
+    
+    def temp_judge(self, ):
+        pass
 
     def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
+
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
         self.pub_accerror.publish(Float32(self.follow_error))
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
+                local_curv_v = self.calculate_v_by_curvature(local_idx, self.lmap.lanelets, self.local_id, self.hist_yaw, self.ref_v) # info, kph, kph, mps, roi path for curve
                 static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
-                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
                 target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
+                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
                 target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
                 self.target_v = min(target_v_static, target_v_dynamic)
+                self.target_v = local_curv_v
+
+                current_time = time.time()
+                if current_time - self.last_update_time >= self.update_interval:
+                    print(f'current velocity planner is {self.velo_pl.acc_state}')
+                    print(f'Max velocity planner is {self.velo_pl.max_velocity}')
+                    self.velo_pl.target_v = self.target_v
+                    self.velo_pl.current_velocity_init = CS.vEgo * MPS_TO_KPH #--> needs to be km/h 
+
+
             else:
-                self.target_v = CS.vEgo
+                self.target_v = CS.vEgo * MPS_TO_KPH
 
             if pp == 2:
                 self.target_v = 0.0

@@ -29,6 +29,8 @@ class PurePursuit:
 
         self.cur_curvature = 0.0
 
+        self.prev_angle = None
+
     def target_lfc_cb(self, msg):
         self.Lfc = msg.data
 
@@ -70,22 +72,40 @@ class PurePursuit:
         return (new_x, new_y)
 
     def run(self, vEgo, path, position, yawRate, cte):
-        lfd = self.Lfc+self.k*vEgo
-        lfd = np.clip(lfd, 4, 60)
-        steering_angle = 0.
-        lx, ly = path[0]
+        if vEgo*3.6 < 17.5:
+            lfd = 3.6
+        else:
+            lfd = 6 + 2.3 * vEgo**0.8 / 3.6  
+        # print(f"       lfd:{lfd:.2f}")
+        # print(f"                  vEgo:{vEgo*3.6:.2f}")
+        lfd = np.clip(lfd, 4, 60)  
+        steering_angle = 0.  
+        lx, ly = path[0] 
+        
         for point in path:
             diff = np.asarray((point[0]-position[0], point[1]-position[1]))
             rotation_matrix = np.array(
                 ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), (np.sin(-radians(yawRate)),  np.cos(-radians(yawRate)))))
             rotated_diff = rotation_matrix.dot(diff)
-            if rotated_diff[0] > 0:
-                dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
-                if dis >= lfd:
-                    theta = np.arctan2(rotated_diff[1]-self.avoid_gain, rotated_diff[0])
-                    steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
-                    steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 6 else steering_angle
-                    lx = point[0]
-                    ly = point[1]
-                    break
-        return degrees(steering_angle), (lx, ly)
+            dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
+            if dis >= lfd: 
+                theta = np.arctan2(rotated_diff[1], rotated_diff[0]) 
+                steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
+                steering_angle = steering_angle + np.arctan2(0.2 * cte, vEgo) if vEgo > 6 else steering_angle
+                lx = point[0]  
+                ly = point[1]  
+                break
+        
+        # smoothing
+        alpha = 0.9
+        if self.prev_angle is None:
+            self.prev_angle = steering_angle
+        else:
+            steering_angle = alpha * steering_angle + (1 - alpha) * self.prev_angle
+            self.prev_angle = steering_angle
+
+        factor = 1.3
+        if vEgo*3.6 < 25:
+            factor = 1.00
+        return degrees(factor*steering_angle), (lx, ly) 
+    

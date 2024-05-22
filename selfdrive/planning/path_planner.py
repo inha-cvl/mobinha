@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray
+from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -15,6 +15,8 @@ import tf2_ros
 
 class PathPlanner:
     def __init__(self, CP):
+
+        self.current_blinker_state = (0, None)
         self.state = 'WAITING'
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
@@ -33,7 +35,7 @@ class PathPlanner:
         self.local_id = None
         self.temp_global_idx = 0
         self.local_path_theta = None
-        self.yaw = None
+        self.f = None
         self.prev_yaw = None
         # self.global_yaw, self.global_k = [], []
 
@@ -77,6 +79,7 @@ class PathPlanner:
         self.pub_goal_object = rospy.Publisher('/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
+        self.pub_local_id = rospy.Publisher('/mobinha/planning/local_id', String, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
@@ -239,13 +242,13 @@ class PathPlanner:
         CS = sm.CS
         pp = 0
 
-        if self.state == 'WAITING':
+        if self.state == 'WAITING': # pp e
             time.sleep(1)
             if self.get_goal != 0:
                 self.state = 'READY'
             pp = 3
 
-        elif self.state == 'READY':
+        elif self.state == 'READY': # pp 3, 0
             non_intp_path = None
             non_intp_id = None
             head_lane_ids = None
@@ -401,8 +404,12 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX) 
+                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
                                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
+                self.current_blinker_state = (blinker, target_id)
+                msg = String()
+                msg.data = ','.join(self.local_id)
+                self.pub_local_id.publish(msg)
 
                 if blinker != 0 and self.blinker_target_id == None:
                     self.blinker_target_id = target_id

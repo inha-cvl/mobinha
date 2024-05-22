@@ -82,6 +82,7 @@ class PathPlanner:
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
+        self.schoolzone_state_pub = rospy.Publisher('/schoolzone', Float32MultiArray, queue_size=5)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -602,7 +603,7 @@ class PathPlanner:
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
 
                 # schoolzone_viz
-                schoolzone_points = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx)
+                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx)
                 print(f"my node number is : {self.l_idx}") 
                 print("my position is : ", CS.position.x, CS.position.y)
                 
@@ -610,6 +611,11 @@ class PathPlanner:
                 print(schoolzone_points)
                 schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
                 self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
+                
+                schoolzone = Float32MultiArray()
+                schoolzone.data = [float(schoolzone_info['state']), float(schoolzone_info['remaining_distance'])]
+                self.schoolzone_state_pub.publish(schoolzone)
+                
 
                 if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
                     self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))

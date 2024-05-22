@@ -843,18 +843,25 @@ def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_i
     schoolzone_info = {}
     schoolzone_info['points'] = schoolzone_points
     if len(schoolzone_points) > 1:
-        schoolzone_info['state'] = "ready"
-        schoolzone_info['remaining distance'] = 0.5*(min(schoolzone_points[0][0], schoolzone_points[1][0]) - present_idx)
+        remain_distance = 0.5*(min(schoolzone_points[0][0], schoolzone_points[1][0]) - present_idx)
+        if remain_distance < 50:
+            schoolzone_info['state'] = 2 #"ready"
+            schoolzone_info['remaining_distance'] = remain_distance
+        else:
+            schoolzone_info['state'] = 0 #'out'
+            schoolzone_info['remaining_distance'] = 0
+               
     elif len(schoolzone_points) == 1:
-        schoolzone_info['state'] = 'in'
-        schoolzone_info['remaining distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
+        schoolzone_info['state'] = 1 # 'in'
+        schoolzone_info['remaining_distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
+    
     elif len(schoolzone_points) == 0:
-        schoolzone_info['state'] = 'out'
-        schoolzone_info['remaining distance'] = None
+        schoolzone_info['state'] = 0 #'out'
+        schoolzone_info['remaining_distance'] = 0
     print("============")
     print(schoolzone_info)
     print("============")
-    return schoolzone_points
+    return schoolzone_points, schoolzone_info
 
 
 

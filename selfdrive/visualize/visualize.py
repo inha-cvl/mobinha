@@ -78,11 +78,9 @@ class MainWindow(QMainWindow, form_class):
 
         self.left_blinker = self.findChild(QLabel, 'left_blinker')
         self.right_blinker = self.findChild(QLabel, 'right_blinker')
-        
         self.label_cam1 = self.findChild(QLabel, 'warn_camera1')
-        self.label_cam2 = self.findChild(QLabel, 'warn_camera2')
-        self.label_cam3 = self.findChild(QLabel, 'warn_camera3')
-
+        self.label_school = self.findChild(QLabel, 'warn_kid')
+        self.label_path = self.findChild(QLabel, 'warn_path')
         self.label_lidar = self.findChild(QLabel, 'warn_lidar')
         self.label_gps = self.findChild(QLabel, 'warn_gps')
         self.label_ins = self.findChild(QLabel, 'warn_ins')
@@ -90,13 +88,11 @@ class MainWindow(QMainWindow, form_class):
         self.label_perception = self.findChild(QLabel, 'warn_perception')
         self.label_planning = self.findChild(QLabel, 'warn_planning')
 
-        self.sensors = [self.label_cam1, self.label_cam2, self.label_cam3, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
+        self.sensors = [self.label_cam1, self.label_school, self.label_path, self.label_lidar, self.label_gps, self.label_ins, self.label_can, self.label_perception, self.label_planning] 
         self.blinker = 0
+        self.dist_schoolzone = 0
 
         # self.rviz_map_screen.setLayoutQVBoxLayout())
-
-        self.player = QMediaPlayer()
-        self.is_sound_playing = False
 
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
@@ -198,15 +194,23 @@ class MainWindow(QMainWindow, form_class):
         elif msg.data == 2: # right
             self.blinker = 2
         elif msg.data == 3: # both
-            self.blinker = 2
+            self.blinker = 3
 
-    def sensor_check_cb(self, msg):     
+    def sensor_check_cb(self, msg): 
         self.sensor_status_color.clear()
         for i, sensor_status in enumerate(msg.data):
-            text_color = "#00AAFF;" if sensor_status==1 else "#FC6C6C;"
+            if i == len(msg.data)-1: # school zone distance
+                self.dist_schoolzone = sensor_status # distance
+                continue
+            if sensor_status == 1:
+                text_color = "#00AAFF;"  
+            elif sensor_status == 0:
+                text_color = "#FC6C6C;" 
+            else:
+                text_color = "#FFFF00;"
+
             self.sensor_status_color.append(text_color)
 
-#####
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
             self.tick[sec] = time.time()
@@ -749,8 +753,8 @@ class MainWindow(QMainWindow, form_class):
 
     def update_sensor_check(self, colors):
         camera1_warning = 0
-        #camera2_warning = 1
-        #camera3_warning = 2
+        kid_warning = 1
+        path_warning = 2
         lidar_warning = 3
         gps_warning = 4
         ins_warning = 5
@@ -767,6 +771,10 @@ class MainWindow(QMainWindow, form_class):
                 self.state_screen.setStyleSheet("background-color : #FC6C6C;")
                 if i == camera1_warning:
                     self.state_screen.setText("WARNING :\nCAMERA1")
+                elif i == kid_warning:
+                    self.state_screen.setText("WARNING :\nKID ZONE")
+                elif i == path_warning:
+                    self.state_screen.setText("WARNING :\nPATH TRACKING")
                 elif i == lidar_warning:
                     self.state_screen.setText("WARNING :\nLIDAR")
                 elif i == gps_warning:
@@ -780,7 +788,7 @@ class MainWindow(QMainWindow, form_class):
                 elif i == planning_warning:
                     self.state_screen.setText("WARNING :\nPLANNING")
                 warning_state += 1
-                
+
         if warning_state == 0:
             self.state_screen.setStyleSheet("background-color : #008000;")
             self.state_screen.setText("ALL CONNETED")
@@ -791,7 +799,6 @@ class MainWindow(QMainWindow, form_class):
                 #self.CS.cruiseState = 2
                 #self.check_mode(2)
             
-
     def update_blinker(self, blinker):
         if blinker == 0:
             self.left_blinker.setStyleSheet(f"color : #ffffff;")
@@ -804,7 +811,10 @@ class MainWindow(QMainWindow, form_class):
             self.left_blinker.setStyleSheet(f"color : #df1354;")
             self.right_blinker.setStyleSheet(f"color : #df1354;")
         else:
-            pass            
+            pass
+
+    def update_distance_schoolzone(self, dist):
+        self.label_school.setText(f"SCHOOL : {dist} M")
 
     def display(self):
         self.label_vehicle_vel.setText(f"{round(self.CS.vEgo*MPH_TO_KPH)} km/h")
@@ -879,6 +889,7 @@ class MainWindow(QMainWindow, form_class):
             # sensor_check
             self.update_sensor_check(self.sensor_status_color)
             self.update_blinker(self.blinker)
+            self.update_distance_schoolzone(self.dist_schoolzone)
                 
 def signal_handler(sig, frame):
     QApplication.quit()

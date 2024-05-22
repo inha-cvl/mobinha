@@ -4392,7 +4392,7 @@ border-color: rgb(71,181,255);</string>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-color: #00AAFF;
+color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
@@ -4422,7 +4422,7 @@ color: #00AAFF;
                   </property>
                   <property name="styleSheet">
                    <string notr="true">
-color: #00AAFF;
+color: #FC6C6C;
 </string>
                   </property>
                   <property name="frameShape">
@@ -4455,7 +4455,8 @@ color: #00AAFF;
                   </property>
                   <property name="styleSheet">
                    <string notr="true">
-color: #00AAFF;
+color: #FC6C6C;
+
 </string>
                   </property>
                   <property name="text">
@@ -4523,7 +4524,7 @@ border-color: rgb(71,181,255);</string>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-color: #00AAFF;
+color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
@@ -4553,7 +4554,7 @@ color: #00AAFF;
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-color: #00AAFF;
+color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
@@ -4583,7 +4584,7 @@ color: #00AAFF;
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-color: #00AAFF;
+color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
@@ -4606,7 +4607,7 @@ color: #00AAFF;
                    </font>
                   </property>
                   <property name="styleSheet">
-                   <string notr="true">QLabel {color: #00AAFF;}</string>
+                   <string notr="true">QLabel {color: #FC6C6C;}</string>
                   </property>
                   <property name="text">
                    <string>CAMERA 1</string>
@@ -4617,7 +4618,7 @@ color: #00AAFF;
                  </widget>
                 </item>
                 <item row="5" column="1">
-                 <widget class="QLabel" name="warn_camera2">
+                 <widget class="QLabel" name="warn_kid">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                     <horstretch>0</horstretch>
@@ -4639,7 +4640,7 @@ color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 2(NO USE)</string>
+                   <string>SCHOOL</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -4647,7 +4648,7 @@ color: #FC6C6C;
                  </widget>
                 </item>
                 <item row="5" column="2">
-                 <widget class="QLabel" name="warn_camera3">
+                 <widget class="QLabel" name="warn_path">
                   <property name="font">
                    <font>
                     <family>Ubuntu Condensed</family>
@@ -4662,7 +4663,7 @@ color: #FC6C6C;
 }</string>
                   </property>
                   <property name="text">
-                   <string>CAMERA 3(NO USE)</string>
+                   <string>LDW</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>

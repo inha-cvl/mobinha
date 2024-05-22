@@ -180,17 +180,17 @@ class LongitudinalPlanner:
             lf = len(ids)-1
         next_id_1 = ids[lf].split('_')[0]
         now_id = ids[idx].split('_')[0]
-        print(f'this is next_id_1 {next_id_1}')
-        print(f'this is now_id {now_id}')
+        # print(f'this is next_id_1 {next_id_1}')
+        # print(f'this is now_id {now_id}')
 
         yaw_temp = lanelets[next_id_1]['yaw'][:30] if len(lanelets[next_id_1]['yaw']) >30 else lanelets[next_id_1]['yaw']
         yaw_variation = max(yaw_temp) - min(yaw_temp)
         yaw_now = lanelets[now_id]['yaw']
         for yaw_n in yaw_now:
             diff_yaw = yaw_n - self.hist_yaw
-            print(f'this is yaw_n {yaw_n}')
-            print(f'this is diff_yaw {diff_yaw}')
-            print(f'this is curve {yaw_variation}')
+            # print(f'this is yaw_n {yaw_n}')
+            # print(f'this is diff_yaw {diff_yaw}')
+            # print(f'this is curve {yaw_variation}')
             self.hist_yaw = yaw_n
             if yaw_variation > 0.27:
                 target_v = 15  # min_v  #### 15km/h is proofed in k-city
@@ -234,7 +234,7 @@ class LongitudinalPlanner:
         # else: # PLUS is DECEL
         #     target_v = max(0, self.target_v - gain)
 
-        print(f'here is the static {target_v}')
+        #print(f'here is the static {target_v}')
         return target_v 
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego):
@@ -299,11 +299,11 @@ class LongitudinalPlanner:
         
         left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
 
-        print(f'lane_information {self.lane_information[2]}')
-        print(f'Distacne {self.lane_information[2]-tl_offset-local_s}')
-        print(f'Unit {self.M_TO_IDX}')
-        print(f'tl_offset {tl_offset}')
-        print(f'local_s {local_s}') 
+        # print(f'lane_information {self.lane_information[2]}')
+        # print(f'Distacne {self.lane_information[2]-tl_offset-local_s}')
+        # print(f'Unit {self.M_TO_IDX}')
+        # print(f'tl_offset {tl_offset}')
+        # print(f'local_s {local_s}') 
         
         # [1] = Goal Object
         if self.goal_object is not None:
@@ -377,8 +377,8 @@ class LongitudinalPlanner:
 
                 current_time = time.time()
                 if current_time - self.last_update_time >= self.update_interval:
-                    print(f'current velocity planner is {self.velo_pl.acc_state}')
-                    print(f'Max velocity planner is {self.velo_pl.max_velocity}')
+                    # print(f'current velocity planner is {self.velo_pl.acc_state}')
+                    # print(f'Max velocity planner is {self.velo_pl.max_velocity}')
                     self.velo_pl.target_v = self.target_v
                     self.velo_pl.current_velocity_init = CS.vEgo * MPS_TO_KPH #--> needs to be km/h 
 

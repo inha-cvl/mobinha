@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String
+from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -11,7 +11,7 @@ from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
-
+import tf2_ros
 
 class PathPlanner:
     def __init__(self, CP):
@@ -64,6 +64,13 @@ class PathPlanner:
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
 
+        self.tf_ego2fl = None # minchan
+        self.tf_ego2fr = None
+        self.tf_ego2rl = None
+        self.tf_ego2rr = None
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
+
         self.pub_lanelet_map = rospy.Publisher('/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
         self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher('/mobinha/global_path', Marker, queue_size=1, latch=True)
@@ -84,6 +91,9 @@ class PathPlanner:
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
+        self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
+        self.schoolzone_state_pub = rospy.Publisher('/mobinha/planning/schoolzone', Int16MultiArray, queue_size=5)
+        self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -207,6 +217,27 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
+                    
+    def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
+        result = 1
+        lean_reach = 1.4 ### 
+        departure_reach = 3 ## threshold for tor previous 1.7 m 
+        wheel_position = [fl_position, fr_position, rl_position, rr_position]
+        wheel_cte = []
+        # print("fl fr rl rr : ", end="")
+        for whl_pos in wheel_position:
+            wheel_idx = calc_idx(self.local_path, whl_pos)
+            val = abs(calculate_cte(self.local_path[wheel_idx], self.local_path[wheel_idx+1], whl_pos))
+            wheel_cte.append(val)
+        #     print(f"{val:.2f} ", end="")
+        # print()
+            
+        if max(wheel_cte) > lean_reach:
+            result = 2
+        if max(wheel_cte) > departure_reach:
+            result = 0
+            
+        return result
     
     def run(self, sm):
         CS = sm.CS
@@ -582,11 +613,47 @@ class PathPlanner:
                 # CTE
                 pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
                 self.pub_goal_object.publish(pose)
+                
+                #lane_departure
+                try:
+                    self.transform = self.tf_buffer.lookup_transform('world', 'ego_car', rospy.Time(0))
+                    self.tf_ego2fl = self.tf_buffer.lookup_transform('world', 'fl', rospy.Time(0))
+                    self.tf_ego2fr = self.tf_buffer.lookup_transform('world', 'fr', rospy.Time(0))
+                    self.tf_ego2rl = self.tf_buffer.lookup_transform('world', 'rl', rospy.Time(0))
+                    self.tf_ego2rr = self.tf_buffer.lookup_transform('world', 'rr', rospy.Time(0))
+                except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+                    pass
+
+                fl_position = (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y)
+                fr_position = (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y)
+                rl_position = (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y)
+                rr_position = (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y)
+                # print(f"fl, fr, rl, rr, {fl:.3f} {fr:.3f} {rl:.3f} {rr:.3f}")
+                warn = self.lane_departure(fl_position, fr_position, rl_position, rr_position)
+                self.pub_lane_departure_warning.publish(warn)
 
                 # crosswalkViz
                 crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
                 crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
+
+
+                # schoolzone_viz
+                
+                position = (CS.position.x, CS.position.y)
+                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, CS)
+                # print(f"my node number is : {self.l_idx}") 
+                # print("my position is : ", CS.position.x, CS.position.y)
+                
+                
+                # print(schoolzone_points)
+                schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
+                self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
+                
+                schoolzone = Int16MultiArray()
+                schoolzone.data = [int(schoolzone_info['state']), int(schoolzone_info['remaining_distance'])]
+                self.schoolzone_state_pub.publish(schoolzone)
+
 
                 if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
                     self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))

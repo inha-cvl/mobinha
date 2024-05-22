@@ -281,9 +281,9 @@ def main():
     while not rospy.is_shutdown():
         # cam1, cam2, cam3, lidar, gps, ins, can, perception, planning
         # 1 : no problem / 0 : problem
-        # sensor_check.data = [cam.check(), school.check(), path.check(), lidar.check(), gps.check(), ins.check(), can.check(), 
-        #                      int(tl.check() == cluster.check() == 1), planning.check(), school.distance()]
-        sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        sensor_check.data = [cam.check(), school.check(), path.check(), lidar.check(), gps.check(), ins.check(), can.check(), 
+                             int(tl.check() == cluster.check() == 1), planning.check(), school.distance()]
+        #sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         pub.publish(sensor_check)
         rospy.sleep(0.2) # 5hz
         

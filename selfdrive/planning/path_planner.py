@@ -217,23 +217,23 @@ class PathPlanner:
                     before_n = splited_id
                     
     def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
-        result = 0
+        result = 1
         lean_reach = 1.4
         departure_reach = 1.7
         wheel_position = [fl_position, fr_position, rl_position, rr_position]
         wheel_cte = []
-        print("fl fr rl rr : ", end="")
+        # print("fl fr rl rr : ", end="")
         for whl_pos in wheel_position:
             wheel_idx = calc_idx(self.local_path, whl_pos)
             val = abs(calculate_cte(self.local_path[wheel_idx], self.local_path[wheel_idx+1], whl_pos))
             wheel_cte.append(val)
-            print(f"{val:.2f} ", end="")
-        print()
+        #     print(f"{val:.2f} ", end="")
+        # print()
             
         if max(wheel_cte) > lean_reach:
             result = 2
         if max(wheel_cte) > departure_reach:
-            result = 1
+            result = 0
             
         return result
     

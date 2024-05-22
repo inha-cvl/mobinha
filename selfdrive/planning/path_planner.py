@@ -12,6 +12,7 @@ from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
 
+
 import tf2_ros
 
 class PathPlanner:
@@ -89,6 +90,7 @@ class PathPlanner:
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
+        self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -212,11 +214,35 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
+
+    def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
+        result = 0
+        lean_reach = 1.4
+        departure_reach = 1.65
+        wheel_position = [fl_position, fr_position, rl_position, rr_position]
+        wheel_cte = []
+        print("fl fr rl rr : ", end="")
+        for whl_pos in wheel_position:
+            wheel_idx = calc_idx(self.local_path, whl_pos)
+            val = abs(calculate_cte(self.local_path[wheel_idx], self.local_path[wheel_idx+1], whl_pos))
+            wheel_cte.append(val)
+            print(f"{val:.2f} ", end="")
+        print()
+            
+        lean_reach = 1.4
+        departure_reach = 1.65
+        if max(wheel_cte) > lean_reach:
+            result = 2
+        if max(wheel_cte) > departure_reach:
+            result = 1
+            
+        return result
+
     
     def run(self, sm):
         CS = sm.CS
         pp = 0
-
+        # 좌표계 변환
         try:
             self.transform = self.tf_buffer.lookup_transform('world', 'ego_car', rospy.Time(0))
             self.tf_ego2fl = self.tf_buffer.lookup_transform('world', 'fl', rospy.Time(0))
@@ -225,7 +251,6 @@ class PathPlanner:
             self.tf_ego2rr = self.tf_buffer.lookup_transform('world', 'rr', rospy.Time(0))
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            #rospy.logerr("TF error: %s", str(e))
             pass
 
         if self.state == 'WAITING':
@@ -594,18 +619,25 @@ class PathPlanner:
                 # CTE
                 pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
 
-                fl = calculate_cte(self.local_path[self.l_idx+3], self.local_path[self.l_idx+4], (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y))
-                fr = calculate_cte(self.local_path[self.l_idx+3], self.local_path[self.l_idx+4], (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y))
-                rl = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y))
-                rr = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y))
-
-                print(f"fl is {fl}")
-                print(f"fr is {fr}")
-                print(f"rl is {rl}")
-                print(f"rr is {rr}")
-                
-                # lane_leaning(fl,fr,rl,rr)
                 self.pub_goal_object.publish(pose)
+
+
+                fl_position = (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y)
+                fr_position = (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y)
+                rl_position = (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y)
+                rr_position = (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y)
+                # print(f"fl, fr, rl, rr, {fl:.3f} {fr:.3f} {rl:.3f} {rr:.3f}")
+
+                warn = self.lane_departure(fl_position, fr_position, rl_position, rr_position)
+                self.pub_lane_departure_warning.publish(warn)
+
+	            # # 각 바퀴와 경로와의 오차 계산
+                # fl = calculate_cte(self.local_path[self.l_idx+4], self.local_path[self.l_idx+5], (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y))
+                # fr = calculate_cte(self.local_path[self.l_idx+4], self.local_path[self.l_idx+5], (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y))
+                # rl = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y))
+                # rr = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y))
+
+
 
                 # crosswalkViz
                 crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)

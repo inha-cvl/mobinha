@@ -149,7 +149,10 @@ class APID:
         #     brake_val = -output
         # output = max(-100, min(self.ctrls[4], 100))
 
-        accel_lim = 40
+        if cur/3.6 < 15:
+            accel_lim = 2*cur/3.6+10
+
+        # accel_lim = 40
         brake_lim = 50
         if self.error < 2/3.6:
             output *= 0.9
@@ -162,6 +165,6 @@ class APID:
         if self.error < 2:
             accel_val *= 0.8
             brake_val *= 0.2
-        # print(accel_val)
+
         return accel_val, brake_val
         # return self.ctrls[4]

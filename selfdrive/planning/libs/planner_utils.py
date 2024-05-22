@@ -88,6 +88,46 @@ def exchange_waypoint(target, now):
 
     return exchange_waypoints
 
+## head lane id는 걍 다 들어가 있음.
+def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_idx):
+    schoolzone_points = []
+
+    print("my link number is : ", nowID)
+    ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
+    further_lane_ids = head_lane_ids[:]
+    if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
+    print(further_lane_ids)
+    for further_link, lanelet_id in enumerate(further_lane_ids):
+        if len(lanelets[lanelet_id]['schoolZone']) > 0 and further_link < 5:
+            for point in lanelets[lanelet_id]['schoolZone']:
+                idx = local_point.query((point[0], point[1]), 1)[1]
+                if idx > present_idx:
+                    schoolzone_points.append((idx, point[0], point[1]))
+    
+    
+    schoolzone_info = {}
+    schoolzone_info['points'] = schoolzone_points
+    if len(schoolzone_points) > 1:
+        remain_distance = 0.5*(min(schoolzone_points[0][0], schoolzone_points[1][0]) - present_idx)
+        if remain_distance < 50:
+            schoolzone_info['state'] = 2 #"ready"
+            schoolzone_info['remaining_distance'] = remain_distance
+        else:
+            schoolzone_info['state'] = 0 #'out'
+            schoolzone_info['remaining_distance'] = 0
+               
+    elif len(schoolzone_points) == 1:
+        schoolzone_info['state'] = 1 # 'in'
+        schoolzone_info['remaining_distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
+    
+    elif len(schoolzone_points) == 0:
+        schoolzone_info['state'] = 0 #'out'
+        schoolzone_info['remaining_distance'] = 0
+    print("============")
+    print(schoolzone_info)
+    print("============")
+    return schoolzone_points, schoolzone_info
+
 def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
 
     left_id = lanelets[now_lane_id]['adjacentLeft']

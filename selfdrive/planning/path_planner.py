@@ -219,7 +219,7 @@ class PathPlanner:
     def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
         result = 0
         lean_reach = 1.4
-        departure_reach = 1.65
+        departure_reach = 1.7
         wheel_position = [fl_position, fr_position, rl_position, rr_position]
         wheel_cte = []
         print("fl fr rl rr : ", end="")
@@ -230,8 +230,6 @@ class PathPlanner:
             print(f"{val:.2f} ", end="")
         print()
             
-        lean_reach = 1.4
-        departure_reach = 1.65
         if max(wheel_cte) > lean_reach:
             result = 2
         if max(wheel_cte) > departure_reach:

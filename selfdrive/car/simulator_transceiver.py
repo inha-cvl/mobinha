@@ -55,11 +55,11 @@ class SimulatorTransceiver:
         #right turn course
         # self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
         # # k-city-xingyou scenario start
-        # self.ego = Vehicle(351.149, 1096.453, math.radians(90), 0.0, 2.65)
+        self.ego = Vehicle(351.149, 1096.453, math.radians(90), 0.0, 2.65)
         ### k-city -xingyou -curve test
         # self.ego = Vehicle(474.480, 1567.810, math.radians(90), 0.0, 2.65) 
         ### k-city -xingyou -city road test
-        self.ego = Vehicle(475.53165668397725, 1122.5222162505208, math.radians(90), 0.0, 2.65) 
+        # self.ego = Vehicle(475.53165668397725, 1122.5222162505208, math.radians(90), 0.0, 2.65) 
 
         self.roll = 0.0
         self.pitch = 0.0

@@ -57,9 +57,7 @@ class LongitudinalPlanner:
         self.right_turn_situation_real = (0,0)
         self.waiting_at_crosswalk = False
 
-        ### when percision is 0.5m, ROI is 0~15m
-        max_size = 30  # 固定列表大小
-        self.queue = FixedSizeQueue(max_size)
+        self.hist_yaw = 0
 
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
@@ -168,7 +166,37 @@ class LongitudinalPlanner:
             # print("e:",round(error,2),"a:",round(-(kp*error + ki*self.integral + kd*derivative)*HZ,2),"m/s")
             return min(0/HZ, max(-3/HZ, -(kp*error + ki*self.integral + kd*derivative)))
         # TODO: error part 0~-7 0~-3
+
+
+    def calculate_v_by_curvature(self, idx, lanelets, ids, hist_yaw,ref_v): # info, kph, kph, mps
+        target_v = ref_v 
+        ###
+        lf = int( idx+12) # 5m ~ 65m
+        # left_turn_lane = [1, 2, 91]
+
+        if lf < 0:
+            lf = 0
+        elif lf > len(ids)-1:
+            lf = len(ids)-1
+        next_id_1 = ids[lf].split('_')[0]
+        now_id = ids[idx].split('_')[0]
+        print(f'this is next_id_1 {next_id_1}')
+        print(f'this is now_id {now_id}')
+
+        yaw_temp = lanelets[next_id_1]['yaw'][:30] if len(lanelets[next_id_1]['yaw']) >30 else lanelets[next_id_1]['yaw']
+        yaw_variation = max(yaw_temp) - min(yaw_temp)
+        yaw_now = lanelets[now_id]['yaw']
+        for yaw_n in yaw_now:
+            diff_yaw = yaw_n - self.hist_yaw
+            print(f'this is yaw_n {yaw_n}')
+            print(f'this is diff_yaw {diff_yaw}')
+            print(f'this is curve {yaw_variation}')
+            self.hist_yaw = yaw_n
+            if yaw_variation > 0.27:
+                target_v = 15  # min_v  #### 15km/h is proofed in k-city
         
+            return target_v   ## -> km/h
+
     def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
             return 1.5 / HZ
@@ -339,24 +367,20 @@ class LongitudinalPlanner:
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(local_idx, self.lmap.lanelets, self.local_id, self.ref_v, self.min_v, CS.vEgo,self.M_TO_IDX, self.queue, local_path) # info, kph, kph, mps, roi path for curve
-                # static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
-                # target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
-                # dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
-                # target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
-                # self.target_v = min(target_v_static, target_v_dynamic)
+                local_curv_v = self.calculate_v_by_curvature(local_idx, self.lmap.lanelets, self.local_id, self.hist_yaw, self.ref_v) # info, kph, kph, mps, roi path for curve
+                static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
+                target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
+                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
+                target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
+                self.target_v = min(target_v_static, target_v_dynamic)
                 self.target_v = local_curv_v
 
-                print(f'current vEgo is {CS.vEgo } m/s')
-                print(f'here is tht point for target velocity {self.target_v} km/h')
-                print(f'here is tht point for min_v {self.min_v} km/h')
-                print(f'sl_param is {self.sl_param}')
-                # current_time = time.time()
-                # if current_time - self.last_update_time >= self.update_interval:
-                #     print(f'current velocity planner is {self.velo_pl.acc_state}')
-                #     print(f'Max velocity planner is {self.velo_pl.max_velocity}')
-                #     self.velo_pl.target_v = self.target_v
-                #     self.velo_pl.current_velocity_init = CS.vEgo * MPS_TO_KPH #--> needs to be km/h 
+                current_time = time.time()
+                if current_time - self.last_update_time >= self.update_interval:
+                    print(f'current velocity planner is {self.velo_pl.acc_state}')
+                    print(f'Max velocity planner is {self.velo_pl.max_velocity}')
+                    self.velo_pl.target_v = self.target_v
+                    self.velo_pl.current_velocity_init = CS.vEgo * MPS_TO_KPH #--> needs to be km/h 
 
 
             else:

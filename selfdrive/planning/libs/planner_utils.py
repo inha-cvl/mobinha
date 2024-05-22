@@ -439,28 +439,6 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
 
 
 
-def calculate_v_by_curvature(idx, lanelets, ids, ref_v, min_v, vEgo, M_TO_IDX, queue, local_path): # info, kph, kph, mps
-
-    lf = int( idx+12) # 5m ~ 65m
-    # left_turn_lane = [1, 2, 91]
-
-    if lf < 0:
-        lf = 0
-    elif lf > len(ids)-1:
-        lf = len(ids)-1
-    next_id_1 = ids[lf].split('_')[0]
-
-    yaw_temp = lanelets[next_id_1]['yaw'][:30] if len(lanelets[next_id_1]['yaw']) >30 else lanelets[next_id_1]['yaw']
-    yaw_variation = max(yaw_temp) - min(yaw_temp)
-    print(f'this is curve {yaw_variation}')
-    if yaw_variation > 0.27:
-        target_v = 15  # min_v  #### 15km/h is proofed in k-city
-    else:
-        target_v = ref_v 
-    
-    return target_v   ## -> km/h
-
-
 def get_a_b_for_curv(min, ignore):
     # a = -90 / (min-ignore)
     # b = 60-(ignore*a)
@@ -480,9 +458,10 @@ blinker_minimum_duration = 2  # 최소 블링커 지속 시간(s)
 blinker_status = 0  # 현재 블링커 상태 (0: 꺼짐, 1: 좌, 2: 우)
 blinker_target_id = None
 
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id):#, local_id, change_target_id, change_lane_flag): 
-    #TODO: CHECK FLAG    
-    global blinker_start_time, blinker_status, blinker_target_id
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):#, local_id, change_target_id, change_lane_flag): 
+    #TODO: CHECK FLAG  
+
+    current_blinker, target_next_id = current_blinker_state
  
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+10))) # 5m ~ 65m
@@ -501,7 +480,18 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
         ld = len(ids)-1
     next_id_2 = ids[ld].split('_')[0]
 
-    # 차선 변경할 때
+
+    current_curvature = abs(max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']))
+    next1_curvature = abs(max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']))
+    next2_curvature = abs(max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']))
+
+    # 예외 case(노면표시 없음)추후 수정예정
+    rTurn_special_case = ['473', '605', '615', '670']
+    lTurn_special_case = []
+    rPocket_special_case = []
+    lPocket_special_case = ['411']
+
+        # 차선 변경할 때
     if next_id_1 in my_neighbor_id[0]:
         # or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
         print("now Lchange")
@@ -509,40 +499,73 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
     elif next_id_1 in my_neighbor_id[1]:
         print("now Rchange")
         return 2, next_id_1
-    
-    # 다음링크가 회전차로일 때
-    elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.5 and lanelets[next_id_2]['intersection'] == True:
-        if lanelets[next_id_2]['rightTurn'] == True:
+
+    # 다음링크가 회전차로일 때(580 예외 case, 우회전 노면표시 없는 곳 추후 수정 예정)
+    elif next2_curvature > 0.5 and lanelets[next_id_2]['intersection'] == True and len(lanelets[next_id_2]['successor']) < 2 and next_id_2 != '580':
+        # 다음링크가 우회전일 때
+        if (lanelets[next_id_2]['rightTurn'] == True and lanelets[next_id_2]['leftTurn'] == False) or next_id_2 in rTurn_special_case:
             print(next_id_2)
             print("next Rturn")
             return 2, next_id_2
+        # 다음링크가 좌회전일 때
         else:
             print(next_id_2)
             print("next Lturn")
             return 1, next_id_2
-        
+    
+    elif next_id_2 == '614':
+        print(next_id_2)
+        print("next *Rturn")
+        return 2, next_id_2
+    
+    # 다음링크가 로터리 진입일 때
+    elif next1_curvature > 0.25 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True and lanelets[splited_local_id]['intersection'] == False:
+        print(f"{splited_local_id} -> {next_id_1}")
+        print("next rotary in")
+        return 1, next_id_1
+
     # 다음링크가 포켓차로일 때
-    elif max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']) > 0.25 and lanelets[splited_local_id]['direction'] != None:
+    elif next1_curvature > 0.25 and len(lanelets[next_id_1]['direction']) > 0:  # len(lanelets[next_id_1]['direction']) == 1
+        # 다음링크가 좌포켓일 때
         if lanelets[next_id_1]['direction'] == 'L':
             print(next_id_1)
-            print("next Lpocket")
+            print("next Rpocket")
             return 1, next_id_1
-        else:  # lanelets[next_id_1]['direction'] == 'R'
+        # 다음링크가 우포켓일 때
+        elif lanelets[next_id_1]['direction'] == 'R':
             print(next_id_1)
             print("next Rpocket")
-            return 2, next_id_2
+            return 2, next_id_1
 
-    # 다음링크가 yaw값이 많이 변할 때
+    # 다음링크 노면표시 없는 좌포켓
+    elif next_id_1 in lPocket_special_case:
+        print(next_id_1)
+        print("next Lpocket")
+        return 1, next_id_1
+
+    # 다음링크 곡률 작은 우포켓차로
+    elif next1_curvature > 0.07 and lanelets[next_id_1]['laneNo'] > lanelets[splited_local_id]['laneNo'] and next_id_1 != '300':
+        print(next_id_1)
+        print("next Rpocket")
+        return 2, next_id_1
+
+    # 다음링크가 좌포켓
     # elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.1:
     #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
     #     if lanelets[next_id_2]['laneNo'] != lanelets[splited_local_id]['laneNo'] or lanelets[next_id_2]['leftTurn'] == True:
     #         print(next_id_2)
     #         return 1, next_id_2
-    
-    # 현재링크가 회전차로일 때
-    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.5 and lanelets[splited_local_id]['intersection'] == True:
+
+    # 현재링크가 로터리, 다음링크가 로터리 진출차로일 때
+    elif current_curvature > 0.25 and len(lanelets[splited_local_id]['successor']) > 1 and lanelets[splited_local_id]['intersection'] == True and current_curvature > next1_curvature: 
+        print(f"{splited_local_id} -> {next_id_1}")
+        print("next rotary out")
+        return 2, next_id_1
+
+    # 현재링크가 회전차로일 때(580 예외 case, 우회전 노면표시 없는 곳 추후 수정 예정)
+    elif current_curvature > 0.5 and lanelets[splited_local_id]['intersection'] == True and len(lanelets[splited_local_id]['successor']) < 2 and splited_local_id != '580':
         # 현재링크가 우회전일 때
-        if lanelets[splited_local_id]['rightTurn'] == True: # and splited_local_id != '5':
+        if (lanelets[splited_local_id]['rightTurn'] == True and lanelets[splited_local_id]['leftTurn'] == False) or splited_local_id in rTurn_special_case:
             print(splited_local_id)
             print("now Rturn")
             return 2, next_id_2
@@ -551,11 +574,16 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print(splited_local_id)
             print("now Lturn")
             return 1, next_id_2
-    
-     # 현재링크가 포켓차로일 때
-    elif max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']) > 0.25 and lanelets[splited_local_id]['direction'] != None:
+        
+    elif splited_local_id == '614':
+        print(splited_local_id)
+        print("now *Rturn")
+        return 2, next_id_2
+
+    # 현재링크가 포켓차로일 때
+    elif current_curvature > 0.25 and len(lanelets[splited_local_id]['direction']) > 0:
         # 현재링크가 좌포켓일 때
-        if lanelets[splited_local_id]['direction'] == 'L': # and splited_local_id != '5':
+        if lanelets[splited_local_id]['direction'] == 'L':
             print(splited_local_id)
             print("now Lpocket")
             return 1, next_id_1
@@ -565,15 +593,32 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print("now Rpocket")
             return 2, next_id_1
 
+    # 현재링크 노면표시 없는 좌포켓
+    elif splited_local_id in lPocket_special_case:
+        print(splited_local_id)
+        print("now Lpocket")
+        return 1, next_id_1
+
+    # # 현재 곡률 작은 포켓차로
+    # elif current_curvature > 0.07 and lanelets[splited_local_id]['laneNo'] > lanelets[lanelets[splited_local_id]['predecessor']]['laneNo']:
+    #     print(splited_local_id)
+    #     print("now Rpocket")
+    #     return 2, next_id_1
+
+    # 현재링크가 좌로합류차로일 때(추후 알고리즘 추가 예정)
+    elif splited_local_id == '90':
+        print(splited_local_id)
+        print("now Lmerge")
+        return 1, next_id_1
+
+    if current_blinker != 0 and splited_local_id != next_id_1 and splited_local_id != next_id_2:
+        print(f"maintaining current blinker state: {current_blinker}")
+        return current_blinker, splited_local_id
+
     # if change_lane_flag:  # if flag is True, keep the blinker on
     #     if change_target_id in my_neighbor_id[0]:
-    #         return 1 , change_target_id
-    #     elif change_target_id in my_neighbor_id[1]:
-    #         return 2, change_target_id
 
-    return 0, None
-
-
+        
 def compare_id(lh_id, my_neighbor_id):
     if lh_id in my_neighbor_id[0] or lh_id in my_neighbor_id[1]:
         return False
@@ -946,18 +991,3 @@ def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
 
     return False  # Return False if no obstacle is inside any polygon
             
-
-
-
-class FixedSizeQueue:
-    def __init__(self, max_size):
-        self.queue = deque(maxlen=max_size)
-        self.max_size = max_size
-    
-    def add(self, item):
-        if len(self.queue) >= self.max_size:
-            self.queue.popleft()  # Remove the oldest item
-        self.queue.append(item)
-    
-    def get_queue(self):
-        return list(self.queue)

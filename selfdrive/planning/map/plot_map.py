@@ -25,7 +25,7 @@ class PathAnalysis:
         self.route_file = route_file
 
         # 确认目录是否存在，不存在则创建
-        self.route_dir = '/workspace/mobinha/src/mobinha/selfdrive/planning/map/route_generate/'
+        self.route_dir = '/workspace/mobinha/selfdrive/planning/map/route_generate/'
         os.makedirs(self.route_dir, exist_ok=True)
 
         if self.mode == 'save':
@@ -214,18 +214,18 @@ if __name__ == '__main__':
     map_name = map_name_list[1]
     mode = mode_list[1] # 或 'load'
     
-    route_file = '/workspace/mobinha/src/mobinha/selfdrive/planning/map/route_generate/kcity_route_4.txt'  # 如果是 'load' 模式，需要提供路径，如 '/workspace/mobinha/src/mobinha/selfdrive/planning/map/route_generate/kcity_route_1.txt'
+    route_file = '/workspace/mobinha/selfdrive/planning/map/route_generate/kcity_route_4.txt'  # 如果是 'load' 模式，需要提供路径，如 '/workspace/mobinha/selfdrive/planning/map/route_generate/kcity_route_1.txt'
 
     if map_name == 'songdo':
         base_lla = (37.3888319, 126.6428739, 7.369)
         rotation_angle = 0
-        map_file = '/workspace/mobinha/src/mobinha/selfdrive/planning/map/songdo/'
+        map_file = '/workspace/mobinha/selfdrive/planning/map/songdo/'
         is_utm = False
 
     elif map_name == 'kcity':
         base_lla = (37.2292221592864, 126.76912499027308, 29.18400001525879)
         rotation_angle = 0
-        map_file = '/workspace/mobinha/src/mobinha/selfdrive/planning/map/KCity/'
+        map_file = '/workspace/mobinha/selfdrive/planning/map/KCity/'
         is_utm = True
 
     analyzer = PathAnalysis(map_name, map_file, base_lla, rotation_angle, mode, is_utm, route_file)

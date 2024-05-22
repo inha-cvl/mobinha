@@ -805,7 +805,9 @@ class MainWindow(QMainWindow, form_class):
             self.right_blinker.setStyleSheet(f"color : #ffffff;")
         elif blinker == 1:
             self.left_blinker.setStyleSheet(f"color : #df1354;")
+            self.right_blinker.setStyleSheet(f"color : #ffffff;")
         elif blinker == 2:
+            self.left_blinker.setStyleSheet(f"color : #ffffff;")
             self.right_blinker.setStyleSheet(f"color : #df1354;")
         elif blinker == 3:
             self.left_blinker.setStyleSheet(f"color : #df1354;")

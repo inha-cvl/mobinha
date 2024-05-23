@@ -75,7 +75,7 @@ class PurePursuit:
         # if vEgo*3.6 < 17.5:
         
         ## 2024.05.23 test
-        if vEgo*3.6 < 30: #km/h
+        if vEgo*3.6 < 25: #km/h
             lfd = 3.6
         else:
             lfd = 6 + 2.3 * vEgo**0.8 / 3.6  

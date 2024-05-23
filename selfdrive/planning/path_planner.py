@@ -83,6 +83,10 @@ class PathPlanner:
         ### 2024.05.23 test
         self.pub_splited_local_id = rospy.Publisher('/mobinha/planning/splited_localid', String, queue_size=1)
         ### 2024.05.23 test
+        ### 2024.05.24 test
+        self.pub_turing_flag = rospy.Publisher('/mobinha/planning/turning_flag', String, queue_size=1)
+        self.pub_turning_velocity = rospy.Publisher('/mobinha/planning/turning_target_v', Int8, queue_size=1)
+        ### 2024.05.24 test
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
@@ -380,6 +384,7 @@ class PathPlanner:
 
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
                 ### 2024.05.23 test
+                ### Splited local id
                 msg = String()
                 msg.data = splited_local_id
                 self.pub_splited_local_id.publish(msg) 
@@ -414,12 +419,23 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
+                blinker, target_id, turning_target_v, turning_flag = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
                                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
                 self.current_blinker_state = (blinker, target_id)
+
+                ## turing flag
+                msg = String()
+                msg.data = turning_flag
+                self.pub_turing_flag.publish(msg)
+
+                ## turning_target_v
+                turning_velocity=Int8()
+                turning_velocity.data = turning_target_v
+                self.pub_turning_velocity.publish(turning_velocity)
+
+                ## local ids
                 msg = String()
                 msg.data = ','.join(self.local_id)
-
                 self.pub_local_id.publish(msg)
 
                 if blinker != 0 and self.blinker_target_id == None:

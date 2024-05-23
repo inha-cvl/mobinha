@@ -132,7 +132,9 @@ class MainWindow(QMainWindow, form_class):
         self.initialize()
         self.connection_setting()
 
-        self.MAX_VELOCITY = 50  # 최대 속도값
+        # self.MAX_VELOCITY = 50  # 최대 속도값
+        ### 2024.05.23 test
+        self.MAX_VELOCITY = 100  # 최대 속도값
         self.MIN_VELOCITY = 20    # 최소 속도값
 #####
 
@@ -480,8 +482,8 @@ class MainWindow(QMainWindow, form_class):
         self.map_name = str(self.map_name_combo_box.currentText())
 
     def target_v_cb(self, msg):
-        self.label_target_v.setText(f"{round(msg.data*MPH_TO_KPH)} km/h")
-        self.target_v = float(round(msg.data*MPH_TO_KPH, 2))
+        self.label_target_v.setText(f"{round(msg.data)} km/h")
+        self.target_v = float(round(msg.data, 2))
 
     def graph_update(self):
         if self.moving_start:

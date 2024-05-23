@@ -13,6 +13,9 @@ class Localizer:
         self.ego_car = EgoCarViz()
         self.br = tf.TransformBroadcaster()
 
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
+
         self.pub_ego_car = rospy.Publisher('/mobinha/control/ego_car', Marker, queue_size=1)
         self.pub_enu_pose = rospy.Publisher('/veh_pose', Pose2D, queue_size=1)
 

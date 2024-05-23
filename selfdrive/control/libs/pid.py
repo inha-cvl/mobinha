@@ -19,6 +19,8 @@ class PID:
         self.pre_error = error
         return pid
 
+KPH_TO_MPS = 1 / 3.6
+MPS_TO_KPH = 3.6
 class APID:
     def __init__(self):
         # 증분형
@@ -149,17 +151,24 @@ class APID:
         #     accel_lim = 2*cur/3.6
         accel_lim = 30 #40
         brake_lim = 50
-        if self.error < 2/3.6:
-            output *= 0.9
+
+        ### 0523 test 
+        brake_lim = 40
+        # if self.error < 2/3.6:
+        #     output *= 0.9
         if output>0:
             accel_val = min(output, accel_lim)
             brake_val = 0
+            # brake_val = brake_lim
+        ### 0523 test 
+
+
         else:
             accel_val = 0
             brake_val = min(-output, brake_lim)
         if self.error < 2:
             accel_val *= 0.8
-            brake_val *= 0.2
+            # brake_val *= 0.2
         # print(accel_val)
         return accel_val, brake_val
         # return self.ctrls[4]

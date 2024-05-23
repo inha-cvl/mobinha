@@ -93,11 +93,11 @@ def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, CS):
     schoolzone_points = []
     present_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
 
-    print("my link number is : ", nowID)
+    # print("my link number is : ", nowID)
     ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
     further_lane_ids = head_lane_ids[:]
     if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
-    print(further_lane_ids)
+    # print(further_lane_ids)
     for further_link, lanelet_id in enumerate(further_lane_ids):
         if len(lanelets[lanelet_id]['schoolZone']) > 0:
             for point in lanelets[lanelet_id]['schoolZone']:
@@ -123,9 +123,9 @@ def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, CS):
     elif len(schoolzone_points) == 0:
         schoolzone_info['state'] = 1 #'out'
         schoolzone_info['remaining_distance'] = 0
-    print("============")
-    print(schoolzone_info)
-    print("============")
+    # print("============")
+    # print(schoolzone_info)
+    # print("============")
     return schoolzone_points, schoolzone_info
 
 def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):

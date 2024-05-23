@@ -80,6 +80,9 @@ class PathPlanner:
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_local_id = rospy.Publisher('/mobinha/planning/local_id', String, queue_size=1)
+        ### 2024.05.23 test
+        self.pub_splited_local_id = rospy.Publisher('/mobinha/planning/splited_localid', String, queue_size=1)
+        ### 2024.05.23 test
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
@@ -376,6 +379,12 @@ class PathPlanner:
                     self.l_idx = l_idx
 
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
+                ### 2024.05.23 test
+                msg = String()
+                msg.data = splited_local_id
+                self.pub_splited_local_id.publish(msg) 
+
+
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
                 stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
@@ -410,6 +419,7 @@ class PathPlanner:
                 self.current_blinker_state = (blinker, target_id)
                 msg = String()
                 msg.data = ','.join(self.local_id)
+
                 self.pub_local_id.publish(msg)
 
                 if blinker != 0 and self.blinker_target_id == None:
@@ -441,8 +451,8 @@ class PathPlanner:
                     renew_a = 30 # uniti: idx
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
-                        print(obs)
-                        print(get_look_a_head_id)
+                        # print(obs)
+                        # print(get_look_a_head_id)
                         #Left
                         if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             #TODO: if left lane change, get prev,now,next leftBound and check obstacle where is it. 
@@ -639,7 +649,7 @@ class PathPlanner:
 
 
                 # schoolzone_viz
-                
+                ### here
                 position = (CS.position.x, CS.position.y)
                 schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, CS)
                 # print(f"my node number is : {self.l_idx}") 
@@ -647,6 +657,7 @@ class PathPlanner:
                 
                 
                 # print(schoolzone_points)
+                ## here
                 schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
                 self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
                 

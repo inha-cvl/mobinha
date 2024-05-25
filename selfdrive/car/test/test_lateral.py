@@ -65,8 +65,12 @@ class IONIQ:
             geo_path[i][0], geo_path[i][1], 0, self.base_lat, self.base_lon, 0)
             self.path.append((x,y))
         
+        print(self.path)
+        # plt.plot([el[0] for el in self.path], [el[1] for el in self.path])
+        # plt.show()
         self.prev_steer = 0
-
+        self.lx = 0
+        self.ly = 0
         self.cte = 0
 
         self.purepursuit = PurePursuit(self.path)
@@ -212,24 +216,18 @@ class IONIQ:
             self.cte = self.calculate_cte(self.position)
             if self.PA_enable:
                 
-                wheel_angle, (lx, ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
+                wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
                 # plt.plot(lx, ly, 'ro')
-                threshold = 449
-                self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
-                print(f"CTE:{self.cte:.2f}")
+                threshold = 450
+                self.steer = self.limit_steer_change(min(max(wheel_angle*13.5, -threshold), threshold))
+                print(self.steer)
+                inted_steer = int(self.steer)
                 # print("STEER : ", self.steer)
                 # print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
-                if abs(self.steer - self.prev_steer) > 70 and self.prev_steer != 0:
-                    print("error occurred")
-                    print("steer", self.steer)
-                    print("prev", self.prev_steer)
-                    exit(0)
-                    # print(f"v : {self.prev_current_v:.2f}, pos: {self.prev_position[0]:.2f}. {self.prev_position[1]:.2f}, heading: {self.prev_yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.prev_idx}")
-                    # print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
                 self.prev_current_v = self.current_v
                 self.prev_position = self.position
                 self.prev_yaw = self.yaw
-                self.prev_steer = self.steer
+                self.prev_steer = inted_steer
                 self.prev_idx = self.idx
                 # print(self.steer)
             time.sleep(0.01)
@@ -260,7 +258,7 @@ class IONIQ:
     
     def set_target_v(self):
         while not rospy.is_shutdown():
-            self.target_v = 10 / 3.6
+            self.target_v = 20 / 3.6
 
     def plot_velocity(self):
         plt.ion()
@@ -268,6 +266,7 @@ class IONIQ:
         target_line, = ax.plot(self.time_stamps, self.target_v_history, label='Target Velocity')
         current_line, = ax.plot(self.time_stamps, self.current_v_history, label='Current Velocity')
         error_line, = ax.plot(self.time_stamps, self.error_history, label='Error')
+        
         plt.legend(loc='upper left')
 
         while not rospy.is_shutdown():
@@ -295,6 +294,8 @@ class IONIQ:
         fig, ax = plt.subplots()
         path_line, = ax.plot([el[0] for el in self.path], [el[1] for el in self.path], "r", label="path")
         position_point, = ax.plot([], [], 'bo', label="Current Position")
+        lookahead, = ax.plot([], [], 'ro', label="Lookahead Point")
+
         plt.legend(loc='upper left')
         plt.grid(True)
 
@@ -302,6 +303,8 @@ class IONIQ:
             with self.plot_lock:
                 position_point.set_xdata(self.x)
                 position_point.set_ydata(self.y)
+                lookahead.set_xdata(self.lx)
+                lookahead.set_ydata(self.ly)
                 ax.relim()
                 ax.autoscale_view()
 
@@ -336,27 +339,35 @@ class IONIQ:
         return min_idx
     
     def calculate_cte(self, position):
-        idx = self.calc_idx(position)
-        self.idx = idx
-        Ax, Ay = self.path[idx]
-        Bx, By = self.path[idx+1]
-        Px, Py = position
+        try:
+            idx = self.calc_idx(position)
+            self.idx = idx
+            Ax, Ay = self.path[idx]
+            Bx, By = self.path[idx+1]
+            Px, Py = position
 
-        numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
-        denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
-        cte = numerator / denominator if denominator != 0 else 0
+            numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+            denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+            cte = numerator / denominator if denominator != 0 else 0
 
-        cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
-        
-        if cross_product > 0:
-            return -cte
-        elif cross_product < 0:
-            return cte
-        else:
+            cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+            
+            if cross_product > 0:
+                return -cte
+            elif cross_product < 0:
+                return cte
+            else:
+                return 0
+        except:
             return 0
     
     def limit_steer_change(self, current_steer):
-        return current_steer
+        saturation_th = 5
+        saturated_steering_angle = current_steer
+        # diff = max(min(current_steer-prev, self.saturation_th), -self.saturation_th)
+        diff = max(min(current_steer-self.prev_steer, saturation_th), -saturation_th)
+        saturated_steering_angle = self.prev_steer + diff
+        return saturated_steering_angle
     
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C! Exiting gracefully...')
@@ -371,8 +382,8 @@ if __name__ == '__main__':
     t2 = threading.Thread(target=IONIQ.state_controller)
     t3 = threading.Thread(target=IONIQ.set_target_v)
     t4 = threading.Thread(target=IONIQ.controller)
-    # t5 = threading.Thread(target=IONIQ.plot_velocity)
-    t5 = threading.Thread(target=IONIQ.plot_position)
+    t5 = threading.Thread(target=IONIQ.plot_velocity)
+    # t5 = threading.Thread(target=IONIQ.plot_position)
 
     t1.start()
     t2.start()

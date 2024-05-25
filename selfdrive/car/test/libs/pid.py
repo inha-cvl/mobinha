@@ -33,17 +33,11 @@ import matplotlib.pyplot as plt
 
 class APID:
     def __init__(self):
-        # 증분형
-        # self.Kp = 8
-        # self.Ki = 0.004
-        # self.Kd = 10
-        # self.lr = 0.001 # 0.0001
-
         # 일반형
-        self.window_size = 4
-        self.Kp = 40
-        self.Ki = 12 / self.window_size
-        self.Kd = 16    
+        self.window_size = 6
+        self.Kp = 45
+        self.Ki = 6 / self.window_size
+        self.Kd = 25
         self.lr = 0.001 # 0.0001
         self.error_history = []
 
@@ -63,7 +57,6 @@ class APID:
         self.cnt = 0
 
         self.ref = 10
-        self.cur = 0
 
         self.epsilon = 1e-8
     
@@ -120,48 +113,23 @@ class APID:
         # control_amount : 일반형
         self.error = self.errs[3]
         self.integral = sum(self.error_history)
-        # if self.errs[3] < 2:
-        #     self.integral = 0
         self.derivative = self.errs[3]-self.errs[2]
 
         output = (Kp * self.error) + (Ki * self.integral) + (Kd *self.derivative)
-        self.cur += output
-        # control_amount : 증분형
-        # u_k_p = Kp * (self.errs[3] - self.errs[2])
-        # lim = 0.1
-        # u_k_i = max(-lim, min((Ki * self.errs[3]), lim))
-        # u_k_d = Kd * (self.errs[3] - 2*self.errs[2] + self.errs[1])
-        # delta_u_k = u_k_p + u_k_i + u_k_d 
-        # delta_u_k = (Kp * (self.errs[3] - self.errs[2])) + \
-        #             (Ki * self.errs[3]) + \
-        #             (Kd * (self.errs[3] - 2*self.errs[2] + self.errs[1]))
-        # self.ctrls[4] = self.ctrls[3] + delta_u_k
-        # self.cur += self.ctrls[4]
-
-        # print("P:{:4.2f} I:{:4.2f} D:{:4.2f}".format(Kp, Ki, Kd))
-        
-        # output = max(-100, min(self.ctrls[4], 100))
-        # if output>0:
-        #     accel_val = output
-        #     brake_val = 0
-        # else:
-        #     accel_val = 0
-        #     brake_val = -output
-        # output = max(-100, min(self.ctrls[4], 100))
 
         accel_lim = 40
         brake_lim = 50
-        if self.error < 2/3.6:
-            output *= 0.9
+        
+        if cur*3.6 < 54:
+            accel_lim = 1.3*cur+10
+
+        print(output)
         if output>0:
             accel_val = min(output, accel_lim)
             brake_val = 0
         else:
             accel_val = 0
             brake_val = min(-output, brake_lim)
-        if self.error < 2:
-            accel_val *= 0.8
-            brake_val *= 0.2
         # print(accel_val)
         return accel_val, brake_val
         # return self.ctrls[4]

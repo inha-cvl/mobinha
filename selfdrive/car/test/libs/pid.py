@@ -1,3 +1,5 @@
+import numpy as np
+
 class PID:
     def __init__(self, dt=0.05):
         self.K_P = 2.98
@@ -56,12 +58,27 @@ class APID:
 
         self.cnt = 0
 
-        self.ref = 10
+        self.ref = None
+        self.ref_prev = None
 
         self.epsilon = 1e-8
+
+    # def limit_steer_change(self, current_accel_lim):
+    #     saturation_th = 5
+    #     saturated_accel_lim = current_accel_lim
+    #     diff = max(min(current_accel_lim-self.prev_accel_lim, saturation_th), -saturation_th)
+    #     saturated_accel_lim = self.prev_accel_lim + diff
+    #     return saturated_accel_lim
     
     def run(self, cur, ref):
         # update
+        if self.ref is None:
+            self.ref = ref
+        if self.ref != ref:
+            self.ref_prev = self.ref
+            self.ref = ref
+        self.cur_v = cur
+
         for i in range(3):
             self.errs[i] = self.errs[i+1]
             self.outs[i] = self.outs[i+1]
@@ -117,19 +134,41 @@ class APID:
 
         output = (Kp * self.error) + (Ki * self.integral) + (Kd *self.derivative)
 
-        accel_lim = 40
-        brake_lim = 50
+        self.post_process(output)
         
-        if cur*3.6 < 54:
-            accel_lim = 1.3*cur+10
+        return output
 
-        print(output)
+        
+    def post_process(self, output):
+        accel_lim_max = 30
+        brake_lim_max = 30
+
+        if self.ref_prev < self.ref:
+            if self.cur_v < self.ref_prev + 0.3*(self.ref - self.ref_prev):
+                accel_lim += 0.05
+            elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref:
+                accel_lim -= 0.05
+                
+        accel_lim = np.clip(accel_lim, 0, accel_lim_max)
+
+        if self.ref_prev > self.ref:
+            if self.cur_v > self.ref_prev + 0.3*(self.ref - self.ref_prev):
+                brake_lim += 0.05
+            if self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref:
+                brake_lim -= 0.05
+
+        brake_lim = np.clip(brake_lim, 0, brake_lim_max)
+
+
         if output>0:
             accel_val = min(output, accel_lim)
             brake_val = 0
         else:
             accel_val = 0
             brake_val = min(-output, brake_lim)
-        # print(accel_val)
+
         return accel_val, brake_val
-        # return self.ctrls[4]
+
+
+        # if cur*3.6 < 54:
+        #     accel_lim = 1.3*cur+10

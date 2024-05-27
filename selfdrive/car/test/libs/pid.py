@@ -36,10 +36,10 @@ import matplotlib.pyplot as plt
 class APID:
     def __init__(self):
         # 일반형
-        self.window_size = 6
-        self.Kp = 45
-        self.Ki = 6 / self.window_size
-        self.Kd = 25
+        self.window_size = 4
+        self.Kp = 44
+        self.Ki = 1.5 / self.window_size
+        self.Kd = 35
         self.lr = 0.001 # 0.0001
         self.error_history = []
 
@@ -55,13 +55,16 @@ class APID:
         self.outs = [-1, -1, -1, -1, -1]
         self.ctrls = [-1, -1, -1, -1, -1]
 
+        self.epsilon = 1e-8
 
         self.cnt = 0
 
         self.ref = None
         self.ref_prev = None
 
-        self.epsilon = 1e-8
+        self.accel_lim = 10
+        self.brake_lim = 15
+
 
     # def limit_steer_change(self, current_accel_lim):
     #     saturation_th = 5
@@ -134,38 +137,56 @@ class APID:
 
         output = (Kp * self.error) + (Ki * self.integral) + (Kd *self.derivative)
 
-        self.post_process(output)
+        accel_val, brake_val = self.post_process(output)
         
-        return output
+        return accel_val, brake_val
 
         
     def post_process(self, output):
         accel_lim_max = 30
         brake_lim_max = 30
 
-        if self.ref_prev < self.ref:
-            if self.cur_v < self.ref_prev + 0.3*(self.ref - self.ref_prev):
-                accel_lim += 0.05
-            elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref:
-                accel_lim -= 0.05
-                
-        accel_lim = np.clip(accel_lim, 0, accel_lim_max)
+        # 속도에러 미분항
+        self.v_err = self.ref - self.cur_v
 
-        if self.ref_prev > self.ref:
-            if self.cur_v > self.ref_prev + 0.3*(self.ref - self.ref_prev):
-                brake_lim += 0.05
-            if self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref:
-                brake_lim -= 0.05
+        if self.ref_prev is not None and self.ref is not None:
+            if self.ref_prev < self.ref:
+                if self.cur_v < self.ref_prev + 0.3*(self.ref - self.ref_prev):
+                    self.accel_lim += 0.1
+                    print("mode 1")
+                    
+                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref - 2/3.6:
+                    print("mode 2")
+                    if self.v_err_prev - self.v_err < 0.02:
+                        print("mode 2:pass")
+                        pass
+                    else:
+                        self.accel_lim -= 0.1
+            
+            self.accel_lim = np.clip(self.accel_lim, 0, accel_lim_max)
+            self.v_err_prev = self.v_err
 
-        brake_lim = np.clip(brake_lim, 0, brake_lim_max)
+            print(self.accel_lim)
 
+            if self.ref_prev > self.ref:
+                if self.cur_v > self.ref_prev + 0.3*(self.ref - self.ref_prev):
+                    self.brake_lim += 0.01
+                if self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref:
+                    self.brake_lim -= 0.01
+
+            self.brake_lim = np.clip(self.brake_lim, 0, brake_lim_max)
+        else:
+            print("initialize")
+            # self.accel_lim = accel_lim_max
+            # self.brake_lim = brake_lim_max
+            
 
         if output>0:
-            accel_val = min(output, accel_lim)
+            accel_val = min(output, self.accel_lim)
             brake_val = 0
         else:
             accel_val = 0
-            brake_val = min(-output, brake_lim)
+            brake_val = min(-output, self.brake_lim)
 
         return accel_val, brake_val
 

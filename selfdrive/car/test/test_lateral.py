@@ -258,7 +258,14 @@ class IONIQ:
     
     def set_target_v(self):
         while not rospy.is_shutdown():
-            self.target_v = 20 / 3.6
+            if -(int(self.run_time)- int(time.time())) < 5:
+                self.target_v = 0
+            elif -(int(self.run_time)- int(time.time())) < 20:
+                self.target_v = 30 / 3.6
+            elif -(int(self.run_time)- int(time.time())) < 35:
+                self.target_v = 50 / 3.6
+            else:
+                self.target_v = 0
 
     def plot_velocity(self):
         plt.ion()

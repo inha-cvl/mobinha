@@ -263,14 +263,24 @@ class IONIQ:
             timeflow_sec = int(time.time())-int(self.run_time)
             if timeflow_sec < 5:
                 self.target_v = 0
-            elif timeflow_sec < 15:
-                self.target_v = 15 / 3.6
-            # elif timeflow_sec < 30:
-            #     self.target_v = 50 / 3.6
-            # elif timeflow_sec < 40:
-            #     self.target_v = 50 / 3.6
-            # elif timeflow_sec < 60:
-            #     self.target_v = 0 / 3.6
+
+            elif timeflow_sec < 10:
+                self.target_v = 30 / 3.6
+
+            elif timeflow_sec < 20:
+                self.target_v = 30 / 3.6
+
+            elif timeflow_sec < 30:
+                self.target_v = 30 / 3.6
+
+            elif timeflow_sec < 40:
+                self.target_v = 30 / 3.6
+
+            elif timeflow_sec < 50:
+                self.target_v = 30 / 3.6
+
+            elif timeflow_sec < 60:
+                self.target_v = 0 / 3.6
 
     def plot_velocity(self):
         plt.ion()

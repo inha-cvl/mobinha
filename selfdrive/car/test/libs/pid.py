@@ -36,10 +36,10 @@ import matplotlib.pyplot as plt
 class APID:
     def __init__(self):
         # 일반형
-        self.window_size = 4
-        self.Kp = 44
-        self.Ki = 1.25 / self.window_size
-        self.Kd = 39
+        self.window_size = 2
+        self.Kp = 46
+        self.Ki = 1.2 / self.window_size
+        self.Kd = 35
         self.lr = 0.001 # 0.0001
         self.error_history = []
 
@@ -64,6 +64,8 @@ class APID:
 
         self.accel_default = 10
         self.brake_default = 0.5
+        self.accel_min = self.accel_default
+        self.brake_min = self.brake_default
         self.accel_lim = self.accel_default
         self.brake_lim = self.brake_default
 
@@ -76,6 +78,9 @@ class APID:
             self.ref_prev = self.ref
             self.ref = ref
         self.cur_v = cur
+
+        self.accel_min = self.accel_default + 1.2*cur/10
+        self.brake_min = self.brake_default
 
         for i in range(3):
             self.errs[i] = self.errs[i+1]
@@ -138,6 +143,7 @@ class APID:
 
         
     def post_process(self, output):
+        print("                     herererer", self.accel_min)
         accel_lim_max = 33
         brake_lim_max = 45
 
@@ -146,36 +152,40 @@ class APID:
         if self.ref_prev is not None and self.ref is not None:
             # accel
             if self.ref_prev < self.ref:
+                self.brake_lim -= 0.2
+                # self.brake_lim = np.clip(self.brake_lim, self.brake_min, brake_lim_max)
+
                 if self.cur_v < self.ref_prev + 0.4*(self.ref - self.ref_prev):
                     self.accel_lim += 0.25
                     print("[ACCEL] mode 1 : accel limit increase")
                     
-                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref - 2/3.6:
-                    if self.v_err_prev - self.v_err < 0.02:
-                        print("[ACCEL] mode 2: pass")
-                        pass
-                    else:
-                        print("[ACCEL] mode 2 : limit decrease")
-                        self.accel_lim -= 0.1
+                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref:
+                    self.accel_lim -= 0.3
+                    print("[ACCEL] mode 3 : accel limit decrease")
+            
+                else:
+                    print("[ACCEL] mode 2 : maintain")
+                    
             
 
             # brake
             if self.ref_prev > self.ref and self.cur_v > self.ref:
+                self.accel_lim -= 0.2
+                # self.accel_lim = np.clip(self.accel_lim, self.accel_min, accel_lim_max)
+
                 if self.cur_v > self.ref_prev + 0.4*(self.ref - self.ref_prev):
                     self.brake_lim += 0.3
-                    print("[BRAKE] mode 1 : limit increase", self.brake_lim)
+                    print("[BRAKE] mode 1 : brake limit increase", self.brake_lim)
                     
-                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref + 2/3.6:
-                    if self.v_err_prev - self.v_err > 0.02:
-                        print("[BRAKE] mode 2: pass")
-                        pass
-                    else:
-                        print("[BRAKE] mode 2: limit decrease")
-                        self.brake_lim -= 0.1
+                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref + 0/3.6:
+                    self.brake_lim -= 0.3
+                    print("[BRAKE] mode 3 : brake limit decrease")
+                else:
+                    print("[BRAKE] mode 2 : maintain")
             
 
-            self.accel_lim = np.clip(self.accel_lim, self.accel_default, accel_lim_max)
-            self.brake_lim = np.clip(self.brake_lim, self.brake_default, brake_lim_max)
+            self.accel_lim = np.clip(self.accel_lim, self.accel_min, accel_lim_max)
+            self.brake_lim = np.clip(self.brake_lim, self.brake_min, brake_lim_max)
 
 
             self.v_err_prev = self.v_err
@@ -184,15 +194,15 @@ class APID:
 
         else:
             print("initialize")
-            
+        print("output", output)
         if output>0:
             accel_val = min(output, self.accel_lim)
             brake_val = 0
-            self.brake_lim = self.brake_default
+            # self.brake_lim = self.brake_min
         else:
             accel_val = 0
             brake_val = min(-output, self.brake_lim)
-            self.accel_lim = self.accel_default
+            # self.accel_lim = self.accel_min
         
         if self.ref == 0 and self.cur_v < 2.5:
             brake_val = 40

@@ -127,7 +127,7 @@ class IONIQ:
         self.alv_cnt = self.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.PA_enable, 'PA_StrAngCmd': self.steer,
                    'LON_Enable': self.LON_enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
-                   'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset,
+                   'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset,
                    'TURN_SIG_LEFT': 0, 'TURN_SIG_RIGHT': 0
                    }
         msg = self.db.encode_message('Control', signals)
@@ -214,6 +214,7 @@ class IONIQ:
         while not rospy.is_shutdown():
             if self.LON_enable:
                 self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
+                print(1,self.accel, self.brake)
 
             self.position = (self.x, self.y)
             self.cte = self.calculate_cte(self.position)
@@ -262,12 +263,14 @@ class IONIQ:
             timeflow_sec = int(time.time())-int(self.run_time)
             if timeflow_sec < 5:
                 self.target_v = 0
-            elif timeflow_sec < 20:
-                self.target_v = 30 / 3.6
-            elif timeflow_sec < 35:
-                self.target_v = 50 / 3.6
-            else:
-                self.target_v = 0
+            elif timeflow_sec < 15:
+                self.target_v = 15 / 3.6
+            # elif timeflow_sec < 30:
+            #     self.target_v = 50 / 3.6
+            # elif timeflow_sec < 40:
+            #     self.target_v = 50 / 3.6
+            # elif timeflow_sec < 60:
+            #     self.target_v = 0 / 3.6
 
     def plot_velocity(self):
         plt.ion()

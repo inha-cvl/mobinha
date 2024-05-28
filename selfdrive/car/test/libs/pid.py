@@ -146,14 +146,14 @@ class APID:
             if self.ref_prev < self.ref:
                 if self.cur_v < self.ref_prev + 0.3*(self.ref - self.ref_prev):
                     self.accel_lim += 0.1
-                    print("ACCEL mode 1 : accel limit increase")
+                    print("[ACCEL] mode 1 : accel limit increase")
                     
                 elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref - 2/3.6:
                     if self.v_err_prev - self.v_err < 0.02:
-                        print("ACCEL mode 2: pass")
+                        print("[ACCEL] mode 2: pass")
                         pass
                     else:
-                        print("ACCEL mode 2 : limit decrease")
+                        print("[ACCEL] mode 2 : limit decrease")
                         self.accel_lim -= 0.1
             
             self.accel_lim = np.clip(self.accel_lim, 0, accel_lim_max)
@@ -162,15 +162,14 @@ class APID:
             if self.ref_prev > self.ref:
                 if self.cur_v > self.ref_prev - 0.3*(self.ref - self.ref_prev):
                     self.brake_lim += 0.1
-                    print("BRAKE mode 1 : limit increase")
+                    print("[BRAKE] mode 1 : limit increase")
                     
                 elif self.ref_prev - 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref + 2/3.6:
-                    print("BRAKE mode 2")
                     if self.v_err_prev - self.v_err > 0.02:
-                        print("BRAKE mode 2: pass")
+                        print("[BRAKE] mode 2: pass")
                         pass
                     else:
-                        print("BRAKE mode 2: limit decrease")
+                        print("[BRAKE] mode 2: limit decrease")
                         self.brake_lim -= 0.1
             
             self.brake_lim = np.clip(self.brake_lim, 0, brake_lim_max)

@@ -65,13 +65,6 @@ class APID:
         self.accel_lim = 10
         self.brake_lim = 15
 
-
-    # def limit_steer_change(self, current_accel_lim):
-    #     saturation_th = 5
-    #     saturated_accel_lim = current_accel_lim
-    #     diff = max(min(current_accel_lim-self.prev_accel_lim, saturation_th), -saturation_th)
-    #     saturated_accel_lim = self.prev_accel_lim + diff
-    #     return saturated_accel_lim
     
     def run(self, cur, ref):
         # update
@@ -146,39 +139,49 @@ class APID:
         accel_lim_max = 30
         brake_lim_max = 30
 
-        # 속도에러 미분항
         self.v_err = self.ref - self.cur_v
 
         if self.ref_prev is not None and self.ref is not None:
+            # accel
             if self.ref_prev < self.ref:
                 if self.cur_v < self.ref_prev + 0.3*(self.ref - self.ref_prev):
                     self.accel_lim += 0.1
-                    print("mode 1")
+                    print("ACCEL mode 1 : accel limit increase")
                     
                 elif self.ref_prev + 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref - 2/3.6:
-                    print("mode 2")
                     if self.v_err_prev - self.v_err < 0.02:
-                        print("mode 2:pass")
+                        print("ACCEL mode 2: pass")
                         pass
                     else:
+                        print("ACCEL mode 2 : limit decrease")
                         self.accel_lim -= 0.1
             
             self.accel_lim = np.clip(self.accel_lim, 0, accel_lim_max)
+
+            # brake
+            if self.ref_prev > self.ref:
+                if self.cur_v > self.ref_prev - 0.3*(self.ref - self.ref_prev):
+                    self.brake_lim += 0.1
+                    print("BRAKE mode 1 : limit increase")
+                    
+                elif self.ref_prev - 0.7*(self.ref - self.ref_prev) < self.cur_v < self.ref + 2/3.6:
+                    print("BRAKE mode 2")
+                    if self.v_err_prev - self.v_err > 0.02:
+                        print("BRAKE mode 2: pass")
+                        pass
+                    else:
+                        print("BRAKE mode 2: limit decrease")
+                        self.brake_lim -= 0.1
+            
+            self.brake_lim = np.clip(self.brake_lim, 0, brake_lim_max)
+
+
             self.v_err_prev = self.v_err
 
-            print(self.accel_lim)
+            print("         ACC_LIM, BRK_LIM : ", self.accel_lim, self.brake_lim)
 
-            if self.ref_prev > self.ref:
-                if self.cur_v > self.ref_prev + 0.3*(self.ref - self.ref_prev):
-                    self.brake_lim += 0.01
-                if self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref:
-                    self.brake_lim -= 0.01
-
-            self.brake_lim = np.clip(self.brake_lim, 0, brake_lim_max)
         else:
             print("initialize")
-            # self.accel_lim = accel_lim_max
-            # self.brake_lim = brake_lim_max
             
 
         if output>0:

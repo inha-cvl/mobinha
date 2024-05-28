@@ -185,18 +185,21 @@ class IONIQ:
                         1001: reset\n1000: over\n')
             cmd = int(cmd)
             if cmd == 99: 
+                self.reset_trigger()
                 self.PA_enable = 1
                 self.LON_enable = 0
                 self.brake = 0
                 self.accel = 0
                 self.reset = 0
-            elif cmd == 88: 
+            elif cmd == 88:
+                self.reset_trigger()
                 self.PA_enable = 0
                 self.LON_enable = 1
                 self.brake = 0
                 self.accel = 0
                 self.reset = 0
             elif cmd == 77: 
+                self.reset_trigger()
                 self.PA_enable = 1
                 self.LON_enable = 1
                 self.brake = 0
@@ -220,16 +223,14 @@ class IONIQ:
                 # plt.plot(lx, ly, 'ro')
                 threshold = 450
                 self.steer = self.limit_steer_change(min(max(wheel_angle*13.5, -threshold), threshold))
-                print(self.steer)
+                print("Steer: ", self.steer)
                 inted_steer = int(self.steer)
-                # print("STEER : ", self.steer)
                 # print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
                 self.prev_current_v = self.current_v
                 self.prev_position = self.position
                 self.prev_yaw = self.yaw
                 self.prev_steer = inted_steer
                 self.prev_idx = self.idx
-                # print(self.steer)
             time.sleep(0.01)
             ''' ## 1
             v : 1.85, pos: -20.17. 27.63, heading: -144.85, target: -23.78, 22.88, idx: 82
@@ -258,11 +259,12 @@ class IONIQ:
     
     def set_target_v(self):
         while not rospy.is_shutdown():
-            if -(int(self.run_time)- int(time.time())) < 5:
+            timeflow_sec = int(time.time())-int(self.run_time)
+            if timeflow_sec < 5:
                 self.target_v = 0
-            elif -(int(self.run_time)- int(time.time())) < 20:
+            elif timeflow_sec < 20:
                 self.target_v = 30 / 3.6
-            elif -(int(self.run_time)- int(time.time())) < 35:
+            elif timeflow_sec < 35:
                 self.target_v = 50 / 3.6
             else:
                 self.target_v = 0
@@ -326,7 +328,6 @@ class IONIQ:
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
-        # print(self.yaw)
 
     def calc_idx(self, pt):
         min_dist = float('inf')
@@ -371,7 +372,6 @@ class IONIQ:
     def limit_steer_change(self, current_steer):
         saturation_th = 5
         saturated_steering_angle = current_steer
-        # diff = max(min(current_steer-prev, self.saturation_th), -self.saturation_th)
         diff = max(min(current_steer-self.prev_steer, saturation_th), -saturation_th)
         saturated_steering_angle = self.prev_steer + diff
         return saturated_steering_angle

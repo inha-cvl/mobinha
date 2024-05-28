@@ -143,7 +143,7 @@ class APID:
 
         
     def post_process(self, output):
-        print("                     herererer", self.accel_min)
+        # print("                      ACCEL_MIN :", self.accel_min)
         accel_lim_max = 33
         brake_lim_max = 45
 
@@ -153,7 +153,6 @@ class APID:
             # accel
             if self.ref_prev < self.ref:
                 self.brake_lim -= 0.2
-                # self.brake_lim = np.clip(self.brake_lim, self.brake_min, brake_lim_max)
 
                 if self.cur_v < self.ref_prev + 0.4*(self.ref - self.ref_prev):
                     self.accel_lim += 0.25
@@ -171,13 +170,12 @@ class APID:
             # brake
             if self.ref_prev > self.ref and self.cur_v > self.ref:
                 self.accel_lim -= 0.2
-                # self.accel_lim = np.clip(self.accel_lim, self.accel_min, accel_lim_max)
 
                 if self.cur_v > self.ref_prev + 0.4*(self.ref - self.ref_prev):
                     self.brake_lim += 0.3
                     print("[BRAKE] mode 1 : brake limit increase", self.brake_lim)
                     
-                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref + 0/3.6:
+                elif self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref:
                     self.brake_lim -= 0.3
                     print("[BRAKE] mode 3 : brake limit decrease")
                 else:
@@ -190,25 +188,19 @@ class APID:
 
             self.v_err_prev = self.v_err
 
-            print("         ACC_LIM, BRK_LIM : ", self.accel_lim, self.brake_lim)
+            print("                                 ACC_LIM, BRK_LIM : ", self.accel_lim, self.brake_lim)
 
         else:
             print("initialize")
-        print("output", output)
+
         if output>0:
             accel_val = min(output, self.accel_lim)
             brake_val = 0
-            # self.brake_lim = self.brake_min
         else:
             accel_val = 0
             brake_val = min(-output, self.brake_lim)
-            # self.accel_lim = self.accel_min
         
         if self.ref == 0 and self.cur_v < 2.5:
             brake_val = 40
 
         return accel_val, brake_val
-
-
-        # if cur*3.6 < 54:
-        #     accel_lim = 1.3*cur+10

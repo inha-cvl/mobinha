@@ -1,46 +1,12 @@
 import numpy as np
 
-class PID:
-    def __init__(self, dt=0.05):
-        self.K_P = 2.98
-        self.K_I = 2.38
-        self.K_D = 0.00
-        self.pre_error = 0.0
-        self.integral_error = 0.0
-        self.dt = dt
-
-    def run(self, target, current):
-        error = target - current 
-
-        derivative_error = (error - self.pre_error)/self.dt 
-        self.integral_error += error*self.dt
-        self.integral_error = max(-5, min(self.integral_error, 5)) 
-
-        pid = self.K_P*error + self.K_I*self.integral_error + self.K_D*derivative_error
-        pid = max(-100, min(pid, 100))  
-        self.pre_error = error
-        
-        if pid>0:
-            accel_val = pid
-            brake_val = 0
-        else:
-            accel_val = 0
-            brake_val = pid
-
-        return accel_val, brake_val
-
-
-# imported by JM
-import matplotlib.pyplot as plt
-
 class APID:
     def __init__(self):
-        # 일반형
         self.window_size = 2
         self.Kp = 46
         self.Ki = 1.2 / self.window_size
         self.Kd = 35
-        self.lr = 0.001 # 0.0001
+        self.lr = 0.001 
         self.error_history = []
 
         self.dKp = 0
@@ -178,22 +144,23 @@ class APID:
                 elif self.ref_prev + 0.7*(self.ref - self.ref_prev) > self.cur_v > self.ref:
                     self.brake_lim -= 0.3
                     print("[BRAKE] mode 3 : brake limit decrease")
+
                 else:
                     print("[BRAKE] mode 2 : maintain")
             
 
             self.accel_lim = np.clip(self.accel_lim, self.accel_min, accel_lim_max)
             self.brake_lim = np.clip(self.brake_lim, self.brake_min, brake_lim_max)
+            print("                                 ACC_LIM, BRK_LIM : ", self.accel_lim, self.brake_lim)
 
 
             self.v_err_prev = self.v_err
 
-            print("                                 ACC_LIM, BRK_LIM : ", self.accel_lim, self.brake_lim)
 
         else:
             print("initialize")
 
-        if output>0:
+        if output > 0:
             accel_val = min(output, self.accel_lim)
             brake_val = 0
         else:

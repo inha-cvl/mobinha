@@ -2,7 +2,7 @@ import can
 import cantools
 import threading
 import time
-from selfdrive.car.test.libs.apid import PID, APID
+from libs.apid import APID
 from libs.purepursuit import PurePursuit
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -263,7 +263,7 @@ class IONIQ:
                 # plt.plot(lx, ly, 'ro')
                 threshold = 450
                 self.steer = self.limit_steer_change(min(max(wheel_angle*13.5, -threshold), threshold))
-                print("Steer: ", self.steer)
+                # print("Steer: ", self.steer)
                 inted_steer = int(self.steer)
                 self.prev_current_v = self.current_v
                 self.prev_position = self.position
@@ -280,7 +280,10 @@ class IONIQ:
             self.current_v_history.append(self.current_v*3.6)
             self.target_v_history.append(self.target_v*3.6)
             self.error_history.append(abs(self.target_v - self.current_v)*3.6)
-            self.accel_history.append((self.current_v_history[-1]-self.current_v_history[-2])*100)
+            try:
+                self.accel_history.append((self.current_v_history[-1]-self.current_v_history[-2])*100)
+            except:
+                self.accel_history.append(0)
 
             for arr in [self.time_stamps, self.current_v_history, self.target_v_history, self.error_history]:
                 if len(arr) > 100:
@@ -411,9 +414,11 @@ class IONIQ:
         except:
             return 0
     
-
     def limit_steer_change(self, current_steer):
-        saturation_th = 5
+        saturation_th = 15
+        saturation_th = -5/9*(self.current_v*3.6-6)+15
+        saturation_th = np.clip(saturation_th, 2, 20)
+        # print("                         ", saturation_th)
         saturated_steering_angle = current_steer
         diff = max(min(current_steer-self.prev_steer, saturation_th), -saturation_th)
         saturated_steering_angle = self.prev_steer + diff
@@ -434,8 +439,8 @@ if __name__ == '__main__':
     t3 = threading.Thread(target=IONIQ.set_target_v)
     t4 = threading.Thread(target=IONIQ.controller)
 
-    t5 = threading.Thread(target=IONIQ.plot_velocity)
-    # t5 = threading.Thread(target=IONIQ.plot_position)
+    # t5 = threading.Thread(target=IONIQ.plot_velocity)
+    t5 = threading.Thread(target=IONIQ.plot_position)
     # t5 = threading.Thread(target=IONIQ.plot_acceleration)
 
     t1.start()

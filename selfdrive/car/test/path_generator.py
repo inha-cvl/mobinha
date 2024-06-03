@@ -39,7 +39,7 @@ class GPSLogger:
         else:
             last_lat, last_lon = self.last_saved_point
             distance = self.haversine(last_lat, last_lon, self.latitude, self.longitude)
-            if distance >= 0.5:  # 50cm 이상인 경우에만 저장
+            if distance >= 0.1:  # 50cm 이상인 경우에만 저장
                 self.path.append((self.latitude, self.longitude))
                 self.last_saved_point = (self.latitude, self.longitude)
         

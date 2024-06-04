@@ -49,8 +49,8 @@ class IONIQ:
         self.apid = APID()
 
         geo_path = []
-        # with open('path_log.txt', 'r') as file:
-        with open('26.txt', 'r') as file:
+        with open('path_log.txt', 'r') as file:
+        # with open('26.txt', 'r') as file:
             lines = file.readlines() 
 
         for line in lines:
@@ -352,6 +352,7 @@ class IONIQ:
 
         plt.legend(loc='upper left')
         plt.grid(True)
+        plt.axis('equal')
 
         while not rospy.is_shutdown():
             with self.plot_lock:

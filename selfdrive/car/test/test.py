@@ -49,7 +49,8 @@ class IONIQ:
         self.apid = APID()
 
         geo_path = []
-        with open('path_log.txt', 'r') as file:
+        # with open('path_log.txt', 'r') as file:
+        with open('26.txt', 'r') as file:
             lines = file.readlines() 
 
         for line in lines:
@@ -95,6 +96,8 @@ class IONIQ:
 
         self.position = (0, 0)
 
+        self.reset_trigger()
+
 
     def daemon(self):
         while not rospy.is_shutdown():
@@ -120,25 +123,25 @@ class IONIQ:
             timeflow_sec = int(time.time())-int(self.run_time)
             if timeflow_sec < 5:
                 self.target_v = 0
+            else:
+                self.target_v = 20/3.6
+            # elif timeflow_sec < 10:
+            #     self.target_v = 30 / 3.6
 
-            elif timeflow_sec < 10:
-                self.target_v = 30 / 3.6
+            # elif timeflow_sec < 20:
+            #     self.target_v = 30 / 3.6
 
-            elif timeflow_sec < 20:
-                self.target_v = 30 / 3.6
+            # elif timeflow_sec < 30:
+            #     self.target_v = 30 / 3.6
 
-            elif timeflow_sec < 30:
-                self.target_v = 30 / 3.6
+            # elif timeflow_sec < 40:
+            #     self.target_v = 30 / 3.6
 
-            elif timeflow_sec < 40:
-                self.target_v = 30 / 3.6
+            # elif timeflow_sec < 50:
+            #     self.target_v = 30 / 3.6
 
-            elif timeflow_sec < 50:
-                self.target_v = 30 / 3.6
-
-            elif timeflow_sec < 60:
-                self.target_v = 0 / 3.6
-
+            # elif timeflow_sec < 60:
+            #     self.target_v = 0 / 3.6
 
     def reset_trigger(self):
         self.reset = 1
@@ -415,7 +418,7 @@ class IONIQ:
             return 0
     
     def limit_steer_change(self, current_steer):
-        saturation_th = 15
+        # saturation_th = 20
         saturation_th = -5/9*(self.current_v*3.6-6)+15
         saturation_th = np.clip(saturation_th, 2, 20)
         # print("                         ", saturation_th)

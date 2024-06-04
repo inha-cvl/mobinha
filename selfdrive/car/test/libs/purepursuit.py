@@ -13,14 +13,14 @@ class PurePursuit:
         self.prev_angle = None
 
     def run(self, vEgo, path, position, yawRate, cte):
-        if vEgo*3.6 < 12:
-            lfd = 2.0
-        else:
-            lfd = 10 + 3 * vEgo**0.8 / 3.6
+        lfd = 1.8 # for speed 8km
+        lfd = 2 # for speed 10
+        lfd = 4 # for speed 20, factor 1.2
+        lfd = 6 # for speed 24, factor 1.2  
+        lfd = 6 # for speed 30, factor 1.4
+
 
         print(f"CTE:{cte:.2f}")
-        # print(f"       lfd:{lfd:.2f}")
-        # print(f"                  vEgo:{vEgo*3.6:.2f}")
         lfd = np.clip(lfd, 4, 60)  
         steering_angle = 0.  
         lx, ly = path[0] 
@@ -50,19 +50,7 @@ class PurePursuit:
         # factor = 1.3
 
 
-        factor = 1
-        val = np.clip(abs(cte)/2, -0.4, 0.4)
-        if cte > 0:
-            if steering_angle > 0:
-                factor = 1 + val
-            else:
-                factor = 1 - val
-        else:
-            if steering_angle > 0:
-                factor = 1 - val
-            else:
-                factor = 1 + val
-        print("                                ", factor)
+        factor = 1.3
 
         return degrees(factor*steering_angle), (lx, ly) 
     

@@ -17,7 +17,7 @@ import sys
 
 class IONIQ:
     def __init__(self):
-        rospy.init_node("testLateral")
+        rospy.init_node("controlTest_junmyeong")
 
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
@@ -262,7 +262,8 @@ class IONIQ:
             self.cte = self.calculate_cte(self.position)
             if self.PA_enable:
                 
-                wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
+                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
+                wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
                 # plt.plot(lx, ly, 'ro')
                 threshold = 450
                 self.steer = self.limit_steer_change(min(max(wheel_angle*13.5, -threshold), threshold))

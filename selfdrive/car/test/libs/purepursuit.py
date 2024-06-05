@@ -57,3 +57,36 @@ class PurePursuit:
 
         return degrees(factor*steering_angle), (lx, ly) 
     
+
+    def run_experimental(self, vEgo, path, idxEgo, posEgo, yawEgo, cte):
+        # lfd = 1.8 # for speed 8km, factor 1
+        # lfd = 2 # for speed 10
+        # lfd = 4 # for speed 20, factor 1.2
+        lfd = 6 # for speed 24, factor 1.2  
+        # lfd = 6 # for speed 30, factor 1.4
+        # lfd = 7 # for speed 40, factor 1.3
+        # lfd = 10 # for speed 50, factor 1.3
+
+
+        print(f"CTE:{cte:.2f}")
+        heading = yawEgo
+        x, y = posEgo
+
+        resolution = 0.1
+        lookahead_dis = 6 # [m]
+        lookahead_idx = int(lookahead_dis/resolution)
+
+        # Target index 결정
+        target_idx = min(idxEgo + lookahead_idx, len(path)-1)
+        if target_idx >= len(path)-1:
+            target_idx = len(path)-1
+
+        # 각도 계산
+        target_x, target_y = path[target_idx]
+        tmp = degrees(atan2(target_y - y, target_x - x)) % 360
+        alpha = tmp - heading
+        angle = atan2(2.0 * self.L * sin(radians(alpha)), lookahead_dis)
+        steer = degrees(angle) 
+
+
+        return steer, (target_x, target_y)

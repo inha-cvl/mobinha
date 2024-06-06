@@ -1,8 +1,8 @@
-import rospy
-from std_msgs.msg import Float32
-from numpy.linalg import norm
 from math import sin, cos, atan2, radians, degrees
 import numpy as np
+import scipy.linalg as la
+from scipy.signal import cont2discrete
+
 
 class PurePursuit:
     KPH_TO_MPS = 1 / 3.6
@@ -18,7 +18,6 @@ class PurePursuit:
         # lfd = 4 # for speed 20, factor 1.2
         lfd = 6 # for speed 24, factor 1.2  
         # lfd = 6 # for speed 30, factor 1.4
-
         # lfd = 7 # for speed 40, factor 1.3
         # lfd = 10 # for speed 50, factor 1.3
 
@@ -41,16 +40,6 @@ class PurePursuit:
                 lx = point[0]  
                 ly = point[1]  
                 break
-        
-        # # smoothing
-        # alpha = 0.9
-        # if self.prev_angle is None:
-        #     self.prev_angle = steering_angle
-        # else:
-        #     steering_angle = alpha * steering_angle + (1 - alpha) * self.prev_angle
-        #     self.prev_angle = steering_angle
-
-        # factor = 1.3
 
 
         factor = 1.2
@@ -88,5 +77,85 @@ class PurePursuit:
         angle = atan2(2.0 * self.L * sin(radians(alpha)), lookahead_dis)
         steer = degrees(angle) 
 
+
+        return steer, (target_x, target_y)
+
+
+    def run_experimental_rhc(self, vEgo, path, idxEgo, posEgo, yawEgo, cte):
+        # 시스템 파라미터
+        L = self.L  # 차량의 축간거리 (m)
+        dt = 0.1  # 시간 간격 (s)
+        T = 1.0  # 예측 시간 (s)
+        N = int(T / dt)  # 예측 창의 시간 스텝 수
+        lookahead_distance = 6  # lookahead distance in meters
+        resolution = 0.1  # path resolution in meters
+
+        # 현재 상태
+        xEgo, yEgo = posEgo
+        psiEgo = yawEgo
+        x0 = np.array([xEgo, yEgo, psiEgo])
+
+        # 선형화된 시스템 매개변수 업데이트 함수
+        def get_system_matrices(psi):
+            A = np.array([[0, 0, -vEgo * np.sin(psi)],
+                        [0, 0, vEgo * np.cos(psi)],
+                        [0, 0, 0]])
+
+            B = np.array([[0],
+                        [0],
+                        [vEgo / (L * np.cos(psi)**2)]])
+            
+            return A, B
+
+        # 이산 시간 시스템으로 변환 함수
+        def discretize_system(A, B, dt):
+            Ad, Bd, _, _, _ = cont2discrete((A, B, np.eye(3), np.zeros((3, 1))), dt)
+            return Ad, Bd
+
+        # LQR 가중치 행렬
+        Q = np.diag([0,0,1])  # 단위 행렬 (상태 오차 가중치)
+        R = np.array([[1]])  # 제어 입력 가중치
+
+        # 초기화
+        steer = 0
+        target_x, target_y = path[idxEgo]
+
+        for _ in range(N):
+            # 목표 yaw angle 설정
+            lookahead_idx = int(lookahead_distance / resolution)
+            target_idx = min(idxEgo + lookahead_idx, len(path) - 1)
+            
+            target_x, target_y = path[target_idx]
+
+            # 목표 yaw angle 계산
+            target_yaw = np.arctan2(target_y - yEgo, target_x - xEgo)
+
+            # 선형화된 시스템 매개변수 업데이트
+            A, B = get_system_matrices(psiEgo)
+            
+            # 이산 시간 시스템으로 변환
+            Ad, Bd = discretize_system(A, B, dt)
+            
+            # 이산 시간 Riccati 방정식을 풀어 P를 계산
+            P = la.solve_discrete_are(Ad, Bd, Q, R)
+            
+            # 이산 시간 LQR 이득 행렬 계산
+            K = np.dot(la.inv(np.dot(np.dot(Bd.T, P), Bd) + R), np.dot(np.dot(Bd.T, P), Ad))
+            
+            # 목표 상태 벡터 설정
+            x_d = np.array([target_x, target_y, target_yaw])
+            
+            # 현재 상태에서 제어 입력 계산
+            u = -np.dot(K, (x0 - x_d))
+            delta = u[0]
+            
+            # 시스템 상태 업데이트
+            xEgo = x0[0] + vEgo * np.cos(x0[2]) * dt
+            yEgo = x0[1] + vEgo * np.sin(x0[2]) * dt
+            psiEgo = x0[2] + (vEgo / L) * np.tan(delta) * dt
+            x0 = np.array([xEgo, yEgo, psiEgo])
+
+            # 조향각 계산
+            steer = np.degrees(delta)
 
         return steer, (target_x, target_y)

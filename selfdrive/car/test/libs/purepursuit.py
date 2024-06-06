@@ -3,7 +3,6 @@ import numpy as np
 import scipy.linalg as la
 from scipy.signal import cont2discrete
 
-
 class PurePursuit:
     KPH_TO_MPS = 1 / 3.6
 
@@ -12,7 +11,7 @@ class PurePursuit:
         self.L = 3
         self.prev_angle = None
 
-    def run(self, vEgo, path, position, yawRate, cte):
+    def run(self, vEgo, path, idx, position, yawRate, cte):
         # lfd = 1.8 # for speed 8km, factor 1
         # lfd = 2 # for speed 10
         # lfd = 4 # for speed 20, factor 1.2
@@ -22,12 +21,12 @@ class PurePursuit:
         # lfd = 10 # for speed 50, factor 1.3
 
 
-        print(f"CTE:{cte:.2f}")
+        # print(f"CTE:{cte:.2f}")
         lfd = np.clip(lfd, 4, 60)  
         steering_angle = 0.  
         lx, ly = path[0] 
         
-        for point in path:
+        for point in path[idx:]:
             diff = np.asarray((point[0]-position[0], point[1]-position[1]))
             rotation_matrix = np.array(
                 ((np.cos(-radians(yawRate)), -np.sin(-radians(yawRate))), (np.sin(-radians(yawRate)),  np.cos(-radians(yawRate)))))
@@ -80,15 +79,25 @@ class PurePursuit:
 
         return steer, (target_x, target_y)
 
+    def check_controllability(self, A, B):
+        n = A.shape[0]
+        controllability_matrix = B
+        for i in range(1, n):
+            controllability_matrix = np.hstack((controllability_matrix, np.linalg.matrix_power(A, i) @ B))
+        rank_of_controllability_matrix = np.linalg.matrix_rank(controllability_matrix)
+        if rank_of_controllability_matrix == n:
+            return True
+        else:
+            return False
 
     def run_experimental_rhc(self, vEgo, path, idxEgo, posEgo, yawEgo, cte):
         # 시스템 파라미터
         L = self.L  # 차량의 축간거리 (m)
+        lookahead_distance = 6  # lookahead distance in meters
+        resolution = 0.1  # path resolution in meters
         dt = 0.1  # 시간 간격 (s)
         T = 1.0  # 예측 시간 (s)
         N = int(T / dt)  # 예측 창의 시간 스텝 수
-        lookahead_distance = 6  # lookahead distance in meters
-        resolution = 0.1  # path resolution in meters
 
         # 현재 상태
         xEgo, yEgo = posEgo
@@ -100,21 +109,14 @@ class PurePursuit:
             A = np.array([[0, 0, -vEgo * np.sin(psi)],
                         [0, 0, vEgo * np.cos(psi)],
                         [0, 0, 0]])
-
             B = np.array([[0],
                         [0],
                         [vEgo / (L * np.cos(psi)**2)]])
-            
             return A, B
 
-        # 이산 시간 시스템으로 변환 함수
-        def discretize_system(A, B, dt):
-            Ad, Bd, _, _, _ = cont2discrete((A, B, np.eye(3), np.zeros((3, 1))), dt)
-            return Ad, Bd
-
         # LQR 가중치 행렬
-        Q = np.diag([0,0,1])  # 단위 행렬 (상태 오차 가중치)
-        R = np.array([[1]])  # 제어 입력 가중치
+        Q = np.diag([1, 1, 100])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
+        R = np.array([[0.1]])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
 
         # 초기화
         steer = 0
@@ -124,7 +126,6 @@ class PurePursuit:
             # 목표 yaw angle 설정
             lookahead_idx = int(lookahead_distance / resolution)
             target_idx = min(idxEgo + lookahead_idx, len(path) - 1)
-            
             target_x, target_y = path[target_idx]
 
             # 목표 yaw angle 계산
@@ -132,21 +133,34 @@ class PurePursuit:
 
             # 선형화된 시스템 매개변수 업데이트
             A, B = get_system_matrices(psiEgo)
-            
-            # 이산 시간 시스템으로 변환
-            Ad, Bd = discretize_system(A, B, dt)
-            
-            # 이산 시간 Riccati 방정식을 풀어 P를 계산
-            P = la.solve_discrete_are(Ad, Bd, Q, R)
-            
-            # 이산 시간 LQR 이득 행렬 계산
-            K = np.dot(la.inv(np.dot(np.dot(Bd.T, P), Bd) + R), np.dot(np.dot(Bd.T, P), Ad))
-            
+
+            if not self.check_controllability(A, B):
+                print("A=", A)
+                print("B=", B)
+                print("System is not controllable. Switching to PURE PURSUIT.")
+                return self.run(vEgo, path, idxEgo, posEgo, yawEgo, cte)
+            else:
+                print("finally using RHC")
+            try:
+                # 연속 시간 Riccati 방정식을 풀어 P를 계산
+                P = la.solve_continuous_are(A, B, Q, R)
+                # 연속 시간 LQR 이득 행렬 계산
+                K = np.linalg.inv(R) @ B.T @ P
+            except np.linalg.LinAlgError:
+                print("A=", A)
+                print("B=", B)
+                print("Q=", Q)
+                print("R=", R)
+                print("PURE PURSUIT")
+                return self.run(vEgo, path, idxEgo, posEgo, yawEgo, cte)
+
+            print("RHC RHC RHC RHC RHC RHC RHC")
+
             # 목표 상태 벡터 설정
             x_d = np.array([target_x, target_y, target_yaw])
             
             # 현재 상태에서 제어 입력 계산
-            u = -np.dot(K, (x0 - x_d))
+            u = -K @ (x0 - x_d)
             delta = u[0]
             
             # 시스템 상태 업데이트

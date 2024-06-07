@@ -115,7 +115,7 @@ class PurePursuit:
             return A, B
 
         # LQR 가중치 행렬
-        Q = np.diag([1, 1, 100])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
+        Q = np.diag([1, 1, 1])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
         R = np.diag([0.1, 0.1])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
 
         # 초기화
@@ -136,17 +136,11 @@ class PurePursuit:
             A, B = get_system_matrices(psiEgo, delta)
 
             if not self.check_controllability(A, B):
-                print("A=", A)
-                print("B=", B)
                 print("System is not controllable. Switching to PURE PURSUIT.")
                 return self.run(vEgo, path, idxEgo, posEgo, yawEgo, cte)
             
             try:
-                # 연속 시간 Riccati 방정식을 풀어 P를 계산
-                print("B", B)
-                print("R",R)    
                 P = la.solve_continuous_are(A, B, Q, R)
-                # 연속 시간 LQR 이득 행렬 계산
                 K = np.linalg.inv(R) @ B.T @ P
             except np.linalg.LinAlgError:
                 print("R is not inversible. Switching to PURE PURSUIT.")

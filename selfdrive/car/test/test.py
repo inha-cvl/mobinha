@@ -264,7 +264,11 @@ class IONIQ:
                 
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
+                
+                tmp_time = time.time()
                 wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
+                print("PROCESS TIME : ", time.time()-tmp_time)
+
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
                 # plt.plot(lx, ly, 'ro')
                 threshold = 450

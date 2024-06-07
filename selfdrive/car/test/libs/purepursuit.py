@@ -10,6 +10,14 @@ class PurePursuit:
         print("Pure Pursuit model initiated!")
         self.L = 3
         self.prev_angle = None
+        self.path = path
+        self.yaw_list = []
+        for i in range(1, len(self.path)):
+            dx = self.path[i][0] - self.path[i-1][0]
+            dy = self.path[i][1] - self.path[i-1][1]
+            yaw = atan2(dy, dx)
+            self.yaw_list.append(yaw)
+        
 
     def run(self, vEgo, path, idx, position, yawRate, cte):
         # lfd = 1.8 # for speed 8km, factor 1
@@ -39,6 +47,8 @@ class PurePursuit:
                 lx = point[0]  
                 ly = point[1]  
                 break
+
+        self.yaw_list.append(0)
 
 
         factor = 1.2
@@ -90,7 +100,8 @@ class PurePursuit:
         else:
             return False
 
-    def run_experimental_rhc(self, vEgo, path, idxEgo, posEgo, yawEgo, cte):
+    def run_experimental_rhc(self, vEgo, path, idxEgo, posEgo, yawEgo, cte, steer):
+        path = self.path # 이거 되면 나머지 변수명도 바꾸기
         # 시스템 파라미터
         L = self.L  # 차량의 축간거리 (m)
         lookahead_distance = 6  # lookahead distance in meters
@@ -115,11 +126,10 @@ class PurePursuit:
             return A, B
 
         # LQR 가중치 행렬
-        Q = np.diag([1, 1, 1])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
+        Q = np.diag([1, 1, 100])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
         R = np.diag([0.1, 0.1])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
 
         # 초기화
-        steer = 0
         target_x, target_y = path[idxEgo]
 
         for _ in range(N):
@@ -129,7 +139,7 @@ class PurePursuit:
             target_x, target_y = path[target_idx]
 
             # 목표 yaw angle 계산
-            target_yaw = np.arctan2(target_y - yEgo, target_x - xEgo)
+            target_yaw = self.yaw_list[idxEgo]
 
             # 선형화된 시스템 매개변수 업데이트
             delta = steer  # 현재 조향각 사용

@@ -66,7 +66,7 @@ class IONIQ:
             geo_path[i][0], geo_path[i][1], 0, self.base_lat, self.base_lon, 0)
             self.path.append((x,y))
         
-        print(self.path)
+        # print(self.path)
         # plt.plot([el[0] for el in self.path], [el[1] for el in self.path])
         # plt.show()
         self.prev_steer = 0
@@ -264,9 +264,9 @@ class IONIQ:
                 
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
-                
+
                 tmp_time = time.time()
-                wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
+                wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte, self.steer)
                 print("PROCESS TIME : ", time.time()-tmp_time)
 
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)

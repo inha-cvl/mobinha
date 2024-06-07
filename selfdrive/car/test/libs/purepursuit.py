@@ -17,6 +17,8 @@ class PurePursuit:
             dy = self.path[i][1] - self.path[i-1][1]
             yaw = atan2(dy, dx)
             self.yaw_list.append(yaw)
+        print(self.yaw_list)
+        self.yaw_list.append(0)
         
 
     def run(self, vEgo, path, idx, position, yawRate, cte):
@@ -100,14 +102,13 @@ class PurePursuit:
         else:
             return False
 
-    def run_experimental_rhc(self, vEgo, path, idxEgo, posEgo, yawEgo, cte, steer):
-        path = self.path # 이거 되면 나머지 변수명도 바꾸기
+    def run_experimental_rhc(self, vEgo, path, idxEgo, posEgo, yawEgo, cte, strEgo):
         # 시스템 파라미터
         L = self.L  # 차량의 축간거리 (m)
         lookahead_distance = 6  # lookahead distance in meters
         resolution = 0.1  # path resolution in meters
-        dt = 0.1  # 시간 간격 (s)
-        T = 1.0  # 예측 시간 (s)
+        dt = 0.05  # 시간 간격 (s)
+        T = 0.25  # 예측 시간 (s)
         N = int(T / dt)  # 예측 창의 시간 스텝 수
 
         # 현재 상태
@@ -126,12 +127,10 @@ class PurePursuit:
             return A, B
 
         # LQR 가중치 행렬
-        Q = np.diag([1, 1, 100])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
-        R = np.diag([0.1, 0.1])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
+        Q = np.diag([1, 1, 10])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
+        R = np.diag([10, 100])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
 
-        # 초기화
-        target_x, target_y = path[idxEgo]
-
+        steer = strEgo
         for _ in range(N):
             # 목표 yaw angle 설정
             lookahead_idx = int(lookahead_distance)
@@ -139,7 +138,7 @@ class PurePursuit:
             target_x, target_y = path[target_idx]
 
             # 목표 yaw angle 계산
-            target_yaw = self.yaw_list[idxEgo]
+            target_yaw = self.yaw_list[target_idx]
 
             # 선형화된 시스템 매개변수 업데이트
             delta = steer  # 현재 조향각 사용
@@ -148,7 +147,7 @@ class PurePursuit:
             if not self.check_controllability(A, B):
                 print("System is not controllable. Switching to PURE PURSUIT.")
                 return self.run(vEgo, path, idxEgo, posEgo, yawEgo, cte)
-            
+
             try:
                 P = la.solve_continuous_are(A, B, Q, R)
                 K = np.linalg.inv(R) @ B.T @ P
@@ -158,11 +157,11 @@ class PurePursuit:
 
             # 목표 상태 벡터 설정
             x_d = np.array([target_x, target_y, target_yaw])
-            
+
             # 현재 상태에서 제어 입력 계산
             u = -K @ (x0 - x_d)
             delta = u[0]
-            
+
             # 시스템 상태 업데이트
             xEgo = x0[0] + vEgo * np.cos(x0[2]) * dt
             yEgo = x0[1] + vEgo * np.sin(x0[2]) * dt

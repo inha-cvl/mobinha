@@ -105,18 +105,18 @@ class PurePursuit:
         x0 = np.array([xEgo, yEgo, psiEgo])
 
         # 선형화된 시스템 매개변수 업데이트 함수
-        def get_system_matrices(psi):
+        def get_system_matrices(psi, delta):
             A = np.array([[0, 0, -vEgo * np.sin(psi)],
                         [0, 0, vEgo * np.cos(psi)],
                         [0, 0, 0]])
-            B = np.array([[0],
-                        [0],
-                        [vEgo / (L * np.cos(psi)**2)]])
+            B = np.array([[np.cos(psi), 0],
+                        [np.sin(psi), 0],
+                        [np.tan(delta) / L, vEgo / (L * np.cos(delta)**2)]])
             return A, B
 
         # LQR 가중치 행렬
         Q = np.diag([1, 1, 100])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
-        R = np.array([[0.1]])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
+        R = np.array([[0.1, 0.1]])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
 
         # 초기화
         steer = 0
@@ -132,7 +132,8 @@ class PurePursuit:
             target_yaw = np.arctan2(target_y - yEgo, target_x - xEgo)
 
             # 선형화된 시스템 매개변수 업데이트
-            A, B = get_system_matrices(psiEgo)
+            delta = steer  # 현재 조향각 사용
+            A, B = get_system_matrices(psiEgo, delta)
 
             if not self.check_controllability(A, B):
                 print("A=", A)

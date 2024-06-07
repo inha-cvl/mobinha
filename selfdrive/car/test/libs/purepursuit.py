@@ -116,7 +116,7 @@ class PurePursuit:
 
         # LQR 가중치 행렬
         Q = np.diag([1, 1, 100])  # 상태 오차 가중치 (yaw에 더 큰 가중치를 부여)
-        R = np.array([[0.1, 0.1]])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
+        R = np.diag([0.1, 0.1])  # 제어 입력 가중치 (작은 값을 설정하여 민감하게 반응)
 
         # 초기화
         steer = 0
@@ -124,7 +124,7 @@ class PurePursuit:
 
         for _ in range(N):
             # 목표 yaw angle 설정
-            lookahead_idx = int(lookahead_distance / resolution)
+            lookahead_idx = int(lookahead_distance)
             target_idx = min(idxEgo + lookahead_idx, len(path) - 1)
             target_x, target_y = path[target_idx]
 
@@ -140,22 +140,17 @@ class PurePursuit:
                 print("B=", B)
                 print("System is not controllable. Switching to PURE PURSUIT.")
                 return self.run(vEgo, path, idxEgo, posEgo, yawEgo, cte)
-            else:
-                print("finally using RHC")
+            
             try:
                 # 연속 시간 Riccati 방정식을 풀어 P를 계산
+                print("B", B)
+                print("R",R)    
                 P = la.solve_continuous_are(A, B, Q, R)
                 # 연속 시간 LQR 이득 행렬 계산
                 K = np.linalg.inv(R) @ B.T @ P
             except np.linalg.LinAlgError:
-                print("A=", A)
-                print("B=", B)
-                print("Q=", Q)
-                print("R=", R)
-                print("PURE PURSUIT")
+                print("R is not inversible. Switching to PURE PURSUIT.")
                 return self.run(vEgo, path, idxEgo, posEgo, yawEgo, cte)
-
-            print("RHC RHC RHC RHC RHC RHC RHC")
 
             # 목표 상태 벡터 설정
             x_d = np.array([target_x, target_y, target_yaw])

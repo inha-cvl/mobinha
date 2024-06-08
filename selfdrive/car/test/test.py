@@ -261,15 +261,21 @@ class IONIQ:
             self.position = (self.x, self.y)
             self.cte = self.calculate_cte(self.position)
             if self.PA_enable:
+            # if 1:
                 
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
 
                 tmp_time = time.time()
-                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte, self.steer)
-                wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc2(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte, self.steer)
-                print("PROCESS TIME : ", time.time()-tmp_time)
-                print(wheel_angle)
+                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, np.deg2rad(self.yaw), self.cte, self.steer)
+                try:
+                    wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc2(self.current_v, self.path, self.idx, self.position, np.deg2rad(self.yaw), self.cte, self.steer)
+                    print("LSE")
+                except:
+                    print("purepursuit")
+                    wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
+
+                # print("PROCESS TIME : ", time.time()-tmp_time)
 
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
                 # plt.plot(lx, ly, 'ro')

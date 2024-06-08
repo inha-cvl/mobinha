@@ -177,11 +177,11 @@ class PurePursuit:
         # 시스템 파라미터
         L = 3  # 차량의 축간거리 (m)
         v = 10  # 차량 속도 (m/s)
-        dt = 0.1
+        dt = 0.01
         lookahead = 10
         target_idx = idxEgo + lookahead
         psi_d = self.yaw_list[target_idx] # 목표 헤딩 (라디안 단위로 변환)
-
+        
         x = np.array([posEgo[0], posEgo[1], yawEgo])
 
         A = np.array([[1, 0, -v * np.sin(x[2]) * dt],
@@ -196,16 +196,15 @@ class PurePursuit:
         
         # 최소자승 문제 정의
         H = B.T @ B
-        f = -2 * B.T @ (psi_d - x_pred[2])
+        f = -2 * B.T * (psi_d - x_pred[2])
         
         # 제어 입력 계산 (최소자승해)
         delta = -np.linalg.inv(H) @ f
-        
-        steer = strEgo + delta[0][2]
+        steer = yawEgo + 13.5*delta[0][2]
 
-        print(f"targetting yaw : {psi_d}\ndelta yaw : {delta[0][2]}\nfinal steer : {steer}\n\n")
+        print(f"current yaw : {yawEgo}\ntargetting yaw : {psi_d}\ndelta yaw : {delta[0][2]}\nfinal steer : {steer}\n\n")
 
 
-        return steer
+        return steer, self.path[target_idx]
 
 

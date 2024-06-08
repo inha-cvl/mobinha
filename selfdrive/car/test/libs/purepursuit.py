@@ -172,3 +172,40 @@ class PurePursuit:
             steer = np.degrees(delta)
 
         return steer, (target_x, target_y)
+    
+    def run_experimental_rhc2(self, vEgo, path, idxEgo, posEgo, yawEgo, cte, strEgo):
+        # 시스템 파라미터
+        L = 3  # 차량의 축간거리 (m)
+        v = 10  # 차량 속도 (m/s)
+        dt = 0.1
+        lookahead = 10
+        target_idx = idxEgo + lookahead
+        psi_d = self.yaw_list[target_idx] # 목표 헤딩 (라디안 단위로 변환)
+
+        x = np.array([posEgo[0], posEgo[1], yawEgo])
+
+        A = np.array([[1, 0, -v * np.sin(x[2]) * dt],
+                    [0, 1, v * np.cos(x[2]) * dt],
+                    [0, 0, 1]])
+        B = np.array([[0],
+                    [0],
+                    [v * dt / (L * np.cos(x[2])**2)]])
+        
+        # 상태 예측
+        x_pred = A @ x
+        
+        # 최소자승 문제 정의
+        H = B.T @ B
+        f = -2 * B.T @ (psi_d - x_pred[2])
+        
+        # 제어 입력 계산 (최소자승해)
+        delta = -np.linalg.inv(H) @ f
+        
+        steer = strEgo + delta[0][2]
+
+        print(f"targetting yaw : {psi_d}\ndelta yaw : {delta[0][2]}\nfinal steer : {steer}\n\n")
+
+
+        return steer
+
+

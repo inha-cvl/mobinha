@@ -266,7 +266,8 @@ class IONIQ:
                 # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
 
                 tmp_time = time.time()
-                wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte, self.steer)
+                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte, self.steer)
+                wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc2(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte, self.steer)
                 print("PROCESS TIME : ", time.time()-tmp_time)
                 print(wheel_angle)
 

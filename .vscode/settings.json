@@ -1,3 +1,13 @@
 {
-    "cmake.sourceDirectory": "/home/mingu/software/mobinha/selfdrive/message"
+    "cmake.sourceDirectory": "/home/mingu/software/mobinha/selfdrive/message",
+    "python.autoComplete.extraPaths": [
+        "/home/kana/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/kana/Documents/openpilot"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/kana/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/kana/Documents/openpilot"
+    ]
 }

@@ -124,9 +124,6 @@ class ObstacleDetector:
         self.morai_ego_v = msg.orientation.w
 
     def get_lidar_objects(self, local_point, car_idx):
-        dx = 0 #self.CS.position.x - self.morai_local_point[0] if self.is_morai else 0
-        dy = 0 #self.CS.position.y - self.morai_local_point[1] if self.is_morai else 0
-=======
         
         # dx = self.CS.position.x - self.morai_local_point[0] if self.is_morai else 0
         # dy = self.CS.position.y - self.morai_local_point[1] if self.is_morai else 0
@@ -134,7 +131,6 @@ class ObstacleDetector:
         ## for gosilsil in morai
         dx = 0
         dy = 0
->>>>>>> 7237048246ea4b1e21d507cc87de788dfef55da0
 
         viz_obstacle = []
         obstacle_sd = []
@@ -245,10 +241,10 @@ class ObstacleDetector:
 
     def run(self, CS):
         self.CS = CS
-        if self.gosilsil_flag: # 고실실
-            self.lidar_object = [[462.957, 1205.544, 0, 0, 0, 0, 0, 0, 0, 0]] # 고실실
-        else:
-            self.lidar_object = []
+        # if self.gosilsil_flag: # 고실실
+        #     self.lidar_object = [[462.957, 1205.544, 0, 0, 0, 0, 0, 0, 0, 0]] # 고실실
+        # else:
+        #     self.lidar_object = []
             
         
         if self.local_path is not None:

@@ -241,7 +241,7 @@ class LongitudinalPlanner:
 
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
-        goal_offset = 1.5*self.M_TO_IDX
+        goal_offset = 1*self.M_TO_IDX
         tl_offset = 5*self.M_TO_IDX # origin 7
         cw_offset = 5*self.M_TO_IDX
         static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX

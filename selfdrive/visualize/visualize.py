@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import rospy
 import traceback
-import pymap3d
+import pymap3d as pm
 from collections import deque
 from rviz import bindings as rviz
 from std_msgs.msg import String, Float32, Int8, Int16MultiArray, Float32MultiArray
@@ -60,7 +60,8 @@ class MainWindow(QMainWindow, form_class):
         self.goal_lat, self.goal_lng, self.goal_alt = 0, 0, 0
         self.target_yaw = 0
         self.cte = 0
-        
+        self.gosilsil_state = 0
+        self.gosilsil_moving_by_pessanger = 0
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
@@ -77,8 +78,7 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
         rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
-
-        rospy.Subscriber('/hlv_signal', Int8, self.scenario_cb)
+        rospy.Subscriber('/gosilsil', Float32MultiArray, self.gosilsil_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         self.state = 'WAITING'
@@ -86,6 +86,7 @@ class MainWindow(QMainWindow, form_class):
         self.pub_state = rospy.Publisher('/mobinha/visualize/system_state', String, queue_size=1)
         self.pub_can_cmd = rospy.Publisher('/mobinha/visualize/can_cmd', Int8, queue_size=1)
         self.pub_scenario_goal = rospy.Publisher('/mobinha/visualize/scenario_goal', PoseArray, queue_size=1)
+        self.pub_gosilsil_signal = rospy.Publisher("/gosilsil_signal", Int8, queue_size=1)
 
         self.rviz_frame('map')
         self.rviz_frame('lidar')
@@ -120,6 +121,26 @@ class MainWindow(QMainWindow, form_class):
     def right_turn_simulator_toggled(self):
         right_turn_simulator = RTISimulator(self)
         right_turn_simulator.show()
+    
+    def gosilsil_cb(self, msg):
+        self.gosilsil_state = int(msg.data[0])
+        #x,y,_ = pm.geodetic2enu(msg.data[1], msg.data[2], 7, 37.2292221592864, 126.76912499027308, 29.18400001525879)
+        x,y,_ = pm.geodetic2enu(msg.data[1], msg.data[2], 7, 35.64699249, 128.40116601, 20)
+
+        if self.gosilsil_state == 0:
+            self.status_label.setText("Waiting Call . . .")
+        elif self.gosilsil_state == 1 :
+            self.status_label.setText("Catch a Call!")
+            self.gosilsil_pessanger_position = [(x,y)]
+        elif self.gosilsil_state in [2,3,4]: 
+            self.status_label.setText(f"Pessenger Set\nDestination to {int(self.gosilsil_state)-1}")  
+            self.scenario_goal = [(x,y)]
+            if self.scenario == 2 :
+                self.start_button_clicked()
+        elif self.gosilsil_state == 5:
+            self.status_label.setText("Go")
+            self.cmd_button_clicked(1)
+
 
     def initialize(self):
         rospy.set_param('car_name', self.car_name)
@@ -489,46 +510,78 @@ class MainWindow(QMainWindow, form_class):
                 pass
 
     def planning_state_cb(self, msg):
-        if msg.data[0] == 1 and msg.data[1] == 1:
-            # self.state = 'START'
-            self.status_label.setText("Moving")
-            self.moving_start = True
-            self.goal_update = False
-            self.scenario1_button.setDisabled(True)
-            self.scenario2_button.setDisabled(True)
-            self.scenario3_button.setDisabled(True)
-            self.media_thread.planning_state = 1
+        if self.state == 'START':
+            if msg.data[0] == 1 and msg.data[1] == 1:
+                # self.state = 'START'
+                if 1 < self.gosilsil_state < 5:
+                    self.status_label.setText("Pessenger is\nReady to Go")
+                elif self.gosilsil_state == 5:
+                    self.status_label.setText("Heading to Destination")
+                else:
+                    self.status_label.setText("Heading to Pessenger")
+                self.moving_start = True
+                self.goal_update = False
+                self.scenario1_button.setDisabled(True)
+                self.scenario2_button.setDisabled(True)
+                self.scenario3_button.setDisabled(True)
+                self.media_thread.planning_state = 1
 
-        elif msg.data[0] == 2 and msg.data[1] == 2:
-            self.status_label.setText("Arrived")
-            self.cmd_button_clicked(0)
-            self.pause_button.setDisabled(True)
-            self.start_button.setEnabled(True)
-            self.initialize_button.setEnabled(True)
-            self.media_thread.planning_state = 2
+            elif msg.data[0] == 2 and msg.data[1] == 2:
+                if self.gosilsil_state == 1:
+                    if self.scenario == 2 :
+                        self.status_label.setText("Passenger Seleting\nDestination ...")
+                        self.scenario1_button.setDisabled(True)
+                        self.scenario2_button.setDisabled(True)
+                        self.scenario3_button.setDisabled(True)
+                    else:
+                        self.status_label.setText("Passenger Onboarding ...")
+                        self.scenario1_button.setDisabled(True)
+                        self.scenario2_button.setEnabled(True)
+                        self.scenario3_button.setDisabled(True)
+                elif self.gosilsil_state == 5:
+                    self.status_label.setText("Passenger Offboarding ...")
+                    self.scenario1_button.setDisabled(True)
+                    self.scenario2_button.setDisabled(True)
+                    self.scenario3_button.setEnabled(True)
+                self.cmd_button_clicked(0)
+                self.scenario1_button.setDisabled(True)
+                self.pause_button.setDisabled(True)
+                self.start_button.setEnabled(True)
+                self.initialize_button.setEnabled(True)
+                self.media_thread.planning_state = 2
+            
+            elif msg.data[0] == 4:
+                # self.state = 'TOR'
+                self.status_label.setText("Take Over Request")
+                self.cmd_button_clicked(0)
+                self.start_button.setDisabled(True)
+                self.initialize_button.setDisabled(True)
+                self.pause_button.setEnabled(True)
+                self.media_thread.planning_state = 4
 
-        elif msg.data[0] == 3:
-            self.status_label.setText("Insert Goal")
-            self.scenario1_button.setEnabled(True)
-            self.scenario2_button.setEnabled(True)
-            self.scenario3_button.setEnabled(True)
-            self.media_thread.planning_state = 3
+            elif msg.data[0] == 3:
+                if self.gosilsil_state == 0:
+                    self.status_label.setText("Waiting Call ...")
+                    self.scenario1_button.setEnabled(True)
+                    self.scenario2_button.setDisabled(True)
+                    self.scenario3_button.setDisabled(True)
 
-        elif msg.data[0] == 4:
-            # self.state = 'TOR'
-            self.status_label.setText("Take Over Request")
-            self.cmd_button_clicked(0)
-            self.start_button.setDisabled(True)
-            self.initialize_button.setDisabled(True)
-            self.pause_button.setEnabled(True)
-            self.media_thread.planning_state = 4
+                elif self.gosilsil_state == 1:
+                    self.status_label.setText("Catch a Call !!!")
+                    self.scenario1_button.setEnabled(True)
+                    self.scenario2_button.setDisabled(True)
+                    self.scenario3_button.setDisabled(True)
 
+                self.media_thread.planning_state = 3
+
+        
     def start_button_clicked(self):
         self.state = 'START'
         self.status_label.setText("Starting ...")
         self.start_button.setDisabled(True)
         self.initialize_button.setDisabled(True)
         self.pause_button.setEnabled(True)
+        self.pub_state.publish(String(self.state))
 
     def pause_button_clicked(self):
         self.state = 'PAUSE'
@@ -538,16 +591,23 @@ class MainWindow(QMainWindow, form_class):
         self.pause_button.setDisabled(True)
 
     def initialize_button_clicked(self):
-        self.status_label.setText("Initialize")
-        self.initialize()
+        if self.gosilsil_state == 1:
+            self.status_label.setText("Passenger Onboarding ...")
+        else:
+            self.status_label.setText("Initialize")
+            if self.scenario == 2:
+                pass
+            self.initialize()
+            self.start_button.setEnabled(True)
+            self.scenario = 0
+
         self.goal_update = True
         # self.reset_rviz()
-        self.start_button.setEnabled(True)
-        self.scenario = 0
         self.scenario1_button.setDisabled(True)
         self.scenario2_button.setDisabled(True)
         self.scenario3_button.setDisabled(True)
         self.state = 'INITIALIZE'
+        self.pub_state.publish(String(self.state))
 
     def over_button_clicked(self):
         self.status_label.setText("Over")
@@ -578,10 +638,10 @@ class MainWindow(QMainWindow, form_class):
 
     def scenario_button_clicked(self, idx):
         self.scenario = idx
-        module = importlib.import_module('selfdrive.visualize.routes.{}'.format('gosilsil'))
-        scenario = getattr(module, 'scenario_{}'.format(idx))
-        self.scenario_goal = scenario
-    
+        if self.gosilsil_state == 1 and idx == 1:
+            self.scenario_goal = self.gosilsil_pessanger_position
+        elif idx == 2:
+            self.initialize_button_clicked()
 
     def view_button_clicked(self, idx):
         if self.map_view_manager is not None:

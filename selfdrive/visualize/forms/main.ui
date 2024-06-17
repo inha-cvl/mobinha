@@ -230,7 +230,7 @@ Long</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>대기</string>
+         <string>승객 하차</string>
         </property>
         <property name="shortcut">
          <string>3</string>
@@ -293,7 +293,7 @@ Long</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>거절</string>
+         <string>승객 탑승</string>
         </property>
         <property name="shortcut">
          <string>2</string>
@@ -441,7 +441,7 @@ border-color: rgb(71,181,255);</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>수락</string>
+         <string>호출 수락</string>
         </property>
         <property name="shortcut">
          <string>1</string>
@@ -1533,6 +1533,11 @@ border-color: rgb(71,181,255);</string>
         <item>
          <property name="text">
           <string>KIAPI</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>KIAPI_City</string>
          </property>
         </item>
        </widget>

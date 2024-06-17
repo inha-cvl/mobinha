@@ -47,6 +47,7 @@ class Planning:
                 return 1
             if self.state == 'INITIALIZE':
                 if self.need_init:
+                    print("Planner Initialized")
                     sm, path_planner, longitudinal_planner = self.init()
                     pp = 0
                     lgp = 0

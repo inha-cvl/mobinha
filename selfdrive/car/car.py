@@ -42,7 +42,7 @@ class Transceiver:
                     cm, can, timer = self.init()
             elif self.state == 'START':
                 if self.timer(timer):
-                    self.need_init = True
+                    #self.need_init = True
                     cm.update()
                     can.run(cm)
             elif self.state == 'OVER':

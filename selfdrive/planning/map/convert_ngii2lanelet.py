@@ -24,12 +24,12 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    name = 'testbed(songdo)'
+    name = 'KIAPI_City'
 
     parser.add_argument('--ngii_path', type=str, default='./%s'%(name))
     parser.add_argument('--precision', type=float, default=1.0)
-    parser.add_argument('--base_lla', type=tuple, default=(37.4179788, 126.6140342, 7), help='(lat, lon, alt)')
-    parser.add_argument('--is_utm', type=bool, default=False)
+    parser.add_argument('--base_lla', type=tuple, default=(35.64699249,128.40116601, 7), help='(lat, lon, alt)')
+    parser.add_argument('--is_utm', type=bool, default=True)
 
     args = parser.parse_args()
 

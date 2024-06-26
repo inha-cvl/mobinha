@@ -235,6 +235,8 @@ class SchoolZoneCheck:
     
     def check(self):
         if (rospy.Time.now() - self.current_time).to_sec() < 1:
+            if self.dist != 0 and self.dist < 50:
+                return 0
             return self.state
         else:
             return 0
@@ -265,9 +267,8 @@ def main():
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video0/compressed', CompressedImage, 20)
-    # lidar = SensorCheck('/cloud_segmentation/nonground', PointCloud2, 5)
-    # lidar = SensorCheck('/cloud_segmentation/cropcloud', PointCloud2, 5)
-    lidar = SensorCheck('/hesai/pandar', PointCloud2, 5)
+    lidar = SensorCheck('/cloud_segmentation/nonground', PointCloud2, 5)
+    #lidar = SensorCheck('/hesai/pandar', PointCloud2, 5)
     gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 1.0, 1.0)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 20)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
@@ -283,14 +284,14 @@ def main():
     while not rospy.is_shutdown():
         # cam1, cam2, cam3, lidar, gps, ins, can, perception, planning
         # 1 : no problem / 0 : problem
-        # sensor_check.data = [cam.check(), school.check(), path.check(), lidar.check(), gps.check(), ins.check(), can.check(), 
-        #                      int(tl.check() == cluster.check() == 1), planning.check(), school.distance()]
+        sensor_check.data = [cam.check(), school.check(), path.check(), lidar.check(), gps.check(), ins.check(), can.check(), 
+                             int(tl.check() == cluster.check() == 1), planning.check(), school.distance()]
 
         ## check School Zone check and distance
         # sensor_check.data = [1, school.check(), path.check(), 1, 1, 1, 1, 
         #                      int(1 == 1 == 1), 1, school.distance()]
 
-        sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        #sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         pub.publish(sensor_check)
         rospy.sleep(0.2) # 5hz
         

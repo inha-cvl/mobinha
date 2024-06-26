@@ -205,11 +205,11 @@ class MainWindow(QMainWindow, form_class):
                 self.dist_schoolzone = sensor_status # distance
                 continue
             if sensor_status == 1:
-                text_color = "#00AAFF;"  
+                text_color = "#00AAFF;" # green
             elif sensor_status == 0:
-                text_color = "#FC6C6C;" 
+                text_color = "#FC6C6C;" # red
             else:
-                text_color = "#FFFF00;"
+                text_color = "#FFFF00;" # yellow
 
             self.sensor_status_color.append(text_color)
 

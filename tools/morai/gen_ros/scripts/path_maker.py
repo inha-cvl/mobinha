@@ -53,7 +53,7 @@ class test :
             self.f.write(data)
             self.prev_x=x
             self.prev_y=y
-            print(x,y)
+            # print(x,y)
 
     def status_callback(self,msg): ## Vehicl Status Subscriber 
         self.is_status=True

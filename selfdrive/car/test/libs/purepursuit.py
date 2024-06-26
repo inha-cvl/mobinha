@@ -17,8 +17,7 @@ class PurePursuit:
             lfd = 3.6
         else:
             lfd = 6 + 2.3 * vEgo**0.8 / 3.6  
-        print(f"       lfd:{lfd:.2f}")
-        print(f"                  vEgo:{vEgo*3.6:.2f}")
+        print(f"CTE:{self.cte:.2f} lfd:{lfd:.2f} vEgo:{vEgo*3.6:.2f}")
         lfd = np.clip(lfd, 4, 60)  
         steering_angle = 0.  
         lx, ly = path[0] 
@@ -38,7 +37,8 @@ class PurePursuit:
                 break
         
         # smoothing
-        alpha = 0.9
+        if vEgo*3.6 < 25:
+            alpha = 0.5 
         if self.prev_angle is None:
             self.prev_angle = steering_angle
         else:
@@ -47,6 +47,7 @@ class PurePursuit:
 
         factor = 1.3
         if vEgo*3.6 < 25:
-            factor = 1.00
+            factor = 1
+            
         return degrees(factor*steering_angle), (lx, ly) 
     

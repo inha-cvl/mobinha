@@ -11,6 +11,7 @@ from selfdrive.planning.libs.velocity_planner import VELOCITY_PLANNER
 from selfdrive.visualize.rviz_utils import *
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
+from path_planner import PathPlanner 
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -20,6 +21,23 @@ class LongitudinalPlanner:
     def __init__(self, CP):
         self.lmap = LaneletMap(CP.mapParam.path)
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+        self.current_blinker_state = (0, None)
+        self.turning_flag = None
+        self.turng_target_v = -1
+        self.hist_target_v = 0
+        self.hist_target_flag = None
+        self.turning_state = [
+        "No turning", # 0 
+        # 1           2            3            4              5          6
+        "Lchanging", "Rchanging", "will Lturn", "will Rturn", "Lturing", "Rturing",
+        # 7               8
+        "will Rotary in", "will Rotary out", 
+        # 9            10             11               12            13
+        "now LPocket", "now RPocket", "will LPocket", "will RPocket", "Keeping"
+        ]
+        self.start_waiting_time = 0
+        self.timeer_count = 0
+
 
         self.lidar_obstacle = None
         self.traffic_light_obstacle = None
@@ -41,9 +59,7 @@ class LongitudinalPlanner:
         self.sl_param = CP.slParam._asdict()
 
         self.velo_pl = VELOCITY_PLANNER(target_velocity = self.max_v, max_velocity = self.max_v, current_velocity = 0)
-        # 假设在类的初始化方法中添加了以下两个属性
-        self.last_update_time = time.time()
-        self.update_interval = 0.2  # 5Hz的时间间隔为0.1秒
+
 
         self.last_error = 0
         self.follow_error = 0
@@ -63,6 +79,13 @@ class LongitudinalPlanner:
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         rospy.Subscriber('/mobinha/planning/local_id',String, self.local_id_cb)
+        ### 2024.05.23 test
+        rospy.Subscriber('/mobinha/planning/splited_localid',String, self.splited_local_id_cb)
+        ### 2024.05.23 test
+        ### 2024.05.24 test
+        rospy.Subscriber('/mobinha/planning/turning_flag', String, self.turning_flag_cb)
+        rospy.Subscriber('/mobinha/planning/turning_target_v', Int8, self.turning_target_v_cb)
+        ### 2024.05.24 test
         rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         rospy.Subscriber('/mobinha/visualize/max_v', Int8, self.max_v_cb)
         rospy.Subscriber('/crosswalkPolygon', Marker, self.crosswalk_cb)
@@ -72,9 +95,23 @@ class LongitudinalPlanner:
         self.pub_traffic_light_marker = rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
 
+
+    ### 2024.05.24 test
+    def turning_flag_cb(self, msg):
+        self.turning_flag = msg.data
+        print(f'here is turing flag {self.turning_flag}')
+
+    def turning_target_v_cb(self, msg):
+        self.turng_target_v = msg.data
+        print(f'here is turng_target_v {self.turng_target_v}')
+    ### 2024.05.24 test
+
     def max_v_cb(self, msg):
-        self.max_v = msg.data
-        
+        if msg.data != None:
+            self.max_v = msg.data
+        else:
+            self.max_v = 45
+
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z, pose.orientation.x, pose.orientation.y)for pose in msg.poses]
 
@@ -95,6 +132,12 @@ class LongitudinalPlanner:
     def local_id_cb(self, msg):
         # [0] id, [1] forward_direction, [2] stop line distance [3] forward_curvature
         self.local_id = msg.data.split(',')
+
+    ### 2024.05.23 test
+    def splited_local_id_cb(self, msg):
+        # [0] id, [1] forward_direction, [2] stop line distance [3] forward_curvature
+        self.splited_local_id = msg.data
+        print(f'+++++++++++++++++++++++\n here is splited local id {self.splited_local_id}')
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
@@ -171,7 +214,7 @@ class LongitudinalPlanner:
     def calculate_v_by_curvature(self, idx, lanelets, ids, hist_yaw,ref_v): # info, kph, kph, mps
         target_v = ref_v 
         ###
-        lf = int( idx+12) # 5m ~ 65m
+        lf = int(idx+20) # 5m ~ 65m
         # left_turn_lane = [1, 2, 91]
 
         if lf < 0:
@@ -179,23 +222,16 @@ class LongitudinalPlanner:
         elif lf > len(ids)-1:
             lf = len(ids)-1
         next_id_1 = ids[lf].split('_')[0]
-        now_id = ids[idx].split('_')[0]
-        print(f'this is next_id_1 {next_id_1}')
-        print(f'this is now_id {now_id}')
+        # print(f'this is next_id_1 {next_id_1}')
+        # print(f'this is now_id {now_id}')
 
         yaw_temp = lanelets[next_id_1]['yaw'][:30] if len(lanelets[next_id_1]['yaw']) >30 else lanelets[next_id_1]['yaw']
         yaw_variation = max(yaw_temp) - min(yaw_temp)
-        yaw_now = lanelets[now_id]['yaw']
-        for yaw_n in yaw_now:
-            diff_yaw = yaw_n - self.hist_yaw
-            print(f'this is yaw_n {yaw_n}')
-            print(f'this is diff_yaw {diff_yaw}')
-            print(f'this is curve {yaw_variation}')
-            self.hist_yaw = yaw_n
-            if yaw_variation > 0.27:
-                target_v = 15  # min_v  #### 15km/h is proofed in k-city
-        
-            return target_v   ## -> km/h
+
+        if yaw_variation > 0.27:
+            target_v = 20  # min_v  #### 15km/h is proofed in k-city
+
+        return target_v   ## -> km/h
 
     def get_static_gain(self, error, ttc, gain=0.1/HZ):
         if error < 0:
@@ -218,11 +254,23 @@ class LongitudinalPlanner:
             norm_s = 0
         min_s = distance*self.IDX_TO_M
         pi = self.sigmoid_logit_function(norm_s)# if 0<norm_s<1 else 1
-        target_v = max_v * pi
+        print(f'here is sigmoid logic {pi}, max_v {max_v}')
+        target_v = max_v * pi 
         return target_v, min_s
     
     def static_velocity_plan(self, cur_v, max_v, static_d):
+        ### cur_v MPS
+        turnging_timing = self.turning_state[3:9]
+
+        if self.hist_target_flag in turnging_timing:
+            max_v = self.hist_target_v
         target_v, min_s = self.get_params(max_v, static_d) # input static d unit (idx), output min_s unit (m)
+        
+        # if static_d <= (cur_v * KPH_TO_MPS) + 20:
+        #     print(f' sucas afsodfj ')
+        #     target_v = 0
+        # else:
+        #     target_v = max_v
 
         ###Cloudn't understance====xingyou
         # follow_distance = self.desired_follow_distance_s(cur_v) #output follow_distance unit (m)
@@ -234,7 +282,7 @@ class LongitudinalPlanner:
         # else: # PLUS is DECEL
         #     target_v = max(0, self.target_v - gain)
 
-        print(f'here is the static {target_v}')
+        #print(f'here is the static {target_v}')
         return target_v 
 
     def dynamic_velocity_plan(self, cur_v, max_v, dynamic_d, v_ego):
@@ -323,10 +371,12 @@ class LongitudinalPlanner:
                 if self.traffic_light_to_obstacle(int(tlobs[1]), int(self.lane_information[1])):
                     can_go = True
 
-
-        if self.lane_information[1] == 2: # Right Turn
+        right_turn_timimg = [self.turning_state[4], self.turning_state[6], self.turning_state[7], self.turning_state[12]]
+        if self.hist_target_flag in right_turn_timimg: # Right Turn
+            timeer = time.time()
             min_distance = self.find_closest_point(veh_pose, self.crosswalk)
-
+                
+            print(f'Now is right turning')
             if not can_go:
                 if self.lane_information[2] < math.inf:
                     left_distance_to_stopline = self.lane_information[2]-tl_offset-local_s
@@ -334,7 +384,9 @@ class LongitudinalPlanner:
                         static_s2 = left_distance_to_stopline
                     if static_s2 < -10*self.M_TO_IDX: # passed traffic light is not considered
                         static_s2 = 90*self.M_TO_IDX
-                        
+                        self.timeer_count = 0
+                        self.start_waiting_time = 0
+
                 if self.right_turn_situation == (0,0):
                     pass
                 elif self.right_turn_situation == (0, 1):
@@ -343,6 +395,22 @@ class LongitudinalPlanner:
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
                 elif self.right_turn_situation == (1, 1):
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
+            if v_ego == 0 and static_s2 < 10: ### closer stopline in 10m and ego car stoped 
+                if self.timeer_count == 0:
+                    self.start_waiting_time = time.time()
+                    self.timeer_count +=1
+
+                
+            self.time_out = timeer - self.start_waiting_time
+            print(f'================================= ')
+            print(f'right turning start_waiting_time is {self.start_waiting_time}')
+            print(f'right turning time out is {self.time_out}')
+            print(f'right turning timeer_count is {self.timeer_count}')
+            print(f'self.hist_target_flag is {self.hist_target_flag}')
+            print(f'================================= ')
+            if self.time_out > 2 and self.time_out < timeer:
+                static_s2 = 90*self.M_TO_IDX
+
         else:
             ### Check distance with spot line to ours => self.lane_information[2] 
             if not can_go:
@@ -361,26 +429,37 @@ class LongitudinalPlanner:
     def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
 
+        turnging_timing = self.turning_state[3:9]
+
         lgp = 0
         self.pub_target_v.publish(Float32(self.target_v))
         self.pub_accerror.publish(Float32(self.follow_error))
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
             if CS.cruiseState == 1:
+                if self.turning_flag in turnging_timing and self.turng_target_v != -1:
+                    self.hist_target_v = self.turng_target_v
+                if self.turning_flag != self.turning_state[13]:## keeping
+                    self.hist_target_flag = self.turning_flag
+
                 local_curv_v = self.calculate_v_by_curvature(local_idx, self.lmap.lanelets, self.local_id, self.hist_yaw, self.ref_v) # info, kph, kph, mps, roi path for curve
                 static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
-                target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
                 dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
+
+
+                target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
                 target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
                 self.target_v = min(target_v_static, target_v_dynamic)
-                self.target_v = local_curv_v
+                print(f'current static_d is {static_d}')
+                print(f'current dynamic_d is {dynamic_d}')
+                print(f'local_curv_v_d is {local_curv_v}')
+                print(f'current target_v_static is {target_v_static}')
+                print(f'target_v_dynamic is {target_v_dynamic}')
+                print(f'Current target_v is {self.target_v}')
 
-                current_time = time.time()
-                if current_time - self.last_update_time >= self.update_interval:
-                    print(f'current velocity planner is {self.velo_pl.acc_state}')
-                    print(f'Max velocity planner is {self.velo_pl.max_velocity}')
-                    self.velo_pl.target_v = self.target_v
-                    self.velo_pl.current_velocity_init = CS.vEgo * MPS_TO_KPH #--> needs to be km/h 
+                if (CS.vEgo * MPS_TO_KPH) < 1 and self.target_v == 0:
+                    self.target_v = 0
+                
 
 
             else:
@@ -392,5 +471,5 @@ class LongitudinalPlanner:
                     lgp = 2
             else:
                 lgp = 1
-
         return lgp
+        

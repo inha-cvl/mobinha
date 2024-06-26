@@ -3,7 +3,7 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String
+from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String, Int16MultiArray
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
 from visualization_msgs.msg import Marker
 
@@ -11,7 +11,7 @@ from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
-
+import tf2_ros
 
 class PathPlanner:
     def __init__(self, CP):
@@ -64,6 +64,13 @@ class PathPlanner:
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
 
+        self.tf_ego2fl = None # minchan
+        self.tf_ego2fr = None
+        self.tf_ego2rl = None
+        self.tf_ego2rr = None
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
+
         self.pub_lanelet_map = rospy.Publisher('/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
         self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher('/mobinha/global_path', Marker, queue_size=1, latch=True)
@@ -73,6 +80,13 @@ class PathPlanner:
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_local_id = rospy.Publisher('/mobinha/planning/local_id', String, queue_size=1)
+        ### 2024.05.23 test
+        self.pub_splited_local_id = rospy.Publisher('/mobinha/planning/splited_localid', String, queue_size=1)
+        ### 2024.05.23 test
+        ### 2024.05.24 test
+        self.pub_turing_flag = rospy.Publisher('/mobinha/planning/turning_flag', String, queue_size=1)
+        self.pub_turning_velocity = rospy.Publisher('/mobinha/planning/turning_target_v', Int8, queue_size=1)
+        ### 2024.05.24 test
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
@@ -84,6 +98,9 @@ class PathPlanner:
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
+        self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
+        self.schoolzone_state_pub = rospy.Publisher('/mobinha/planning/schoolzone', Int16MultiArray, queue_size=5)
+        self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -207,6 +224,27 @@ class PathPlanner:
                         del non_intp_path[i]
                         del non_intp_id[i]
                     before_n = splited_id
+                    
+    def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
+        result = 1
+        lean_reach = 1.4 ### 
+        departure_reach = 3 ## threshold for tor previous 1.7 m 
+        wheel_position = [fl_position, fr_position, rl_position, rr_position]
+        wheel_cte = []
+        # print("fl fr rl rr : ", end="")
+        for whl_pos in wheel_position:
+            wheel_idx = calc_idx(self.local_path, whl_pos)
+            val = abs(calculate_cte(self.local_path[wheel_idx], self.local_path[wheel_idx+1], whl_pos))
+            wheel_cte.append(val)
+        #     print(f"{val:.2f} ", end="")
+        # print()
+            
+        if max(wheel_cte) > lean_reach:
+            result = 2
+        if max(wheel_cte) > departure_reach:
+            result = 0
+            
+        return result
     
     def run(self, sm):
         CS = sm.CS
@@ -345,6 +383,13 @@ class PathPlanner:
                     self.l_idx = l_idx
 
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
+                ### 2024.05.23 test
+                ### Splited local id
+                msg = String()
+                msg.data = splited_local_id
+                self.pub_splited_local_id.publish(msg) 
+
+
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
                 stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
@@ -374,9 +419,21 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                blinker, target_id = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
+                blinker, target_id, turning_target_v, turning_flag = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
                                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
                 self.current_blinker_state = (blinker, target_id)
+
+                ## turing flag
+                msg = String()
+                msg.data = turning_flag
+                self.pub_turing_flag.publish(msg)
+
+                ## turning_target_v
+                turning_velocity=Int8()
+                turning_velocity.data = turning_target_v
+                self.pub_turning_velocity.publish(turning_velocity)
+
+                ## local ids
                 msg = String()
                 msg.data = ','.join(self.local_id)
                 self.pub_local_id.publish(msg)
@@ -410,8 +467,8 @@ class PathPlanner:
                     renew_a = 30 # uniti: idx
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
-                        print(obs)
-                        print(get_look_a_head_id)
+                        # print(obs)
+                        # print(get_look_a_head_id)
                         #Left
                         if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             #TODO: if left lane change, get prev,now,next leftBound and check obstacle where is it. 
@@ -582,11 +639,48 @@ class PathPlanner:
                 # CTE
                 pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
                 self.pub_goal_object.publish(pose)
+                
+                #lane_departure
+                try:
+                    self.transform = self.tf_buffer.lookup_transform('world', 'ego_car', rospy.Time(0))
+                    self.tf_ego2fl = self.tf_buffer.lookup_transform('world', 'fl', rospy.Time(0))
+                    self.tf_ego2fr = self.tf_buffer.lookup_transform('world', 'fr', rospy.Time(0))
+                    self.tf_ego2rl = self.tf_buffer.lookup_transform('world', 'rl', rospy.Time(0))
+                    self.tf_ego2rr = self.tf_buffer.lookup_transform('world', 'rr', rospy.Time(0))
+                except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+                    pass
+
+                fl_position = (self.tf_ego2fl.transform.translation.x, self.tf_ego2fl.transform.translation.y)
+                fr_position = (self.tf_ego2fr.transform.translation.x, self.tf_ego2fr.transform.translation.y)
+                rl_position = (self.tf_ego2rl.transform.translation.x, self.tf_ego2rl.transform.translation.y)
+                rr_position = (self.tf_ego2rr.transform.translation.x, self.tf_ego2rr.transform.translation.y)
+                # print(f"fl, fr, rl, rr, {fl:.3f} {fr:.3f} {rl:.3f} {rr:.3f}")
+                warn = self.lane_departure(fl_position, fr_position, rl_position, rr_position)
+                self.pub_lane_departure_warning.publish(warn)
 
                 # crosswalkViz
                 crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
                 crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
+
+
+                # schoolzone_viz
+                ### here
+                position = (CS.position.x, CS.position.y)
+                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, CS)
+                # print(f"my node number is : {self.l_idx}") 
+                # print("my position is : ", CS.position.x, CS.position.y)
+                
+                
+                # print(schoolzone_points)
+                ## here
+                schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
+                self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
+                
+                schoolzone = Int16MultiArray()
+                schoolzone.data = [int(schoolzone_info['state']), int(schoolzone_info['remaining_distance'])]
+                self.schoolzone_state_pub.publish(schoolzone)
+
 
                 if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
                     self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))

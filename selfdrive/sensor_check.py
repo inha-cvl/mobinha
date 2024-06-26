@@ -2,7 +2,7 @@ import rospy
 from sensor_msgs.msg import PointCloud2, CompressedImage
 from std_msgs.msg import Float32MultiArray, Int8, Int16MultiArray
 import numpy as np
-from novatel_oem7_msgs.msg import BESTGNSSPOS, INSPVA
+from novatel_oem7_msgs.msg import BESTPOS, INSPVA
 from geometry_msgs.msg import PoseArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
@@ -194,7 +194,6 @@ class ClusterCheck:
         self.last_time = rospy.Time.now()
         self.message = ''
         self.message_count = 0
-        self.state = ''
         self.hz = 0.0
         self.hz_thresh = hz_thresh
 
@@ -220,27 +219,79 @@ class ClusterCheck:
         else:
             return 0
         
+
+class SchoolZoneCheck:
+    def __init__(self, topic_name, msg_type):
+        self.current_time = rospy.Time.now()
+        self.state = 0
+        self.dist = 0
+        
+        rospy.Subscriber(topic_name, msg_type, self.topic_callback)
+
+    def topic_callback(self, msg):
+        self.current_time = rospy.Time.now()
+        self.state = msg.data[0]
+        self.dist = msg.data[1]
+    
+    def check(self):
+        if (rospy.Time.now() - self.current_time).to_sec() < 1:
+            if self.dist != 0 and self.dist < 50:
+                return 0
+            return self.state
+        else:
+            return 0
+
+    def distance(self):
+        return self.dist
+    
+
+class PathCheck:
+    def __init__(self, topic_name, msg_type):
+        self.current_time = rospy.Time.now()
+        self.state = 0
+        
+        rospy.Subscriber(topic_name, msg_type, self.topic_callback)
+
+    def topic_callback(self, msg):
+        self.current_time = rospy.Time.now()
+        self.state = msg.data
+    
+    def check(self):
+        if (rospy.Time.now() - self.current_time).to_sec() < 1:
+            return self.state
+        else:
+            return 0
+
 def main():
     rospy.init_node('sensor_diagnostics')
     pub = rospy.Publisher('sensor_check', Int16MultiArray, queue_size=10)
     
     cam = SensorCheck('/gmsl_camera/dev/video0/compressed', CompressedImage, 20)
     lidar = SensorCheck('/cloud_segmentation/nonground', PointCloud2, 5)
-    gps = GPSCheck('/novatel/oem7/bestgnsspos', BESTGNSSPOS, 7, 1.0, 1.0)
+    #lidar = SensorCheck('/hesai/pandar', PointCloud2, 5)
+    gps = GPSCheck('/novatel/oem7/bestpos', BESTPOS, 7, 1.0, 1.0)
     ins = INSCheck('/novatel/oem7/inspva', INSPVA, 20)
     can = CanCheck('/mobinha/car/gateway_state',Int8)
     planning = PlanningCheck('/mobinha/planning_state', Int16MultiArray)
     tl = ObjectCheck('/mobinha/perception/camera/bounding_box', PoseArray, 1)
     cluster = ClusterCheck('/mobinha/perception/lidar/track_box', BoundingBoxArray, 3)
-    
+    school = SchoolZoneCheck("/mobinha/planning/schoolzone", Int16MultiArray)
+    path = PathCheck("mobinha/planning/lane_departure_warning", Int8)
+    # ready, distance
+
     sensor_check = Int16MultiArray()
 
     while not rospy.is_shutdown():
         # cam1, cam2, cam3, lidar, gps, ins, can, perception, planning
-        # 1 : problem / 0 : no problem
-        # sensor_check.data = [cam.check(), 1, 1, lidar.check(), gps.check(), ins.check(), can.check(), 
-        #                      int(tl.check() == cluster.check() == 1), planning.check()]
-        sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+        # 1 : no problem / 0 : problem
+        sensor_check.data = [cam.check(), school.check(), path.check(), lidar.check(), gps.check(), ins.check(), can.check(), 
+                             int(tl.check() == cluster.check() == 1), planning.check(), school.distance()]
+
+        ## check School Zone check and distance
+        # sensor_check.data = [1, school.check(), path.check(), 1, 1, 1, 1, 
+        #                      int(1 == 1 == 1), 1, school.distance()]
+
+        #sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         pub.publish(sensor_check)
         rospy.sleep(0.2) # 5hz
         

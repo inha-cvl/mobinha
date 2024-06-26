@@ -87,15 +87,22 @@ class Controller:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte)
             
-            threshold = 449
+            ### 2024.05.23 test
+            threshold = 440
+            # threshold = 449
             steer = int(min(max(int(wheel_angle*self.steer_ratio), -threshold), threshold))
 
             lah_viz = LookAheadViz(lah_pt)
             self.pub_lah.publish(lah_viz)
 
             ### the velocity is m/s, target_v and CS.vEgo is m/s
-            accel, brake = self.apid.run(self.target_v / 3.6, CS.vEgo) 
-            
+            # print(f' here is control input {(self.target_v / 3.6), self.target_v } CS>V {CS.vEgo}')
+            accel, brake = self.apid.run((self.target_v * KPH_TO_MPS), CS.vEgo) 
+
+            if self.target_v  == 0 :
+                # print(f'Sliding inginginging')
+                brake = 40 
+
             vector3.x = steer
             vector3.y = accel
             vector3.z = brake

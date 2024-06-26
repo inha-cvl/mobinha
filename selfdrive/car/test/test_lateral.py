@@ -109,6 +109,7 @@ class IONIQ:
                 self.LON_enable = 0
             if self.steering_overide:
                 self.PA_enable = 0
+                # pass
             ## for all test
             # if self.acc_override or self.brk_override or self.steering_overide:
             #     self.PA_enable = 0
@@ -206,6 +207,7 @@ class IONIQ:
     def controller(self):
         while not rospy.is_shutdown():
             if self.LON_enable:
+                
                 self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
 
             self.position = (self.x, self.y)
@@ -216,14 +218,14 @@ class IONIQ:
                 # plt.plot(lx, ly, 'ro')
                 threshold = 449
                 self.steer = int(self.limit_steer_change(min(max(int(wheel_angle*13.5), -threshold), threshold)))
-                print(f"CTE:{self.cte:.2f}")
+
                 # print("STEER : ", self.steer)
                 # print(f"v : {self.current_v}, pos: {self.position[0]}. {self.position[1]}, heading: {self.yaw}, target: {lx}, {ly}, idx: {self.idx}")
-                if abs(self.steer - self.prev_steer) > 70 and self.prev_steer != 0:
-                    print("error occurred")
-                    print("steer", self.steer)
-                    print("prev", self.prev_steer)
-                    exit(0)
+                # if abs(self.steer - self.prev_steer) > 100 and self.prev_steer != 0:
+                #     print("error occurred")
+                #     print("steer", self.steer)
+                #     print("prev", self.prev_steer)
+                #     exit(0)
                     # print(f"v : {self.prev_current_v:.2f}, pos: {self.prev_position[0]:.2f}. {self.prev_position[1]:.2f}, heading: {self.prev_yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.prev_idx}")
                     # print(f"v : {self.current_v:.2f}, pos: {self.position[0]:.2f}. {self.position[1]:.2f}, heading: {self.yaw:.2f}, target: {lx:.2f}, {ly:.2f}, idx: {self.idx}")
                 self.prev_current_v = self.current_v

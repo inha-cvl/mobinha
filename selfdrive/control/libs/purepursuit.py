@@ -72,7 +72,10 @@ class PurePursuit:
         return (new_x, new_y)
 
     def run(self, vEgo, path, position, yawRate, cte):
-        if vEgo*3.6 < 17.5:
+        # if vEgo*3.6 < 17.5:
+        
+        ## 2024.05.23 test
+        if vEgo*3.6 < 25: #km/h
             lfd = 3.6
         else:
             lfd = 6 + 2.3 * vEgo**0.8 / 3.6  

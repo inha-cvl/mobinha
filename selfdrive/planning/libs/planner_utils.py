@@ -495,14 +495,6 @@ blinker_minimum_duration = 2  # 최소 블링커 지속 시간(s)
 blinker_status = 0  # 현재 블링커 상태 (0: 꺼짐, 1: 좌, 2: 우)
 blinker_target_id = None
 
-<<<<<<< HEAD
-# songdo + KCity ver.
-def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):#, local_id, change_target_id, change_lane_flag): 
-    
-    current_blinker, target_next_id = current_blinker_state
-=======
->>>>>>> eeab462884987bf8ec7c6c70f60ffc3021ddb7db
-
 def judge_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX):
     print(f'here is judge turnning {splited_local_id}')
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)

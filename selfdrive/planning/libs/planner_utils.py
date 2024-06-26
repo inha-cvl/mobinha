@@ -457,7 +457,6 @@ blinker_target_id = None
 
 # songdo + KCity ver.
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):#, local_id, change_target_id, change_lane_flag): 
-    #TODO: CHECK FLAG  
     
     current_blinker, target_next_id = current_blinker_state
 
@@ -482,8 +481,8 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
     next1_curvature = abs(max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']))
     next2_curvature = abs(max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']))
 
-    # 예외 case(노면표시 없음)추후 수정예정
-    rTurn_special_case = ['473', '605', '615', '670']
+    # kcity 예외 case(노면표시 없음)추후 수정예정
+    rTurn_special_case = ['473', '605', '615', '670', '614']
     lTurn_special_case = []
     rPocket_special_case = []
     lPocket_special_case = ['411']
@@ -510,10 +509,10 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
             print("next Lturn")
             return 1, next_id_2
     
-    elif next_id_2 == '614':
-        print(next_id_2)
-        print("next *Rturn")
-        return 2, next_id_2
+    # elif next_id_2 == '614':
+    #     print(next_id_2)
+    #     print("next *Rturn")
+    #     return 2, next_id_2
     
     # 다음링크가 로터리 진입일 때
     elif next1_curvature > 0.25 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True and lanelets[splited_local_id]['intersection'] == False:
@@ -526,7 +525,7 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
         # 다음링크가 좌포켓일 때
         if lanelets[next_id_1]['direction'] == 'L':
             print(next_id_1)
-            print("next Rpocket")
+            print("next Lpocket")
             return 1, next_id_1
         # 다음링크가 우포켓일 때
         elif lanelets[next_id_1]['direction'] == 'R':

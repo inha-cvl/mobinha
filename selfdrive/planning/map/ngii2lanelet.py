@@ -160,6 +160,12 @@ class NGII2LANELET:
         speedbumps = {}
         postpoints = {}
 
+        roundabout_node = []
+        # roundabout test(hees)
+        for a1_node in ngii.a1_node:
+            if a1_node.NodeType == '10':
+                roundabout_node.append(a1_node.ID)
+
         for n, a2_link in tqdm(enumerate(ngii.a2_link), desc="a2_link: ", total=len(ngii.a2_link)):
             if a2_link.Length == 0:
                 continue
@@ -200,6 +206,8 @@ class NGII2LANELET:
             lanelets[new_id]['leftType'] = []
             lanelets[new_id]['rightBound'] = []
             lanelets[new_id]['rightType'] = []
+
+            lanelets[new_id]['roundabout'] = False
             
             # lanelets[new_id]['ROI'] = []
 
@@ -212,6 +220,10 @@ class NGII2LANELET:
                 from_node[a2_link.FromNodeID] = []
 
             from_node[a2_link.FromNodeID].append(new_id)
+
+            # roundabout test(hees)
+            if a2_link.FromNodeID in roundabout_node and a2_link.ToNodeID in roundabout_node:
+                lanelets[new_id]['roundabout'] = True
 
             if a2_link.LinkType == '1':
                 lanelets[new_id]['intersection'] = True

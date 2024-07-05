@@ -60,10 +60,12 @@ class Execute_velocity:
         # Select mode
         print("Press 's' to start scheduling, 'q' to quit.")
         while True:
-            if keyboard.is_pressed('s'):
+            # if keyboard.is_pressed('s'):
+            if 1:
                 print("Press 'a' for acceleration mode or 'd' for deceleration mode, 'q' to quit.")
                 while True:
-                    if keyboard.is_pressed('a'):
+                    # if keyboard.is_pressed('a'):
+                    if 1:
                         self.mode = 'acceleration'
                         print("Selected mode: acceleration")
                         return True
@@ -102,8 +104,10 @@ class Execute_velocity:
             update_interval = 10  # Update the graph every 10 calculations
             update_counter = 0
 
-            while elapsed_time <= self.target_time:
-                if keyboard.is_pressed('q'):
+            # while elapsed_time <= self.target_time:
+            while 1:
+                # if keyboard.is_pressed('q'):
+                if 0:
                     self.running = False
                     plt.ioff()
                     plt.close(fig)
@@ -116,6 +120,7 @@ class Execute_velocity:
                     current_speed = planner.get_speed(1 - normalized_time)
                 print(f"Time: {elapsed_time:.2f} s, Speed: {current_speed[0]:.2f} m/s")
                 times.append(elapsed_time)
+                print(current_speed)
                 speeds.append(current_speed[0])
                 elapsed_time += self.interval
 

@@ -119,29 +119,30 @@ class IONIQ:
 
 
     def set_target_v(self):
-        while not rospy.is_shutdown():
-            timeflow_sec = int(time.time())-int(self.run_time)
-            if timeflow_sec < 5:
-                self.target_v = 0
-            else:
-                self.target_v = 20/3.6
-            # elif timeflow_sec < 10:
-            #     self.target_v = 30 / 3.6
+        pass
+        # while not rospy.is_shutdown():
+        #     timeflow_sec = int(time.time())-int(self.run_time)
+        #     if timeflow_sec < 5:
+        #         self.target_v = 0
+        #     else:
+        #         self.target_v = 20/3.6
+        #     # elif timeflow_sec < 10:
+        #     #     self.target_v = 30 / 3.6
 
-            # elif timeflow_sec < 20:
-            #     self.target_v = 30 / 3.6
+        #     # elif timeflow_sec < 20:
+        #     #     self.target_v = 30 / 3.6
 
-            # elif timeflow_sec < 30:
-            #     self.target_v = 30 / 3.6
+        #     # elif timeflow_sec < 30:
+        #     #     self.target_v = 30 / 3.6
 
-            # elif timeflow_sec < 40:
-            #     self.target_v = 30 / 3.6
+        #     # elif timeflow_sec < 40:
+        #     #     self.target_v = 30 / 3.6
 
-            # elif timeflow_sec < 50:
-            #     self.target_v = 30 / 3.6
+        #     # elif timeflow_sec < 50:
+        #     #     self.target_v = 30 / 3.6
 
-            # elif timeflow_sec < 60:
-            #     self.target_v = 0 / 3.6
+        #     # elif timeflow_sec < 60:
+        #     #     self.target_v = 0 / 3.6
 
     def reset_trigger(self):
         self.reset = 1
@@ -260,25 +261,8 @@ class IONIQ:
 
             self.position = (self.x, self.y)
             self.cte = self.calculate_cte(self.position)
-            if self.PA_enable:
-            # if 1:
-                
-                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
-                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
-
-                tmp_time = time.time()
-                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc(self.current_v, self.path, self.idx, self.position, np.deg2rad(self.yaw), self.cte, self.steer)
-                try:
-                    wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental_rhc2(self.current_v, self.path, self.idx, self.position, np.deg2rad(self.yaw), self.cte, self.steer)
-                    print("LSE")
-                except:
-                    print("purepursuit")
-                    wheel_angle, (self.lx, self.ly) = self.purepursuit.run_experimental(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
-
-                # print("PROCESS TIME : ", time.time()-tmp_time)
-
-                # wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path, self.idx, self.position, self.yaw, self.cte)
-                # plt.plot(lx, ly, 'ro')
+            if self.PA_enable:                
+                wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
                 threshold = 450
                 self.steer = self.limit_steer_change(min(max(wheel_angle*13.5, -threshold), threshold))
                 # print("Steer: ", self.steer)
@@ -391,6 +375,8 @@ class IONIQ:
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
 
+    def target_v_cb(self, msg):
+        self.target_v = float(msg)
 
     def calc_idx(self, pt):
         min_dist = float('inf')

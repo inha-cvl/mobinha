@@ -33,12 +33,12 @@ class Velocity_Planner:
         ## car_pos, tar_pos는 모두 np.array 형식
         dis = np.linalg.norm(tar_pos - car_pos)
         
-        derivative = (dis - self.int) / self.dt
+        derivative = (dis - self.dis_history[-1]) / self.dt
 
         self.output = (self.Kp * dis) + (self.Ki * sum(self.dis_history)) + (self.Kd * derivative)
 
         # update
-        self.dis_history[-1] = dis * self.dt
+        self.dis_history[-1] = dis
 
         
     def target_velocity_publish(self):

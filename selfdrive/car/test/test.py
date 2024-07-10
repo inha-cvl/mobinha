@@ -14,6 +14,7 @@ import rospy
 import pymap3d
 import signal
 import sys
+import libs.utils as utils
 
 class IONIQ:
     def __init__(self):
@@ -43,7 +44,7 @@ class IONIQ:
         self.Gway_Brake_Active = None
         self.Gway_Brake_Cylinder_Pressure = None
         
-        self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
+        # self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
         self.target_v = 0
         self.current_v = 0
         self.apid = APID()
@@ -87,6 +88,7 @@ class IONIQ:
 
         # sensor data subscribe
         rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
+        rospy.Subscriber('/target_velocity', Float32, self.target_v_cb)
         self.x, self.y, self.z = 0, 0, 0
         self.roll = 0
         self.pitch = 0
@@ -97,6 +99,9 @@ class IONIQ:
         self.position = (0, 0)
 
         self.reset_trigger()
+
+        # current v publish
+        self.pub_vel = rospy.Publisher('/current_velocity', Float32, queue_size=1)
 
 
     def daemon(self):
@@ -148,22 +153,22 @@ class IONIQ:
         self.reset = 1
 
 
-    def timer(self, sec):
-        if time.time() - self.tick[sec] > sec:
-            self.tick[sec] = time.time()
-            return True
-        else:
-            return False
+    # def timer(self, sec):
+    #     if time.time() - self.tick[sec] > sec:
+    #         self.tick[sec] = time.time()
+    #         return True
+    #     else:
+    #         return False
         
 
-    def alive_counter(self, alv_cnt):
-        alv_cnt += 1
-        alv_cnt = 0 if alv_cnt > 255 else alv_cnt
-        return alv_cnt
+    # def alive_counter(self, alv_cnt):
+    #     alv_cnt += 1
+    #     alv_cnt = 0 if alv_cnt > 255 else alv_cnt
+    #     return alv_cnt
     
 
     def longitudinal_cmd(self):
-        self.alv_cnt = self.alive_counter(self.alv_cnt)
+        self.alv_cnt = utils.alive_counter(self.alv_cnt)
         signals = {'PA_Enable': self.PA_enable, 'PA_StrAngCmd': self.steer,
                    'LON_Enable': self.LON_enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
                    'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset,
@@ -205,7 +210,7 @@ class IONIQ:
             res = self.db.decode_message(data.arbitration_id, data.data)
             self.PA_Enable_Status = res['PA_Enable_Status']
             self.LON_Enable_Status = res['LON_Enable_Status']
-        if self.timer(1):
+        if utils.timer(1):
             print(f"=================================================\n \
                 input acl: {self.accel} | input brake: {self.brake}\n  \
                 safety: {self.safety_status} | brake_active: {self.Gway_Brake_Active}\n  \
@@ -213,6 +218,10 @@ class IONIQ:
                 ovr(acl,brk,str): {self.acc_override} | {self.brk_override} | {self.steering_overide}| reset: {self.reset}\n \
                 accel_pedal: {self.Gway_Accel_Pedal_Position}, brake_cylinder:{self.Gway_Brake_Cylinder_Pressure} \
                 LON_en: {self.LON_enable}, PA_en: {self.PA_enable}")
+        
+        msg = Float32()
+        msg.data = self.current_v
+        self.pub_vel.publish(msg)
 
 
     def sender(self, arb_id, msg):
@@ -260,11 +269,11 @@ class IONIQ:
                 print(1,self.accel, self.brake)
 
             self.position = (self.x, self.y)
-            self.cte = self.calculate_cte(self.position)
+            self.idx, self.cte = utils.calculate_cte(self.path, self.position)
             if self.PA_enable:                
                 wheel_angle, (self.lx, self.ly) = self.purepursuit.run(self.current_v, self.path[self.idx:], self.position, self.yaw, self.cte)
                 threshold = 450
-                self.steer = self.limit_steer_change(min(max(wheel_angle*13.5, -threshold), threshold))
+                self.steer = utils.limit_steer_change(self.current_v, self.prev_steer, min(max(wheel_angle*13.5, -threshold), threshold))
                 # print("Steer: ", self.steer)
                 inted_steer = int(self.steer)
                 self.prev_current_v = self.current_v
@@ -378,65 +387,65 @@ class IONIQ:
     def target_v_cb(self, msg):
         self.target_v = float(msg)
 
-    def calc_idx(self, pt):
-        min_dist = float('inf')
-        min_idx = 0
+    # def calc_idx(self, pt):
+    #     min_dist = float('inf')
+    #     min_idx = 0
 
-        for idx, pt1 in enumerate(self.path):
-            dist = np.sqrt((pt[0]-pt1[0])**2+(pt[1]-pt1[1])**2)
-            if dist < min_dist:
-                min_dist = dist
-                min_idx = idx
+    #     for idx, pt1 in enumerate(self.path):
+    #         dist = np.sqrt((pt[0]-pt1[0])**2+(pt[1]-pt1[1])**2)
+    #         if dist < min_dist:
+    #             min_dist = dist
+    #             min_idx = idx
 
-        if min_idx == len(self.path) - 1:
-            pt1 = self.path[min_idx-1]
-        else:
-            pt1 = self.path[min_idx]
+    #     if min_idx == len(self.path) - 1:
+    #         pt1 = self.path[min_idx-1]
+    #     else:
+    #         pt1 = self.path[min_idx]
 
-        return min_idx
+    #     return min_idx
     
 
-    def calculate_cte(self, position):
-        try:
-            idx = self.calc_idx(position)
-            self.idx = idx
-            Ax, Ay = self.path[idx]
-            Bx, By = self.path[idx+1]
-            Px, Py = position
+    # def calculate_cte(self, position):
+    #     try:
+    #         idx = utils.calc_idx(self.path, position)
+    #         self.idx = idx
+    #         Ax, Ay = self.path[idx]
+    #         Bx, By = self.path[idx+1]
+    #         Px, Py = position
 
-            numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
-            denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
-            cte = numerator / denominator if denominator != 0 else 0
+    #         numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
+    #         denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
+    #         cte = numerator / denominator if denominator != 0 else 0
 
-            cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+    #         cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
             
-            if cross_product > 0:
-                return -cte
-            elif cross_product < 0:
-                return cte
-            else:
-                return 0
-        except:
-            return 0
+    #         if cross_product > 0:
+    #             return -cte
+    #         elif cross_product < 0:
+    #             return cte
+    #         else:
+    #             return 0
+    #     except:
+    #         return 0
     
-    def limit_steer_change(self, current_steer):
-        # saturation_th = 20
-        saturation_th = -5/9*(self.current_v*3.6-6)+15
-        saturation_th = np.clip(saturation_th, 2, 20)
-        # print("                         ", saturation_th)
-        saturated_steering_angle = current_steer
-        diff = max(min(current_steer-self.prev_steer, saturation_th), -saturation_th)
-        saturated_steering_angle = self.prev_steer + diff
-        return saturated_steering_angle
+    # def limit_steer_change(self, current_steer):
+    #     # saturation_th = 20
+    #     saturation_th = -5/9*(self.current_v*3.6-6)+15
+    #     saturation_th = np.clip(saturation_th, 2, 20)
+    #     # print("                         ", saturation_th)
+    #     saturated_steering_angle = current_steer
+    #     diff = max(min(current_steer-self.prev_steer, saturation_th), -saturation_th)
+    #     saturated_steering_angle = self.prev_steer + diff
+    #     return saturated_steering_angle
     
 
-def signal_handler(sig, frame):
-    print('You pressed Ctrl+C! Exiting gracefully...')
-    rospy.signal_shutdown('Exiting')
-    sys.exit(0)
+# def signal_handler(sig, frame):
+#     print('You pressed Ctrl+C! Exiting gracefully...')
+#     rospy.signal_shutdown('Exiting')
+#     sys.exit(0)
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, utils.signal_handler)
 
     IONIQ = IONIQ()
     t1 = threading.Thread(target=IONIQ.daemon)

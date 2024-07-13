@@ -20,6 +20,7 @@ class StateMaster:
     def __init__(self, CP):
 
         self.CS = CS
+        self.timestamp = rospy.Time(0)
         self.base_lla = [CP.mapParam.baseLatitude,CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
         self.v = 0.0
@@ -80,6 +81,7 @@ class StateMaster:
             msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
 
     def novatel_cb(self, msg):
+        self.timestamp = msg.header.stamp
         self.latitude = msg.latitude
         self.longitude = msg.longitude
         self.altitude = msg.height
@@ -88,8 +90,8 @@ class StateMaster:
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
-        self.yaw = self.yaw - 0.3
-       
+        self.yaw = self.yaw - 0.3 # control 에서 수정하도록 바꿔야 함
+    
     def velocity_cb(self, msg):
         self.v = msg.data
 
@@ -125,6 +127,7 @@ class StateMaster:
     def update(self):
         car_state = self.CS._asdict()
 
+        car_state["timestamp"] = self.timestamp
         car_state["vEgo"] = self.v
         car_state_position = car_state["position"]._asdict()
         car_state_position["x"] = self.x

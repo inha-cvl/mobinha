@@ -1,4 +1,5 @@
 from typing import NamedTuple
+import rospy
 
 
 class Positions(NamedTuple):
@@ -34,6 +35,7 @@ class ButtonEvent(NamedTuple):
 
 
 class CarState(NamedTuple):
+    timestamp: rospy.Time = rospy.Time(0)
     vEgo: float = 0.0
     aEgo: float = 0.0
     position: Positions = Positions()

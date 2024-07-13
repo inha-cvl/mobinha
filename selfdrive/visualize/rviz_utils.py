@@ -643,3 +643,15 @@ def EgoCarViz():
     marker.pose.orientation.z = quaternion[2]
     marker.pose.orientation.w = quaternion[3]
     return marker
+
+def rotate_quaternion_yaw(quaternion, yaw_degrees):
+    yaw_radians = math.radians(yaw_degrees)
+    q_yaw = (0, 0, math.sin(yaw_radians / 2), math.cos(yaw_radians / 2))
+    x1, y1, z1, w1 = quaternion
+    x2, y2, z2, w2 = q_yaw
+    return (
+        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
+        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+    )

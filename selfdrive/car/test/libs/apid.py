@@ -35,9 +35,13 @@ class APID:
         self.accel_lim = self.accel_default
         self.brake_lim = self.brake_default
 
+        self.output = 0
     
     def run(self, cur, ref):
         # update
+        if cur is None or ref is None:
+            print("apid module args error! -from apid.py")
+            return 0
         if self.ref is None:
             self.ref = ref
         if self.ref != ref:
@@ -101,14 +105,28 @@ class APID:
         self.integral = sum(self.error_history)
         self.derivative = self.errs[3]-self.errs[2]
 
-        output = (Kp * self.error) + (Ki * self.integral) + (Kd *self.derivative)
+        self.output = (Kp * self.error) + (Ki * self.integral) + (Kd *self.derivative)
 
-        accel_val, brake_val = self.post_process(output)
+        # accel_lim, brake_lim 변경
+        # accel_val, brake_val = self.post_process()
         
+
+        return self.output
+    
+        if self.output > 0:
+            accel_val = min(self.output, self.accel_lim)
+            brake_val = 0
+        else:
+            accel_val = 0
+            brake_val = min(-self.output, self.brake_lim)
+        
+        if self.ref == 0 and self.cur_v < 2.5:
+            brake_val = 40
+
         return accel_val, brake_val
 
         
-    def post_process(self, output):
+    def post_process(self):
         # print("                      ACCEL_MIN :", self.accel_min)
         accel_lim_max = 33
         brake_lim_max = 45
@@ -158,16 +176,6 @@ class APID:
 
 
         else:
-            print("initialize")
+            print("post process : initialize")
 
-        if output > 0:
-            accel_val = min(output, self.accel_lim)
-            brake_val = 0
-        else:
-            accel_val = 0
-            brake_val = min(-output, self.brake_lim)
         
-        if self.ref == 0 and self.cur_v < 2.5:
-            brake_val = 40
-
-        return accel_val, brake_val

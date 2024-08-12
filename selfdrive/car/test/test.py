@@ -19,7 +19,6 @@ import libs.utils as utils
 class IONIQ:
     def __init__(self):
         rospy.init_node("controlTest_junmyeong")
-
         self.bus = can.ThreadSafeBus(
             interface='socketcan', channel='can0', bitrate=500000)
         self.db = cantools.database.load_file('/home/inha/Documents/catkin_ws/src/mobinha/selfdrive/car/dbc/ioniq/can.dbc')
@@ -44,14 +43,14 @@ class IONIQ:
         self.Gway_Brake_Active = None
         self.Gway_Brake_Cylinder_Pressure = None
         
-        # self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
         self.target_v = 0
         self.current_v = 0
-        self.apid = APID()
-
+        self.vApid = APID()
+        self.sApid = APID()
+        
+        # global path init
         geo_path = []
         with open('path_log.txt', 'r') as file:
-        # with open('26.txt', 'r') as file:
             lines = file.readlines() 
 
         for line in lines:
@@ -66,10 +65,11 @@ class IONIQ:
             x, y, _ = pymap3d.geodetic2enu(
             geo_path[i][0], geo_path[i][1], 0, self.base_lat, self.base_lon, 0)
             self.path.append((x,y))
-        
         # print(self.path)
         # plt.plot([el[0] for el in self.path], [el[1] for el in self.path])
         # plt.show()
+
+        # controller init
         self.prev_steer = 0
         self.lx = 0
         self.ly = 0
@@ -77,22 +77,27 @@ class IONIQ:
 
         self.purepursuit = PurePursuit(self.path)
         
-        # Plot 관련 초기화
+        # Plot init
         self.plot_lock = threading.Lock()
         self.time_stamps = []
         self.current_v_history = []
         self.target_v_history = []
         self.error_history = []
         self.accel_history = [0]
+        self.vApid_output_history = []
+        self.sApid_output_history = []
+        self.final_output_history = []
         self.run_time = time.time()
 
         # sensor data subscribe
         rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
         rospy.Subscriber('/target_velocity', Float32, self.target_v_cb)
+        rospy.Subscriber('/current_distance', Float32, self.current_s_cb)
         self.x, self.y, self.z = 0, 0, 0
         self.roll = 0
         self.pitch = 0
-        self.yaw = 0 
+        self.yaw = 0
+        self.current_s = 100
 
         self.idx = 0
 
@@ -103,6 +108,19 @@ class IONIQ:
         # current v publish
         self.pub_vel = rospy.Publisher('/current_velocity', Float32, queue_size=1)
 
+
+    def novatel_cb(self, msg):
+        self.x, self.y, self.z = pymap3d.geodetic2enu(
+            msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
+        self.roll = msg.roll
+        self.pitch = msg.pitch
+        self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
+
+    def target_v_cb(self, msg):
+        self.target_v = float(msg)
+
+    def current_s_cb(self, msg):
+        self.current_s = msg.data
 
     def daemon(self):
         while not rospy.is_shutdown():
@@ -124,6 +142,7 @@ class IONIQ:
 
 
     def set_target_v(self):
+        self.target_v = 15/3.6
         pass
         # while not rospy.is_shutdown():
         #     timeflow_sec = int(time.time())-int(self.run_time)
@@ -153,19 +172,6 @@ class IONIQ:
         self.reset = 1
 
 
-    # def timer(self, sec):
-    #     if time.time() - self.tick[sec] > sec:
-    #         self.tick[sec] = time.time()
-    #         return True
-    #     else:
-    #         return False
-        
-
-    # def alive_counter(self, alv_cnt):
-    #     alv_cnt += 1
-    #     alv_cnt = 0 if alv_cnt > 255 else alv_cnt
-    #     return alv_cnt
-    
 
     def longitudinal_cmd(self):
         self.alv_cnt = utils.alive_counter(self.alv_cnt)
@@ -186,7 +192,7 @@ class IONIQ:
             self.velocity_RL = res['Gway_Wheel_Velocity_RL']
             self.velocity_RR = res['Gway_Wheel_Velocity_RR']
             self.velocity_FL = res['Gway_Wheel_Velocity_FL']
-            self.current_v = (self.velocity_RR + self.velocity_RL)/7.2
+            self.current_v = (self.velocity_RR + self.velocity_RL)/7.2 # [m/s]
         if data.arbitration_id == 368:
             res = self.db.decode_message(368, data.data)
             self.Gway_Accel_Pedal_Position = res['Gway_Accel_Pedal_Position']
@@ -264,10 +270,28 @@ class IONIQ:
 
     def controller(self):
         while not rospy.is_shutdown():
+            ### Longitudinal control
             if self.LON_enable:
-                self.accel, self.brake = self.apid.run(self.current_v, self.target_v)   
-                print(1,self.accel, self.brake)
+                self.target_s = max(self.current_v*3.6-15, 5) # safe_distance
+                self.vApid_output = self.vApid.run(self.current_v, self.target_v)   
+                self.sApid_output = self.sApid.run(self.current_s, self.target_s)   
+                output = min(self.vApid_output, self.sApid_output)
 
+                ### post process ####
+                accel_lim = 30
+                brake_lim = 30
+                if output > 0:
+                    self.accel_val = min(output, accel_lim)
+                    self.brake_val = 0
+                else:
+                    self.accel_val = 0
+                    self.brake_val = min(-output, brake_lim)
+                
+                if self.ref == 0 and self.cur_v < 2.5:
+                    self.brake_val = 40
+                #####################
+            
+            ### Lateral control
             self.position = (self.x, self.y)
             self.idx, self.cte = utils.calculate_cte(self.path, self.position)
             if self.PA_enable:                
@@ -295,6 +319,9 @@ class IONIQ:
                 self.accel_history.append((self.current_v_history[-1]-self.current_v_history[-2])*100)
             except:
                 self.accel_history.append(0)
+            self.vApid_output_history.append(self.vApid_output)
+            self.sApid_output_history.append(self.sApid_output)
+            self.final_output_history.append(min(self.vApid_output, self.sApid_output))
 
             for arr in [self.time_stamps, self.current_v_history, self.target_v_history, self.error_history]:
                 if len(arr) > 100:
@@ -349,6 +376,33 @@ class IONIQ:
             plt.grid(True)
             plt.draw()
             plt.pause(0.01)
+
+
+    def plot_apids(self):
+        plt.ion()
+        fig, ax = plt.subplots()
+        current_line1, = ax.plot(self.time_stamps, self.vApid_output_history, label='vApid output', c='b')
+        current_line2, = ax.plot(self.time_stamps, self.sApid_output_history, label='sApid output', c='g')
+        current_line3, = ax.plot(self.time_stamps, self.final_output_history, label='final output', c='r')
+        
+        plt.legend(loc='upper left')
+
+        while not rospy.is_shutdown():
+            self.update_values()
+
+            current_line1.set_ydata(self.vApid_output_history)
+            current_line1.set_xdata(self.time_stamps)
+            current_line2.set_ydata(self.sApid_output_history)
+            current_line2.set_xdata(self.time_stamps)
+            current_line3.set_ydata(self.final_output_history)
+            current_line3.set_xdata(self.time_stamps)
+
+            ax.relim()
+            ax.autoscale_view()
+
+            plt.grid(True)
+            plt.draw()
+            plt.pause(0.01)
             
     
     def plot_position(self):
@@ -377,72 +431,12 @@ class IONIQ:
             plt.pause(0.01)
     
 
-    def novatel_cb(self, msg):
-        self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
-        self.roll = msg.roll
-        self.pitch = msg.pitch
-        self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
-
-    def target_v_cb(self, msg):
-        self.target_v = float(msg)
-
-    # def calc_idx(self, pt):
-    #     min_dist = float('inf')
-    #     min_idx = 0
-
-    #     for idx, pt1 in enumerate(self.path):
-    #         dist = np.sqrt((pt[0]-pt1[0])**2+(pt[1]-pt1[1])**2)
-    #         if dist < min_dist:
-    #             min_dist = dist
-    #             min_idx = idx
-
-    #     if min_idx == len(self.path) - 1:
-    #         pt1 = self.path[min_idx-1]
-    #     else:
-    #         pt1 = self.path[min_idx]
-
-    #     return min_idx
     
 
-    # def calculate_cte(self, position):
-    #     try:
-    #         idx = utils.calc_idx(self.path, position)
-    #         self.idx = idx
-    #         Ax, Ay = self.path[idx]
-    #         Bx, By = self.path[idx+1]
-    #         Px, Py = position
-
-    #         numerator = abs((Bx - Ax) * (Ay - Py) - (Ax - Px) * (By - Ay))
-    #         denominator = np.sqrt((Bx - Ax)**2 + (By - Ay)**2)
-    #         cte = numerator / denominator if denominator != 0 else 0
-
-    #         cross_product = (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
-            
-    #         if cross_product > 0:
-    #             return -cte
-    #         elif cross_product < 0:
-    #             return cte
-    #         else:
-    #             return 0
-    #     except:
-    #         return 0
-    
-    # def limit_steer_change(self, current_steer):
-    #     # saturation_th = 20
-    #     saturation_th = -5/9*(self.current_v*3.6-6)+15
-    #     saturation_th = np.clip(saturation_th, 2, 20)
-    #     # print("                         ", saturation_th)
-    #     saturated_steering_angle = current_steer
-    #     diff = max(min(current_steer-self.prev_steer, saturation_th), -saturation_th)
-    #     saturated_steering_angle = self.prev_steer + diff
-    #     return saturated_steering_angle
-    
-
-# def signal_handler(sig, frame):
-#     print('You pressed Ctrl+C! Exiting gracefully...')
-#     rospy.signal_shutdown('Exiting')
-#     sys.exit(0)
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C! Exiting gracefully...')
+    rospy.signal_shutdown('Exiting')
+    sys.exit(0)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, utils.signal_handler)
@@ -454,8 +448,9 @@ if __name__ == '__main__':
     t4 = threading.Thread(target=IONIQ.controller)
 
     # t5 = threading.Thread(target=IONIQ.plot_velocity)
-    t5 = threading.Thread(target=IONIQ.plot_position)
+    # t5 = threading.Thread(target=IONIQ.plot_position)
     # t5 = threading.Thread(target=IONIQ.plot_acceleration)
+    t5 = threading.Thread(target=IONIQ.plot_apids)
 
     t1.start()
     t2.start()

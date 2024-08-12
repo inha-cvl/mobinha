@@ -25,6 +25,8 @@ class IONIQ:
         self.accel = 0
         self.brake = 0
         self.steer = 0
+        self.vApid_output = 0
+        self.sApid_output = 0
 
         self.LON_enable = 0
         self.PA_enable = 0
@@ -142,7 +144,7 @@ class IONIQ:
 
 
     def set_target_v(self):
-        self.target_v = 15/3.6
+        self.target_v = 10/3.6
         pass
         # while not rospy.is_shutdown():
         #     timeflow_sec = int(time.time())-int(self.run_time)
@@ -238,57 +240,65 @@ class IONIQ:
 
     def state_controller(self):
         while not rospy.is_shutdown():
-            cmd = input('99: PA |88: LON |77: ALL\n \
-                        1001: reset\n1000: over\n')
-            cmd = int(cmd)
-            if cmd == 99: 
-                self.reset_trigger()
-                self.PA_enable = 1
-                self.LON_enable = 0
-                self.brake = 0
-                self.accel = 0
-                self.reset = 0
-            elif cmd == 88:
-                self.reset_trigger()
-                self.PA_enable = 0
-                self.LON_enable = 1
-                self.brake = 0
-                self.accel = 0
-                self.reset = 0
-            elif cmd == 77: 
-                self.reset_trigger()
-                self.PA_enable = 1
-                self.LON_enable = 1
-                self.brake = 0
-                self.accel = 0
-                self.reset = 0
-            elif cmd == 1001:
-                self.reset_trigger()
-            elif cmd == 1000:
-                exit(0)
+            try:
+                cmd = input('99: PA |88: LON |77: ALL\n \
+                            1001: reset\n1000: over\n')
+                cmd = int(cmd)
+                if cmd == 99: 
+                    self.reset_trigger()
+                    self.PA_enable = 1
+                    self.LON_enable = 0
+                    self.brake = 0
+                    self.accel = 0
+                    self.reset = 0
+                elif cmd == 88:
+                    self.reset_trigger()
+                    self.PA_enable = 0
+                    self.LON_enable = 1
+                    self.brake = 0
+                    self.accel = 0
+                    self.reset = 0
+                elif cmd == 77: 
+                    self.reset_trigger()
+                    self.PA_enable = 1
+                    self.LON_enable = 1
+                    self.brake = 0
+                    self.accel = 0
+                    self.reset = 0
+                elif cmd == 1001:
+                    self.reset_trigger()
+                elif cmd == 1000:
+                    exit(0)
+            except:
+                print("re-insert")
 
 
     def controller(self):
         while not rospy.is_shutdown():
             ### Longitudinal control
             if self.LON_enable:
-                self.target_s = max(self.current_v*3.6-15, 5) # safe_distance
-                self.vApid_output = self.vApid.run(self.current_v, self.target_v)   
-                self.sApid_output = self.sApid.run(self.current_s, self.target_s)   
-                output = min(self.vApid_output, self.sApid_output)
+                # self.target_s = max(self.current_v*3.6-15, 5) # safe_distance
+                self.target_s = 20 # safe_distance
 
+                self.vApid_output = self.vApid.run(self.current_v, self.target_v)   
+                # self.vApid_output = 100
+
+                self.sApid_output = -self.sApid.run(self.current_s, self.target_s)  
+                output = min(self.vApid_output, self.sApid_output)
+                print("output: ", output)
                 ### post process ####
-                accel_lim = 30
-                brake_lim = 30
+                accel_lim = 25
+                brake_lim = 50
                 if output > 0:
-                    self.accel_val = min(output, accel_lim)
-                    self.brake_val = 0
+                    self.accel = min(output, accel_lim)
+                    self.brake = 0
                 else:
-                    self.accel_val = 0
-                    self.brake_val = min(-output, brake_lim)
+                    self.accel = 0
+                    self.brake = min(-output, brake_lim)
                 
                 if self.target_v == 0 and self.current_v < 2.5:
-                    self.brake_val = 40
+                    self.brake = 40
+                print("acc, brk", self.accel, self.brake)
                 #####################
             
             ### Lateral control
@@ -323,7 +333,7 @@ class IONIQ:
             self.sApid_output_history.append(self.sApid_output)
             self.final_output_history.append(min(self.vApid_output, self.sApid_output))
 
-            for arr in [self.time_stamps, self.current_v_history, self.target_v_history, self.error_history]:
+            for arr in [self.time_stamps, self.current_v_history, self.target_v_history, self.error_history, self.vApid_output_history, self.sApid_output_history, self.final_output_history]:
                 if len(arr) > 100:
                     arr.pop(0)
 

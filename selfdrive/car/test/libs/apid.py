@@ -2,10 +2,19 @@ import numpy as np
 
 class APID:
     def __init__(self):
+        # tmp param for vApid
         self.window_size = 2
         self.Kp = 46
         self.Ki = 1.2 / self.window_size
         self.Kd = 35
+        self.lr = 0.001 
+        self.error_history = []
+
+        # tmp param for sApid
+        self.window_size = 2
+        self.Kp = 5
+        self.Ki = 0 / self.window_size
+        self.Kd = 0
         self.lr = 0.001 
         self.error_history = []
 
@@ -109,7 +118,6 @@ class APID:
 
         # accel_lim, brake_lim 변경
         # accel_val, brake_val = self.post_process()
-        
 
         return self.output
     

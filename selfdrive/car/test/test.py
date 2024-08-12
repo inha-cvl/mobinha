@@ -287,7 +287,7 @@ class IONIQ:
                     self.accel_val = 0
                     self.brake_val = min(-output, brake_lim)
                 
-                if self.ref == 0 and self.cur_v < 2.5:
+                if self.target_v == 0 and self.current_v < 2.5:
                     self.brake_val = 40
                 #####################
             

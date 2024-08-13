@@ -9,8 +9,8 @@ from jsk_recognition_msgs.msg import BoundingBoxArray
 # Camera & Lidar
 class SensorCheck:
     def __init__(self, topic_name, msg_type, hz_thresh):
-        self.current_time = rospy.Time.now()
-        self.last_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
+        self.last_time = rospy.Time(0)
         self.message = ''
         self.message_count = 0
         self.state = ''
@@ -20,7 +20,7 @@ class SensorCheck:
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
 
     def topic_callback(self, msg):
-        self.current_time = rospy.Time.now()
+        self.current_time = msg.header.stamp
         self.message = msg.data
         self.message_count += 1
 
@@ -41,8 +41,8 @@ class SensorCheck:
         
 class GPSCheck:
     def __init__(self, topic_name, msg_type, hz_thresh, lat_thresh, lon_thresh):
-        self.current_time = rospy.Time.now()
-        self.last_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
+        self.last_time = rospy.Time(0)
         self.current_seq = 0
         self.last_seq = 0
         self.lat_std = 0.0
@@ -58,7 +58,7 @@ class GPSCheck:
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
 
     def topic_callback(self, msg):
-        self.current_time = rospy.Time.now()
+        self.current_time = msg.header.stamp
         self.current_seq = msg.header.seq
         self.sol_age = msg.sol_age
         self.lat_std = msg.lat_stdev
@@ -85,8 +85,8 @@ class GPSCheck:
     
 class INSCheck:
     def __init__(self, topic_name, msg_type, hz_thresh):
-        self.current_time = rospy.Time.now()
-        self.last_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
+        self.last_time = rospy.Time(0)
         self.current_seq = 0
         self.last_seq = 0
         self.message_count = 0
@@ -98,7 +98,7 @@ class INSCheck:
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
 
     def topic_callback(self, msg):
-        self.current_time = rospy.Time.now()
+        self.current_time = msg.header.stamp
         self.current_seq = msg.header.seq
         self.lat = msg.latitude
         self.message_count += 1
@@ -122,7 +122,7 @@ class INSCheck:
 
 class CanCheck:
     def __init__(self, topic_name, msg_type):
-        self.current_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
         self.state = 1
         
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
@@ -139,7 +139,7 @@ class CanCheck:
 
 class PlanningCheck:
     def __init__(self, topic_name, msg_type):
-        self.current_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
         self.pp = 0
         self.lgp = 0
 
@@ -158,8 +158,8 @@ class PlanningCheck:
             
 class ObjectCheck:
     def __init__(self, topic_name, msg_type, hz_thresh):
-        self.current_time = rospy.Time.now()
-        self.last_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
+        self.last_time = rospy.Time(0)
         self.message = ''
         self.message_count = 0
         self.state = ''
@@ -169,7 +169,7 @@ class ObjectCheck:
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
 
     def topic_callback(self, msg):
-        self.current_time = rospy.Time.now()
+        self.current_time = msg.header.stamp
         self.message = msg.poses
         self.message_count += 1
 
@@ -190,8 +190,8 @@ class ObjectCheck:
 
 class ClusterCheck:
     def __init__(self, topic_name, msg_type, hz_thresh):
-        self.current_time = rospy.Time.now()
-        self.last_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
+        self.last_time = rospy.Time(0)
         self.message = ''
         self.message_count = 0
         self.hz = 0.0
@@ -200,7 +200,7 @@ class ClusterCheck:
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
 
     def topic_callback(self, msg):
-        self.current_time = rospy.Time.now()
+        self.current_time = msg.header.stamp
         self.message = msg.boxes
         self.message_count += 1
 
@@ -222,7 +222,7 @@ class ClusterCheck:
 
 class SchoolZoneCheck:
     def __init__(self, topic_name, msg_type):
-        self.current_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
         self.state = 0
         self.dist = 0
         
@@ -247,7 +247,7 @@ class SchoolZoneCheck:
 
 class PathCheck:
     def __init__(self, topic_name, msg_type):
-        self.current_time = rospy.Time.now()
+        self.current_time = rospy.Time(0)
         self.state = 0
         
         rospy.Subscriber(topic_name, msg_type, self.topic_callback)
@@ -291,7 +291,7 @@ def main():
         # sensor_check.data = [1, school.check(), path.check(), 1, 1, 1, 1, 
         #                      int(1 == 1 == 1), 1, school.distance()]
 
-        #sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        sensor_check.data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         pub.publish(sensor_check)
         rospy.sleep(0.2) # 5hz
         

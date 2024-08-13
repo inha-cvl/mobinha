@@ -47,9 +47,9 @@ class SimulatorTransceiver:
         # ans bakery
         # self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
         #kcity highway 
-        #self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
+        # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
         #kcity right turn urban
-        # self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
+        self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
         #songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
         #right turn course
@@ -59,7 +59,7 @@ class SimulatorTransceiver:
         ### k-city -xingyou -curve test
         # self.ego = Vehicle(474.480, 1567.810, math.radians(90), 0.0, 2.65) 
         ### k-city -xingyou -city road test
-        self.ego = Vehicle(475.53165668397725, 1122.5222162505208, math.radians(90), 0.0, 2.65) 
+        # self.ego = Vehicle(475.53165668397725, 1122.5222162505208, math.radians(90), 0.0, 2.65) 
 
         self.roll = 0.0
         self.pitch = 0.0
@@ -103,6 +103,7 @@ class SimulatorTransceiver:
         self.gear = 3 if v>0 else 0
 
         inspva = INSPVA()
+        inspva.header.stamp = rospy.Time.now()
         lat, lon, alt = pymap3d.enu2geodetic(x, y, 0, self.base_lla[0], self.base_lla[1], self.base_lla[2])
         inspva.latitude = lat
         inspva.longitude = lon

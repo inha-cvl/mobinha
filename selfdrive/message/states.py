@@ -21,7 +21,7 @@ class StateMaster:
 
         self.CS = CS
         self.base_lla = [CP.mapParam.baseLatitude,CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
-
+        self.timestamp = rospy.Time(0)
         self.v = 0.0
         self.pitch = 0.0
         self.roll = 0.0
@@ -80,6 +80,7 @@ class StateMaster:
             msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
 
     def novatel_cb(self, msg):
+        self.timestamp = msg.header.stamp
         self.latitude = msg.latitude
         self.longitude = msg.longitude
         self.altitude = msg.height
@@ -124,7 +125,7 @@ class StateMaster:
 
     def update(self):
         car_state = self.CS._asdict()
-
+        car_state["timestamp"] = self.timestamp
         car_state["vEgo"] = self.v
         car_state_position = car_state["position"]._asdict()
         car_state_position["x"] = self.x

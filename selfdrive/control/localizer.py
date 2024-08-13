@@ -6,62 +6,64 @@ import math
 import rospy
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import Pose2D, TransformStamped
 
 
 class Localizer:
     def __init__(self):
         self.ego_car = EgoCarViz()
         self.br = tf.TransformBroadcaster()
+        self.timestamp = rospy.Time(0)
 
-        self.tf_buffer = tf2_ros.Buffer()
-        self.listener = tf2_ros.TransformListener(self.tf_buffer)
+        # calibration
+        self.static_br = tf2_ros.StaticTransformBroadcaster()
+        static_transforms = [
+            ((1.5275, 0.0, 0.0), (0, 0, 0, 1), 'ego_car', 'gps'),   # center
+            ((1.06, 0, 1.22), (0, 0, 0, 1), 'hesai_lidar', 'gps'),   # need to calibrate using hesai driver
+            ((1.91, 0.94, 0), (0, 0, 0, 1), 'fl', 'gps'),
+            ((1.91, -0.94, 0), (0, 0, 0, 1), 'fr', 'gps'),
+            ((0, 0.94, 0), (0, 0, 0, 1), 'rl', 'gps'),
+            ((0, -0.94, 0), (0, 0, 0, 1), 'rr', 'gps')
+        ]
+        self.publish_static_tfs(static_transforms)
 
         self.pub_ego_car = rospy.Publisher('/mobinha/control/ego_car', Marker, queue_size=1)
         self.pub_enu_pose = rospy.Publisher('/veh_pose', Pose2D, queue_size=1)
+    
+    # calibration
+    def publish_static_tfs(self, transforms):
+        static_transformStamped_vec = []
+        for translation, rotation, child_frame, parent_frame in transforms:
+            static_transformStamped = TransformStamped()
+            #static_transformStamped.header.stamp = rospy.Time(0)
+            static_transformStamped.header.frame_id = parent_frame
+            static_transformStamped.child_frame_id = child_frame
+            static_transformStamped.transform.translation.x = translation[0]
+            static_transformStamped.transform.translation.y = translation[1]
+            static_transformStamped.transform.translation.z = translation[2]
+            static_transformStamped.transform.rotation.x = rotation[0]
+            static_transformStamped.transform.rotation.y = rotation[1]
+            static_transformStamped.transform.rotation.z = rotation[2]
+            static_transformStamped.transform.rotation.w = rotation[3]
+            static_transformStamped_vec.append(static_transformStamped)
+        
+        self.static_br.sendTransform(static_transformStamped_vec)
 
     def run(self, sm):
         CS = sm.CS
         quaternion = tf.transformations.quaternion_from_euler(
             math.radians(CS.rollRate), math.radians(CS.pitchRate), math.radians(CS.yawRate))  # RPY
-        self.br.sendTransform(
-            (CS.position.x, CS.position.y, CS.position.z),
-            (quaternion[0], quaternion[1],
-                quaternion[2], quaternion[3]),
-            rospy.Time.now(),
-            'ego_car',
-            'world'
-        )
-        # INS부터 각 바퀴까지의 거리 정의
-        self.br.sendTransform(
-            (1.91, 0.94, 0),
-            (0,0,0,1),
-            rospy.Time.now(),
-            'fl',
-            'ego_car'
-        )
-        self.br.sendTransform(
-            (1.91, -0.94, 0),
-            (0,0,0,1),
-            rospy.Time.now(),
-            'fr',
-            'ego_car'
-        )
-        self.br.sendTransform(
-            (0, 0.94, 0),
-            (0,0,0,1),
-            rospy.Time.now(),
-            'rl',
-            'ego_car'
-        )
-        self.br.sendTransform(
-            (0, -0.94, 0),
-            (0,0,0,1),
-            rospy.Time.now(),
-            'rr',
-            'ego_car'
-        )
         
-        self.br.sendTransform((-0.5, 0, 1.2),(0, 0, 0, 1), rospy.Time.now(), 'Pandar64', 'ego_car')
-
+        if self.timestamp != CS.timestamp:
+            self.br.sendTransform(
+                (CS.position.x, CS.position.y, CS.position.z),
+                (quaternion[0], quaternion[1],
+                    quaternion[2], quaternion[3]),
+                CS.timestamp,
+                'gps',
+                'world'
+            )
+        
+        self.timestamp = CS.timestamp
         self.pub_ego_car.publish(self.ego_car)
         self.pub_enu_pose.publish(CS.position.x, CS.position.y, CS.yawRate)

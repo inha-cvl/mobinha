@@ -61,6 +61,7 @@ class PathPlanner:
         self.look_a_head_pos = [0,0]
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
+        self.schoolzone_passed = False
 
         self.pub_lanelet_map = rospy.Publisher('/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
         self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
@@ -603,7 +604,7 @@ class PathPlanner:
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
 
                 # schoolzone_viz
-                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx)
+                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx,self.schoolzone_passed)
                 print(f"my node number is : {self.l_idx}") 
                 print("my position is : ", CS.position.x, CS.position.y)
                 

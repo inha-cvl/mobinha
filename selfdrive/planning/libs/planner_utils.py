@@ -824,21 +824,30 @@ def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
 
 
 ## head lane id는 걍 다 들어가 있음.
-def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_idx):
+def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_idx, passed):
     schoolzone_points = []
-
+    passed = False
     print("my link number is : ", nowID)
     ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
     further_lane_ids = head_lane_ids[:]
     if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
     print(further_lane_ids)
     for further_link, lanelet_id in enumerate(further_lane_ids):
-        if len(lanelets[lanelet_id]['schoolZone']) > 0 and further_link < 5:
-            for point in lanelets[lanelet_id]['schoolZone']:
-                idx = local_point.query((point[0], point[1]), 1)[1]
-                if idx > present_idx:
-                    schoolzone_points.append((idx, point[0], point[1]))
+        if 'schoolZone' in lanelets[lanelet_id].keys():
+            if len(lanelets[lanelet_id]['schoolZone']) > 0:
+                for point in lanelets[lanelet_id]['schoolZone']:
+                    idx = local_point.query((point[0], point[1]), 1)[1]
+                    if idx > present_idx:
+                        schoolzone_points.append((idx, point[0], point[1]))
     
+    if not passed and len(schoolzone_points) > 0:
+        start_schoolzone_idx = schoolzone_points[0][0]
+        if present_idx > start_schoolzone_idx :
+            passed = True
+    elif passed and len(len(schoolzone_points) == 0):
+        passed = False
+    
+    print(passed)
     
     schoolzone_info = {}
     schoolzone_info['points'] = schoolzone_points
@@ -852,15 +861,20 @@ def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_i
             schoolzone_info['remaining_distance'] = 0
                
     elif len(schoolzone_points) == 1:
-        schoolzone_info['state'] = 1 # 'in'
+        schoolzone_info['state'] = 0 # 'in'
         schoolzone_info['remaining_distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
     
-    elif len(schoolzone_points) == 0:
+    elif len(schoolzone_points) == 1:
         schoolzone_info['state'] = 0 #'out'
         schoolzone_info['remaining_distance'] = 0
     print("============")
     print(schoolzone_info)
     print("============")
+    
+    
+     
+    
+    
     return schoolzone_points, schoolzone_info
 
 

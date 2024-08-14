@@ -3,21 +3,22 @@ import numpy as np
 class APID:
     def __init__(self):
         # tmp param for vApid
-        self.window_size = 2
-        self.Kp = 46
-        self.Ki = 1.2 / self.window_size
-        self.Kd = 35
-        self.lr = 0.001 
-        self.error_history = []
+        # self.window_size = 2
+        # self.Kp = 46
+        # self.Ki = 1.2 / self.window_size
+        # self.Kd = 35
+        # self.lr = 0.001 
+        # self.error_history = []
 
         # tmp param for sApid
         self.window_size = 2
         self.Kp = 5
-        self.Ki = 0 / self.window_size
-        self.Kd = 0
-        self.lr = 0.001 
+        self.Ki = 1 / self.window_size
+        self.Kd = 15
+        self.lr = 0.002 
         self.error_history = []
 
+        # 4 1 3
         self.dKp = 0
         self.dKi = 0
         self.dKd = 0

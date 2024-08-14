@@ -9,6 +9,8 @@ import rospy
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.message.messaging import *
 
+from morai_msgs.msg import CtrlCmd
+
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
@@ -42,6 +44,11 @@ class Controller:
         self.local_path_k = None
 
         self.car = rospy.get_param('car_name', 'None')
+
+
+        ####
+        self.pub = rospy.Publisher('/ctrl_cmd', CtrlCmd, queue_size=1) ## Vehicl Control
+
 
     def limit_steer_change(self, current_steer):
         steer_change = current_steer - self.prev_steer
@@ -113,6 +120,13 @@ class Controller:
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             
+            ctrl_msg = CtrlCmd()
+            ctrl_msg.accel = accel
+            ctrl_msg.brake = brake
+            ctrl_msg.velocity = accel
+            # self.pub.publish(ctrl_msg)
+            # print("publishing")
+
 
             vector3.x = steer
             vector3.y = accel
@@ -123,4 +137,5 @@ class Controller:
             vector3.y = CS.actuators.accel
             vector3.z = CS.actuators.brake
 
+        
         self.pub_target_actuators.publish(vector3)

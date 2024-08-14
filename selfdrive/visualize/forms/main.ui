@@ -441,7 +441,7 @@ border-color: rgb(71,181,255);</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>수락</string>
+         <string>Estop</string>
         </property>
         <property name="shortcut">
          <string>1</string>

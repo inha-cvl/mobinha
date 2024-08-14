@@ -40,7 +40,8 @@ class gen_planner():
                              [136.58,1351.98 ,'C119BS010025'],
                              [141.02,1458.27 ,'C119BS010028'],
                              [139.39,1596.44 ,'C119BS010033']]
-
+        while 1:
+            print("gen_planner workingddddddddddddddd")
 
 
 

@@ -24,7 +24,7 @@ class MoraiPlanner():
         self.CM = None
         # publisher
         self.ctrl_pub = rospy.Publisher(
-            '/ctrl_cmd_0', CtrlCmd, queue_size=1)  # Vehicl Control
+            '/ctrl_cmd', CtrlCmd, queue_size=1)  # Vehicl Control
         self.lamp_pub = rospy.Publisher('/lamps', Lamps, queue_size=1)
         self.obj_list_pub = rospy.Publisher(
             '/morai/object_list', PoseArray, queue_size=1)

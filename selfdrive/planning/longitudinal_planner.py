@@ -56,6 +56,60 @@ class LongitudinalPlanner:
         self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_traffic_light_marker = rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
+        
+        ############ for planner simulation by JM
+        from morai_msgs.msg import EgoVehicleStatus, GetTrafficLightStatus, ObjectStatusList
+        rospy.Subscriber("/Ego_topic", EgoVehicleStatus, self.ego_topic_cb)
+        self.ego_pos = [0, 0]
+        self.ego_velocity = [0, 0]
+
+        # stopline 취득까지 ok, Goal point 설정 완
+        self.roundAbout_stopline_pos = [35.754, 1825.488]
+        self.roundAbout_stopped = False
+
+        # 신호 받아오는것까지 ok
+        rospy.Subscriber("/GetTrafficLightStatus", GetTrafficLightStatus, self.trafficLight_type_cb)
+        self.trafficLight_stopline_pos = [84.395, 1226.867]
+        self.trafficLight_type = None
+        # Estop 완
+        rospy.Subscriber("/Object_topic", ObjectStatusList, self.obstacle_pos_cb)
+        self.object_list = []
+
+    def ego_topic_cb(self, msg):
+        self.ego_pos[0] = msg.position.x
+        self.ego_pos[1] = msg.position.y
+        self.ego_velocity[0] = msg.velocity.x
+        self.ego_velocity[1] = msg.velocity.y
+
+    def trafficLight_type_cb(self, msg):
+        self.trafficLight_type = msg.trafficLightStatus
+
+    def obstacle_pos_cb(self, msg):
+        object_list = PoseArray()
+        for obj in msg.npc_list:
+            pose = Pose()
+            pose.position.x = obj.position.x
+            pose.position.y = obj.position.y
+            pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
+            object_list.poses.append(pose)
+        for obj in msg.obstacle_list:
+            pose = Pose()
+            pose.position.x = obj.position.x
+            pose.position.y = obj.position.y
+            pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
+            object_list.poses.append(pose)
+        for obj in msg.pedestrian_list:
+            pose = Pose()
+            pose.position.x = obj.position.x
+            pose.position.y = obj.position.y
+            pose.position.z = obj.heading
+            pose.orientation.w = obj.velocity.x
+            object_list.poses.append(pose)
+        self.object_list = object_list
+
+
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z, pose.orientation.x, pose.orientation.y)for pose in msg.poses]
@@ -284,18 +338,77 @@ class LongitudinalPlanner:
     def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
         lgp = 0
-        self.pub_target_v.publish(Float32(self.target_v))
+        self.pub_target_v.publish(Float32(self.target_v)) ## 얘만패면됨
         self.pub_accerror.publish(Float32(self.follow_error))
         if local_path != None and self.lane_information != None:
             local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
-            print("From longPlanner", CS.cruiseState)
             if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
-                static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
-                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
-                target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
-                target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
-                self.target_v = min(target_v_static, target_v_dynamic)
+                # local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
+                # static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
+                # dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
+                # target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
+                # target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
+                # self.target_v = min(target_v_static, target_v_dynamic)
+
+                ######## for simulation by JM
+                # scenario = "traffic_light"
+                scenario = "obstacle"
+                # scenario = "roundabout"
+
+                ## traffic light
+                if scenario == "traffic_light":
+                    print("current type is ", self.trafficLight_type)
+                    if self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
+                        distance_to_stopline = ((self.ego_pos[0]-self.trafficLight_stopline_pos[0])**2 + (self.ego_pos[1]-self.trafficLight_stopline_pos[1])**2)**0.5
+                        print("distance to stopline(traffic_light)", distance_to_stopline)
+                        if distance_to_stopline < 10:
+                            self.target_v = 0
+                        else:
+                            self.target_v = 5
+                        print("from long_planner, target_v:", self.target_v)
+                    else:
+                        self.target_v = 5
+                
+                ## obstacle
+                if scenario == "obstacle":
+                    min_dist = 100
+                    for obs in self.object_list.poses:
+                        dist = ((self.ego_pos[0]-obs.position.x)**2 + (self.ego_pos[1]-obs.position.y)**2)**0.5
+                        min_dist = min(dist, min_dist)
+                    print("MIN DIST(dog): ", min_dist)
+                    if min_dist < 13:
+                        self.target_v = 0
+                    else:
+                        self.target_v = 5
+                    print("from long_planner, target_v:", self.target_v)
+
+                ## roundabout
+                if scenario == "roundabout":
+                    if not self.roundAbout_stopped:
+                        distance_to_stopline = ((self.ego_pos[0]-self.roundAbout_stopline_pos[0])**2 + (self.ego_pos[1]-self.roundAbout_stopline_pos[1])**2)**0.5
+                        print("distance to stopline(roundabout)", distance_to_stopline)
+                        if distance_to_stopline < 10:
+                            self.target_v = 0
+                        else:
+                            self.target_v = 5
+
+                        cur_velocity = (self.ego_velocity[0]**2 + self.ego_velocity[1]**2)**0.5
+                        if distance_to_stopline < 8 and cur_velocity < 0.1:
+                            time.sleep(3)
+                            self.roundAbout_stopped = True
+                        print("from long_planner, target_v:", self.target_v)
+                    else:
+                        self.target_v = 5
+                        min_dist = 100
+                        for obs in self.object_list.poses:
+                            dist = ((self.ego_pos[0]-obs.position.x)**2 + (self.ego_pos[1]-obs.position.y)**2)**0.5
+                            min_dist = min(dist, min_dist)
+                        print("MIN DIST(car): ", min_dist)
+                        if min_dist < 27:
+                            self.target_v = 0
+                        else:
+                            self.target_v = 5
+
             else:
                 self.target_v = CS.vEgo
 

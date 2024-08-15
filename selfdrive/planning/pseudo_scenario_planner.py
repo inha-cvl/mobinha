@@ -5,7 +5,7 @@ import numpy as np
 class PseudoPlanner:
     def __init__(self):
         ## Subscribers
-        rospy.Subscriber("/ego_topic", Float32, self.ego_pos_cb)
+        rospy.Subscriber("/Ego_topic", Float32, self.ego_pos_cb)
         self.ego_pos = None
 
         rospy.Subscriber("/roundAbout_stopline_pos", Float32, self.roundAbout_stopline_pos_cb) # not used

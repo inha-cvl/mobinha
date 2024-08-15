@@ -9,8 +9,6 @@ import rospy
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.message.messaging import *
 
-from morai_msgs.msg import CtrlCmd
-
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 
@@ -46,8 +44,6 @@ class Controller:
         self.car = rospy.get_param('car_name', 'None')
 
 
-        ####
-        self.pub = rospy.Publisher('/ctrl_cmd', CtrlCmd, queue_size=1) ## Vehicl Control
 
 
     def limit_steer_change(self, current_steer):
@@ -74,6 +70,7 @@ class Controller:
 
     def target_v_cb(self, msg):
         self.target_v = msg.data
+        print("from controller, target v:", self.target_v)
 
     def lane_information_cb(self, msg):
         self.l_idx = msg.orientation.y
@@ -97,7 +94,7 @@ class Controller:
         
         return accel_val, brake_val
     
-    def get_init_acuator(self):
+    def get_init_actuator(self):
         vector3 = Vector3()
         vector3.x = 0 #steer
         vector3.y = 0 #accel
@@ -106,7 +103,7 @@ class Controller:
     
     def run(self, sm):
         CS = sm.CS
-        vector3 = self.get_init_acuator()
+        vector3 = self.get_init_actuator()
         if self.local_path != None:
             wheel_angle, lah_pt = self.purepursuit.run(
                 CS.vEgo, self.local_path[int(self.l_idx):], (CS.position.x, CS.position.y), CS.yawRate, self.cte)
@@ -120,13 +117,6 @@ class Controller:
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
             accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
             
-            ctrl_msg = CtrlCmd()
-            ctrl_msg.accel = accel
-            ctrl_msg.brake = brake
-            ctrl_msg.velocity = accel
-            # self.pub.publish(ctrl_msg)
-            # print("publishing")
-
 
             vector3.x = steer
             vector3.y = accel

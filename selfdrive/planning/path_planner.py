@@ -614,8 +614,8 @@ class PathPlanner:
                 self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
                 
                 schoolzone = Float32MultiArray()
-                schoolzone.data = [float(schoolzone_info['state']), float(schoolzone_info['remaining_distance'])]
-                self.schoolzone_state_pub.publish(schoolzone)
+                # schoolzone.data = [float(schoolzone_info['state']), float(schoolzone_info['remaining_distance'])]
+                # self.schoolzone_state_pub.publish(schoolzone)
                 
 
                 if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):

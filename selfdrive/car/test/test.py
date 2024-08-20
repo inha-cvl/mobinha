@@ -200,7 +200,19 @@ class IONIQ:
                 # min(self.target_v, self.obs_velocity + alpha)
             else:
                 print("error on status decision: test.py")
+            
+            while 1:
+                self.target_v = 15/3.6
+                if self.current_v > 12/3.6:
+                    self.target_v = 0
+                    start_point = (self.x, self.y)
+                    break
 
+            self.target_v = 0
+            if self.current_v < 2/3.6:
+                end_point = (self.x, self.y)
+                print("stopping distance(10km/h->2km/h): ", ((start_point[0]-end_point[0])**2+(start_point[1]-end_point[1])**2)**0.5)            
+                
             # self.target_v /= 3.6
             # self.target_v = 50/3.6
             # pass

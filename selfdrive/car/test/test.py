@@ -174,32 +174,32 @@ class IONIQ:
     def set_target_v(self):
         # self.target_v = 50/3.6
         while not rospy.is_shutdown():
-            safety_distance = max(self.current_v*3.6-15, 10) # safe_distance
-            margin = 3
-            margined_safety_distance = safety_distance + margin
+            # safety_distance = max(self.current_v*3.6-15, 10) # safe_distance
+            # margin = 3
+            # margined_safety_distance = safety_distance + margin
             
-            if self.current_s < margined_safety_distance*0.9:
-                status = "danger_zone"
-            elif margined_safety_distance*0.8 < self.current_s < margined_safety_distance*1.2:
-                status = "safe_zone"
-            elif margined_safety_distance*1.2 < self.current_s:
-                status = "far_zone"
-            else:
-                status = "Error"
+            # if self.current_s < margined_safety_distance*0.9:
+            #     status = "danger_zone"
+            # elif margined_safety_distance*0.8 < self.current_s < margined_safety_distance*1.2:
+            #     status = "safe_zone"
+            # elif margined_safety_distance*1.2 < self.current_s:
+            #     status = "far_zone"
+            # else:
+            #     status = "Error"
             
-            print(f"safe distance {margined_safety_distance}, cur distance {self.current_s}, {status}")
+            # print(f"safe distance {margined_safety_distance}, cur distance {self.current_s}, {status}")
 
-            if status == "danger_zone":
-                self.target_v = 0/3.6
-                # self.obs_velocity - beta
-            elif status == "safe_zone":
-                self.target_v = 10/3.6
-                # self.obs_velocity
-            elif status == "far_zone":
-                self.target_v = 15/3.6
-                # min(self.target_v, self.obs_velocity + alpha)
-            else:
-                print("error on status decision: test.py")
+            # if status == "danger_zone":
+            #     self.target_v = 0/3.6
+            #     # self.obs_velocity - beta
+            # elif status == "safe_zone":
+            #     self.target_v = 10/3.6
+            #     # self.obs_velocity
+            # elif status == "far_zone":
+            #     self.target_v = 15/3.6
+            #     # min(self.target_v, self.obs_velocity + alpha)
+            # else:
+            #     print("error on status decision: test.py")
             
             while 1:
                 self.target_v = 15/3.6
@@ -207,11 +207,12 @@ class IONIQ:
                     self.target_v = 0
                     start_point = (self.x, self.y)
                     break
-
-            self.target_v = 0
-            if self.current_v < 2/3.6:
-                end_point = (self.x, self.y)
-                print("stopping distance(10km/h->2km/h): ", ((start_point[0]-end_point[0])**2+(start_point[1]-end_point[1])**2)**0.5)            
+            while 1:
+                self.target_v = 0
+                if self.current_v < 2/3.6:
+                    end_point = (self.x, self.y)
+                    print("stopping distance(10km/h->2km/h): ", ((start_point[0]-end_point[0])**2+(start_point[1]-end_point[1])**2)**0.5)  
+                    break          
                 
             # self.target_v /= 3.6
             # self.target_v = 50/3.6
@@ -361,6 +362,7 @@ class IONIQ:
                 # ### post process ####
                 accel_lim = 20
                 brake_lim = 60
+                brake_lim = 30
                 # if abs(self.target_s - self.current_s) < 4:
                 #     output *= abs(self.target_s - self.current_s)/4
                 if output > 0:

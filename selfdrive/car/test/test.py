@@ -170,7 +170,22 @@ class IONIQ:
             #     self.PA_enable = 0
             #     self.LON_enable = 0 
 
-
+    def stopping_distance_measure(self):
+        while not rospy.is_shutdown():
+            while 1:
+                self.target_v = 15/3.6
+                if self.current_v > 12/3.6:
+                    self.target_v = 0
+                    start_point = (self.x, self.y)
+                    break
+            while 1:
+                self.target_v = 0
+                if self.current_v < 2/3.6:
+                    end_point = (self.x, self.y)
+                    print("stopping distance(10km/h->2km/h): ", ((start_point[0]-end_point[0])**2+(start_point[1]-end_point[1])**2)**0.5)
+                    while 1:
+                        self.target_v = 0  
+    
     def set_target_v(self):
         # self.target_v = 50/3.6
         while not rospy.is_shutdown():
@@ -576,7 +591,8 @@ if __name__ == '__main__':
     IONIQ = IONIQ()
     t1 = threading.Thread(target=IONIQ.daemon)
     t2 = threading.Thread(target=IONIQ.state_controller)
-    t3 = threading.Thread(target=IONIQ.set_target_v)
+    # t3 = threading.Thread(target=IONIQ.set_target_v)
+    t3 = threading.Thread(target=IONIQ.stopping_distance_measure)
     t4 = threading.Thread(target=IONIQ.controller)
 
     t5 = threading.Thread(target=IONIQ.plot_velocity)

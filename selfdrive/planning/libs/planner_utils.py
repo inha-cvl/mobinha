@@ -490,11 +490,6 @@ def get_a_b_for_blinker(min, ignore):
     b = 10
     return a,b
 
-blinker_start_time = None
-blinker_minimum_duration = 2  # 최소 블링커 지속 시간(s)
-blinker_status = 0  # 현재 블링커 상태 (0: 꺼짐, 1: 좌, 2: 우)
-blinker_target_id = None
-
 def judge_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX):
     print(f'here is judge turnning {splited_local_id}')
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
@@ -740,7 +735,13 @@ def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_loca
 
     return blinker_n_velocity_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX, my_neighbor_id, current_blinker_state)
 
-        
+def get_stopline_pos(lanelets, splited_local_id):
+    if len(lanelets[splited_local_id]['stoplineID']) != 0:
+        stopline_pos = lanelets[splited_local_id]['waypoints'][-1]  # [x, y]
+    else:
+        stopline_pos = None
+    return stopline_pos
+
 def compare_id(lh_id, my_neighbor_id):
     if lh_id in my_neighbor_id[0] or lh_id in my_neighbor_id[1]:
         return False

@@ -282,6 +282,8 @@ class MainWindow(QMainWindow, form_class):
         self.scenario3_button.clicked.connect(lambda state, idx=3:  self.scenario_button_clicked(idx))
         self.scenario4_button.clicked.connect(lambda state, idx=4:  self.scenario_button_clicked(idx))
         self.scenario5_button.clicked.connect(lambda state, idx=5:  self.scenario_button_clicked(idx))
+        self.scenario6_button.clicked.connect(lambda state, idx=6:  self.scenario_button_clicked(idx))
+        self.scenario7_button.clicked.connect(lambda state, idx=7:  self.scenario_button_clicked(idx))
 
         self.view_third_button.clicked.connect(lambda state, idx=0: self.view_button_clicked(idx))
         self.view_top_button.clicked.connect(lambda state, idx=1: self.view_button_clicked(idx))
@@ -653,6 +655,8 @@ class MainWindow(QMainWindow, form_class):
             self.scenario3_button.setDisabled(True)
             self.scenario4_button.setDisabled(True)
             self.scenario5_button.setDisabled(True)
+            self.scenario6_button.setDisabled(True)
+            self.scenario7_button.setDisabled(True)
             self.media_thread.planning_state = 1
 
         elif msg.data[0] == 2 and msg.data[1] == 2:
@@ -670,6 +674,8 @@ class MainWindow(QMainWindow, form_class):
             self.scenario3_button.setEnabled(True)
             self.scenario4_button.setEnabled(True)
             self.scenario5_button.setEnabled(True)
+            self.scenario6_button.setDisabled(True)
+            self.scenario7_button.setDisabled(True)
             self.media_thread.planning_state = 3
 
         elif msg.data[0] == 4:
@@ -707,6 +713,8 @@ class MainWindow(QMainWindow, form_class):
         self.scenario3_button.setDisabled(True)
         self.scenario4_button.setDisabled(True)
         self.scenario5_button.setDisabled(True)
+        self.scenario6_button.setDisabled(True)
+        self.scenario7_button.setDisabled(True)
         self.state = 'INITIALIZE'
 
     def over_button_clicked(self):

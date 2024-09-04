@@ -230,7 +230,7 @@ Long</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>RA+IS</string>
+         <string>ACC</string>
         </property>
         <property name="shortcut">
          <string>3</string>

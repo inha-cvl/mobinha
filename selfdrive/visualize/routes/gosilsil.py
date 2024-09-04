@@ -7,6 +7,6 @@ scenario_2 = [ # roundabout
 ]
 
 
-scenario_3 = [
-(455.1978784412285, 1296.578),
+scenario_3 = [ # ACC
+(132.52, 1629.36),
 ]

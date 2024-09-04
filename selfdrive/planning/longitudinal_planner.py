@@ -56,6 +56,7 @@ class LongitudinalPlanner:
         self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_traffic_light_marker = rospy.Publisher('/mobinha/planner/traffic_light_marker', Marker, queue_size=1)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
+        self.pub_acc_plot = rospy.Publisher('/mobinha/acc_plot', Pose, queue_size=1)
         
         ############ for planner simulation by JM
         from morai_msgs.msg import EgoVehicleStatus, GetTrafficLightStatus, ObjectStatusList
@@ -68,13 +69,8 @@ class LongitudinalPlanner:
         self.stopline_point2 = None
         self.stopline_point1_last = None
 
-        # stopline 취득까지 ok, Goal point 설정 완
-        self.roundAbout_stopline_pos = [35.754, 1825.488]
-        self.roundAbout_stopped = False
-
         # 신호 받아오는것까지 ok
         rospy.Subscriber("/GetTrafficLightStatus", GetTrafficLightStatus, self.trafficLight_type_cb)
-        self.trafficLight_stopline_pos = [84.395, 1226.867]
         self.trafficLight_header = None
         self.trafficLight_last_header = None
         self.trafficLight_type = None
@@ -428,7 +424,7 @@ class LongitudinalPlanner:
     def run(self, sm, pp=0, local_path=None):
         CS = sm.CS
         lgp = 0
-        print("CS position: ", (CS.position.x, CS.position.y))
+        # print("CS position: ", (CS.position.x, CS.position.y))
         self.pub_target_v.publish(Float32(self.target_v)) ## 얘만패면됨
         self.pub_accerror.publish(Float32(self.follow_error))
         if local_path != None and self.lane_information != None:
@@ -446,7 +442,8 @@ class LongitudinalPlanner:
                 # scenario = "obstacle"
                 # scenario = "roundabout"
                 # scenario = "roundabout+intersection"
-                scenario = "ACC"
+                # scenario = "ACC"
+                scenario = "traffic_light+ACC"
 
                 ## traffic light
                 if scenario == "traffic_light":
@@ -480,14 +477,15 @@ class LongitudinalPlanner:
                             distance_to_stopline = -distance_to_stopline
                     print("Distance to stopline", distance_to_stopline)
 
-                    # 신호에 따라
+                    # 신호등의 존재를 확인
                     if self.trafficLight_type is None: # TODO on ioniq: 신호등 없는 정지선인 경우
                         # 정지선 근처인지 확인
                         if 0 < distance_to_stopline < 10:
                             # 정지선에 정지했는지 확인
                             if not self.stopline_stopped :
+                                self.target_v = 0
                                 if CS.vEgo > 0.1: # from Ego_topic vel.x
-                                    self.target_v = 0
+                                    # self.target_v = 0 # here
                                     print("[No trafficLight] stopping at stopline")
                                 else:
                                     if self.stopline_timer_flag:
@@ -509,14 +507,15 @@ class LongitudinalPlanner:
                         else:
                             self.target_v = 5
 
-                    elif self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
-                        if 0 < distance_to_stopline < 10:
-                            self.target_v = 0
+                    else:
+                        if self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
+                            if 0 < distance_to_stopline < 10:
+                                self.target_v = 0
+                            else:
+                                self.target_v = 5
+
                         else:
                             self.target_v = 5
-
-                    else:
-                        self.target_v = 5
 
                     # 정지선 위치 바뀌면 (신호등 없는 정지선) local variable 초기화
                     if self.stopline_point1[0] != self.stopline_point1_last[0]:
@@ -526,7 +525,7 @@ class LongitudinalPlanner:
                         print("[No trafficLight] Stopline with no traffic light initialized")
                     
 
-                    self.target_v = min(self.target_v, self.acc_for_morai())
+                    # self.target_v = min(self.target_v, self.acc_for_morai())
                     print("---------------------------------------------------------")
                 
                 ## obstacle
@@ -687,8 +686,184 @@ class LongitudinalPlanner:
             
                 ## ACC
                 if scenario == "ACC":
-                    self.target_v = 30/3.6
-                    print(f"current v is {CS.vEgo:.2f}")
+                    self.target_v = 50/3.6
+
+                    safety_distance = max(CS.vEgo*3.6-15, 10) # safe_distance
+                    margin = 3
+                    margined_safety_distance = safety_distance + margin
+
+                    nearest_s = float('inf')
+                    obs_velocity = float('inf')
+                    for obs in self.object_list.poses:
+                        current_s = ((obs.position.x - self.ego_pos[0])**2 + (obs.position.y - self.ego_pos[1])**2)**0.5
+                        if current_s < nearest_s:
+                            nearest_s = current_s
+                        
+                        obs_velocity = obs.orientation.w/3.6
+                    
+                    if nearest_s < margined_safety_distance*0.9:
+                        status = "danger_zone"
+                    elif margined_safety_distance*0.9 < nearest_s < margined_safety_distance*1.4:
+                        status = "safe_zone"
+                    elif margined_safety_distance*1.4 < nearest_s:
+                        status = "far_zone"
+                    else:
+                        status = "zone_error"
+                    print(f"======{status}=======\ncurrent s is {nearest_s:.2f}\ntarget s is {margined_safety_distance:.2f}")
+                    
+                    
+                    s_ratio = nearest_s / margined_safety_distance
+                    
+                    if status == "danger_zone":
+                        val = obs_velocity*s_ratio
+                    elif status == "safe_zone":
+                        val = obs_velocity*s_ratio
+                    elif status == "far_zone":
+                        val = obs_velocity*s_ratio**1.5
+                        # val = float('inf')
+                    else:
+                        print("error on status decision: test.py")
+                    
+                    self.target_v = min(self.target_v, val)
+                    print(f"current v is {CS.vEgo:.2f}\ntarget v is {self.target_v:.2f}")
+                    
+                    acc_plot_msg = Pose()
+                    acc_plot_msg.orientation.x = margined_safety_distance
+                    acc_plot_msg.orientation.y = current_s
+                    acc_plot_msg.orientation.z = self.target_v
+                    acc_plot_msg.orientation.w = CS.vEgo
+                    self.pub_acc_plot.publish(acc_plot_msg)
+
+                ## traffic_light
+                if scenario == "traffic_light+ACC":
+                    # traffic_light part
+                    # 모라이 인지 한계: 링크에 신호등 없으면 None 메시지 보내는게 아니라 그냥 메시지를 안 보냄
+                    # 따라서 헤더 비교하여 신호등 정보 수신이 없으면 None 반환
+                    if not None in [self.trafficLight_header, self.trafficLight_last_header]:
+                        last_header_time = self.trafficLight_last_header.stamp.secs + 1e-9*self.trafficLight_last_header.stamp.nsecs
+                        now_header_time = self.trafficLight_header.stamp.secs + 1e-9*self.trafficLight_header.stamp.nsecs
+                        if last_header_time == now_header_time:
+                            self.trafficLight_type = None
+                        self.trafficLight_last_header = self.trafficLight_header                            
+
+                    # distance 계산
+                    distance_to_stopline = float('inf')
+                    if not None in [self.stopline_point1, self.stopline_point2]:
+                        # distance 크기 계산
+                        x0, y0 = CS.position.x, CS.position.y
+                        x1, y1 = self.stopline_point1
+                        x2, y2 = self.stopline_point2
+                        distance_to_stopline = abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1) / math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
+                        # 지났으면 -부호
+                        heading_vector = (math.cos(math.radians(CS.yawRate)), math.sin(math.radians(CS.yawRate)))
+                        ego_to_stopline = (x1-x0, y1-y0)
+                        dot_product_value = sum(a * b for a, b in zip(ego_to_stopline, heading_vector))
+                        norm_v1 = math.sqrt(sum(a * a for a in ego_to_stopline))
+                        norm_v2 = math.sqrt(sum(b * b for b in heading_vector))
+                        cos_theta = dot_product_value / (norm_v1 * norm_v2)
+                        if cos_theta < 0:
+                            distance_to_stopline = -distance_to_stopline
+                    print("Distance to stopline", distance_to_stopline)
+
+                    # 신호등의 존재를 확인
+                    if self.trafficLight_type is None: # TODO on ioniq: 신호등 없는 정지선인 경우
+                        # 정지선 근처인지 확인
+                        if 0 < distance_to_stopline < 10:
+                            # 정지선에 정지했는지 확인
+                            if not self.stopline_stopped :
+                                target_v_TL = 0
+                                if CS.vEgo > 0.1: # from Ego_topic vel.x
+                                    # target_v_TL = 0 # here
+                                    print("[No trafficLight] stopping at stopline")
+                                else:
+                                    if self.stopline_timer_flag:
+                                        self.stopline_no_traffic_light_timer = rospy.Time.now()
+                                        self.stopline_timer_flag = False
+                                    if self.stopline_timer(3.0): 
+                                        print("stopline timer running...(3 secs)")
+                                        self.stopline_stopped = True
+                            else:
+                                safe_intersection = self.safe_intersection_for_morai()
+                                if safe_intersection:
+                                # TODO on ioniq: and 사거리 안전하면 조건 추가 << LiDAR 이용하여 판단
+                                    target_v_TL = 5
+                                    print("[No trafficLight] safe, go at 5")
+                                else:
+                                    target_v_TL = 0
+                                    print("[No trafficLight] not safe, wait at 0")
+
+                        else:
+                            target_v_TL = 5
+
+                    else:
+                        if self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
+                            if 0 < distance_to_stopline < 10:
+                                target_v_TL = 0
+                            else:
+                                target_v_TL = 5
+
+                        else:
+                            target_v_TL = 5
+                    
+                    # 정지선 위치 바뀌면 (신호등 없는 정지선) local variable 초기화
+                    if self.stopline_point1[0] != self.stopline_point1_last[0]:
+                        self.stopline_timer_flag = True
+                        self.stopline_stopped = False
+                        self.stopline_point1_last[0] = self.stopline_point1[0]
+                        print("[No trafficLight] Stopline with no traffic light initialized")
+                    
+                    # ACC part
+                    safety_distance = max(CS.vEgo*3.6-15, 10) # safe_distance
+                    margin = 3
+                    margined_safety_distance = safety_distance + margin
+
+                    nearest_s = float('inf')
+                    current_s = float('inf')
+                    obs_velocity = float('inf')
+                    for obs in self.object_list.poses:
+                        current_s = ((obs.position.x - self.ego_pos[0])**2 + (obs.position.y - self.ego_pos[1])**2)**0.5
+                        if current_s < nearest_s:
+                            nearest_s = current_s
+                        
+                        obs_velocity = obs.orientation.w/3.6
+                    
+                    if nearest_s < margined_safety_distance*0.9:
+                        status = "danger_zone"
+                    elif margined_safety_distance*0.9 < nearest_s < margined_safety_distance*1.4:
+                        status = "safe_zone"
+                    elif margined_safety_distance*1.4 < nearest_s:
+                        status = "far_zone"
+                    else:
+                        status = "zone_error"
+                    print(f"======{status}=======\ncurrent s is {nearest_s:.2f}\ntarget s is {margined_safety_distance:.2f}")
+                    
+                    
+                    s_ratio = nearest_s / margined_safety_distance
+                    
+                    if status == "danger_zone":
+                        target_v_ACC = obs_velocity*s_ratio
+                    elif status == "safe_zone":
+                        target_v_ACC = obs_velocity*s_ratio
+                    elif status == "far_zone":
+                        target_v_ACC = obs_velocity*s_ratio**1.5
+                        # target_v_ACC = float('inf')
+                    else:
+                        print("error on status decision: test.py")
+                    
+                    print(f"curvature: {10:.2f}\ntraffic_light: {target_v_TL:.2f}\nACC: {target_v_ACC:.2f}")
+                    self.target_v = min(10, target_v_TL, target_v_ACC) # 10 is for curavature module
+                    print(f"current v is {CS.vEgo:.2f}\ntarget v is {self.target_v:.2f}")
+                    
+                    acc_plot_msg = Pose()
+                    acc_plot_msg.orientation.x = margined_safety_distance
+                    acc_plot_msg.orientation.y = current_s
+                    acc_plot_msg.orientation.z = self.target_v
+                    acc_plot_msg.orientation.w = CS.vEgo
+                    self.pub_acc_plot.publish(acc_plot_msg)
+
+                    
+                    
+
             
             else:
                 self.target_v = CS.vEgo

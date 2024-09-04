@@ -20,7 +20,6 @@ class TileMap:
     def __init__(self, lanelets, tile_size):
         self.tiles = {}
         self.tile_size = tile_size
-
         for id_, data in lanelets.items():
             for n, (x, y) in enumerate(data['waypoints']):
                 row = int(x // tile_size)

@@ -26,6 +26,7 @@ class MoraiTransceiver:
         rospy.Subscriber("/gps", GPSMessage, self.gps_cb)
         rospy.Subscriber("/imu", Imu, self.imu_cb)
         rospy.Subscriber("/Ego_topic", EgoVehicleStatus, self.ego_topic_cb)
+        self.velocity = 0
 
     def gps_cb(self, msg):
         self.gps_ok = True
@@ -60,5 +61,5 @@ class MoraiTransceiver:
             msg.pitch = self.pitch
             msg.azimuth = -(math.degrees(self.yaw)+270)
             self.pub_novatel.publish(msg)
-
+            
             self.pub_velocity.publish(Float32(self.velocity))

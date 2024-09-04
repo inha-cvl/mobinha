@@ -70,7 +70,6 @@ class Controller:
 
     def target_v_cb(self, msg):
         self.target_v = msg.data
-        print("from controller, target v:", self.target_v)
 
     def lane_information_cb(self, msg):
         self.l_idx = msg.orientation.y

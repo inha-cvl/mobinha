@@ -14,7 +14,7 @@ def main(args):
 
     name = args.ngii_path.split('/')[-1]
 
-    with open('%s_1.json'%(name), 'w', encoding='utf-8') as f:
+    with open('%s.json'%(name), 'w', encoding='utf-8') as f:
         json.dump(lanelet.map_data, f, indent="\t")
 
     with open('%s_ID1.json'%(name), 'w', encoding='utf-8') as f:
@@ -28,8 +28,10 @@ if __name__ == "__main__":
 
     parser.add_argument('--ngii_path', type=str, default='./%s'%(name))
     parser.add_argument('--precision', type=float, default=1.0)
-    parser.add_argument('--base_lla', type=tuple, default=(37.2292221592864, 126.76912499027308, 29.18400001525879), help='(lat, lon, alt)')
-    parser.add_argument('--is_utm', type=bool, default=False)
+    # parser.add_argument('--base_lla', type=tuple, default=(37.2292221592864, 126.76912499027308, 29.18400001525879), help='(lat, lon, alt)')
+    parser.add_argument('--base_lla', type=tuple, default=(37.229324231428656, 126.77329705474801, 30.272749606132507), help='(lat, lon, alt)')
+    parser.add_argument('--is_utm', type=bool, default=True)
+    
 
     args = parser.parse_args()
 

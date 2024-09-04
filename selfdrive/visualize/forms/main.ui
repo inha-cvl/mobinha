@@ -230,7 +230,7 @@ Long</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>TrafficLight</string>
+         <string>RA+IS</string>
         </property>
         <property name="shortcut">
          <string>3</string>
@@ -441,7 +441,7 @@ border-color: rgb(71,181,255);</string>
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>Estop</string>
+         <string>Intersection</string>
         </property>
         <property name="shortcut">
          <string>1</string>

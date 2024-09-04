@@ -1,11 +1,10 @@
-
-
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray
-from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
+from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point, Vector3
 from visualization_msgs.msg import Marker
+from morai_msgs.msg import ObjectStatusList
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -71,6 +70,7 @@ class PathPlanner:
         self.pub_goal_object = rospy.Publisher('/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
+        self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
@@ -91,21 +91,53 @@ class PathPlanner:
             lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
-        rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
-        rospy.Subscriber('/mobinha/visualize/scenario_goal',PoseArray, self.scenario_goal_cb)
-        rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
-        rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
-        rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
-        rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb)
-        rospy.Subscriber('/turnsignal', Int8, self.blinker_cb)
+        rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb) # 완 / 시나리오 버튼에 없는 새로운 목적지 지점 하나에 대해서 시나리오 지정 전에 가능
+        rospy.Subscriber('/mobinha/visualize/scenario_goal',PoseArray, self.scenario_goal_cb) # 완 / 시나리오 버튼 누르면 goal_pts 업데이트
+        rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb) # 규햄 질문 / 모든 장애물?
+        rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb) # 완 / 내 앞에있는 장애물 m거리, 없으면 -1
+        rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb) # 완 / purepursuit lookahead
+        rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb) # 규햄 질문 / 근처 차량 선정 기준? 아래참조
+            # if (-50*self.M_TO_IDX) <(obj_s-car_idx) < (50*self.M_TO_IDX) and obj_d > -5 and obj_d < 5:
+            #                 around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
+        rospy.Subscriber('/turnsignal', Int8, self.blinker_cb) # 완 / 깜박이
 
-
+        # rospy.Subscriber("/Object_topic", ObjectStatusList, self.obstacle_pos_cb)
+        self.obstacle_linkid_pub = rospy.Publisher('/mobinha/obstacle/local_id', String, queue_size=1)
         # rospy.Subscriber('/mobinha/visualize/taxi_dest',PoseArray, self.taxi_destination_cb)
 
-        self.new_dest = False
-        self.taxi_destination_number = 0
         self.goal_pts = []
+    # def obstacle_pos_cb(self, msg): # 좌표계가 달라서 다른 id를 반환해버림.. 
+    #     object_list = PoseArray()
+    #     for obj in msg.npc_list:
+    #         pose = Pose()
+    #         pose.position.x = obj.position.x
+    #         pose.position.y = obj.position.y
+    #         pose.position.z = obj.heading
+    #         pose.orientation.w = obj.velocity.x
+    #         object_list.poses.append(pose)
+    #     for obj in msg.obstacle_list:
+    #         pose = Pose()
+    #         pose.position.x = obj.position.x
+    #         pose.position.y = obj.position.y
+    #         pose.position.z = obj.heading
+    #         pose.orientation.w = obj.velocity.x
+    #         object_list.poses.append(pose)
+    #     for obj in msg.pedestrian_list:
+    #         pose = Pose()
+    #         pose.position.x = obj.position.x
+    #         pose.position.y = obj.position.y
+    #         pose.position.z = obj.heading
+    #         pose.orientation.w = obj.velocity.x
+    #         object_list.poses.append(pose)
+    #     self.object_list = object_list
 
+    #     obs_pt = (self.object_list.poses[0].position.x, self.object_list.poses[0].position.y)
+
+    #     obs_lanelets = lanelet_matching(self.tmap.tiles, self.tmap.tile_size, obs_pt)
+    #     if obs_lanelets is not None:
+    #         o_id, o_idx = obs_lanelets
+    #         self.obstacle_linkid_pub.publish(o_id)
+        
     def blinker_cb(self, msg):
         self.turnsignal = msg.data
 
@@ -113,7 +145,6 @@ class PathPlanner:
         self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
         self.get_goal = True
 
-    # 얘는 처음에 돌다가 만다
     def scenario_goal_cb(self, msg):
         scenario_goal = []
         for pose in msg.poses:
@@ -127,8 +158,6 @@ class PathPlanner:
         else:
             self.goal_pts = scenario_goal
             self.get_goal = True
-
-
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
@@ -366,8 +395,10 @@ class PathPlanner:
                 splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
-                stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
-
+                stopline_idx, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
+                # wps = waypoints
+                # print("from planner")
+                # print("stopline pos: ", stopline_wps)
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
                     renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, 
@@ -425,8 +456,8 @@ class PathPlanner:
                     renew_a = 30 # uniti: idx
                     renew_b = 120 # unit : idx
                     for obs in self.around_obstacle:
-                        print(obs)
-                        print(get_look_a_head_id)
+                        # print(obs)
+                        # print(get_look_a_head_id)
                         #Left
                         if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
                             #TODO: if left lane change, get prev,now,next leftBound and check obstacle where is it. 
@@ -435,10 +466,10 @@ class PathPlanner:
                                 vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
                                 targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                                 safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
-                                print("d: ", d)
-                                print("targetmove: ", targetcarmovingdistance)
-                                print(safedistance)
-                                print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
+                                # print("d: ", d)
+                                # print("targetmove: ", targetcarmovingdistance)
+                                # print(safedistance)
+                                # print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
                                 if safedistance < 10:
                                     safedistance = 10 # 5 * 2 : front and back 
                                 safe_space = (safedistance/2)
@@ -454,7 +485,6 @@ class PathPlanner:
                                             self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
                                         if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
                                             force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
-                                            print("left BSD")
                                             for i, force_pt in enumerate(force_interpolate_path):
                                                 self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
                                             self.renewal_path_in_progress = True
@@ -477,10 +507,10 @@ class PathPlanner:
                                 vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
                                 targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
                                 safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
-                                print("d: ", d)
-                                print("targetmove: ", targetcarmovingdistance)
-                                print(safedistance)
-                                print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
+                                # print("d: ", d)
+                                # print("targetmove: ", targetcarmovingdistance)
+                                # print(safedistance)
+                                # print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
                                 if safedistance < 10:
                                     safedistance = 10 # 5 * 2 : front and back 
                                 safe_space = (safedistance/2)
@@ -555,11 +585,11 @@ class PathPlanner:
                 link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
                 lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
 
-                # Pubulish Lane Information
+                # Publish Lane Information
                 pose = Pose()
                 pose.position.x = int(splited_local_id)
                 pose.position.y = get_direction_number(self.lmap.lanelets, splited_local_id, forward_direction)
-                pose.position.z = stopline_s
+                pose.position.z = stopline_idx
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
                 pose.orientation.z = lane_change_point
@@ -568,6 +598,29 @@ class PathPlanner:
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
+
+                # Publish current link's stopline position
+                if len(stopline_wps)>0:
+                    pose_array_msg = PoseArray()
+                    
+                    pose1 = Pose()
+                    pose1.position.x = stopline_wps[0][0]
+                    pose1.position.y = stopline_wps[0][1]
+                    pose1.position.z = 0
+                    
+                    pose2 = Pose()
+                    pose2.position.x = stopline_wps[-1][0]
+                    pose2.position.y = stopline_wps[-1][1]
+                    pose2.position.z = 0
+                    
+                    pose_array_msg.poses.append(pose1)
+                    pose_array_msg.poses.append(pose2)
+                    
+                    # PoseArray 메시지 퍼블리시
+                    self.pub_stopline_pos.publish(pose_array_msg)
+                else:
+                    print("[Path planner.py] No stopline detected")
+
 
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):
@@ -605,11 +658,11 @@ class PathPlanner:
 
                 # schoolzone_viz
                 schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx,self.schoolzone_passed)
-                print(f"my node number is : {self.l_idx}") 
-                print("my position is : ", CS.position.x, CS.position.y)
+                # print(f"my node number is : {self.l_idx}") 
+                # print("my position is : ", CS.position.x, CS.position.y)
                 
                 
-                print(schoolzone_points)
+                # print(schoolzone_points)
                 schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
                 self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
                 

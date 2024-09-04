@@ -218,12 +218,14 @@ if __name__ == '__main__':
 
     if map_name == 'songdo':
         base_lla = (37.3888319, 126.6428739, 7.369)
+        print("from plot_map, songdo selected")
         rotation_angle = 0
         map_file = './songdo/'
         is_utm = False
 
     elif map_name == 'kcity':
         base_lla = (37.2292221592864, 126.76912499027308, 29.18400001525879)
+        print("from plot_map, kcity selected")
         rotation_angle = 0
         map_file = './KCity/'
         is_utm = True

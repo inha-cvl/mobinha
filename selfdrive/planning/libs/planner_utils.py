@@ -20,7 +20,7 @@ def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
 
-def lanelet_matching(tile, tile_size, t_pt):
+def lanelet_matching(tile, tile_size, t_pt): # 완 / TileMap으로 Lanelet 노드 찾기
     row = int(t_pt[0] // tile_size)
     col = int(t_pt[1] // tile_size)
 
@@ -43,12 +43,12 @@ def lanelet_matching(tile, tile_size, t_pt):
     else:
         return None
 
-def get_my_neighbor(lanelets, my_id):
+def get_my_neighbor(lanelets, my_id): # 완 / 왼,왼앞,오,오앞 id 반환
     
-    def get_front_id(current_id):
+    def get_front_id(current_id): # 완 / successor 중 같은 차선(직->좌 x) id 반환
         """Helper function to get the front id for a given lanelet id."""
         if current_id is not None and lanelets[current_id]['successor'] is not None:
-            if set(lanelets[current_id]['successor']) & set(lanelets[my_id]['successor']):
+            if set(lanelets[current_id]['successor']) & set(lanelets[my_id]['successor']): # 공통된 succesor가 있으면
                 return None
             else:
                 if len(lanelets[current_id]['successor']) == 1:
@@ -70,7 +70,7 @@ def get_my_neighbor(lanelets, my_id):
 
     return ((l_id, l_front_id), (r_id, r_front_id))
 
-def exchange_waypoint(target, now):
+def exchange_waypoint(target, now): ## 희상햄 질문 / 머하는넘이지 ?
     exchange_waypoints = []
     for n_pt in now:
         min_dist = float('inf')
@@ -84,22 +84,19 @@ def exchange_waypoint(target, now):
 
     return exchange_waypoints
 
-def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
+def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len): # 완 / 장애물 지날때까지 왼,오 차선으로 경로 밀기
 
     left_id = lanelets[now_lane_id]['adjacentLeft']
     right_id = lanelets[now_lane_id]['adjacentRight']
 
-    if left_id is not None or right_id is not None:
-        obs_idx = obs_len if obs_len < len(
-            local_path_from_now) else len(local_path_from_now)-1
-        local_path_from_now = local_path_from_now[:obs_idx+1]
-
+    if left_id is not None or right_id is not None: # 장애물 전까지 local path waypoints crop
+        obs_idx = obs_len if obs_len < len(local_path_from_now) else len(local_path_from_now)-1
+        local_path_from_now = local_path_from_now[:obs_idx+1] 
     else:
         return None
 
     avoid_path = None
     if left_id is not None:
-        # print(lanelets[left_id])
         avoid_path = exchange_waypoint(
             lanelets[left_id]['waypoints'], local_path_from_now)
 
@@ -108,7 +105,6 @@ def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
             lanelets[right_id]['waypoints'], local_path_from_now)
 
     return avoid_path
-
 
 def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point):
     stopline = []
@@ -122,13 +118,15 @@ def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point)
                 break
     if sl_id is not None:
         stopline = stoplines[sl_id[0]]
-
     now_sl_idx = math.inf
 
     for sl_wp in stopline:
         idx = local_point.query(sl_wp, 1)[1]
         if idx < now_sl_idx:
             now_sl_idx = idx
+            
+    #[55.04864050437192, 1231.728324479584], [56.777149736203, 1230.82881163342ss43], [58.60563482865422, 1229.8886275314371], [59.06954200085164, 1229.641489685897], [60.55645349551719, 1228.8503049760375]
+    # nearest stopline의 idx와 stopline을 이루는 3개 혹은 5개의 점을 반환(차로 수에 따라 변동)
     return now_sl_idx, stopline
 
 
@@ -827,11 +825,11 @@ def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
 def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_idx, passed):
     schoolzone_points = []
     passed = False
-    print("my link number is : ", nowID)
+    # print("my link number is : ", nowID)
     ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
     further_lane_ids = head_lane_ids[:]
     if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
-    print(further_lane_ids)
+    # print(further_lane_ids)
     for further_link, lanelet_id in enumerate(further_lane_ids):
         if 'schoolZone' in lanelets[lanelet_id].keys():
             if len(lanelets[lanelet_id]['schoolZone']) > 0:
@@ -847,7 +845,7 @@ def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_i
     elif passed and len(len(schoolzone_points) == 0):
         passed = False
     
-    print(passed)
+    # print(passed)
     
     schoolzone_info = {}
     schoolzone_info['points'] = schoolzone_points
@@ -867,9 +865,9 @@ def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, present_i
     elif len(schoolzone_points) == 1:
         schoolzone_info['state'] = 0 #'out'
         schoolzone_info['remaining_distance'] = 0
-    print("============")
-    print(schoolzone_info)
-    print("============")
+    # print("============")
+    # print(schoolzone_info)
+    # print("============")
     
     
      
@@ -919,8 +917,8 @@ def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
                     xinters = (y - y1) * (x2 - x1) / (y2 - y1) + x1
                 if x1 == x2 or x <= xinters:
                     inside = not inside
-
         return inside
+    
     for obs in obstacle_list:
         point = (obs[3], obs[4])  # Assuming obs[3] is x and obs[4] is y
         for s_id in crosswalk_ids:

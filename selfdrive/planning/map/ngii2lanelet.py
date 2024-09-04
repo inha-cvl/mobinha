@@ -261,7 +261,7 @@ class NGII2LANELET:
                 if right_data['adjacentLeft'] != id_:
                     data['adjacentRight'] = None
 
-        # Grouping
+        # Grouping # 안 봄
         groups = []
         g_closed = []
         for id_, data in tqdm(lanelets.items(), desc="not groups: ", total=len(groups)):
@@ -291,7 +291,7 @@ class NGII2LANELET:
                 else:
                     data['group'] = None
         
-        for a2_link in tqdm(ngii.a2_link, desc="link2crosswalk_id_matching: ", total=len(ngii.a2_link)):
+        for a2_link in tqdm(ngii.a2_link, desc="link2crosswalk_id_matching: ", total=len(ngii.a2_link)): # 안 봄
             if a2_link.Length == 0:
                 continue
 
@@ -495,7 +495,7 @@ class NGII2LANELET:
                     data['rightChange'][idx_s:idx_f] = [
                         False for _ in range(idx_f-idx_s)]
 
-        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)):
+        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)): 
             obj_id = b3_surfacemark.ID
 
             points = []
@@ -559,8 +559,7 @@ class NGII2LANELET:
                                 # normal right
                                 if lanelets[id_]['intersection']:
                                     if right_data is None:
-                                        right_data = [
-                                            id_, lanelets[id_]['laneNo']]
+                                        right_data = [id_, lanelets[id_]['laneNo']]
                                     else:
                                         if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None:
                                             right_data[0] = id_

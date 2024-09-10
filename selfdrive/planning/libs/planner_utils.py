@@ -9,6 +9,9 @@ import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 from selfdrive.visualize.rviz_utils import *
 
+from shapely.geometry import LineString, Polygon
+
+
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
@@ -20,7 +23,7 @@ def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
 
-def lanelet_matching(tile, tile_size, t_pt): # 완 / TileMap으로 Lanelet 노드 찾기
+def lanelet_matching(tiles, tile_size, t_pt): # 완 / TileMap사용하여 t_pt와 가장 근접한 Lanelet 노드 찾기
     row = int(t_pt[0] // tile_size)
     col = int(t_pt[1] // tile_size)
 
@@ -29,7 +32,7 @@ def lanelet_matching(tile, tile_size, t_pt): # 완 / TileMap으로 Lanelet 노�
 
     for i in range(-1, 2):
         for j in range(-1, 2):
-            selected_tile = tile.get((row+i, col+j))
+            selected_tile = tiles.get((row+i, col+j))
             if selected_tile is not None:
                 for id_, data in selected_tile.items():
                     for idx, pt in enumerate(data['waypoints']):
@@ -39,7 +42,7 @@ def lanelet_matching(tile, tile_size, t_pt): # 완 / TileMap으로 Lanelet 노�
                             l_id = id_
                             l_idx = data['idx'][idx]
     if l_id is not None:
-        return (l_id, l_idx)
+        return (l_id, l_idx) # l_id: "0", l_idx: waypoints의 index
     else:
         return None
 
@@ -250,6 +253,7 @@ def id_interpolate(non_intp, intp, non_intp_id):
 
         n_id = non_intp_id[non_intp_idx]
         itp_ids.append(n_id)
+        
     return itp_ids
 
 
@@ -335,6 +339,7 @@ def node_to_waypoints2(lanelet, shortest_path):
             for i in range(len(alpha_path)):
                 final_id_path.append(str("{}_{}".format(id, i)))
             final_path.extend(alpha_path)
+            
     return final_path, final_id_path
 
 
@@ -807,18 +812,29 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 
     return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
 
-def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
+def get_crosswalk_points(lanelets, surfacemarks, remaining_global_ids, cur_id_idx): 
     polygon_points = []
-    if len(lanelets[nowID]['crosswalkID']) > 0:
-        lanelet_id = nowID
-    else:
-        for lanelet_id in head_lane_ids:
-            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
-                break
-    crosswalk_ids = lanelets[lanelet_id]['crosswalkID']
-    for s_id in lanelets[lanelet_id]['crosswalkID']:
-        polygon_points.extend(surfacemarks[s_id])
-    return crosswalk_ids, polygon_points
+    
+    
+    roi_waypoints = []
+    roi_waypoints += lanelets[remaining_global_ids[0]]['waypoints'][cur_id_idx:]
+    if len(roi_waypoints) > 1:
+        roi_string = LineString(roi_waypoints)
+        # roi_waypoints와 intersect하는 현재 id의 crosswalkID + 다음 id의 crosswalkID
+        crosswalk_ids_all = lanelets[remaining_global_ids[0]]['crosswalkID'] + lanelets[remaining_global_ids[1]]['crosswalkID']
+        print("crosswalk_ids_all: ", crosswalk_ids_all) # 완
+        
+        selected_crosswalk_ids = []
+        for id_ in lanelets[remaining_global_ids[0]]['crosswalkID']: # 현재 id의 crosswalkID
+            crosswalk_polygon = Polygon(surfacemarks[id_])
+            if roi_string.intersects(crosswalk_polygon):
+                selected_crosswalk_ids.append(id_)
+        for id_ in lanelets[remaining_global_ids[1]]['crosswalkID']: # 현재 id의 crosswalkID
+            selected_crosswalk_ids.append(id_)
+        
+        print("ROIED crosswalk_ids: ", list(set(selected_crosswalk_ids))) # 완
+        #TODO: publisher 수정해서 해당하는 모든 id들 viz하도록
+        여기부ㄴ터
 
 
 ## head lane id는 걍 다 들어가 있음.

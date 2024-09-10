@@ -54,8 +54,15 @@ class Planning:
                 if self.timer(0.1):
                     self.need_init = True
                     sm.update()
-                    pp, local_path = path_planner.run(sm)
-                    lgp = longitudinal_planner.run(sm, pp, local_path)
+
+                    # original (0905)
+                    # pp, local_path = path_planner.run(sm)
+                    # lgp = longitudinal_planner.run(sm, pp, local_path) 
+
+                    # modified (0905)
+                    pp, my_lane_id, global_ids, local_path, lmap, tmap = path_planner.run(sm)
+                    lgp = longitudinal_planner.run(sm, lmap, tmap, my_lane_id, global_ids, pp, local_path) #sm, lmap, pp=0, local_path=None
+
                 if pp == 2 and lgp == 2:
                     time.sleep(1)
                     #print("[{}] For Restart, please initialize".format(self.__class__.__name__))

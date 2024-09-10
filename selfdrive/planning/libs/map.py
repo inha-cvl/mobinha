@@ -16,11 +16,11 @@ class LaneletMap:
         self.stoplines = map_data['stoplines']
 
 
-class TileMap:
+class TileMap: # 같은 구역끼리 waypoints를 묶어준다고 생각하면 됨, 정보 손실 없음
     def __init__(self, lanelets, tile_size):
         self.tiles = {}
         self.tile_size = tile_size
-        for id_, data in lanelets.items():
+        for id_, data in lanelets.items(): # ex) "0": {[x1,y1], [x2,y2], ... }
             for n, (x, y) in enumerate(data['waypoints']):
                 row = int(x // tile_size)
                 col = int(y // tile_size)

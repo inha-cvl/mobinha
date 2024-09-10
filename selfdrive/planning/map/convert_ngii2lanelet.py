@@ -17,7 +17,7 @@ def main(args):
     with open('%s.json'%(name), 'w', encoding='utf-8') as f:
         json.dump(lanelet.map_data, f, indent="\t")
 
-    with open('%s_ID1.json'%(name), 'w', encoding='utf-8') as f:
+    with open('%s_ID.json'%(name), 'w', encoding='utf-8') as f:
         json.dump(lanelet.link_id_data, f, indent="\t")
 
 

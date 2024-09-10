@@ -10,7 +10,6 @@ from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 from shapely.geometry import LineString, Polygon
 from scipy.interpolate import splprep, splev
-from shapely.ops import unary_union
 
 def convert_2_360(angle):
     if angle >= 0 and angle <= math.pi:
@@ -97,27 +96,28 @@ class NGII2LANELET:
         a3_path = '%s/A3_DRIVEWAYSECTION.shp'%(folder_path)
         # a4_path = '%s/A4_SUBSIDIARYSECTION.shp'%(folder_path)
 
-        # b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
+        b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
         b2_path = '%s/B2_SURFACELINEMARK.shp'%(folder_path)
         b3_path = '%s/B3_SURFACEMARK.shp'%(folder_path)
 
         c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
-        # c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
-        # c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
-        # c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
+        c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
+        c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
+        c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
 
         ngii = NGIIParser(
             a1_path,
             a2_path,
             a3_path,
             # a4_path,
-            # b1_path, 
+            b1_path, 
             b2_path, 
             b3_path,
-            c1_path)
-            # c3_path,
-            # c4_path,
-            # c6_path)
+            c1_path,
+            c3_path,
+            c4_path,
+            c6_path
+            )
         self.base_lla = base_lla
         self.is_utm = is_utm
         self.generate_lanelet(ngii, precision, self.base_lla, self.is_utm)
@@ -160,6 +160,12 @@ class NGII2LANELET:
         speedbumps = {}
         postpoints = {}
 
+        roundabout_node = []
+        # roundabout test(hees)
+        for a1_node in ngii.a1_node:
+            if a1_node.NodeType == '10':
+                roundabout_node.append(a1_node.ID)
+
         for n, a2_link in tqdm(enumerate(ngii.a2_link), desc="a2_link: ", total=len(ngii.a2_link)):
             if a2_link.Length == 0:
                 continue
@@ -185,7 +191,7 @@ class NGII2LANELET:
             lanelets[new_id]['yaw'] = yaw
             lanelets[new_id]['s'] = s
             lanelets[new_id]['k'] = k
-            lanelets[new_id]['length'] = s[-1]  # a2_link.Length
+            lanelets[new_id]['length'] = s[-1]
             lanelets[new_id]['laneNo'] = a2_link.LaneNo
             
             lanelets[new_id]['leftTurn'] = False
@@ -200,9 +206,8 @@ class NGII2LANELET:
             lanelets[new_id]['leftType'] = []
             lanelets[new_id]['rightBound'] = []
             lanelets[new_id]['rightType'] = []
-            
-            ## school zone
-            lanelets[new_id]['schoolZone'] = []
+
+            lanelets[new_id]['roundabout'] = False
             
             # lanelets[new_id]['ROI'] = []
 
@@ -215,6 +220,10 @@ class NGII2LANELET:
                 from_node[a2_link.FromNodeID] = []
 
             from_node[a2_link.FromNodeID].append(new_id)
+
+            # roundabout test(hees)
+            if a2_link.FromNodeID in roundabout_node and a2_link.ToNodeID in roundabout_node:
+                lanelets[new_id]['roundabout'] = True
 
             if a2_link.LinkType == '1':
                 lanelets[new_id]['intersection'] = True
@@ -261,7 +270,7 @@ class NGII2LANELET:
                 if right_data['adjacentLeft'] != id_:
                     data['adjacentRight'] = None
 
-        # Grouping # 안 봄
+        # Grouping
         groups = []
         g_closed = []
         for id_, data in tqdm(lanelets.items(), desc="not groups: ", total=len(groups)):
@@ -291,7 +300,7 @@ class NGII2LANELET:
                 else:
                     data['group'] = None
         
-        for a2_link in tqdm(ngii.a2_link, desc="link2crosswalk_id_matching: ", total=len(ngii.a2_link)): # 안 봄
+        for a2_link in tqdm(ngii.a2_link, desc="link2crosswalk_id_matching: ", total=len(ngii.a2_link)):
             if a2_link.Length == 0:
                 continue
 
@@ -302,7 +311,7 @@ class NGII2LANELET:
 
             for b3_surfacemark in ngii.b3_surfacemark:
                 polygon = []
-                if b3_surfacemark.Type == '5':
+                if b3_surfacemark.Type == '5': # 횡단보도
                     for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
                         x, y, z = self.to_cartesian(tx, ty, alt)
                         polygon.append((x, y))
@@ -314,55 +323,6 @@ class NGII2LANELET:
                     if intersects:
                         lanelets[new_id]['crosswalkID'].append(b3_surfacemark.ID)
         
-        
-        # for School Zone
-        schoolzone_list = []
-        for a3_drivewaysection in ngii.a3_drivewaysection:
-            polygon = []
-            for tx, ty, alt in a3_drivewaysection.geometry.exterior.coords:
-                x, y, z = self.to_cartesian(tx, ty, alt)
-                polygon.append((x, y))
-    
-            #check cross a2 link and a3 drivesection
-            polygon = Polygon(polygon)
-            schoolzone_list.append(polygon)
-            
-        schoolzone_list = [poly.buffer(0.01) for poly in schoolzone_list]
-        schoolzone_merged = unary_union(schoolzone_list)
-        schoolzone_merged_polygon = []
-        
-        for scx,scy in schoolzone_merged.exterior.coords:
-            schoolzone_merged_polygon.append((scx,scy))
-        schoolzone_merged_exterior = LineString(schoolzone_merged_polygon)
-        
-        
-        for a2_link in tqdm(ngii.a2_link, desc="link2schoolzone_id_matching: ", total=len(ngii.a2_link)):
-            if a2_link.Length == 0:
-                continue
-
-            ori_id = a2_link.ID
-            new_id = ori2new[ori_id]
-
-            link = LineString(lanelets[new_id]['waypoints'])
-            
-            # 겹치는 곳의 좌표
-            intersection = link.intersection(schoolzone_merged_exterior)
-            
-            # 겹치는지 여부
-            intersects = link.intersects(schoolzone_merged_exterior)
-            
-            
-            if intersects:
-                lanelets[new_id]['schoolZone'].append([intersection.x, intersection.y])
-                
-                print("a2_link ID : {}".format(ori_id))
-                print("intersection : {}".format(intersection))
-                
-    
-        
-        
-        
-                
         for a2_link in tqdm(ngii.a2_link, desc="link2stopline_id_matching: ", total=len(ngii.a2_link)):
             def extend_line(coordinates, extension_meters=3):
                 """
@@ -495,7 +455,7 @@ class NGII2LANELET:
                     data['rightChange'][idx_s:idx_f] = [
                         False for _ in range(idx_f-idx_s)]
 
-        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)): 
+        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)):
             obj_id = b3_surfacemark.ID
 
             points = []
@@ -559,7 +519,8 @@ class NGII2LANELET:
                                 # normal right
                                 if lanelets[id_]['intersection']:
                                     if right_data is None:
-                                        right_data = [id_, lanelets[id_]['laneNo']]
+                                        right_data = [
+                                            id_, lanelets[id_]['laneNo']]
                                     else:
                                         if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None:
                                             right_data[0] = id_

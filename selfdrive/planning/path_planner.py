@@ -24,7 +24,8 @@ class PathPlanner:
 
         self.temp_pt = None
         self.global_path = None
-        self.global_id = None
+        self.global_ids = None
+        self.splited_global_ids = None
         self.erase_global_point = None
         self.non_intp_path = None
         self.non_intp_id = None
@@ -62,6 +63,8 @@ class PathPlanner:
         self.nearest_obstacle_distance = -1
         self.schoolzone_passed = False
 
+        self.splited_id = None
+
         self.pub_lanelet_map = rospy.Publisher('/mobinha/planning/lanelet_map', MarkerArray, queue_size=1, latch=True)
         self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher('/mobinha/global_path', Marker, queue_size=1, latch=True)
@@ -73,17 +76,22 @@ class PathPlanner:
         self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
-        self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
-        self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
-        self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
-        self.prevRoadPolygon_pub = rospy.Publisher('/prevRoadPolygon', Marker, queue_size=10)
-        self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
-        self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
-        self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
+        # self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
+        # self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
+        # self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
+        # self.prevRoadPolygon_pub = rospy.Publisher('/prevRoadPolygon', Marker, queue_size=10)
+        # self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
+        # self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
+        
+        self.crosswalkPolygon1_pub = rospy.Publisher('/crosswalkPolygon1', Marker, queue_size=10)
+        self.crosswalkPolygon2_pub = rospy.Publisher('/crosswalkPolygon2', Marker, queue_size=10)
+        self.crosswalkPolygon3_pub = rospy.Publisher('/crosswalkPolygon3', Marker, queue_size=10)
+        
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
-        self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
+        # self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         self.schoolzone_state_pub = rospy.Publisher('/schoolzone', Float32MultiArray, queue_size=5)
+
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -97,47 +105,10 @@ class PathPlanner:
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb) # 완 / 내 앞에있는 장애물 m거리, 없으면 -1
         rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb) # 완 / purepursuit lookahead
         rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb) # 규햄 질문 / 근처 차량 선정 기준? 아래참조
-            # if (-50*self.M_TO_IDX) <(obj_s-car_idx) < (50*self.M_TO_IDX) and obj_d > -5 and obj_d < 5:
-            #                 around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
         rospy.Subscriber('/turnsignal', Int8, self.blinker_cb) # 완 / 깜박이
-
-        # rospy.Subscriber("/Object_topic", ObjectStatusList, self.obstacle_pos_cb)
-        self.obstacle_linkid_pub = rospy.Publisher('/mobinha/obstacle/local_id', String, queue_size=1)
-        # rospy.Subscriber('/mobinha/visualize/taxi_dest',PoseArray, self.taxi_destination_cb)
-
-        self.goal_pts = []
-    # def obstacle_pos_cb(self, msg): # 좌표계가 달라서 다른 id를 반환해버림.. 
-    #     object_list = PoseArray()
-    #     for obj in msg.npc_list:
-    #         pose = Pose()
-    #         pose.position.x = obj.position.x
-    #         pose.position.y = obj.position.y
-    #         pose.position.z = obj.heading
-    #         pose.orientation.w = obj.velocity.x
-    #         object_list.poses.append(pose)
-    #     for obj in msg.obstacle_list:
-    #         pose = Pose()
-    #         pose.position.x = obj.position.x
-    #         pose.position.y = obj.position.y
-    #         pose.position.z = obj.heading
-    #         pose.orientation.w = obj.velocity.x
-    #         object_list.poses.append(pose)
-    #     for obj in msg.pedestrian_list:
-    #         pose = Pose()
-    #         pose.position.x = obj.position.x
-    #         pose.position.y = obj.position.y
-    #         pose.position.z = obj.heading
-    #         pose.orientation.w = obj.velocity.x
-    #         object_list.poses.append(pose)
-    #     self.object_list = object_list
-
-    #     obs_pt = (self.object_list.poses[0].position.x, self.object_list.poses[0].position.y)
-
-    #     obs_lanelets = lanelet_matching(self.tmap.tiles, self.tmap.tile_size, obs_pt)
-    #     if obs_lanelets is not None:
-    #         o_id, o_idx = obs_lanelets
-    #         self.obstacle_linkid_pub.publish(o_id)
         
+        self.goal_pts = []
+
     def blinker_cb(self, msg):
         self.turnsignal = msg.data
 
@@ -172,7 +143,7 @@ class PathPlanner:
     def look_a_head_cb(self, msg):
         self.look_a_head_pos = [msg.pose.position.x, msg.pose.position.y]
 
-    def returnAppendedNonIntpPath(self):
+    def returnAppendedNonIntpPath(self): # 
         appended_non_intp_path = []
         appended_non_intp_id = []
         appended_head_lane_ids = []
@@ -246,20 +217,20 @@ class PathPlanner:
         return appended_non_intp_path, appended_non_intp_id, appended_head_lane_ids
 
     def delete_node_for_smooth_path(self, non_intp_path, non_intp_id, head_lane_ids):
-            before_n = non_intp_id[0].split('_')[0]
-            for i, n in enumerate(non_intp_id):
-                splited_id = n.split('_')[0]
-                if splited_id != before_n :
-                    my_neighbor_id = get_my_neighbor(self.lmap.lanelets, before_n)
-                    if not compare_id(splited_id, my_neighbor_id):
-                        del non_intp_path[i]
-                        del non_intp_id[i]
-                    before_n = splited_id
+        before_n = non_intp_id[0].split('_')[0]
+        for i, n in enumerate(non_intp_id):
+            splited_id = n.split('_')[0]
+            if splited_id != before_n :
+                my_neighbor_id = get_my_neighbor(self.lmap.lanelets, before_n)
+                if not compare_id(splited_id, my_neighbor_id):
+                    del non_intp_path[i]
+                    del non_intp_id[i]
+                before_n = splited_id
     
     def run(self, sm):
         CS = sm.CS
         pp = 0
-
+        print("self.state:", self.state)
         if self.state == 'WAITING':
             time.sleep(1)
             if self.get_goal != 0:
@@ -279,7 +250,7 @@ class PathPlanner:
             self.l_tail = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
-            non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath()
+            non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath() # head_lane_ids는 현재 id포함 global path의 id
             if non_intp_path is None or non_intp_id is None:
                 rospy.logerr('An error occurred, unable to process path. Returning to WAITING state.')
                 self.state = 'WAITING'
@@ -287,18 +258,26 @@ class PathPlanner:
                 pp = 3
                 return pp, None
 
-            self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids)
+            self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids) # non_intp_id 후처리
             if non_intp_path is not None:
                 self.state = 'MOVE'
 
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
                 global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
-                global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
+                global_ids = id_interpolate(non_intp_path, global_path, non_intp_id) # global path를 이루고 있는 id
                 self.global_path = global_path
-                self.global_id = global_id
+                self.global_ids = global_ids
+                print("move: global_ids: ", self.global_ids)
+
+                self.splited_global_ids = []
+                for id in global_ids:
+                    val = id.split("_")[0]
+                    if val not in self.splited_global_ids:
+                        self.splited_global_ids.append(val)
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
                 self.head_lane_ids = head_lane_ids
+                print("self.splited_global_ids assigned!")
 
                 if len(head_lane_ids) >= 2:
                     self.prev_head_lane_id = None
@@ -313,7 +292,7 @@ class PathPlanner:
                     self.next_head_lane_id = None
                     self.now_head_lane_id = None
                 self.erase_global_path = global_path
-                self.erase_global_id = global_id
+                self.erase_global_id = global_ids
                 self.erase_global_yaw = global_yaw
                 self.erase_global_k = global_k
                 global_path_viz = FinalPathViz(self.global_path)
@@ -323,17 +302,17 @@ class PathPlanner:
 
         elif self.state == 'MOVE':
 
-            idx = calc_idx(self.global_path, (CS.position.x, CS.position.y))
+            idx = calc_idx(self.global_path, (CS.position.x, CS.position.y)) # for real car
 
             if abs(idx-self.temp_global_idx) <= 50:
                 self.temp_global_idx = idx
 
             s = self.temp_global_idx * self.precision  # m
 
-            now_lane_id = self.global_id[idx]
-            splited_id = now_lane_id.split('_')[0]
+            now_lane_id = self.global_ids[idx]
+            self.splited_id = now_lane_id.split('_')[0] # 현재 있는 lane_id, global path 위에서만 탐색
 
-            if splited_id == self.next_head_lane_id:
+            if self.splited_id == self.next_head_lane_id:
                 if len(self.head_lane_ids) < 2:
                     self.prev_head_lane_id = self.now_head_lane_id
                     self.now_head_lane_id = self.next_head_lane_id
@@ -378,9 +357,9 @@ class PathPlanner:
                 self.erase_global_point = KDTree(self.erase_global_path)
 
                 # self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
-                self.pub_local_path_theta.publish(Float32MultiArray(data=local_yaw))
+                # self.pub_local_path_theta.publish(Float32MultiArray(data=local_yaw))
                 # self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
-                self.pub_local_path_k.publish(Float32MultiArray(data=local_k))
+                # self.pub_local_path_k.publish(Float32MultiArray(data=local_k))
 
                 self.local_path = local_path
                 self.local_id = local_id
@@ -389,6 +368,7 @@ class PathPlanner:
             if self.local_path is not None:
                 local_point = KDTree(self.local_path)
                 l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
+
                 if abs(l_idx-self.l_idx) <= 100:
                     self.l_idx = l_idx
 
@@ -396,9 +376,7 @@ class PathPlanner:
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
                 stopline_idx, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
-                # wps = waypoints
-                # print("from planner")
-                # print("stopline pos: ", stopline_wps)
+                
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
                     renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, 
@@ -652,10 +630,29 @@ class PathPlanner:
                 self.pub_goal_object.publish(pose)
 
                 # crosswalkViz
-                crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
-                crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
-                self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
-
+                print('here')
+                # print("head_lane_id", self.head_lane_ids)
+                tree = KDTree(self.lmap.lanelets[self.splited_id]['waypoints'])
+                cur_id_idx = tree.query((CS.position.x, CS.position.y), 1)[1]
+                global_id_idx = self.splited_global_ids.index(self.now_head_lane_id)
+                remaining_global_ids = self.splited_global_ids[global_id_idx:] # 완
+                crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, remaining_global_ids, cur_id_idx) # self.head_lane_ids는 정렬 x
+                # crosswalkPolygonMarkers = CrosswalkViz(crosswalkPoints)
+                
+                # self.crosswalkPolygon1_pub.publish(crosswalkPolygonMarkers[0])
+                # self.crosswalkPolygon2_pub.publish(crosswalkPolygonMarkers[1])
+                # self.crosswalkPolygon3_pub.publish(crosswalkPolygonMarkers[2])
+                    
+                # def CrosswalkViz(waypoints_list):
+                #     markers = []
+                #     for (id_, waypoints) in waypoints_list:
+                #         marker = Line('crosswalk', 999, 0.4, (1.0, 0.2, 0.6, 1.0))
+                #         for _, pt in enumerate(waypoints):
+                #             marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
+                #             markers.append(marker)
+                            
+                #     return markers
+                
                 # schoolzone_viz
                 schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx,self.schoolzone_passed)
                 # print(f"my node number is : {self.l_idx}") 
@@ -671,10 +668,10 @@ class PathPlanner:
                 # self.schoolzone_state_pub.publish(schoolzone)
                 
 
-                if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
-                    self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))
-                else:
-                    self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,0]))
+                # if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):
+                #     self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,1]))
+                # else:
+                #     self.pub_right_turn_situation.publish(Int8MultiArray(data=[0,0]))
 
                 # stoplineViz
                 stoplinePolygonmarker = StopLineViz(stopline_wps)
@@ -687,4 +684,4 @@ class PathPlanner:
         elif self.state == 'ARRIVED':
             pp = 2
 
-        return pp, self.local_path
+        return pp, self.splited_id, self.splited_global_ids, self.local_path, self.lmap, self.tmap

@@ -2873,10 +2873,10 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /crosswalkPolygon
-      Name: Marker
+      Name: MarkerArray
       Namespaces:
         {}
       Queue Size: 100

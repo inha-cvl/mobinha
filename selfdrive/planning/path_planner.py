@@ -83,9 +83,10 @@ class PathPlanner:
         # self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
         # self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
         
-        self.crosswalkPolygon1_pub = rospy.Publisher('/crosswalkPolygon1', Marker, queue_size=10)
-        self.crosswalkPolygon2_pub = rospy.Publisher('/crosswalkPolygon2', Marker, queue_size=10)
-        self.crosswalkPolygon3_pub = rospy.Publisher('/crosswalkPolygon3', Marker, queue_size=10)
+        # self.crosswalkPolygon1_pub = rospy.Publisher('/crosswalkPolygon1', Marker, queue_size=10)
+        # self.crosswalkPolygon2_pub = rospy.Publisher('/crosswalkPolygon2', Marker, queue_size=10)
+        # self.crosswalkPolygon3_pub = rospy.Publisher('/crosswalkPolygon3', Marker, queue_size=10)
+        self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', MarkerArray, queue_size=10)
         
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         # self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
@@ -636,9 +637,10 @@ class PathPlanner:
                 cur_id_idx = tree.query((CS.position.x, CS.position.y), 1)[1]
                 global_id_idx = self.splited_global_ids.index(self.now_head_lane_id)
                 remaining_global_ids = self.splited_global_ids[global_id_idx:] # 완
-                crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, remaining_global_ids, cur_id_idx) # self.head_lane_ids는 정렬 x
-                # crosswalkPolygonMarkers = CrosswalkViz(crosswalkPoints)
+                crosswalk_ids_points = get_crosswalk_ids_points(self.lmap.lanelets, self.lmap.surfacemarks, remaining_global_ids, cur_id_idx) # self.head_lane_ids는 정렬 x
                 
+                crosswalkPolygonMarkers = CrosswalkViz(crosswalk_ids_points)
+                self.crosswalkPolygon_pub.publish(crosswalkPolygonMarkers)
                 # self.crosswalkPolygon1_pub.publish(crosswalkPolygonMarkers[0])
                 # self.crosswalkPolygon2_pub.publish(crosswalkPolygonMarkers[1])
                 # self.crosswalkPolygon3_pub.publish(crosswalkPolygonMarkers[2])

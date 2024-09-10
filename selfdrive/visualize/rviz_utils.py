@@ -108,21 +108,18 @@ def FinalPath(waypoints, id_, z, scale, color):
         marker.points.append(Point(x=pt[0], y=pt[1], z=z))
     return marker
 
-def CrosswalkViz_original(waypoints):
-    marker = Line('crosswalk', 999, 0.4, (1.0, 0.2, 0.6, 1.0))
-    for _, pt in enumerate(waypoints):
-        marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
-    return marker
-
 def CrosswalkViz(waypoints_list):
-    markers = []
+    marker_array = MarkerArray()
     for (id_, waypoints) in waypoints_list:
-        marker = Line('crosswalk', 999, 0.4, (1.0, 0.2, 0.6, 1.0))
-        for _, pt in enumerate(waypoints):
+        len_id = len(id_)
+        marker_id = int(id_[len_id-3:])  # id에서 고유 숫자를 가져와서 사용
+        marker = Line('crosswalk', marker_id, 0.4, (1.0, 0.2, 0.6, 1.0))
+        for pt in waypoints:
             marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
-            markers.append(marker)
-            
-    return markers
+        marker_array.markers.append(marker)
+    
+    return marker_array
+
 
 def schoolzoneViz(points):
     array = MarkerArray()

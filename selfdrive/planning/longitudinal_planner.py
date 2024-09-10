@@ -276,8 +276,7 @@ class LongitudinalPlanner:
                         obs_link += tmp
                         break
         print(f"====SAFE2GO====\n- Obs on roi links: {obs_link}\n"+str1+str2+f"- Safe to go: {self.safe_to_go}"+"\n")
-        
-            
+           
     def STOPLINE_module(self, CS):
         str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
         if self.trafficLight_type is None:
@@ -306,7 +305,7 @@ class LongitudinalPlanner:
                     str4 = f"- Obs status: not safe, wait at {target_v_TL:.2f}m/s\n"
 
         elif self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
-            if 0 < self.distance_to_stopline < 10:
+            if 0 < self.distance_to_stopline < max(CS.vEgo*3.6-15, 11):
                 target_v_TL = 0
             else:
                 target_v_TL = 5

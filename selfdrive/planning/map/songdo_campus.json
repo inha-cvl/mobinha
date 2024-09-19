@@ -2307,7 +2307,7 @@
 			"leftType": [],
 			"rightBound": [],
 			"rightType": [],
-			"roundabout": false,
+			"roundabout": true,
 			"intersection": false,
 			"speedLimit": 50,
 			"predecessor": [
@@ -2779,7 +2779,7 @@
 			"leftType": [],
 			"rightBound": [],
 			"rightType": [],
-			"roundabout": false,
+			"roundabout": true,
 			"intersection": false,
 			"speedLimit": 50,
 			"predecessor": [
@@ -3059,7 +3059,7 @@
 			"leftType": [],
 			"rightBound": [],
 			"rightType": [],
-			"roundabout": false,
+			"roundabout": true,
 			"intersection": false,
 			"speedLimit": 50,
 			"predecessor": [
@@ -3165,7 +3165,7 @@
 			"leftType": [],
 			"rightBound": [],
 			"rightType": [],
-			"roundabout": false,
+			"roundabout": true,
 			"intersection": false,
 			"speedLimit": 50,
 			"predecessor": [

@@ -27,20 +27,24 @@ if __name__ == "__main__":
     map_dict = {
     		"KCity" : (37.2292221592864, 126.76912499027308, 29.18400001525879),
     		"songdo" : (37.39657805498484, 126.6321430873685, 7.369),
-    		"songdo-testbed" : (37.4179788, 126.6140342, 7)
+    		"songdo-testbed" : (37.4179788, 126.6140342, 7),
+    		"songdo_campus" : (37.383333, 126.656111, -0.51)
     		}
 
-    name = 'KCity'
+    name = 'songdo_campus'
 
     parser.add_argument('--ngii_path', type=str, default='./%s'%(name))
     parser.add_argument('--precision', type=float, default=1.0)
     parser.add_argument('--base_lla', type=tuple, default=map_dict[name], help='(lat, lon, alt)')
-    parser.add_argument('--is_utm', type=bool, default=True)
+    parser.add_argument('--is_utm', type=bool, default=False)
 
     args = parser.parse_args()
+
+    print(args.ngii_path)
 
     main(args)
 
     #k city 37.2292221592864, 126.76912499027308, 29.18400001525879
     # songdo 37.39657805498484, 126.6321430873685,7.369
     # songdo-testbed 37.4179788, 126.6140342, 7
+    # songdo_campus 37.383333, 126.656111, -0.51

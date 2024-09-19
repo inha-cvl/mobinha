@@ -239,6 +239,11 @@ class NGII2LANELET:
             lanelets[new_id]['speedLimit'] = 50
             # else:
                 # lanelets[new_id]['speedLimit'] = int(a2_link.MaxSpeed)
+            
+            # RightTurn 240919
+            lni = lanelets[new_id]
+            if lni['intersection'] and not lni['leftTurn'] and (max(lni['yaw']) - min(lni['yaw'])) > 0.25:
+                lni['rightTurn'] = True 
 
         for a2_link in ngii.a2_link:
             if a2_link.Length == 0:
@@ -511,29 +516,6 @@ class NGII2LANELET:
                             lanelets[new_id]['direction'].append('U')
 
                         lanelets[new_id]['direction'] = list(set(lanelets[new_id]['direction']))
-
-                        if 'R' in lanelets[new_id]['direction']:
-                            right_data = None
-                            
-                            for id_ in lanelets[new_id]['successor']:
-                                # normal right
-                                if lanelets[id_]['intersection']:
-                                    if right_data is None:
-                                        right_data = [
-                                            id_, lanelets[id_]['laneNo']]
-                                    else:
-                                        if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None:
-                                            right_data[0] = id_
-                                            right_data[1] = lanelets[id_]['laneNo']
-                                        elif right_data[1] < lanelets[id_]['laneNo'] and not str(left_data[1])[0] == '9':
-                                            right_data[0] = id_
-                                            right_data[1] = lanelets[id_]['laneNo']
-                                # island right
-                                else:
-                                    if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None and lanelets[id_]['laneNo'] == 1:
-                                        right_data = [id_, lanelets[id_]['laneNo']]
-                            if right_data is not None:
-                                lanelets[right_data[0]]['rightTurn'] = True
                             
                         if 'L' in lanelets[new_id]['direction']:
                             left_data = None

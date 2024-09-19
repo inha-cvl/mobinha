@@ -18,4 +18,7 @@ with open('/home/jourmain/mobinha/selfdrive/planning/map/KCity.json', 'r') as fi
 # for s_id in crosswalk_ids:
 #     polygon_points.append((s_id, dict_data["surfacemarks"][s_id])) # points [], [] ....
 #     print("crosswalk polygon points", polygon_points)
-print(dict_data["lanelets"]["644"]['rightTurn'])
+
+for i in range(len(dict_data["lanelets"])):
+    if dict_data["lanelets"][f"{i}"]['roundabout']:
+        print(i)

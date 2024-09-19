@@ -225,25 +225,56 @@ class LongitudinalPlanner:
         
         return roi_ids_waypoints
     
-    def get_int_rou_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 successor의 predecessors
+    def get_intsection_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc suc의 pre
         roi_ids_waypoints = []
         suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
-        pre_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
+        pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
         
         next_lane_id = global_ids[global_ids.index(lane_id) + 1]
-        if next_lane_id in pre_suc_id_list:
-            pre_suc_id_list.remove(next_lane_id)
-        for id_ in pre_suc_id_list:
+        if next_lane_id in pre_suc_suc_id_list:
+            pre_suc_suc_id_list.remove(next_lane_id)
+        for id_ in pre_suc_suc_id_list:
             waypoints_length = len(lmap.lanelets[id_]['waypoints'])
             roi_ids_waypoints.append((id_, lmap.lanelets[id_]['waypoints'][max(waypoints_length-13, 0):waypoints_length-1])) # precision: 1, so roi 5~50m
+        
         return roi_ids_waypoints
     
-    def set_scenario_and_roi(self, lmap, my_lane_id, global_ids):
+    def get_roundabout_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc suc의 pre + pre^2 + pre^3
+        roi_ids_waypoints = []
+        
+        suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
+        pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
+        next_lane_id = global_ids[global_ids.index(lane_id) + 1]
+        if next_lane_id in pre_suc_suc_id_list:
+            pre_suc_suc_id_list.remove(next_lane_id)
+        
+        pre_pre_suc_suc_id_list = []
+        for id_ in pre_suc_suc_id_list:
+            pre_pre_suc_suc_id_list += lmap.lanelets[id_]['predecessor'].copy()
+
+        pre_pre_pre_suc_suc_id_list = []
+        for id_ in pre_pre_suc_suc_id_list:
+            pre_pre_pre_suc_suc_id_list += lmap.lanelets[id_]['predecessor'].copy()
+        
+        for id_list in [pre_suc_suc_id_list, pre_pre_suc_suc_id_list, pre_pre_pre_suc_suc_id_list]:
+            for id_ in id_list:
+                roi_ids_waypoints.append((id_, lmap.lanelets[id_]['waypoints'])) # precision: 1
+        
+        return roi_ids_waypoints
+    
+    def set_scenario_and_roi(self, lmap, my_lane_id, global_ids): # Roundabout, Merge, Intersection을 남은 path에 따라 결정
         # safety check ROI 설정
         self.merge_roi_ids_waypoints = []
         self.inter_roi_ids_waypoints = []
+        self.round_roi_ids_waypoints = []
         self.now_scenario = "----"
         self.next_scenario = "----"
+        
+        
+        if lmap.lanelets[my_lane_id]['roundabout']:
+            self.now_scenario = "ROUNDABOUT"
+            print("now: roundabout")
+            
         if len(global_ids) > global_ids.index(my_lane_id)+1:
             next_path_id = global_ids[global_ids.index(my_lane_id) + 1]
             if self.is_next_lane_converged(lmap, my_lane_id, global_ids):
@@ -251,7 +282,7 @@ class LongitudinalPlanner:
                     self.now_scenario = "MERGE"
                     self.merge_roi_ids_waypoints = self.get_merge_roi(lmap, my_lane_id)
                 else:
-                    self.now_scenario = "INTER/ROUND"
+                    self.now_scenario = "INTERSECTION" # 내 차량 우선: roi X
                     
         if len(global_ids) > global_ids.index(my_lane_id)+2:
             next_path_id = global_ids[global_ids.index(my_lane_id) + 1]
@@ -259,8 +290,15 @@ class LongitudinalPlanner:
                 if self.is_any_adjacent_with_same_suc(lmap, next_path_id):
                     self.next_scenario = "MERGE"
                 else:
-                    self.next_scenario = "INTER/ROUND"
-                    self.inter_roi_ids_waypoints = self.get_int_rou_roi(lmap, my_lane_id, global_ids)
+                    if lmap.lanelets[next_path_id]['roundabout']:
+                        self.next_scenario = "ROUNDABOUT"
+                        if self.now_scenario != "ROUNDABOUT":
+                            self.round_roi_ids_waypoints = self.get_roundabout_roi(lmap, my_lane_id, global_ids)
+                    else:
+                        self.next_scenario = "INTERSECTION"
+                        self.inter_roi_ids_waypoints = self.get_intsection_roi(lmap, my_lane_id, global_ids)
+            
+            
                     
         print(f"====SCENARIO===\n- NOW: {self.now_scenario}\n- NEXT: {self.next_scenario}\n")
     
@@ -298,6 +336,17 @@ class LongitudinalPlanner:
                         tmp = id_+" "
                         obs_link += tmp
                         break
+                    
+                    
+            for id_, pts in self.round_roi_ids_waypoints:
+                for pt in pts:
+                    dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
+                    if dis < 1:
+                        self.safe_to_go = False
+                        tmp = id_+" "
+                        obs_link += tmp
+                        break
+                    
         print(f"====SAFE2GO====\n- Obs on roi links: {obs_link}\n"+str1+str2+f"- Safe to go: {self.safe_to_go}"+"\n")
     
     def RIGHTTURN_module(self, CS):
@@ -331,11 +380,11 @@ class LongitudinalPlanner:
                             str2 = f"- Run status: running...({remaining_time:.2f} secs remain)\n"
                             self.stopline_stopped = True
                 else:
-                    target_v_TL = 5
+                    target_v_TL = 100
                 
             else:
                 if self.safe_to_go:
-                    target_v_TL = 5
+                    target_v_TL = 100
                     str3 = f"- Obs status: safe, go at {target_v_TL:.2f}m/s\n"
                 else:
                     target_v_TL = 0
@@ -345,11 +394,11 @@ class LongitudinalPlanner:
             if 0 < self.distance_to_stopline < max(CS.vEgo*3.6-15, 11):
                 target_v_TL = 0
             else:
-                target_v_TL = 5
+                target_v_TL = 100
 
         else:
             str6 = "- Nothing to do with stopline\n"
-            target_v_TL = 5
+            target_v_TL = 100
 
         # 정지선 위치 바뀌면 (신호등 없는 정지선) local variable 초기화
         if self.stopline_point1[0] != self.stopline_point1_last[0]:
@@ -450,11 +499,11 @@ class LongitudinalPlanner:
             
             min_radii = min(min_radii, radius)
         
-        processed_radii = self.postprocess(curvature_radii, max_radii, min_radii)
+        processed_radii = self.postprocess_radii(curvature_radii, max_radii, min_radii)
         
         return processed_radii
 
-    def postprocess(self, raddis, max_radii, min_radii, min_target=10, max_target=30): # 이 인자를 건드려서 최저/최고속도 결정
+    def postprocess_radii(self, raddis, max_radii, min_radii, min_target=10, max_target=20): # 이 인자를 건드려서 최저/최고속도 결정
         processed_radiis = []
         factor = (max_radii - min_radii) + 1e-3
         for el in raddis:
@@ -466,7 +515,7 @@ class LongitudinalPlanner:
     def CURVATURE_module(self, CS, local_path):
         local_point = KDTree(local_path)
         local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
-        target_v_CV = self.compute_curvature_radius(local_path)[local_idx+int(CS.vEgo)] # idx: 1s after
+        target_v_CV = self.compute_curvature_radius(local_path)[min(len(local_path)-1, local_idx+int(CS.vEgo))] # idx: 1s after
         print(f"=====CURVE=====\n- Target v: {target_v_CV}")
         
         return target_v_CV
@@ -476,7 +525,7 @@ class LongitudinalPlanner:
         str1 = "" 
         if self.now_scenario == "MERGE":
             if self.safe_to_go:
-                target_v_MG = 5
+                target_v_MG = 100
                 str1 = f"- Obs status: safe, go at {target_v_MG:.2f}m/s\n"
             else:
                 target_v_MG = 0
@@ -500,7 +549,6 @@ class LongitudinalPlanner:
         self.pub_accerror.publish(Float32(self.follow_error))
         if not None in [l_path, g_ids]:
             local_path = l_path.copy()
-            print(local_path)
             global_ids = g_ids.copy()
             if CS.cruiseState == 1:
                 scenario = "integrated"
@@ -523,13 +571,17 @@ class LongitudinalPlanner:
                     # get target_v
                     target_v_list = []
                     # target_v_list.append(self.RIGHTTURN_module(CS)) # not tested 09/14
-                    # target_v_list.append(self.STOPLINE_module(CS))
-                    # target_v_list.append(self.MERGE_module())
-                    # target_v_list.append(self.ACC_module(CS, local_path))
+                    target_v_list.append(self.STOPLINE_module(CS))
+                    target_v_list.append(self.MERGE_module())
+                    target_v_list.append(self.ACC_module(CS, local_path))
                     target_v_list.append(self.CURVATURE_module(CS, local_path))
-                    self.target_v = min(target_v_list)
+                    try:
+                        self.target_v = min(target_v_list)
+                    except:
+                        print(target_v_list)
+                        print("Error on long_planner: target_v")
                     print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
-                
+
                 if scenario == "check_crosswalk":
                     ego_point = sh.Point((CS.position.x, CS.position.y))
                     if self.crosswalk_polygon is not None:

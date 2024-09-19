@@ -1,10 +1,11 @@
 import rospy
 import time
 from scipy.spatial import KDTree
-from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String
-from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point, Vector3
+from std_msgs.msg import Int8, Float32, Float32MultiArray
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point, Point32, Polygon
 from visualization_msgs.msg import Marker
 from morai_msgs.msg import ObjectStatusList
+
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -74,22 +75,13 @@ class PathPlanner:
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
         self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
+        self.pub_crosswalk_pos = rospy.Publisher('/mobinha/planning/crosswalk_pos', Polygon, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
-        # self.pub_local_path_theta = rospy.Publisher('/mobinha/planning/local_path_theta', Float32MultiArray, queue_size=1)
-        # self.pub_local_path_radius = rospy.Publisher('/mobinha/planning/local_path_radius', Float32MultiArray, queue_size=1)
-        # self.pub_local_path_k = rospy.Publisher('/mobinha/planning/local_path_k', Float32MultiArray, queue_size=1)
-        # self.prevRoadPolygon_pub = rospy.Publisher('/prevRoadPolygon', Marker, queue_size=10)
-        # self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
-        # self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
         
-        # self.crosswalkPolygon1_pub = rospy.Publisher('/crosswalkPolygon1', Marker, queue_size=10)
-        # self.crosswalkPolygon2_pub = rospy.Publisher('/crosswalkPolygon2', Marker, queue_size=10)
-        # self.crosswalkPolygon3_pub = rospy.Publisher('/crosswalkPolygon3', Marker, queue_size=10)
-        self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', MarkerArray, queue_size=10)
         
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
-        # self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
+        self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', MarkerArray, queue_size=10)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         self.schoolzone_state_pub = rospy.Publisher('/schoolzone', Float32MultiArray, queue_size=5)
 
@@ -595,7 +587,6 @@ class PathPlanner:
                     pose_array_msg.poses.append(pose1)
                     pose_array_msg.poses.append(pose2)
                     
-                    # PoseArray 메시지 퍼블리시
                     self.pub_stopline_pos.publish(pose_array_msg)
                 else:
                     print("[Path planner.py] No stopline detected")
@@ -631,37 +622,34 @@ class PathPlanner:
                 self.pub_goal_object.publish(pose)
 
                 # crosswalkViz
-                print('here')
-                # print("head_lane_id", self.head_lane_ids)
                 tree = KDTree(self.lmap.lanelets[self.splited_id]['waypoints'])
                 cur_id_idx = tree.query((CS.position.x, CS.position.y), 1)[1]
-                global_id_idx = self.splited_global_ids.index(self.now_head_lane_id)
+                global_id_idx = self.splited_global_ids.index(self.now_head_lane_id) #now_head_lane_id는 역행하지 않음
+                
+                
                 remaining_global_ids = self.splited_global_ids[global_id_idx:] # 완
                 crosswalk_ids_points = get_crosswalk_ids_points(self.lmap.lanelets, self.lmap.surfacemarks, remaining_global_ids, cur_id_idx) # self.head_lane_ids는 정렬 x
-                
-                crosswalkPolygonMarkers = CrosswalkViz(crosswalk_ids_points)
+                merged_crosswalk_ids_points = merge_polygons(crosswalk_ids_points)
+                crosswalkPolygonMarkers = CrosswalkViz(merged_crosswalk_ids_points)
                 self.crosswalkPolygon_pub.publish(crosswalkPolygonMarkers)
-                # self.crosswalkPolygon1_pub.publish(crosswalkPolygonMarkers[0])
-                # self.crosswalkPolygon2_pub.publish(crosswalkPolygonMarkers[1])
-                # self.crosswalkPolygon3_pub.publish(crosswalkPolygonMarkers[2])
-                    
-                # def CrosswalkViz(waypoints_list):
-                #     markers = []
-                #     for (id_, waypoints) in waypoints_list:
-                #         marker = Line('crosswalk', 999, 0.4, (1.0, 0.2, 0.6, 1.0))
-                #         for _, pt in enumerate(waypoints):
-                #             marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
-                #             markers.append(marker)
-                            
-                #     return markers
+                
+                crosswalk_pos = Polygon()
+                if len(merged_crosswalk_ids_points) > 0:
+                    nearest_crosswalk = merged_crosswalk_ids_points[0]
+                    for wp in nearest_crosswalk[1]:
+                        pt = Point32()
+                        pt.x = wp[0]
+                        pt.y = wp[1]
+                        crosswalk_pos.points.append(pt)
+                
+                self.pub_crosswalk_pos.publish(crosswalk_pos)
+                                
+                
+                
                 
                 # schoolzone_viz
                 schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, self.l_idx,self.schoolzone_passed)
-                # print(f"my node number is : {self.l_idx}") 
-                # print("my position is : ", CS.position.x, CS.position.y)
                 
-                
-                # print(schoolzone_points)
                 schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
                 self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
                 

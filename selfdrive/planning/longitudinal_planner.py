@@ -2,11 +2,13 @@ import rospy
 import math
 
 from std_msgs.msg import Float32
-from geometry_msgs.msg import PoseArray, Pose
+from geometry_msgs.msg import PoseArray, Pose, Polygon
 from morai_msgs.msg import EgoVehicleStatus, GetTrafficLightStatus, ObjectStatusList
 
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
+
+import shapely as sh
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -49,6 +51,10 @@ class LongitudinalPlanner:
         self.stopline_point2 = None
         self.stopline_point1_last = None
 
+        rospy.Subscriber('/mobinha/planning/crosswalk_pos', Polygon, self.crosswalk_cb)
+        self.crosswalk_polygon = None
+
+
         rospy.Subscriber("/GetTrafficLightStatus", GetTrafficLightStatus, self.trafficLight_type_cb)
         self.trafficLight_header = None
         self.trafficLight_last_header = None
@@ -64,15 +70,28 @@ class LongitudinalPlanner:
         self.now_scenario = '-'
         self.next_scenario = '-'
         self.safe_to_go = False
+        self.rightTurn = False
         
         self.distance_to_stopline = 999
+        
+        
 
     def stopline_cb(self, msg):
         self.stopline_point1 = [msg.poses[0].position.x, msg.poses[0].position.y]
         self.stopline_point2 = [msg.poses[1].position.x, msg.poses[1].position.y]
         if self.stopline_point1_last is None:
             self.stopline_point1_last = self.stopline_point1
-
+            
+    def crosswalk_cb(self, msg):
+        points = []
+        for pt in msg.points:
+            points.append((pt.x, pt.y))
+        
+        if len(points) > 2:
+            self.crosswalk_polygon = sh.Polygon(points)
+        else:
+            self.crosswalk_polygon = None
+        
     def transform_point(self, morai_point):
         x, y = morai_point
         cos_theta, sin_theta, tx, ty = (0.9997685974969953, 0.023521693953422407, 0.08183366200224204, -0.13516831435460583)
@@ -80,7 +99,7 @@ class LongitudinalPlanner:
         y_prime = sin_theta * x + cos_theta * y + ty
         return (x_prime, y_prime)
 
-    def ego_topic_cb(self, msg): # 너무 부정확함 쓰면 안 됨
+    def ego_topic_cb(self, msg):
         self.ego_pos[0] = msg.position.x
         self.ego_pos[1] = msg.position.y
         
@@ -132,6 +151,10 @@ class LongitudinalPlanner:
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
 
+    def is_on_rightTurn(self, lmap, lane_id):
+        self.rightTurn = lmap.lanelets[lane_id]['rightTurn']
+        print("rightTurn val:", self.rightTurn)
+    
     def traffic_light_postprocess(self):
         # 신호등 정보 처리
         if not None in [self.trafficLight_header, self.trafficLight_last_header]:
@@ -276,7 +299,21 @@ class LongitudinalPlanner:
                         obs_link += tmp
                         break
         print(f"====SAFE2GO====\n- Obs on roi links: {obs_link}\n"+str1+str2+f"- Safe to go: {self.safe_to_go}"+"\n")
-           
+    
+    def RIGHTTURN_module(self, CS):
+        if self.crosswalk_polygon is not None:
+            shapely_ego = sh.Point((CS.position.x, CS.position.y))
+            distance_to_crosswalk = shapely_ego.distance(self.crosswalk_polygon)
+            print("Distance to crosswalk:", distance_to_crosswalk)
+            if 0 < distance_to_crosswalk < distance_to_crosswalk:
+                print("goint to crosswalk")
+            
+            # not tested 09/14
+            # if 0 < distance_to_crosswalk < max(CS.vEgo*3.6-15, 11):
+            #     target_v_CW = 10/3.6/21*(self.distance_to_stopline - 11)
+            #     if CS.vEgo > 0.02: # from Ego_topic vel.x
+            #         str1 = "- Run status: stopping at crosswalk\n"
+                
     def STOPLINE_module(self, CS):
         str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
         if self.trafficLight_type is None:
@@ -380,9 +417,59 @@ class LongitudinalPlanner:
         
         return target_v_ACC
 
-    def CURVATURE_module(self): # TODO
+    def compute_curvature_radius(self, path, tg_idx=15, max_radii=90, min_radii=36): # 이 인자를 건드려서 분산도, 곡률에 민감도 결정
+        curvature_radii = []
+        path_len = len(path)
         
-        return 10
+        for i in range(path_len):
+            dynamic_idx = min(i, tg_idx, path_len - i - 1)
+
+            x1, y1 = path[i - dynamic_idx]
+            x2, y2 = path[i]
+            x3, y3 = path[i + dynamic_idx]
+            
+            dx1 = x2 - x1
+            dy1 = y2 - y1
+            dx2 = x3 - x2
+            dy2 = y3 - y2
+            
+            ddx = dx2 - dx1
+            ddy = dy2 - dy1
+            
+            numerator = abs(dx1 * ddy - dy1 * ddx)
+            denominator = (dx1**2 + dy1**2)**1.5
+            
+            if denominator != 0:
+                curvature = numerator / denominator
+            else:
+                curvature = 1e-3  # 직선 구간에서 곡률은 0
+            
+            radius = 1/curvature
+        
+            curvature_radii.append(min(radius, max_radii))
+            
+            min_radii = min(min_radii, radius)
+        
+        processed_radii = self.postprocess(curvature_radii, max_radii, min_radii)
+        
+        return processed_radii
+
+    def postprocess(self, raddis, max_radii, min_radii, min_target=10, max_target=30): # 이 인자를 건드려서 최저/최고속도 결정
+        processed_radiis = []
+        factor = (max_radii - min_radii) + 1e-3
+        for el in raddis:
+            val = min_target + (max_target - min_target) * (el-min_radii)/factor
+            processed_radiis.append(round(val, 2)/3.6) # kph -> mps
+        
+        return processed_radiis
+    
+    def CURVATURE_module(self, CS, local_path):
+        local_point = KDTree(local_path)
+        local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
+        target_v_CV = self.compute_curvature_radius(local_path)[local_idx+int(CS.vEgo)] # idx: 1s after
+        print(f"=====CURVE=====\n- Target v: {target_v_CV}")
+        
+        return target_v_CV
     
     def MERGE_module(self):
         target_v_MG = 999
@@ -402,18 +489,21 @@ class LongitudinalPlanner:
         return target_v_MG
         
             
-    def run(self, sm, lmap, tmap, my_lane_id, global_ids, pp=0, local_path=None):
+    def run(self, sm, lmap, tmap, my_lane_id, g_ids, pp=0, l_path=None):
         CS = sm.CS
         lgp = 0
+        
         # print("CS position: ", (CS.position.x, CS.position.y))
         # print("transformed: ", self.transformed_ego_pos)
         print("--------------------------------")
         self.pub_target_v.publish(Float32(self.target_v))
         self.pub_accerror.publish(Float32(self.follow_error))
-        if not None in [local_path, global_ids]:
+        if not None in [l_path, g_ids]:
+            local_path = l_path.copy()
+            print(local_path)
+            global_ids = g_ids.copy()
             if CS.cruiseState == 1:
                 scenario = "integrated"
-                scenario = "check_crosswalk"
                 if scenario == "integrated":
                     # set scenario and roi
                     self.set_scenario_and_roi(lmap, my_lane_id, global_ids)
@@ -427,17 +517,26 @@ class LongitudinalPlanner:
                     # get distance to stopline
                     self.set_distance_to_stopline(CS)
                     
+                    # check if my lane is right_turn
+                    # self.is_on_rightTurn(lmap, my_lane_id)
+                    
                     # get target_v
                     target_v_list = []
-                    target_v_list.append(self.STOPLINE_module(CS))
-                    target_v_list.append(self.MERGE_module())
-                    target_v_list.append(self.ACC_module(CS, local_path))
-                    target_v_list.append(self.CURVATURE_module())
+                    # target_v_list.append(self.RIGHTTURN_module(CS)) # not tested 09/14
+                    # target_v_list.append(self.STOPLINE_module(CS))
+                    # target_v_list.append(self.MERGE_module())
+                    # target_v_list.append(self.ACC_module(CS, local_path))
+                    target_v_list.append(self.CURVATURE_module(CS, local_path))
                     self.target_v = min(target_v_list)
-                    # print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
+                    print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
                 
                 if scenario == "check_crosswalk":
-                    print(lmap.lanelets[my_lane_id]['crosswalkID'])
+                    ego_point = sh.Point((CS.position.x, CS.position.y))
+                    if self.crosswalk_polygon is not None:
+                        for obs in self.object_list.poses:
+                            if sh.Point((obs.position.x, obs.position.y)).intersects(self.crosswalk_polygon):
+                                print("obs on ROI crosswalk!")
+                    
 
             else:
                 self.target_v = CS.vEgo

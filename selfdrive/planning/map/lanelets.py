@@ -13,9 +13,9 @@ with open('/home/jourmain/mobinha/selfdrive/planning/map/KCity.json', 'r') as fi
 # print(dict_data["lanelets"]["429"]["predecessor"])
 # print(dict_data["surfacemarks"]["B319BS010001"])
 
-polygon_points = []
-crosswalk_ids = dict_data["lanelets"]["643"]['crosswalkID']
-for s_id in crosswalk_ids:
-    polygon_points.append((s_id, dict_data["surfacemarks"][s_id])) # points [], [] ....
-    print("crosswalk polygon points", polygon_points)
-
+# polygon_points = []
+# crosswalk_ids = dict_data["lanelets"]["643"]['crosswalkID']
+# for s_id in crosswalk_ids:
+#     polygon_points.append((s_id, dict_data["surfacemarks"][s_id])) # points [], [] ....
+#     print("crosswalk polygon points", polygon_points)
+print(dict_data["lanelets"]["644"]['rightTurn'])

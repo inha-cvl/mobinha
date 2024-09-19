@@ -9,6 +9,7 @@ from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
+import shapely as sh
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -108,11 +109,47 @@ def FinalPath(waypoints, id_, z, scale, color):
         marker.points.append(Point(x=pt[0], y=pt[1], z=z))
     return marker
 
+def merge_polygons(waypoints_list, distance_threshold=3):
+    polygons = [(id_, sh.Polygon(waypoints).buffer(1)) for id_, waypoints in waypoints_list]
+    
+    merged_polygons = []
+    used_ids = set()
+
+    for (id1, poly1) in polygons:
+        if id1 in used_ids:
+            continue
+
+        group = [poly1]
+        group_ids = [id1] 
+        used_ids.add(id1)
+
+        for (id2, poly2) in polygons:
+            if id2 not in used_ids and poly1.distance(poly2) < distance_threshold:
+                group.append(poly2)
+                group_ids.append(id2)
+                used_ids.add(id2)
+
+        merged_polygon = sh.unary_union(group)
+        
+        merged_polygons = []
+        if isinstance(merged_polygon, sh.MultiPolygon):
+            # MultiPolygon일 경우, 각 Polygon을 처리
+            for poly in merged_polygon.geoms:
+                merged_polygons.append((id1, list(poly.exterior.coords)))
+        else:
+            # Polygon일 경우, 바로 처리
+            merged_polygons.append((id1, list(merged_polygon.exterior.coords)))
+        # merged_coords = list(merged_polygon.exterior.coords)
+        # merged_polygons.append((group_ids, merged_coords))
+
+    return merged_polygons
+
 def CrosswalkViz(waypoints_list):
     marker_array = MarkerArray()
     for (id_, waypoints) in waypoints_list:
-        len_id = len(id_)
-        marker_id = int(id_[len_id-3:])  # id에서 고유 숫자를 가져와서 사용
+        merged_id = id_
+        len_id = len(merged_id)
+        marker_id = int(merged_id[len_id-3:])  # id에서 고유 숫자를 가져와서 사용
         marker = Line('crosswalk', marker_id, 0.4, (1.0, 0.2, 0.6, 1.0))
         for pt in waypoints:
             marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
@@ -121,6 +158,7 @@ def CrosswalkViz(waypoints_list):
     return marker_array
 
 
+    
 def schoolzoneViz(points):
     array = MarkerArray()
     for i in range(len(points)):

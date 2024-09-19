@@ -9,7 +9,6 @@ import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 from selfdrive.visualize.rviz_utils import *
 
-from shapely.geometry import LineString, Polygon
 import shapely.geometry as sh
 
 
@@ -817,22 +816,24 @@ def get_crosswalk_ids_points(lanelets, surfacemarks, remaining_global_ids, cur_i
     selected_crosswalk_ids_points = []
     roi_waypoints = lanelets[remaining_global_ids[0]]['waypoints'][cur_id_idx:]
     if len(roi_waypoints) > 1:
-        roi_string = LineString(roi_waypoints)
+        roi_string = sh.LineString(roi_waypoints)
         
         # 현재 id의 crosswalkID
-        my_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[0]]['crosswalkID']))
+        # my_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[0]]['crosswalkID'])) # 중복제거하면 순서정보가 없어셔서 안됨
+        my_lane_crosswalkIds = lanelets[remaining_global_ids[0]]['crosswalkID']
         for id_ in my_lane_crosswalkIds: 
-            crosswalk_polygon = Polygon(surfacemarks[id_])
+            crosswalk_polygon = sh.Polygon(surfacemarks[id_])
             if roi_string.intersects(crosswalk_polygon):
                 selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
-                print("Crosswalk ID for MY link: ", id_)
+                # print("Crosswalk ID for MY link: ", id_)
         
     # 다음 id의 crosswalk
     if len(remaining_global_ids) > 2:
-        next_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[1]]['crosswalkID']))
+        # next_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[1]]['crosswalkID'])) # 중복제거하면 순서정보가 없어셔서 안됨
+        next_lane_crosswalkIds = lanelets[remaining_global_ids[1]]['crosswalkID']
         for id_ in next_lane_crosswalkIds: 
             selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
-            print("Crosswalk ID for NEXT link: ", id_)
+            # print("Crosswalk ID for NEXT link: ", id_)
             
     
     #TODO: publisher 수정해서 해당하는 모든 id들 viz하도록

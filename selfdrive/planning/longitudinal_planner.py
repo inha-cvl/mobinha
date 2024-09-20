@@ -69,7 +69,7 @@ class LongitudinalPlanner:
         
         self.now_scenario = '-'
         self.next_scenario = '-'
-        self.safe_to_go = False
+        self.roi_safe_to_go = False
         self.rightTurn = False
         
         self.distance_to_stopline = 999
@@ -150,10 +150,6 @@ class LongitudinalPlanner:
 
     def goal_object_cb(self, msg):
         self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
-
-    def is_on_rightTurn(self, lmap, lane_id):
-        self.rightTurn = lmap.lanelets[lane_id]['rightTurn']
-        print("rightTurn val:", self.rightTurn)
     
     def traffic_light_postprocess(self):
         # 신호등 정보 처리
@@ -302,8 +298,8 @@ class LongitudinalPlanner:
                     
         print(f"====SCENARIO===\n- NOW: {self.now_scenario}\n- NEXT: {self.next_scenario}\n")
     
-    def set_safe_to_go(self, CS):
-        self.safe_to_go = True
+    def is_roi_safe_to_go(self, CS):
+        self.roi_safe_to_go = True
         obs_link = ''
         min_lane_dis = 999
         str1 = ''
@@ -313,7 +309,7 @@ class LongitudinalPlanner:
                 for pt in pts:
                     dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
                     if dis < 1:
-                        self.safe_to_go = False
+                        self.roi_safe_to_go = False
                         tmp = id_+" "
                         obs_link += tmp
                         break
@@ -324,7 +320,7 @@ class LongitudinalPlanner:
                     str1 = "- Min dis to roi lane(for merge): {min_lane_dis}\n"
                     if lane_dis < 3:
                         str2 = "- Min dis < 3, ego go first\n"
-                        self.safe_to_go = True
+                        self.roi_safe_to_go = True
                         break
 
                 
@@ -332,7 +328,7 @@ class LongitudinalPlanner:
                 for pt in pts:
                     dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
                     if dis < 1:
-                        self.safe_to_go = False
+                        self.roi_safe_to_go = False
                         tmp = id_+" "
                         obs_link += tmp
                         break
@@ -342,26 +338,77 @@ class LongitudinalPlanner:
                 for pt in pts:
                     dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
                     if dis < 1:
-                        self.safe_to_go = False
+                        self.roi_safe_to_go = False
                         tmp = id_+" "
                         obs_link += tmp
                         break
                     
-        print(f"====SAFE2GO====\n- Obs on roi links: {obs_link}\n"+str1+str2+f"- Safe to go: {self.safe_to_go}"+"\n")
+        print(f"====SAFE2GO====\n- Obs on roi links: {obs_link}\n"+str1+str2+f"- Safe to go: {self.roi_safe_to_go}"+"\n")
+                    
+    def compute_curvature_radius(self, path, tg_idx=15, max_radii=90, min_radii=36): # 이 인자를 건드려서 분산도, 곡률에 민감도 결정
+        curvature_radii = []
+        path_len = len(path)
+        
+        for i in range(path_len):
+            dynamic_idx = min(i, tg_idx, path_len - i - 1)
+
+            x1, y1 = path[i - dynamic_idx]
+            x2, y2 = path[i]
+            x3, y3 = path[i + dynamic_idx]
+            
+            dx1 = x2 - x1
+            dy1 = y2 - y1
+            dx2 = x3 - x2
+            dy2 = y3 - y2
+            
+            ddx = dx2 - dx1
+            ddy = dy2 - dy1
+            
+            numerator = abs(dx1 * ddy - dy1 * ddx)
+            denominator = (dx1**2 + dy1**2)**1.5
+            
+            if denominator != 0:
+                curvature = numerator / denominator
+            else:
+                curvature = 1e-3  # 직선 구간에서 곡률은 0
+            
+            radius = 1/curvature
+        
+            curvature_radii.append(min(radius, max_radii))
+            
+            min_radii = min(min_radii, radius)
+        
+        processed_radii = self.postprocess_radii(curvature_radii, max_radii, min_radii)
+        
+        return processed_radii
+
+    def postprocess_radii(self, raddis, max_radii, min_radii, min_target=10, max_target=20): # 이 인자를 건드려서 최저/최고속도 결정
+        processed_radiis = []
+        factor = (max_radii - min_radii) + 1e-3
+        for el in raddis:
+            val = min_target + (max_target - min_target) * (el-min_radii)/factor
+            processed_radiis.append(round(val, 2)/3.6) # kph -> mps
+        
+        return processed_radiis
     
-    def RIGHTTURN_module(self, CS):
+    def RIGHTTURN_module(self, CS): # not finished
+        target_v_CW = 100
         if self.crosswalk_polygon is not None:
             shapely_ego = sh.Point((CS.position.x, CS.position.y))
-            distance_to_crosswalk = shapely_ego.distance(self.crosswalk_polygon)
-            print("Distance to crosswalk:", distance_to_crosswalk)
-            if 0 < distance_to_crosswalk < distance_to_crosswalk:
-                print("goint to crosswalk")
+            ego_distance_to_crosswalk = shapely_ego.distance(self.crosswalk_polygon)
+            # print("Distance to crosswalk:", ego_distance_to_crosswalk)
             
-            # not tested 09/14
-            # if 0 < distance_to_crosswalk < max(CS.vEgo*3.6-15, 11):
-            #     target_v_CW = 10/3.6/21*(self.distance_to_stopline - 11)
-            #     if CS.vEgo > 0.02: # from Ego_topic vel.x
-            #         str1 = "- Run status: stopping at crosswalk\n"
+            if 0 < ego_distance_to_crosswalk < max(CS.vEgo*3.6-15, 11):
+                for obs in self.object_list.poses:
+                    shapely_obj = sh.Point((obs.position.x, obs.position.y))
+                    obj_distance_to_crosswalk = shapely_obj.distance(self.crosswalk_polygon)
+                    if obj_distance_to_crosswalk < 1:
+                        print("obj on CW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11")
+                        target_v_CW = -1
+                        break
+        else:
+            print("no crosswalk")
+        return target_v_CW
                 
     def STOPLINE_module(self, CS):
         str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
@@ -383,7 +430,7 @@ class LongitudinalPlanner:
                     target_v_TL = 100
                 
             else:
-                if self.safe_to_go:
+                if self.roi_safe_to_go:
                     target_v_TL = 100
                     str3 = f"- Obs status: safe, go at {target_v_TL:.2f}m/s\n"
                 else:
@@ -466,52 +513,6 @@ class LongitudinalPlanner:
         
         return target_v_ACC
 
-    def compute_curvature_radius(self, path, tg_idx=15, max_radii=90, min_radii=36): # 이 인자를 건드려서 분산도, 곡률에 민감도 결정
-        curvature_radii = []
-        path_len = len(path)
-        
-        for i in range(path_len):
-            dynamic_idx = min(i, tg_idx, path_len - i - 1)
-
-            x1, y1 = path[i - dynamic_idx]
-            x2, y2 = path[i]
-            x3, y3 = path[i + dynamic_idx]
-            
-            dx1 = x2 - x1
-            dy1 = y2 - y1
-            dx2 = x3 - x2
-            dy2 = y3 - y2
-            
-            ddx = dx2 - dx1
-            ddy = dy2 - dy1
-            
-            numerator = abs(dx1 * ddy - dy1 * ddx)
-            denominator = (dx1**2 + dy1**2)**1.5
-            
-            if denominator != 0:
-                curvature = numerator / denominator
-            else:
-                curvature = 1e-3  # 직선 구간에서 곡률은 0
-            
-            radius = 1/curvature
-        
-            curvature_radii.append(min(radius, max_radii))
-            
-            min_radii = min(min_radii, radius)
-        
-        processed_radii = self.postprocess_radii(curvature_radii, max_radii, min_radii)
-        
-        return processed_radii
-
-    def postprocess_radii(self, raddis, max_radii, min_radii, min_target=10, max_target=20): # 이 인자를 건드려서 최저/최고속도 결정
-        processed_radiis = []
-        factor = (max_radii - min_radii) + 1e-3
-        for el in raddis:
-            val = min_target + (max_target - min_target) * (el-min_radii)/factor
-            processed_radiis.append(round(val, 2)/3.6) # kph -> mps
-        
-        return processed_radiis
-    
     def CURVATURE_module(self, CS, local_path):
         local_point = KDTree(local_path)
         local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
@@ -524,7 +525,7 @@ class LongitudinalPlanner:
         target_v_MG = 999
         str1 = "" 
         if self.now_scenario == "MERGE":
-            if self.safe_to_go:
+            if self.roi_safe_to_go:
                 target_v_MG = 100
                 str1 = f"- Obs status: safe, go at {target_v_MG:.2f}m/s\n"
             else:
@@ -557,7 +558,7 @@ class LongitudinalPlanner:
                     self.set_scenario_and_roi(lmap, my_lane_id, global_ids)
                     
                     # set safe to go
-                    self.set_safe_to_go(CS)
+                    self.is_roi_safe_to_go(CS)
                     
                     # get traffic_light type
                     self.traffic_light_postprocess()
@@ -565,12 +566,9 @@ class LongitudinalPlanner:
                     # get distance to stopline
                     self.set_distance_to_stopline(CS)
                     
-                    # check if my lane is right_turn
-                    # self.is_on_rightTurn(lmap, my_lane_id)
-                    
                     # get target_v
                     target_v_list = []
-                    # target_v_list.append(self.RIGHTTURN_module(CS)) # not tested 09/14
+                    target_v_list.append(self.RIGHTTURN_module(CS)) 
                     target_v_list.append(self.STOPLINE_module(CS))
                     target_v_list.append(self.MERGE_module())
                     target_v_list.append(self.ACC_module(CS, local_path))

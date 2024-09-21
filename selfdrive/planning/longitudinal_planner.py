@@ -221,7 +221,7 @@ class LongitudinalPlanner:
         
         return roi_ids_waypoints
     
-    def get_intsection_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc suc의 pre
+    def get_intsection_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc^2의 pre
         roi_ids_waypoints = []
         suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
         pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
@@ -235,7 +235,7 @@ class LongitudinalPlanner:
         
         return roi_ids_waypoints
     
-    def get_roundabout_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc suc의 pre + pre^2 + pre^3
+    def get_roundabout_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc^2의 pre + pre^2 + pre^3
         roi_ids_waypoints = []
         
         suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
@@ -398,16 +398,20 @@ class LongitudinalPlanner:
             ego_distance_to_crosswalk = shapely_ego.distance(self.crosswalk_polygon)
             # print("Distance to crosswalk:", ego_distance_to_crosswalk)
             
-            if 0 < ego_distance_to_crosswalk < max(CS.vEgo*3.6-15, 11):
-                for obs in self.object_list.poses:
-                    shapely_obj = sh.Point((obs.position.x, obs.position.y))
-                    obj_distance_to_crosswalk = shapely_obj.distance(self.crosswalk_polygon)
-                    if obj_distance_to_crosswalk < 1:
+            for obs in self.object_list.poses:
+                shapely_obj = sh.Point((obs.position.x, obs.position.y))
+                obj_distance_to_crosswalk = shapely_obj.distance(self.crosswalk_polygon)
+                if obj_distance_to_crosswalk < 1:
+                    if 0 < ego_distance_to_crosswalk < max(CS.vEgo*3.6-15, 11):
                         print("obj on CW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11")
-                        target_v_CW = -1
+                        target_v_CW = 10/3.6/21*(self.distance_to_stopline - 11)
                         break
+                    else:
+                        print("there is object on crosswalk, but still far!")
+                
         else:
             print("no crosswalk")
+            
         return target_v_CW
                 
     def STOPLINE_module(self, CS):

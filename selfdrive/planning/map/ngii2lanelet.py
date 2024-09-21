@@ -266,8 +266,8 @@ class NGII2LANELET:
             lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinkID)
             lanelets[new_id]['adjacentRight'] = ori2new.get(a2_link.R_LinkID)
             # else:
-                # lanelets[new_id]['adjacentLeft'] = None
-                # lanelets[new_id]['adjacentRight'] = None
+            lanelets[new_id]['adjacentLeft'] = None
+            lanelets[new_id]['adjacentRight'] = None
 
             lanelets[new_id]['predecessor'] = to_node[a2_link.FromNodeID] if to_node.get(a2_link.FromNodeID) is not None else []
             lanelets[new_id]['successor'] = from_node[a2_link.ToNodeID] if from_node.get(a2_link.ToNodeID) is not None else []

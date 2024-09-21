@@ -43,21 +43,32 @@ class SimulatorTransceiver:
         self.accel_brake = 0.0
         self.gear = 0
 
-        #self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
+        # self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
+
+        # songdo-campus 
+        # self.ego = Vehicle(122.889, 134.891, math.radians(-30.0), 0.0, 2.65)
+
         # ans bakery
         # self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
-        #kcity highway 
+
+        # kcity highway 
         # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)
+
         #kcity right turn urban
         self.ego = Vehicle(465.651, 1615.847, -1.575, 0.0, 2.65)
-        #songdo-site
+
+        # songdo-site
         # self.ego = Vehicle(-3800.520, 3840.930, math.radians(180), 0.0, 2.65)
-        #right turn course
+
+        # songdo right turn course
         # self.ego = Vehicle(-290.920, -2.882, 0.886, 0.0, 2.65)
+
         # # k-city-xingyou scenario start
         # self.ego = Vehicle(351.149, 1096.453, math.radians(90), 0.0, 2.65)
+
         ### k-city -xingyou -curve test
         # self.ego = Vehicle(474.480, 1567.810, math.radians(90), 0.0, 2.65) 
+
         ### k-city -xingyou -city road test
         # self.ego = Vehicle(475.53165668397725, 1122.5222162505208, math.radians(90), 0.0, 2.65) 
 

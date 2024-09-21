@@ -460,8 +460,6 @@ class LongitudinalPlanner:
                 if (CS.vEgo * MPS_TO_KPH) < 1 and self.target_v == 0:
                     self.target_v = 0
                 
-
-
             else:
                 self.target_v = CS.vEgo * MPS_TO_KPH
 
@@ -471,5 +469,6 @@ class LongitudinalPlanner:
                     lgp = 2
             else:
                 lgp = 1
+        
         return lgp
         

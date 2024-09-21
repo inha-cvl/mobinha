@@ -267,6 +267,7 @@ class MainWindow(QMainWindow, form_class):
         self.initialize_button.clicked.connect(self.initialize_button_clicked)
         self.start_button.clicked.connect(self.start_button_clicked)
         self.pause_button.clicked.connect(self.pause_button_clicked)
+        self.reset_button.clicked.connect(self.reset_button_clicked)
         self.over_button.clicked.connect(self.over_button_clicked)
         self.car_name_combo_box.currentIndexChanged.connect(self.car_name_changed)
         self.map_name_combo_box.currentIndexChanged.connect(self.map_name_changed)
@@ -665,6 +666,13 @@ class MainWindow(QMainWindow, form_class):
             self.pause_button.setDisabled(True)
             self.start_button.setEnabled(True)
             self.initialize_button.setEnabled(True)
+            self.scenario1_button.setEnabled(True)
+            self.scenario2_button.setEnabled(True)
+            self.scenario3_button.setEnabled(True)
+            self.scenario4_button.setEnabled(True)
+            self.scenario5_button.setEnabled(True)
+            self.scenario6_button.setEnabled(True)
+            self.scenario7_button.setEnabled(True)
             self.media_thread.planning_state = 2
 
         elif msg.data[0] == 3:
@@ -674,8 +682,8 @@ class MainWindow(QMainWindow, form_class):
             self.scenario3_button.setEnabled(True)
             self.scenario4_button.setEnabled(True)
             self.scenario5_button.setEnabled(True)
-            self.scenario6_button.setDisabled(True)
-            self.scenario7_button.setDisabled(True)
+            self.scenario6_button.setEnabled(True)
+            self.scenario7_button.setEnabled(True)
             self.media_thread.planning_state = 3
 
         elif msg.data[0] == 4:
@@ -716,6 +724,12 @@ class MainWindow(QMainWindow, form_class):
         self.scenario6_button.setDisabled(True)
         self.scenario7_button.setDisabled(True)
         self.state = 'INITIALIZE'
+    
+    def reset_button_clicked(self):
+        self.status_label.setText("Reset")
+        self.goal_update = True
+        self.scenario = 0
+        self.state = 'RESET'
 
     def over_button_clicked(self):
         self.status_label.setText("Over")

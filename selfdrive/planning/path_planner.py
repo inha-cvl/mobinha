@@ -101,11 +101,12 @@ class PathPlanner:
         self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
         self.schoolzone_state_pub = rospy.Publisher('/mobinha/planning/schoolzone', Int16MultiArray, queue_size=5)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
-        map_name = rospy.get_param('map_name', 'None')
-        if map_name == 'songdo':
+        self.map_name = rospy.get_param('map_name', 'None')
+        if self.map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
         else:
             lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
+
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
         rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
@@ -163,7 +164,7 @@ class PathPlanner:
                     e_id, e_idx = ego_lanelets
                 else:
                     rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
-                    self.get_goal = 0
+                    self.get_goal = False
                     self.state = 'WAITING'
                     return None, None, None
 
@@ -173,7 +174,7 @@ class PathPlanner:
 
                 else:
                     rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
-                    self.get_goal = 0
+                    self.get_goal = False
                     self.state = 'WAITING'
                     return None, None, None
 
@@ -190,7 +191,7 @@ class PathPlanner:
                     break
                 else:
                     rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
-                    self.get_goal = 0
+                    self.get_goal = False
                     self.state = 'WAITING'
                     return None, None
 
@@ -252,7 +253,7 @@ class PathPlanner:
 
         if self.state == 'WAITING': # pp e
             time.sleep(1)
-            if self.get_goal != 0:
+            if self.get_goal != False:
                 self.state = 'READY'
             pp = 3
 
@@ -273,14 +274,14 @@ class PathPlanner:
             if non_intp_path is None or non_intp_id is None:
                 rospy.logerr('An error occurred, unable to process path. Returning to WAITING state.')
                 self.state = 'WAITING'
-                self.get_goal = 0
+                self.get_goal = False
                 pp = 3
                 return pp, None
 
             self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids)
             if non_intp_path is not None:
                 self.state = 'MOVE'
-
+                
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
                 global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
@@ -667,19 +668,19 @@ class PathPlanner:
                 # schoolzone_viz
                 ### here
                 position = (CS.position.x, CS.position.y)
-                schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, CS)
-                # print(f"my node number is : {self.l_idx}") 
-                # print("my position is : ", CS.position.x, CS.position.y)
-                
-                
-                # print(schoolzone_points)
-                ## here
-                schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
-                self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
-                
-                schoolzone = Int16MultiArray()
-                schoolzone.data = [int(schoolzone_info['state']), int(schoolzone_info['remaining_distance'])]
-                self.schoolzone_state_pub.publish(schoolzone)
+                if self.map_name == "KCity":
+                    schoolzone_points, schoolzone_info = get_schoolzone_points(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids, local_point, CS)
+                    # print(f"my node number is : {self.l_idx}") 
+                    # print("my position is : ", CS.position.x, CS.position.y)
+                    
+                    # print(schoolzone_points)
+                    ## here
+                    schoolzone_polygonmarker = schoolzoneViz(schoolzone_points)
+                    self.schoolzone_polygon_pub.publish(schoolzone_polygonmarker)
+                    
+                    schoolzone = Int16MultiArray()
+                    schoolzone.data = [int(schoolzone_info['state']), int(schoolzone_info['remaining_distance'])]
+                    self.schoolzone_state_pub.publish(schoolzone)
 
 
                 if is_obstacle_inside_polygon(self.lmap.surfacemarks, crosswalk_ids, self.around_obstacle):

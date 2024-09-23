@@ -137,9 +137,13 @@ class GPSPlot:
         
         self.lat = 0
         self.lon = 0
+        self.alt = 0
+        
 
         self.init_lat = 0
         self.init_lon = 0
+        self.init_alt = 0
+        
         self.init_yaw = 10000
 
         self.x = 0
@@ -156,6 +160,11 @@ class GPSPlot:
             self.lon = msg.longitude
         else:
             self.init_lon = msg.longitude
+
+        if self.init_alt != 0:
+            self.lon = msg.height
+        else:
+            self.init_alt = msg.height
             
         if self.init_yaw != 10000:
             self.yaw = 90 - msg.azimuth if (msg.azimuth >= -90 and msg.azimuth <= 180) else -270 - msg.azimuth
@@ -164,7 +173,7 @@ class GPSPlot:
 
     def gps_plot(self):
         while True:
-            self.x, self.y, _ = pymap3d.geodetic2enu(self.lat, self.lon, 0, self.init_lat, self.init_lon, 0)
+            self.x, self.y, _ = pymap3d.geodetic2enu(self.lat, self.lon, self.alt, self.init_lat, self.init_lon, self.init_alt)
             self.r_x = math.cos(math.radians(self.init_yaw))*self.x - math.sin(math.radians(self.init_yaw))*self.y
             self.r_y = math.sin(math.radians(self.init_yaw))*self.x + math.cos(math.radians(self.init_yaw))*self.y
         # plt.scatter(self.x, self.y, color = 'blue', s=10, alpha=0.5)

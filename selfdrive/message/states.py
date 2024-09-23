@@ -77,7 +77,9 @@ class StateMaster:
         self.longitude = msg.longitude
         self.altitude = msg.altitude
         self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+            # msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+            msg.latitude, msg.longitude, msg.altitude, self.base_lla[0], self.base_lla[1], self.base_lla[2])
+            
 
     def novatel_cb(self, msg):
         self.timestamp = msg.header.stamp
@@ -85,7 +87,9 @@ class StateMaster:
         self.longitude = msg.longitude
         self.altitude = msg.height
         self.x, self.y, self.z = pymap3d.geodetic2enu(
-            msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+            # msg.latitude, msg.longitude, 0, self.base_lla[0], self.base_lla[1], 0)
+            msg.latitude, msg.longitude, msg.height, self.base_lla[0], self.base_lla[1], self.base_lla[2])
+
         self.roll = msg.roll
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth

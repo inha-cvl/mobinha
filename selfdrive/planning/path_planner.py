@@ -4,8 +4,10 @@ import rospy
 import time
 from scipy.spatial import KDTree
 from std_msgs.msg import Int8, Float32, Float32MultiArray, Int8MultiArray, String, Int16MultiArray
-from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Point, Point32, Polygon
 from visualization_msgs.msg import Marker
+from morai_msgs.msg import ObjectStatusList
+
 
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
@@ -27,7 +29,9 @@ class PathPlanner:
 
         self.temp_pt = None
         self.global_path = None
-        self.global_id = None
+        self.global_ids = None
+        self.splited_global_ids = None
+        
         self.erase_global_point = None
         self.non_intp_path = None
         self.non_intp_id = None
@@ -35,7 +39,6 @@ class PathPlanner:
         self.local_id = None
         self.temp_global_idx = 0
         self.local_path_theta = None
-        self.f = None
         self.prev_yaw = None
         # self.global_yaw, self.global_k = [], []
 
@@ -64,6 +67,8 @@ class PathPlanner:
         self.obstacle_detect_timer = 0
         self.nearest_obstacle_distance = -1
 
+        self.splited_id = None
+        
         self.tf_ego2fl = None # minchan
         self.tf_ego2fr = None
         self.tf_ego2rl = None
@@ -79,6 +84,9 @@ class PathPlanner:
         self.pub_goal_object = rospy.Publisher('/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
+        self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
+        self.pub_crosswalk_pos = rospy.Publisher('/mobinha/planning/crosswalk_pos', Polygon, queue_size=1)
+        
         self.pub_local_id = rospy.Publisher('/mobinha/planning/local_id', String, queue_size=1)
         ### 2024.05.23 test
         self.pub_splited_local_id = rospy.Publisher('/mobinha/planning/splited_localid', String, queue_size=1)
@@ -97,10 +105,14 @@ class PathPlanner:
         self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', Marker, queue_size=10)
         self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
+        self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', MarkerArray, queue_size=10)
+        
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
         self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
         self.schoolzone_state_pub = rospy.Publisher('/mobinha/planning/schoolzone', Int16MultiArray, queue_size=5)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
+        self.schoolzone_state_pub = rospy.Publisher('/schoolzone', Float32MultiArray, queue_size=5)
+        
         self.map_name = rospy.get_param('map_name', 'None')
         if self.map_name == 'songdo':
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
@@ -116,6 +128,7 @@ class PathPlanner:
         rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
         rospy.Subscriber('/mobinha/perception/around_obstacle', PoseArray, self.around_obstacle_cb)
         rospy.Subscriber('/turnsignal', Int8, self.blinker_cb)
+        self.goal_pts = []
 
     def blinker_cb(self, msg):
         self.turnsignal = msg.data
@@ -128,8 +141,17 @@ class PathPlanner:
         scenario_goal = []
         for pose in msg.poses:
             scenario_goal.append((pose.position.x, pose.position.y))
-        self.goal_pts = scenario_goal
-        self.get_goal = True
+        if len(self.goal_pts) != 0:
+            if self.goal_pts != scenario_goal:
+                self.goal_pts = scenario_goal
+                self.get_goal = True
+                self.state = 'READY'
+        else:
+            self.goal_pts = scenario_goal
+            self.get_goal = True
+        
+        # self.goal_pts = scenario_goal
+        # self.get_goal = True
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
@@ -284,9 +306,15 @@ class PathPlanner:
                 
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
                 global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
-                global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
+                global_ids = id_interpolate(non_intp_path, global_path, non_intp_id)
+                
                 self.global_path = global_path
-                self.global_id = global_id
+                self.global_ids = global_ids
+                self.splited_global_ids = []
+                for id in global_ids:
+                    val = id.split("_")[0]
+                    if val not in self.splited_global_ids:
+                        self.splited_global_ids.append(val)
                 self.non_intp_path = non_intp_path
                 self.non_intp_id = non_intp_id
                 self.head_lane_ids = head_lane_ids
@@ -304,7 +332,7 @@ class PathPlanner:
                     self.next_head_lane_id = None
                     self.now_head_lane_id = None
                 self.erase_global_path = global_path
-                self.erase_global_id = global_id
+                self.erase_global_id = global_ids
                 self.erase_global_yaw = global_yaw
                 self.erase_global_k = global_k
                 global_path_viz = FinalPathViz(self.global_path)
@@ -321,7 +349,7 @@ class PathPlanner:
 
             s = self.temp_global_idx * self.precision  # m
 
-            now_lane_id = self.global_id[idx]
+            now_lane_id = self.global_ids[idx]
             splited_id = now_lane_id.split('_')[0]
 
             if splited_id == self.next_head_lane_id:
@@ -393,7 +421,7 @@ class PathPlanner:
 
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
-                stopline_s, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
+                stopline_idx, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
 
                 ## Lane Change Local Signal Ver.
                 if self.turnsignal != 0 and not self.turnsignal_state:
@@ -602,7 +630,7 @@ class PathPlanner:
                 pose = Pose()
                 pose.position.x = int(splited_local_id)
                 pose.position.y = get_direction_number(self.lmap.lanelets, splited_local_id, forward_direction)
-                pose.position.z = stopline_s
+                pose.position.z = stopline_idx
                 pose.orientation.x = forward_curvature
                 pose.orientation.y = self.l_idx
                 pose.orientation.z = lane_change_point
@@ -611,7 +639,26 @@ class PathPlanner:
 
                 local_path_viz = LocalPathViz(self.local_path)
                 self.pub_local_path.publish(local_path_viz)
-
+                # Publish current link's stopline position
+                if len(stopline_wps)>0:
+                    pose_array_msg = PoseArray()
+                    
+                    pose1 = Pose()
+                    pose1.position.x = stopline_wps[0][0]
+                    pose1.position.y = stopline_wps[0][1]
+                    pose1.position.z = 0
+                    
+                    pose2 = Pose()
+                    pose2.position.x = stopline_wps[-1][0]
+                    pose2.position.y = stopline_wps[-1][1]
+                    pose2.position.z = 0
+                    
+                    pose_array_msg.poses.append(pose1)
+                    pose_array_msg.poses.append(pose2)
+                    
+                    self.pub_stopline_pos.publish(pose_array_msg)
+                else:
+                    print("[Path planner.py] No stopline detected")
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):
                     pose = Pose()
@@ -660,9 +707,38 @@ class PathPlanner:
                 self.pub_lane_departure_warning.publish(warn)
 
                 # crosswalkViz
-                crosswalk_ids, crosswalkPoints = get_crosswalk_points(self.lmap.lanelets, self.lmap.surfacemarks, self.now_head_lane_id, self.head_lane_ids)
-                crosswalkPolygonmarker = CrosswalkViz(crosswalkPoints)
-                self.crosswalkPolygon_pub.publish(crosswalkPolygonmarker)
+                tree = KDTree(self.lmap.lanelets[self.splited_id]['waypoints'])
+                cur_id_idx = tree.query((CS.position.x, CS.position.y), 1)[1]
+                global_id_idx = self.splited_global_ids.index(self.now_head_lane_id) #now_head_lane_id는 역행하지 않음
+                
+                
+                remaining_global_ids = self.splited_global_ids[global_id_idx:] # 완
+                crosswalk_ids_points = get_crosswalk_ids_points(self.lmap.lanelets, self.lmap.surfacemarks, remaining_global_ids, cur_id_idx) # self.head_lane_ids는 정렬 x
+                merged_crosswalk_ids_points = merge_polygons(crosswalk_ids_points)
+                crosswalkPolygonMarkers = CrosswalkViz(merged_crosswalk_ids_points)
+                self.crosswalkPolygon_pub.publish(crosswalkPolygonMarkers)
+                
+                crosswalk_pos = Polygon()
+                if len(merged_crosswalk_ids_points) > 0:
+                    min_distance = float('inf')
+                    nearest_crosswalk = merged_crosswalk_ids_points[0]
+                    
+                    for crosswalk in merged_crosswalk_ids_points:
+                        first_point = crosswalk[1][0]
+                        distance = euc_distance(first_point, (CS.position.x, CS.position.y))
+                        # distance = math.sqrt((first_point[0]- CS.position.x)**2 + (first_point[1] - CS.position.y)**2)
+
+                        if distance < min_distance:
+                            min_distance = distance
+                            nearest_crosswalk = crosswalk
+                
+                    for wp in nearest_crosswalk[1]:
+                        pt = Point32()
+                        pt.x = wp[0]
+                        pt.y = wp[1]
+                        crosswalk_pos.points.append(pt)
+                
+                self.pub_crosswalk_pos.publish(crosswalk_pos)
 
 
                 # schoolzone_viz
@@ -699,4 +775,4 @@ class PathPlanner:
         elif self.state == 'ARRIVED':
             pp = 2
 
-        return pp, self.local_path
+        return pp, self.splited_id, self.splited_global_ids, self.local_path, self.lmap, self.tmap

@@ -68,7 +68,9 @@ if map == 'songdo':
     base_lla = (37.3888319, 126.6428739, 7.369)
     rotation_angle = 0
 elif map == 'kcity':
-    base_lla = (37.2292221592864, 126.76912499027308, 29.18400001525879)
+    # base_lla = (37.2292221592864, 126.76912499027308, 29.18400001525879)
+    base_lla = (37.229324231428656, 126.77329705474801, 30.272749606132507)
+    
     rotation_angle = 0
 
 analyzer = PathAnalysis(map, base_lla, rotation_angle)

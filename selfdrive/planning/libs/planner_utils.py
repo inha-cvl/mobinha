@@ -11,6 +11,9 @@ import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 from selfdrive.visualize.rviz_utils import *
 
+import shapely.geometry as sh
+
+
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
@@ -24,7 +27,7 @@ def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
 
-def lanelet_matching(tile, tile_size, t_pt):
+def lanelet_matching(tiles, tile_size, t_pt):
     row = int(t_pt[0] // tile_size)
     col = int(t_pt[1] // tile_size)
 
@@ -33,7 +36,7 @@ def lanelet_matching(tile, tile_size, t_pt):
 
     for i in range(-1, 2):
         for j in range(-1, 2):
-            selected_tile = tile.get((row+i, col+j))
+            selected_tile = tiles.get((row+i, col+j))
             if selected_tile is not None:
                 for id_, data in selected_tile.items():
                     for idx, pt in enumerate(data['waypoints']):
@@ -296,6 +299,7 @@ def id_interpolate(non_intp, intp, non_intp_id):
 
         n_id = non_intp_id[non_intp_idx]
         itp_ids.append(n_id)
+        
     return itp_ids
 
 
@@ -381,6 +385,7 @@ def node_to_waypoints2(lanelet, shortest_path):
             for i in range(len(alpha_path)):
                 final_id_path.append(str("{}_{}".format(id, i)))
             final_path.extend(alpha_path)
+            
     return final_path, final_id_path
 
 
@@ -475,6 +480,35 @@ def max_v_by_curvature(forward_curvature, ref_v, min_v, cur_v):
         return_v = return_v if return_v > min_v else min_v
 
     return return_v * KPH_TO_MPS
+
+def calculate_v_by_curvature(lane_information, ref_v, min_v, cur_v): # info, kph, kph, mps
+    #lane information -> [1]:forward direction, [3]:curvature
+    max_curvature = 600
+    min_curvature = 0
+    if lane_information[3] < min_curvature:
+        lane_information[3] = min_curvature
+    elif lane_information[3] > max_curvature:
+        lane_information[3] = max_curvature
+    
+    normalized_curvature = (lane_information[3] - min_curvature) / (max_curvature - min_curvature)
+
+    decel = (ref_v - min_v) * (1 - normalized_curvature)
+    return_v = ref_v - decel
+    # print("return-v:", return_v, "cur_v:",cur_v)
+    if lane_information[3] < max_curvature:
+        if cur_v - return_v*KPH_TO_MPS > 5/HZ: # smooth deceleration
+            return_v = cur_v*MPS_TO_KPH - (5/HZ*MPS_TO_KPH)
+            # print("decel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+        elif cur_v*MPS_TO_KPH > min_v and return_v*KPH_TO_MPS - cur_v > 5/HZ: # smooth acceleration
+            return_v = cur_v*MPS_TO_KPH + (5/HZ*MPS_TO_KPH)
+            # print("accel return-v:", return_v, "cur_v:",cur_v*MPS_TO_KPH)
+    if return_v > ref_v:
+        return_v = ref_v
+
+    # if lane_information[1]==1:
+    #     return_v = min(return_v, max(return_v, 25))    
+    return return_v*KPH_TO_MPS
+
 
 def get_a_b_for_curv(min, ignore):
     # a = -90 / (min-ignore)
@@ -1051,18 +1085,30 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 
     return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
 
-def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
-    polygon_points = []
-    if len(lanelets[nowID]['crosswalkID']) > 0:
-        lanelet_id = nowID
-    else:
-        for lanelet_id in head_lane_ids:
-            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
-                break
-    crosswalk_ids = lanelets[lanelet_id]['crosswalkID']
-    for s_id in lanelets[lanelet_id]['crosswalkID']:
-        polygon_points.extend(surfacemarks[s_id])
-    return crosswalk_ids, polygon_points
+def get_crosswalk_ids_points(lanelets, surfacemarks, remaining_global_ids, cur_id_idx): 
+    selected_crosswalk_ids_points = []
+    roi_waypoints = lanelets[remaining_global_ids[0]]['waypoints'][cur_id_idx:]
+    if len(roi_waypoints) > 1: # string으로 만드려면 2개이상 점 필요
+        roi_string = sh.LineString(roi_waypoints)
+        
+        # 현재 id의 crosswalkID
+        # my_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[0]]['crosswalkID'])) # 중복제거하면 순서정보가 없어셔서 안됨
+        my_lane_crosswalkIds = lanelets[remaining_global_ids[0]]['crosswalkID']
+        for id_ in my_lane_crosswalkIds: 
+            crosswalk_polygon = sh.Polygon(surfacemarks[id_])
+            if roi_string.intersects(crosswalk_polygon):
+                selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
+                # print("Crosswalk ID for MY link: ", id_)
+        
+    # 다음 id의 crosswalk
+    if len(remaining_global_ids) > 2:
+        # next_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[1]]['crosswalkID'])) # 중복제거하면 순서정보가 없어셔서 안됨
+        next_lane_crosswalkIds = lanelets[remaining_global_ids[1]]['crosswalkID']
+        for id_ in next_lane_crosswalkIds: 
+            selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
+            # print("Crosswalk ID for NEXT link: ", id_)
+        
+    return selected_crosswalk_ids_points
 # import rospy
 # from visualization_msgs.msg import Marker
 
@@ -1103,8 +1149,8 @@ def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
                     xinters = (y - y1) * (x2 - x1) / (y2 - y1) + x1
                 if x1 == x2 or x <= xinters:
                     inside = not inside
-
         return inside
+    
     for obs in obstacle_list:
         point = (obs[3], obs[4])  # Assuming obs[3] is x and obs[4] is y
         for s_id in crosswalk_ids:

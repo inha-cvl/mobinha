@@ -6,9 +6,13 @@ class MapParam(NamedTuple):
     tileSize: float = 5.0
     cutDist: float = 15.0
     precision: float = 1.0
-    baseLatitude: float = 37.39657805498484
-    baseLongitude: float = 126.6321430873685
-    baseAltitude: float = 7.369
+    # baseLatitude: float = 37.39657805498484
+    # baseLongitude: float = 126.6321430873685
+    # baseAltitude: float = 7.369
+    #Kcity MORAI
+    baseLatitude: float = 37.229324231428656
+    baseLongitude: float = 126.77329705474801
+    baseAltitude: float = 30.272749606132507
 
 
 class STParam(NamedTuple):

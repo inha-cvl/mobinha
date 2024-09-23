@@ -51,8 +51,8 @@ class Planning:
             elif self.state == 'START':
                 if self.timer(0.1):
                     self.sm.update()
-                    pp, local_path = self.path_planner.run(self.sm)
-                    lgp = self.longitudinal_planner.run(self.sm, pp, local_path)
+                    pp, my_lane_id, global_ids, local_path, lmap, tmap = self.path_planner.run(self.sm)
+                    lgp = self.longitudinal_planner.run(self.sm, lmap, tmap, my_lane_id, global_ids, pp, local_path) #sm, lmap, pp=0, local_path=None
 
                     array = Int16MultiArray()
                     array.data = [pp, lgp]

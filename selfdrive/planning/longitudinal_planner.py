@@ -23,7 +23,7 @@ class LongitudinalPlanner:
         self.can_go_timer_start = None
         self.can_go_stored = False
         self.lane_information = None
-        self.goal_object = None
+        # self.goal_object = None
         self.M_TO_IDX = 1/CP.mapParam.precision
         self.IDX_TO_M = CP.mapParam.precision
         
@@ -37,7 +37,7 @@ class LongitudinalPlanner:
         self.follow_error = 0 # for what ?
 
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
-        rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
+        # rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
         self.pub_acc_plot = rospy.Publisher('/mobinha/acc_plot', Pose, queue_size=1)
@@ -75,7 +75,7 @@ class LongitudinalPlanner:
         self.distance_to_stopline = 999
         
         
-
+    # callback from path_planner
     def stopline_cb(self, msg):
         self.stopline_point1 = [msg.poses[0].position.x, msg.poses[0].position.y]
         self.stopline_point2 = [msg.poses[1].position.x, msg.poses[1].position.y]
@@ -91,7 +91,9 @@ class LongitudinalPlanner:
             self.crosswalk_polygon = sh.Polygon(points)
         else:
             self.crosswalk_polygon = None
-        
+    # ------------------------------------------
+    
+    # callback from MORAI   
     def transform_point(self, morai_point):
         x, y = morai_point
         cos_theta, sin_theta, tx, ty = (0.9997685974969953, 0.023521693953422407, 0.08183366200224204, -0.13516831435460583)
@@ -144,23 +146,28 @@ class LongitudinalPlanner:
             pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         self.object_list = object_list
+    # ------------------------------------------
 
+
+    # perception utils
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z, pose.orientation.x, pose.orientation.y)for pose in msg.poses]
 
-    def goal_object_cb(self, msg):
-        self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
+    # def goal_object_cb(self, msg):
+    #     self.goal_object = (msg.position.x, msg.position.y, msg.position.z)
     
-    def traffic_light_postprocess(self):
-        # 신호등 정보 처리
+    def traffic_light_postprocess(self): # 신호등 정보 후처리
         if not None in [self.trafficLight_header, self.trafficLight_last_header]:
             last_header_time = self.trafficLight_last_header.stamp.secs + 1e-9*self.trafficLight_last_header.stamp.nsecs
             now_header_time = self.trafficLight_header.stamp.secs + 1e-9*self.trafficLight_header.stamp.nsecs
             if last_header_time == now_header_time:
                 self.trafficLight_type = None
             self.trafficLight_last_header = self.trafficLight_header
+    # ------------------------------------------
 
-    def stopline_timer(self, sec):   
+
+    # stopline module utils
+    def stopline_timer(self, sec):
         time_to_go = sec - ((rospy.Time.now() - self.stopline_no_traffic_light_timer).to_sec())
         if (rospy.Time.now() - self.stopline_no_traffic_light_timer).to_sec() >= sec:
             result = True
@@ -189,7 +196,10 @@ class LongitudinalPlanner:
                 distance_to_stopline = -distance_to_stopline
             
             self.distance_to_stopline = distance_to_stopline
+    # ------------------------------------------
     
+    
+    # scenario utils
     def is_next_lane_converged(self, lmap, lane_id, global_ids):
         suc_path_id = global_ids[global_ids.index(lane_id) + 1]
         if len(lmap.lanelets[suc_path_id]['predecessor'])>1:
@@ -206,58 +216,9 @@ class LongitudinalPlanner:
             if adjacentLeft_id in pre_of_suc_id_list or adjacentRight_id in pre_of_suc_id_list:
                 return True
         return False
+    # ------------------------------------------
 
-    def get_merge_roi(self, lmap, lane_id): # adjacentLeft + adjacentRight
-        roi_ids_waypoints = []
-        adjacentLeft_id = lmap.lanelets[lane_id]['adjacentLeft'] 
-        adjacentRight_id = lmap.lanelets[lane_id]['adjacentRight']
-        if adjacentLeft_id is not None:
-            waypoints_length = len(lmap.lanelets[adjacentLeft_id]['waypoints'])
-            roi_ids_waypoints.append((adjacentLeft_id, lmap.lanelets[adjacentLeft_id]['waypoints'][max(waypoints_length-30, 0):waypoints_length-1])) # precision: 1
 
-        if adjacentRight_id is not None:
-            waypoints_length = len(lmap.lanelets[adjacentRight_id]['waypoints'])
-            roi_ids_waypoints.append((adjacentRight_id, lmap.lanelets[adjacentRight_id]['waypoints'][max(waypoints_length-30, 0):waypoints_length-1])) # precision: 1
-        
-        return roi_ids_waypoints
-    
-    def get_intsection_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc^2의 pre
-        roi_ids_waypoints = []
-        suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
-        pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
-        
-        next_lane_id = global_ids[global_ids.index(lane_id) + 1]
-        if next_lane_id in pre_suc_suc_id_list:
-            pre_suc_suc_id_list.remove(next_lane_id)
-        for id_ in pre_suc_suc_id_list:
-            waypoints_length = len(lmap.lanelets[id_]['waypoints'])
-            roi_ids_waypoints.append((id_, lmap.lanelets[id_]['waypoints'][max(waypoints_length-13, 0):waypoints_length-1])) # precision: 1, so roi 5~50m
-        
-        return roi_ids_waypoints
-    
-    def get_roundabout_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc^2의 pre + pre^2 + pre^3
-        roi_ids_waypoints = []
-        
-        suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
-        pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
-        next_lane_id = global_ids[global_ids.index(lane_id) + 1]
-        if next_lane_id in pre_suc_suc_id_list:
-            pre_suc_suc_id_list.remove(next_lane_id)
-        
-        pre_pre_suc_suc_id_list = []
-        for id_ in pre_suc_suc_id_list:
-            pre_pre_suc_suc_id_list += lmap.lanelets[id_]['predecessor'].copy()
-
-        pre_pre_pre_suc_suc_id_list = []
-        for id_ in pre_pre_suc_suc_id_list:
-            pre_pre_pre_suc_suc_id_list += lmap.lanelets[id_]['predecessor'].copy()
-        
-        for id_list in [pre_suc_suc_id_list, pre_pre_suc_suc_id_list, pre_pre_pre_suc_suc_id_list]:
-            for id_ in id_list:
-                roi_ids_waypoints.append((id_, lmap.lanelets[id_]['waypoints'])) # precision: 1
-        
-        return roi_ids_waypoints
-    
     def set_scenario_and_roi(self, lmap, my_lane_id, global_ids): # Roundabout, Merge, Intersection을 남은 path에 따라 결정
         # safety check ROI 설정
         self.merge_roi_ids_waypoints = []
@@ -298,13 +259,132 @@ class LongitudinalPlanner:
                     
         print(f"====SCENARIO===\n- NOW: {self.now_scenario}\n- NEXT: {self.next_scenario}\n")
     
-    def is_roi_safe_to_go(self, CS):
+    # merge module utils
+    def get_merge_roi(self, lmap, lane_id): # adjacentLeft + adjacentRight
+        roi_ids_waypoints = []
+        adjacentLeft_id = lmap.lanelets[lane_id]['adjacentLeft'] 
+        adjacentRight_id = lmap.lanelets[lane_id]['adjacentRight']
+        if adjacentLeft_id is not None:
+            waypoints_length = len(lmap.lanelets[adjacentLeft_id]['waypoints'])
+            roi_ids_waypoints.append((adjacentLeft_id, lmap.lanelets[adjacentLeft_id]['waypoints'][max(waypoints_length-30, 0):waypoints_length-1])) # precision: 1
+
+        if adjacentRight_id is not None:
+            waypoints_length = len(lmap.lanelets[adjacentRight_id]['waypoints'])
+            roi_ids_waypoints.append((adjacentRight_id, lmap.lanelets[adjacentRight_id]['waypoints'][max(waypoints_length-30, 0):waypoints_length-1])) # precision: 1
+        
+        return roi_ids_waypoints
+    
+    def merge_safe_to_go(self, CS):
+        safe_to_go = True
+        obs_link = ''
+        min_lane_dis = 999
+        for obs in self.object_list.poses:
+            # Merge ROI
+            for id_, pts in self.merge_roi_ids_waypoints:
+                for pt in pts:
+                    dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
+                    if dis < 1:
+                        safe_to_go = False
+                        tmp = id_+" "
+                        obs_link += tmp
+                        break
+                # 내 차량이 진입 시도한 이후에는 우선권이 내 차량에 있음
+                for pt in pts:
+                    lane_dis = ((pt[0] - CS.position.x)**2 + (pt[1] - CS.position.y)**2)**0.5
+                    min_lane_dis = min(lane_dis, min_lane_dis)
+                    str1 = "- Min dis to roi lane(for merge): {min_lane_dis}\n"
+                    if lane_dis < 3:
+                        str2 = "- Min dis < 3, ego go first\n"
+                        safe_to_go = True
+                        break
+        
+        return safe_to_go
+    # ------------------------------------------
+    
+    
+    # intersection module utils
+    def get_intsection_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc^2의 pre
+        roi_ids_waypoints = []
+        suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
+        pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
+        
+        next_lane_id = global_ids[global_ids.index(lane_id) + 1]
+        if next_lane_id in pre_suc_suc_id_list:
+            pre_suc_suc_id_list.remove(next_lane_id)
+        for id_ in pre_suc_suc_id_list:
+            waypoints_length = len(lmap.lanelets[id_]['waypoints'])
+            roi_ids_waypoints.append((id_, lmap.lanelets[id_]['waypoints'][max(waypoints_length-13, 0):waypoints_length-1])) # precision: 1, so roi 5~50m
+        
+        return roi_ids_waypoints
+    
+    def intersection_safe_to_go(self):
+        safe_to_go = True
+        obs_link = ''
+        for obs in self.object_list.poses:
+        # Intersection ROI
+            for id_, pts in self.inter_roi_ids_waypoints:
+                for pt in pts:
+                    dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
+                    if dis < 1:
+                        safe_to_go = False
+                        tmp = id_+" "
+                        obs_link += tmp
+                        break
+        
+        return safe_to_go
+    # ------------------------------------------
+    
+    
+    # roundabout module utils
+    def get_roundabout_roi(self, lmap, lane_id, global_ids): # ego lane을 제외한 suc^2의 pre + pre^2 + pre^3
+        roi_ids_waypoints = []
+        
+        suc_suc_path_id = global_ids[global_ids.index(lane_id) + 2]
+        pre_suc_suc_id_list = lmap.lanelets[suc_suc_path_id]['predecessor'].copy()
+        next_lane_id = global_ids[global_ids.index(lane_id) + 1]
+        if next_lane_id in pre_suc_suc_id_list:
+            pre_suc_suc_id_list.remove(next_lane_id)
+        
+        pre_pre_suc_suc_id_list = []
+        for id_ in pre_suc_suc_id_list:
+            pre_pre_suc_suc_id_list += lmap.lanelets[id_]['predecessor'].copy()
+
+        pre_pre_pre_suc_suc_id_list = []
+        for id_ in pre_pre_suc_suc_id_list:
+            pre_pre_pre_suc_suc_id_list += lmap.lanelets[id_]['predecessor'].copy()
+        
+        for id_list in [pre_suc_suc_id_list, pre_pre_suc_suc_id_list, pre_pre_pre_suc_suc_id_list]:
+            for id_ in id_list:
+                roi_ids_waypoints.append((id_, lmap.lanelets[id_]['waypoints'])) # precision: 1
+        
+        return roi_ids_waypoints
+    
+    def roundabout_safe_to_go(self):
+        safe_to_go = True
+        obs_link = ''
+        for obs in self.object_list.poses:
+            # Roundabout ROI
+            for id_, pts in self.round_roi_ids_waypoints:
+                for pt in pts:
+                    dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
+                    if dis < 1:
+                        safe_to_go = False
+                        tmp = id_+" "
+                        obs_link += tmp
+                        break
+        
+        return safe_to_go
+    # ------------------------------------------
+
+
+    def is_roi_safe_to_go(self, CS): # about to be removed
         self.roi_safe_to_go = True
         obs_link = ''
         min_lane_dis = 999
         str1 = ''
         str2 = ''
         for obs in self.object_list.poses:
+            # Merge ROI
             for id_, pts in self.merge_roi_ids_waypoints:
                 for pt in pts:
                     dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
@@ -313,7 +393,7 @@ class LongitudinalPlanner:
                         tmp = id_+" "
                         obs_link += tmp
                         break
-                    
+                # 내 차량이 진입 시도한 이후에는 우선권이 내 차량에 있음
                 for pt in pts:
                     lane_dis = ((pt[0] - CS.position.x)**2 + (pt[1] - CS.position.y)**2)**0.5
                     min_lane_dis = min(lane_dis, min_lane_dis)
@@ -323,7 +403,7 @@ class LongitudinalPlanner:
                         self.roi_safe_to_go = True
                         break
 
-                
+            # Intersection ROI
             for id_, pts in self.inter_roi_ids_waypoints:
                 for pt in pts:
                     dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
@@ -333,7 +413,7 @@ class LongitudinalPlanner:
                         obs_link += tmp
                         break
                     
-                    
+            # Roundabout ROI
             for id_, pts in self.round_roi_ids_waypoints:
                 for pt in pts:
                     dis = ((obs.position.x - pt[0])**2 + (obs.position.y - pt[1])**2)**0.5
@@ -344,7 +424,8 @@ class LongitudinalPlanner:
                         break
                     
         print(f"====SAFE2GO====\n- Obs on roi links: {obs_link}\n"+str1+str2+f"- Safe to go: {self.roi_safe_to_go}"+"\n")
-                    
+
+    # curvature module utils
     def compute_curvature_radius(self, path, tg_idx=15, max_radii=90, min_radii=36): # 이 인자를 건드려서 분산도, 곡률에 민감도 결정
         curvature_radii = []
         path_len = len(path)
@@ -390,36 +471,44 @@ class LongitudinalPlanner:
             processed_radiis.append(round(val, 2)/3.6) # kph -> mps
         
         return processed_radiis
+    # ------------------------------------------
     
-    def RIGHTTURN_module(self, CS): # not finished
+    
+    # velocity planner modules
+    def CROSSWALK_module(self, CS):
         target_v_CW = 100
+        str1 = ''
+        str2 = ''
         if self.crosswalk_polygon is not None:
             shapely_ego = sh.Point((CS.position.x, CS.position.y))
             ego_distance_to_crosswalk = shapely_ego.distance(self.crosswalk_polygon)
-            # print("Distance to crosswalk:", ego_distance_to_crosswalk)
+            str1 = f"- Distance to crosswalk: {ego_distance_to_crosswalk:.2f}\n"
             
             for obs in self.object_list.poses:
                 shapely_obj = sh.Point((obs.position.x, obs.position.y))
                 obj_distance_to_crosswalk = shapely_obj.distance(self.crosswalk_polygon)
                 if obj_distance_to_crosswalk < 1:
                     if 0 < ego_distance_to_crosswalk < max(CS.vEgo*3.6-15, 11):
-                        print("obj on CW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11")
                         target_v_CW = 10/3.6/21*(self.distance_to_stopline - 11)
+                        str2 = "- Obstacle on crosswalk: close\n"
                         break
                     else:
-                        print("there is object on crosswalk, but still far!")
-                
+                        str2 = "- Obstacle on crosswalk: far\n"
+                else:
+                    str2 = "- No obstacle\n"
         else:
-            print("no crosswalk")
+            str1 = "- Nothing to do with crosswalk module\n"
+            
+        print(f"===CROSSWALK===\n{str1}{str2}")
             
         return target_v_CW
                 
-    def STOPLINE_module(self, CS):
+    def STOPLINE_module(self, CS): # traffic_light, roundabout, intersection의 stopline 커버
         str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
         if self.trafficLight_type is None:
             if not self.stopline_stopped:
                 if 0 < self.distance_to_stopline < max(CS.vEgo*3.6-15, 11):
-                    target_v_TL = 10/3.6/21*(self.distance_to_stopline - 11)
+                    target_v_SL = 10/3.6/21*(self.distance_to_stopline - 11)
                     if CS.vEgo > 0.02: # from Ego_topic vel.x
                         str1 = "- Run status: stopping at stopline\n"
                     else:
@@ -431,25 +520,26 @@ class LongitudinalPlanner:
                             str2 = f"- Run status: running...({remaining_time:.2f} secs remain)\n"
                             self.stopline_stopped = True
                 else:
-                    target_v_TL = 100
+                    target_v_SL = 100
                 
             else:
-                if self.roi_safe_to_go:
-                    target_v_TL = 100
-                    str3 = f"- Obs status: safe, go at {target_v_TL:.2f}m/s\n"
+                # if self.roi_safe_to_go:
+                if self.intersection_safe_to_go() and self.roundabout_safe_to_go():
+                    target_v_SL = 100
+                    str3 = f"- Obs status: safe, go at {target_v_SL:.2f}m/s\n"
                 else:
-                    target_v_TL = 0
-                    str4 = f"- Obs status: not safe, wait at {target_v_TL:.2f}m/s\n"
+                    target_v_SL = 0
+                    str4 = f"- Obs status: not safe, wait at {target_v_SL:.2f}m/s\n"
 
         elif self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
             if 0 < self.distance_to_stopline < max(CS.vEgo*3.6-15, 11):
-                target_v_TL = 0
+                target_v_SL = 0
             else:
-                target_v_TL = 100
+                target_v_SL = 100
 
         else:
-            str6 = "- Nothing to do with stopline\n"
-            target_v_TL = 100
+            str6 = "- Nothing to do with stopline module\n"
+            target_v_SL = 100
 
         # 정지선 위치 바뀌면 (신호등 없는 정지선) local variable 초기화
         if self.stopline_point1[0] != self.stopline_point1_last[0]:
@@ -458,11 +548,11 @@ class LongitudinalPlanner:
             self.stopline_point1_last[0] = self.stopline_point1[0]
             str5 = "- Stopline with no traffic light initialized\n"
         
-        str7 = f"- Target v: {target_v_TL}"
+        str7 = f"- Target v: {target_v_SL}"
         
         print(f"====STOPLINE===\n"+f"- TrafficLight: {self.trafficLight_type}\n- Stopline s: {self.distance_to_stopline:.2f}\n"+str1+str2+str3+str4+str5+str6+str7+'\n')
         
-        return target_v_TL
+        return target_v_SL
 
     def ACC_module(self, CS, local_path):
         # ACC part
@@ -501,11 +591,19 @@ class LongitudinalPlanner:
         elif status == "safe_zone":
             target_v_ACC = obs_vel*s_ratio
         elif status == "far_zone":
-            target_v_ACC = 10
+            target_v_ACC = 999
         else:
             print("[ACC] ERROR ON STATUS DECISION")
+            
+        str1 = f"- Status: {status}\n"
+        str2 = f"- Current s: {nearest_s:.2f}\n"
+        str3 = f"- Target s: {margined_safety_distance:.2f}\n"
+        str4 = f"- Target_v: {target_v_ACC:.2f}\n"
+        str5 = ""
+        if target_v_ACC == 999:
+            str5 = f"- Nothing to do with ACC module\n"
         
-        # print(f"======ACC======\n- Status: {status}\n- Current s: {nearest_s:.2f}\n- Target s: {margined_safety_distance:.2f}\n- Target_v: {target_v_ACC}")
+        print(f"======ACC======\n{str1}{str2}{str3}{str4}{str5}")
         
         # Publish datas for plot
         # acc_plot_msg = Pose()
@@ -521,15 +619,16 @@ class LongitudinalPlanner:
         local_point = KDTree(local_path)
         local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
         target_v_CV = self.compute_curvature_radius(local_path)[min(len(local_path)-1, local_idx+int(CS.vEgo))] # idx: 1s after
-        print(f"=====CURVE=====\n- Target v: {target_v_CV}")
+        print(f"=====CURVE=====\n- Target v: {target_v_CV:.2f}\n")
         
         return target_v_CV
     
-    def MERGE_module(self):
+    def MERGE_module(self, CS):
         target_v_MG = 999
         str1 = "" 
         if self.now_scenario == "MERGE":
-            if self.roi_safe_to_go:
+            # if self.roi_safe_to_go:
+            if self.merge_safe_to_go(CS):
                 target_v_MG = 100
                 str1 = f"- Obs status: safe, go at {target_v_MG:.2f}m/s\n"
             else:
@@ -538,10 +637,10 @@ class LongitudinalPlanner:
         else:
             str1 = "- Nothing to do with merge module"
         
-        print(f"=====MERGE=====\n"+str1+"\n")
+        print(f"=====MERGE=====\n{str1}\n")
         
         return target_v_MG
-        
+    # ------------------------------------------
             
     def run(self, sm, lmap, tmap, my_lane_id, g_ids, pp=0, l_path=None):
         CS = sm.CS
@@ -562,7 +661,7 @@ class LongitudinalPlanner:
                     self.set_scenario_and_roi(lmap, my_lane_id, global_ids)
                     
                     # set safe to go
-                    self.is_roi_safe_to_go(CS)
+                    # self.is_roi_safe_to_go(CS)
                     
                     # get traffic_light type
                     self.traffic_light_postprocess()
@@ -572,9 +671,9 @@ class LongitudinalPlanner:
                     
                     # get target_v
                     target_v_list = []
-                    target_v_list.append(self.RIGHTTURN_module(CS)) 
+                    target_v_list.append(self.CROSSWALK_module(CS)) 
                     target_v_list.append(self.STOPLINE_module(CS))
-                    target_v_list.append(self.MERGE_module())
+                    target_v_list.append(self.MERGE_module(CS))
                     target_v_list.append(self.ACC_module(CS, local_path))
                     target_v_list.append(self.CURVATURE_module(CS, local_path))
                     try:
@@ -583,13 +682,6 @@ class LongitudinalPlanner:
                         print(target_v_list)
                         print("Error on long_planner: target_v")
                     print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
-
-                if scenario == "check_crosswalk":
-                    ego_point = sh.Point((CS.position.x, CS.position.y))
-                    if self.crosswalk_polygon is not None:
-                        for obs in self.object_list.poses:
-                            if sh.Point((obs.position.x, obs.position.y)).intersects(self.crosswalk_polygon):
-                                print("obs on ROI crosswalk!")
                     
 
             else:

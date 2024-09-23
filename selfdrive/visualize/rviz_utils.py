@@ -131,7 +131,7 @@ def merge_polygons(waypoints_list, distance_threshold=3):
 
         merged_polygon = sh.unary_union(group)
         
-        merged_polygons = []
+        # merged_polygons = []
         if isinstance(merged_polygon, sh.MultiPolygon):
             # MultiPolygon일 경우, 각 Polygon을 처리
             for poly in merged_polygon.geoms:

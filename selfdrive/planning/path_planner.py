@@ -527,32 +527,6 @@ class PathPlanner:
                 elif time.time() - self.renewal_path_timer > 1.5:
                     self.renewal_path_in_progress = False
 
-                # TODO: Avoidance Path
-                #
-                # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
-                #     if self.obstacle_detect_timer == 0.0:
-                #         self.obstacle_detect_timer = time.time()
-                #     if time.time()-self.obstacle_detect_timer >= 10:
-                #         # pp = 4
-                #         # return pp
-                #         # Create Avoidance Trajectory
-                #         splited_id = now_lane_id.split('_')[0]
-                #         avoid_path = generate_avoid_path(
-                #             self.lmap.lanelets, splited_id, self.local_path[self.l_idx:], 25*(1/self.precision))
-                #         if avoid_path is not None:
-                #             for i, avoid_pt in enumerate(avoid_path):
-                #                 self.local_path[self.l_idx+i] = avoid_pt
-                #             self.obstacle_detect_timer = 0.0
-                # else:
-                #     self.obstacle_detect_timer = 0.0
-
-                # CHECK : now lane position
-                '''
-                [1] |@| | |
-                [2] | |@| |
-                [3] | | |@|
-                [0]  x|@|x  
-                '''
                 link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
                 lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
 
@@ -635,7 +609,18 @@ class PathPlanner:
                 
                 crosswalk_pos = Polygon()
                 if len(merged_crosswalk_ids_points) > 0:
+                    min_distance = float('inf')
                     nearest_crosswalk = merged_crosswalk_ids_points[0]
+                    
+                    for crosswalk in merged_crosswalk_ids_points:
+                        first_point = crosswalk[1][0]
+                        distance = euc_distance(first_point, (CS.position.x, CS.position.y))
+                        # distance = math.sqrt((first_point[0]- CS.position.x)**2 + (first_point[1] - CS.position.y)**2)
+
+                        if distance < min_distance:
+                            min_distance = distance
+                            nearest_crosswalk = crosswalk
+                
                     for wp in nearest_crosswalk[1]:
                         pt = Point32()
                         pt.x = wp[0]

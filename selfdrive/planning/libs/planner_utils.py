@@ -128,7 +128,7 @@ def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point)
         if idx < now_sl_idx:
             now_sl_idx = idx
             
-    #[55.04864050437192, 1231.728324479584], [56.777149736203, 1230.82881163342ss43], [58.60563482865422, 1229.8886275314371], [59.06954200085164, 1229.641489685897], [60.55645349551719, 1228.8503049760375]
+    # ex) [55.04864050437192, 1231.728324479584], [56.777149736203, 1230.82881163342ss43], [58.60563482865422, 1229.8886275314371], [59.06954200085164, 1229.641489685897], [60.55645349551719, 1228.8503049760375]
     # nearest stopline의 idx와 stopline을 이루는 3개 혹은 5개의 점을 반환(차로 수에 따라 변동)
     return now_sl_idx, stopline
 
@@ -203,7 +203,7 @@ def gaussian_smoothing_2d(points, sigma=1):
     
     return list(zip(smoothed_wx, smoothed_wy))
 
-def smooth_compute_yaw_and_curvature(points, precision):
+def smooth_compute_yaw_and_curvature(points, precision): # yaw, k 안 쓰는듯? 0923
     # Apply Gaussian smoothing
     smoothed_path = gaussian_smoothing_2d(points)
     
@@ -815,7 +815,7 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 def get_crosswalk_ids_points(lanelets, surfacemarks, remaining_global_ids, cur_id_idx): 
     selected_crosswalk_ids_points = []
     roi_waypoints = lanelets[remaining_global_ids[0]]['waypoints'][cur_id_idx:]
-    if len(roi_waypoints) > 1:
+    if len(roi_waypoints) > 1: # string으로 만드려면 2개이상 점 필요
         roi_string = sh.LineString(roi_waypoints)
         
         # 현재 id의 crosswalkID
@@ -834,9 +834,6 @@ def get_crosswalk_ids_points(lanelets, surfacemarks, remaining_global_ids, cur_i
         for id_ in next_lane_crosswalkIds: 
             selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
             # print("Crosswalk ID for NEXT link: ", id_)
-            
-    
-    #TODO: publisher 수정해서 해당하는 모든 id들 viz하도록
         
     return selected_crosswalk_ids_points
 

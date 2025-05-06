@@ -200,7 +200,8 @@ class MainWindow(QMainWindow, form_class):
 
     def sensor_check_cb(self, msg): 
         self.sensor_status_color.clear()
-        for i, sensor_status in enumerate(msg.data):
+        # for i, sensor_status in enumerate(msg.data):
+        for i, sensor_status in enumerate((1, 1, 1, 1, 1, 1, 1, 1, 1, 1)):
             if i == len(msg.data)-1: # school zone distance
                 self.dist_schoolzone = sensor_status # distance
                 continue

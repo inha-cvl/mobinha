@@ -219,6 +219,7 @@ class IoniqTransceiver():
                    'LON_Enable': self.control_state['acc_en'], 'Target_Brake': self.target_actuators['brake'], 
                    'Target_Accel': self.target_actuators['accel'], 'Alive_cnt': self.alv_cnt, 'Reset_Flag': self.reset,
                    'TURN_SIG_LEFT': self.blinker['left'], 'TURN_SIG_RIGHT':self.blinker['right']}
+        print(signals['PA_Enable'], signals['LON_Enable'], signals['PA_StrAngCmd'], signals['Target_Accel'], signals['Target_Brake'])
         self.gateway.data[0] = signals['PA_Enable']
         self.gateway.data[1] = signals['LON_Enable']
         self.gateway.data[5] = signals['Reset_Flag']

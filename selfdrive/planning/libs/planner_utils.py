@@ -481,12 +481,6 @@ def get_blinker_and_targetid(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX,
     lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
     ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
 
-    curr_curv = abs(max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']))
-    next1_curv = abs(max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']))
-    next2_curv = abs(max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']))
-
-    songdo_special_case = ['5']
-
     if lf < 0:
         lf = 0
     elif lf > len(ids)-1:
@@ -498,6 +492,13 @@ def get_blinker_and_targetid(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX,
     elif ld > len(ids)-1:
         ld = len(ids)-1
     next_id_2 = ids[ld].split('_')[0]
+
+    # 곡률
+    curr_curv = abs(max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']))
+    next1_curv = abs(max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']))
+    next2_curv = abs(max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']))
+
+    songdo_special_case = ['5']
 
     # 차선 변경
     if next_id_1 in my_neighbor_id[0]:

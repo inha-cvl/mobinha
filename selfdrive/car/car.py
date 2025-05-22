@@ -50,6 +50,7 @@ class Transceiver:
             # time.sleep(timer)
 
     def init(self):
+        start = time.time()
         self.need_init = False
         car = rospy.get_param('car_name', None)
         map = rospy.get_param('map_name', None)
@@ -63,6 +64,8 @@ class Transceiver:
         elif car == "IONIQ":
             can = IoniqTransceiver(CP)
             timer = 0
+        
+        print(f"<Elapsed:LaneLet> Transceiver init: {time.time() - start}")
         return cm, can, timer
 
     def state_cb(self, msg):

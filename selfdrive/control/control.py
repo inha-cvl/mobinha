@@ -45,6 +45,7 @@ class Control:
                 continue
 
     def init(self):
+        start = time.time()
         self.need_init = False
         car = rospy.get_param('car_name', 'None')
         map = rospy.get_param('map_name', 'None')
@@ -52,6 +53,7 @@ class Control:
         sm = StateMaster(CP)
         localizer = Localizer()
         controller = Controller(CP)
+        print(f"<Elapsed:LaneLet> Control init: {time.time() - start}")
 
         return sm, localizer, controller
 

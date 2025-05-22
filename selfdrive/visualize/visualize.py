@@ -178,6 +178,7 @@ class MainWindow(QMainWindow, form_class):
             pose.position.x = goal[0]
             pose.position.y = goal[1]
             scenario_goal.poses.append(pose)
+
         return scenario_goal
 
     def visualize_update(self):
@@ -536,6 +537,7 @@ class MainWindow(QMainWindow, form_class):
         self.pause_button.setDisabled(True)
 
     def initialize_button_clicked(self):
+        start = time.time()
         self.status_label.setText("Initialize")
         self.initialize()
         self.goal_update = True
@@ -546,6 +548,7 @@ class MainWindow(QMainWindow, form_class):
         self.scenario2_button.setDisabled(True)
         self.scenario3_button.setDisabled(True)
         self.state = 'INITIALIZE'
+        print(f"<Elapsed:LaneLet> Button clicked: {time.time() - start}")
 
     def over_button_clicked(self):
         self.status_label.setText("Over")
@@ -565,10 +568,12 @@ class MainWindow(QMainWindow, form_class):
                 button.setEnabled(True)
 
     def scenario_button_clicked(self, idx):
+        start = time.time()
         self.scenario = idx
         module = importlib.import_module('selfdrive.visualize.routes.{}'.format(self.map_name))
         scenario = getattr(module, 'scenario_{}'.format(idx))
         self.scenario_goal = scenario
+        print(f"<Elapsed:Scenario3> Button clicked: {time.time() - start}")
 
     def view_button_clicked(self, idx):
         if self.map_view_manager is not None:

@@ -269,6 +269,13 @@ def node_matching(lanelet, l_id, l_idx):
 
 
 def dijkstra(graph, start, finish):
+#     import json
+#     with open("/home/inha/Desktop/graph.json", "w", encoding='utf-8') as f:
+#         json.dump(graph, f, ensure_ascii=False, indent=4)
+#     with open("/home/inha/Desktop/start.json", "w", encoding='utf-8') as f:
+#         json.dump(start, f, ensure_ascii=False, indent=4)
+#     with open("/home/inha/Desktop/finish.json", "w", encoding='utf-8') as f:
+#         json.dump(finish, f, ensure_ascii=False, indent=4)
     distances = {}
     previous = {}
     nodes = []

@@ -24,6 +24,7 @@ class PublishBBox:
         self.get_goal = False
 
     def state_cb(self, msg):
+        print("object test USING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         if self.state != str(msg.data):
             if str(msg.data) == 'START':
                 print("[{}] Start".format(self.__class__.__name__))

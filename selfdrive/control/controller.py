@@ -67,6 +67,7 @@ class Controller:
 
     def target_v_cb(self, msg):
         self.target_v = msg.data
+        self.target_v = 30/3.6 ############ TEST
 
     def lane_information_cb(self, msg):
         self.l_idx = msg.orientation.y

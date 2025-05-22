@@ -16,9 +16,16 @@ from selfdrive.visualize.rviz_utils import *
 class PathPlanner:
     def __init__(self, CP):
         self.state = 'WAITING'
+
+        start = time.time()
         self.lmap = LaneletMap(CP.mapParam.path)
+        print(f"<Elapsed:Lanelet>: Accessing lanelet file: {time.time() - start}")
+
+        start = time.time()
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
+        print(f"<Elapsed:Lanelet>: Converting lanelet: {time.time() - start}")
+
         self.precision = CP.mapParam.precision
         self.M_TO_IDX = 1/CP.mapParam.precision
         self.IDX_TO_M = CP.mapParam.precision
@@ -83,10 +90,13 @@ class PathPlanner:
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
         map_name = rospy.get_param('map_name', 'None')
         if map_name == 'songdo':
+            start = time.time()
             lanelet_map_viz = VectorMapVis(self.lmap.map_data)
+            print(f"<Elapsed:Lanelet> Making VectorMapVis object: {time.time() - start}")
         else:
             lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
         self.pub_lanelet_map.publish(lanelet_map_viz)
+        print("PUBLISHED")
 
         rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
         rospy.Subscriber('/mobinha/visualize/scenario_goal',PoseArray, self.scenario_goal_cb)
@@ -109,6 +119,7 @@ class PathPlanner:
             scenario_goal.append((pose.position.x, pose.position.y))
         self.goal_pts = scenario_goal
         self.get_goal = True
+        
 
     def lidar_obstacle_cb(self, msg):
         self.lidar_obstacle = [(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.z)for pose in msg.poses]
@@ -129,6 +140,7 @@ class PathPlanner:
         appended_head_lane_ids = []
         goal_pt = None
 
+        start = time.time()
         for pt in self.goal_pts:
             goal_pt = pt
             shortest_path = []
@@ -186,25 +198,28 @@ class PathPlanner:
             appended_head_lane_ids.extend(shortest_path)
 
             self.temp_pt = goal_pt
+        print(f"<Elapsed:Scenario3> Making path: {time.time() - start}")
 
         appended_head_lane_ids = set_lane_ids(appended_head_lane_ids)
 
+        start = time.time()
         goal_viz = GoalViz(goal_pt)
         self.pub_goal_viz.publish(goal_viz)
+        print(f"<Elapsed:Scenario3> Making GoalViz: {time.time() - start}")
 
         return appended_non_intp_path, appended_non_intp_id, appended_head_lane_ids
 
     def delete_node_for_smooth_path(self, non_intp_path, non_intp_id, head_lane_ids):
-            before_n = non_intp_id[0].split('_')[0]
-            for i, n in enumerate(non_intp_id):
-                splited_id = n.split('_')[0]
-                if splited_id != before_n :
-                    my_neighbor_id = get_my_neighbor(self.lmap.lanelets, before_n)
-                    if not compare_id(splited_id, my_neighbor_id):
-                        del non_intp_path[i]
-                        del non_intp_id[i]
-                    before_n = splited_id
-    
+        before_n = non_intp_id[0].split('_')[0]
+        for i, n in enumerate(non_intp_id):
+            splited_id = n.split('_')[0]
+            if splited_id != before_n :
+                my_neighbor_id = get_my_neighbor(self.lmap.lanelets, before_n)
+                if not compare_id(splited_id, my_neighbor_id):
+                    del non_intp_path[i]
+                    del non_intp_id[i]
+                before_n = splited_id
+
     def run(self, sm):
         CS = sm.CS
         pp = 0
@@ -216,6 +231,7 @@ class PathPlanner:
             pp = 3
 
         elif self.state == 'READY':
+            start_ready = time.time()
             non_intp_path = None
             non_intp_id = None
             head_lane_ids = None
@@ -227,7 +243,8 @@ class PathPlanner:
             self.l_nitt = 250
             self.l_tail = 50
             self.temp_pt = [CS.position.x, CS.position.y]
-
+            
+            start = time.time()
             non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath()
             if non_intp_path is None or non_intp_id is None:
                 rospy.logerr('An error occurred, unable to process path. Returning to WAITING state.')
@@ -236,13 +253,25 @@ class PathPlanner:
                 pp = 3
                 return pp, None
 
+            start = time.time()
             self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids)
+            print(f"<Elapsed:Scenario3> delete_node...: {time.time() - start}")
+
             if non_intp_path is not None:
                 self.state = 'MOVE'
 
+                start = time.time()
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
+                print(f"<Elapsed:Scenario3> ref_interpolate_2d: {time.time() - start}")
+
+                start = time.time()
                 global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
+                print(f"<Elapsed:Scenario3> smooth_compute_yaw...: {time.time() - start}")
+
+                start = time.time()
                 global_id = id_interpolate(non_intp_path, global_path, non_intp_id)
+                print(f"<Elapsed:Scenario3> id_interpolate: {time.time() - start}")
+
                 self.global_path = global_path
                 self.global_id = global_id
                 self.non_intp_path = non_intp_path
@@ -268,6 +297,8 @@ class PathPlanner:
                 global_path_viz = FinalPathViz(self.global_path)
                 self.pub_global_path.publish(global_path_viz)
 
+            print(f"<Elapsed:Scenario3> TOTAL(READY STATE): {time.time() - start_ready}")
+            
             pp = 0
 
         elif self.state == 'MOVE':
@@ -371,8 +402,8 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                blinker, target_id = get_blinker_and_targetid(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id) 
-                                                                        #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
+                # blinker, target_id = get_blinker_and_targetid(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id) 
+                blinker, target_id = 0, None                                            #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
 
                 if blinker != 0 and self.blinker_target_id == None:
                     self.blinker_target_id = target_id

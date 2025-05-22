@@ -225,6 +225,7 @@ def LaneletMapViz(lanelet, for_viz):
 
 
 def VectorMapVis(map_data):
+    start = time.time()
     lanelet = map_data['lanelets']
     #side_lanelets = map_data['side_lanelets']
     stoplines = map_data['stoplines']
@@ -284,7 +285,8 @@ def VectorMapVis(map_data):
         marker = PostPoint('postpoint_%s' % (id_), 0, data,
                            0.2, 4.0, (1.0, 1.0, 1.0, 0.5))
         array.markers.append(marker)
-
+    
+    print(f"<Elapsed:Lanelet> Converting into LANELET: {time.time() - start}")
     return array
 
 

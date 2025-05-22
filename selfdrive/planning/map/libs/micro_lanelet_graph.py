@@ -1,7 +1,8 @@
 import copy
 
 import rospy
-from visualization_msgs.msg import MarkerArray
+# from visualization_msgs.msg import MarkerArray
+from visualization_msgs.msg import Marker
 
 from libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *

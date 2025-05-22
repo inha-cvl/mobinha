@@ -181,7 +181,7 @@ class MainWindow(QMainWindow, form_class):
         return scenario_goal
 
     def visualize_update(self):
-        while self.system_state:
+        while self.system_state:  # 지연의심포인트: 0.1초마다 계속 갱신
             if self.timer(0.1):
                 self.pub_state.publish(String(self.state))
                 self.pub_can_cmd.publish(Int8(self.can_cmd))
@@ -208,7 +208,7 @@ class MainWindow(QMainWindow, form_class):
                 
                 QCoreApplication.processEvents()
 
-    def rviz_frame(self, type):
+    def rviz_frame(self, type):  # 지연의심포인트: RViz 자체가 렌더링 지연시킬 수 있음
         rviz_frame = rviz.VisualizationFrame()
         rviz_frame.setSplashPath("")
         rviz_frame.initialize()
@@ -329,7 +329,7 @@ class MainWindow(QMainWindow, form_class):
         self.label_target_v.setText(f"{round(msg.data*MPH_TO_KPH)} km/h")
         self.target_v = float(round(msg.data*MPH_TO_KPH, 2))
 
-    def graph_update(self):
+    def graph_update(self):  # 지연의심포인트: 0.5초마다 갱신, deque에서 자주 pop/append
         if self.moving_start:
             self.graph_time += 0.5
             self.graph_velocity_data['x'].append(self.graph_time)
@@ -468,7 +468,7 @@ class MainWindow(QMainWindow, form_class):
             self.direction_text_label.setText(self.direction_message_list[idx])
             self.direction_image_label.setPixmap(self.direction_pixmap_list[idx])
 
-    def convert_to_qimage(self, data):
+    def convert_to_qimage(self, data):  # 지연의심포인트: GPU가 아닌 CPU를 사용한 이미지 디코딩 및 변환
         np_arr = np.frombuffer(data, np.uint8)
         cv2_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         rgbImage = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)

@@ -12,6 +12,8 @@ from selfdrive.planning.libs.micro_lanelet_graph import MicroLaneletGraph
 from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
 
+import pickle, os
+
 
 class PathPlanner:
     def __init__(self, CP):
@@ -22,9 +24,25 @@ class PathPlanner:
         print(f"<Elapsed:Lanelet>: Accessing lanelet file: {time.time() - start}")
 
         start = time.time()
+        # 타일맵 생성
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
-        self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
         print(f"<Elapsed:Lanelet>: Converting lanelet: {time.time() - start}")
+
+        # graph_cache_path = "graph_cache.pkl"
+
+        # if os.path.exists(graph_cache_path):
+        #     with open(graph_cache_path, 'rb') as f:
+        #         self.graph = pickle.load(f)
+        #     print("Loaded graph from cache.")
+        # else:
+        #     self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
+        #     with open(graph_cache_path, 'wb') as f:
+        #         pickle.dump(self.graph, f)
+        #     print("Graph generated and cached.")
+        
+        # original
+        # self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+        self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
 
         self.precision = CP.mapParam.precision
         self.M_TO_IDX = 1/CP.mapParam.precision

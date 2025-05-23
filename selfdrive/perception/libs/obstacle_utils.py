@@ -16,8 +16,19 @@ class ObstacleUtils:
         obj_y = odom[1] + ny
 
         return obj_x, obj_y
+    
+    def enuobject2rel(odom, obj_enu_x, obj_enu_y):
+        rad = np.radians(odom[2])
 
-    def object2frenet(local_point, local_path, target):  # Array in Frenet Array Out
+        nx = obj_enu_x - odom[0]
+        ny = obj_enu_y - odom[1]
+
+        obj_local_x = math.cos(-rad) * nx - math.sin(-rad) * ny
+        obj_local_y = math.sin(-rad) * nx + math.cos(-rad) * ny
+
+        return obj_local_x, obj_local_y
+
+    def object2frenet(local_point, local_path, target):  # Array in Frenet Array Out, no problem
         point = local_point.query(target, 1)[1]
         if(point == 0):
             return 0, 1000
@@ -28,17 +39,18 @@ class ObstacleUtils:
         x_x = target[0] - wp[point-1][0]
         x_y = target[1] - wp[point-1][1]
 
-        if (n_x*n_x+n_y*n_y) > 0:
-            proj_norm = (x_x*n_x+x_y*n_y)/(n_x*n_x+n_y*n_y)
+        if (n_x*n_x+n_y*n_y) > 0: # Question: why?
+            proj_norm = (x_x*n_x+x_y*n_y)/(n_x*n_x+n_y*n_y) # unit vector
         else:
             proj_norm = 0
-        proj_x = proj_norm*n_x
+
+        proj_x = proj_norm*n_x 
         proj_y = proj_norm*n_y
         
-        frenet_s = point
+        frenet_s = point # index on local path
         frenet_d = ObstacleUtils.distance(x_x, x_y, proj_x, proj_y)
 
-        normal_x, normal_y = n_y, -n_x
+        normal_x, normal_y = n_y, -n_x # outer product
         dot_product = normal_x * x_x + normal_y * x_y
         if dot_product < 0:
             frenet_d *= -1

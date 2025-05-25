@@ -42,7 +42,9 @@ def ObjectsViz(objects):
         else:
             color = (0.0, 1.0, 0.0, 1.0)
         # quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(pt[4]))
-        marker = Sphere('obstacle', n, (round(pt[0],1), round(pt[1],1)), 2.1, color)
+        # marker = Sphere('obstacle', n, (round(pt[0],1), round(pt[1],1)), 2.1, color)
+        marker = Points('obstacle', n, 1.0, color)
+        marker.points.append(Point(x=pt[0], y=pt[1], z=1.0))
         array.markers.append(marker)
 
     if len(objects) < prev_marker_count:
@@ -186,6 +188,7 @@ def ShortestPathViz(lanelet, shortest_path):
     return array
 
 
+# map이 songdo 아닐 때
 def LaneletMapViz(lanelet, for_viz):
     array = MarkerArray()
     for id_, data in lanelet.items():
@@ -211,7 +214,7 @@ def LaneletMapViz(lanelet, for_viz):
         # marker = ID(id_, mid_pt, color)
         # array.markers.append(marker)
 
-    for n, (points, type_) in enumerate(for_viz):
+    for n, (points, type_) in enumerate(for_viz):  
         if type_ == 'stop_line':
             marker = Bound('for_viz', n, n, points,
                            'solid', (1.0, 1.0, 1.0, 1.0))
@@ -223,7 +226,7 @@ def LaneletMapViz(lanelet, for_viz):
 
     return array
 
-
+# map이 songdo일 때
 def VectorMapVis(map_data):
     start = time.time()
     lanelet = map_data['lanelets']
@@ -267,8 +270,10 @@ def VectorMapVis(map_data):
         array.markers.append(marker)
 
     for id_, data in trafficlights.items():
-        marker = Sphere('traifficlight_%s' %
-                        (id_), 0, data, 0.1, (1.0, 1.0, 1.0, 0.5))
+        # marker = Sphere('traifficlight_%s' %
+        #                 (id_), 0, data, 0.1, (1.0, 1.0, 1.0, 0.5))
+        marker = Points('trafficlight_%s' % id_, 0, 0.1, (1.0, 1.0, 1.0, 0.5))
+        marker.points.append(Point(x=data[0], y=data[1], z=1.0))
         array.markers.append(marker)
 
     for id_, data in vehicleprotectionsafetys.items():
@@ -282,8 +287,10 @@ def VectorMapVis(map_data):
     #     array.markers.append(marker)
 
     for id_, data in postpoints.items():
-        marker = PostPoint('postpoint_%s' % (id_), 0, data,
-                           0.2, 4.0, (1.0, 1.0, 1.0, 0.5))
+        # marker = PostPoint('postpoint_%s' % (id_), 0, data,
+        #                    0.2, 4.0, (1.0, 1.0, 1.0, 0.5))
+        marker = Points('postpoint_%s' % id_, 0, 0.2, (1.0, 1.0, 1.0, 0.5))
+        marker.points.append(Point(x=data[0], y=data[1], z=2+data[2]))
         array.markers.append(marker)
     
     print(f"<Elapsed:Lanelet> Converting into LANELET: {time.time() - start}")

@@ -22,7 +22,7 @@ Panels:
     Expanded:
       - /Current View1
     Name: Views
-    Splitter Ratio: 0.5
+    Splitter Ratio: 0.5 
   - Class: rviz/Time
     Name: Time
     SyncMode: 0

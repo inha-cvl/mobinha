@@ -671,11 +671,11 @@ class LongitudinalPlanner:
                     
                     # get target_v
                     target_v_list = []
-                    target_v_list.append(self.CROSSWALK_module(CS)) 
-                    target_v_list.append(self.STOPLINE_module(CS))
-                    target_v_list.append(self.MERGE_module(CS))
+                    # target_v_list.append(self.CROSSWALK_module(CS)) 
+                    # target_v_list.append(self.STOPLINE_module(CS))
+                    # target_v_list.append(self.MERGE_module(CS))
                     target_v_list.append(self.ACC_module(CS, local_path))
-                    target_v_list.append(self.CURVATURE_module(CS, local_path))
+                    # target_v_list.append(self.CURVATURE_module(CS, local_path))
                     try:
                         self.target_v = min(target_v_list)
                     except:

@@ -1,5 +1,6 @@
 import math
-import time
+from collections import deque
+from math import sqrt
 
 import heapq as hq
 import numpy as np
@@ -10,9 +11,14 @@ import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 from selfdrive.visualize.rviz_utils import *
 
+import shapely.geometry as sh
+
+
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
+
+
 
 def euc_distance(pt1, pt2):
     return np.sqrt((pt2[0]-pt1[0])**2+(pt2[1]-pt1[1])**2)
@@ -21,7 +27,7 @@ def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
 
-def lanelet_matching(tile, tile_size, t_pt):
+def lanelet_matching(tiles, tile_size, t_pt):
     row = int(t_pt[0] // tile_size)
     col = int(t_pt[1] // tile_size)
 
@@ -30,7 +36,7 @@ def lanelet_matching(tile, tile_size, t_pt):
 
     for i in range(-1, 2):
         for j in range(-1, 2):
-            selected_tile = tile.get((row+i, col+j))
+            selected_tile = tiles.get((row+i, col+j))
             if selected_tile is not None:
                 for id_, data in selected_tile.items():
                     for idx, pt in enumerate(data['waypoints']):
@@ -84,6 +90,46 @@ def exchange_waypoint(target, now):
         exchange_waypoints.append(change_pt)
 
     return exchange_waypoints
+
+## head lane id는 걍 다 들어가 있음.
+def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, CS):
+    schoolzone_points = []
+    present_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
+
+    # print("my link number is : ", nowID)
+    ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
+    further_lane_ids = head_lane_ids[:]
+    if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
+    # print(further_lane_ids)
+    for further_link, lanelet_id in enumerate(further_lane_ids):
+        if len(lanelets[lanelet_id]['schoolZone']) > 0:
+            for point in lanelets[lanelet_id]['schoolZone']:
+                idx = local_point.query((point[0], point[1]), 1)[1]
+                if idx > present_idx:
+                    schoolzone_points.append((idx, point[0], point[1]))
+    
+    schoolzone_info = {}
+    schoolzone_info['points'] = schoolzone_points
+    if len(schoolzone_points) > 1:
+        remain_distance = 0.5*(min(schoolzone_points[0][0], schoolzone_points[1][0]) - present_idx)
+        if remain_distance < 50:
+            schoolzone_info['state'] = 2 #"ready"
+            schoolzone_info['remaining_distance'] = remain_distance
+        else:
+            schoolzone_info['state'] = 1 #'out'
+            schoolzone_info['remaining_distance'] = 0
+               
+    elif len(schoolzone_points) == 1:
+        schoolzone_info['state'] = 0 # 'in'
+        schoolzone_info['remaining_distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
+    
+    elif len(schoolzone_points) == 0:
+        schoolzone_info['state'] = 1 #'out'
+        schoolzone_info['remaining_distance'] = 0
+    # print("============")
+    # print(schoolzone_info)
+    # print("============")
+    return schoolzone_points, schoolzone_info
 
 def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
 
@@ -220,7 +266,7 @@ def smooth_compute_yaw_and_curvature(points, precision):
     for ds in np.arange(0.0, itp.s[-1], precision):
         yaw.append(itp.calc_yaw(ds))
         k.append(itp.calc_curvature(ds))
-        
+    
     return smoothed_path, yaw, k
 
 def ref_interpolate(points, precision):
@@ -253,6 +299,7 @@ def id_interpolate(non_intp, intp, non_intp_id):
 
         n_id = non_intp_id[non_intp_idx]
         itp_ids.append(n_id)
+        
     return itp_ids
 
 
@@ -269,13 +316,6 @@ def node_matching(lanelet, l_id, l_idx):
 
 
 def dijkstra(graph, start, finish):
-#     import json
-#     with open("/home/inha/Desktop/graph.json", "w", encoding='utf-8') as f:
-#         json.dump(graph, f, ensure_ascii=False, indent=4)
-#     with open("/home/inha/Desktop/start.json", "w", encoding='utf-8') as f:
-#         json.dump(start, f, ensure_ascii=False, indent=4)
-#     with open("/home/inha/Desktop/finish.json", "w", encoding='utf-8') as f:
-#         json.dump(finish, f, ensure_ascii=False, indent=4)
     distances = {}
     previous = {}
     nodes = []
@@ -345,6 +385,7 @@ def node_to_waypoints2(lanelet, shortest_path):
             for i in range(len(alpha_path)):
                 final_id_path.append(str("{}_{}".format(id, i)))
             final_path.extend(alpha_path)
+            
     return final_path, final_id_path
 
 
@@ -483,10 +524,12 @@ def get_a_b_for_blinker(min, ignore):
     b = 10
     return a,b
 
-def get_blinker_and_targetid(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id):
+def judge_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX):
+    print(f'here is judge turnning {splited_local_id}')
     a, b = get_a_b_for_blinker(10*KPH_TO_MPS, 50*KPH_TO_MPS)
-    lf = int(min(idx+110, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 15m ~ 65m
-    ld = int(min(idx+130, max(idx+(a*vEgo+b)*M_TO_IDX, idx+40))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
+    lf = int(min(idx+40, max(idx+(a*vEgo+b)*M_TO_IDX, idx+20))) # 10m ~ 20m
+    ld = int(min(idx+120, max(idx+(a*vEgo+b)*M_TO_IDX, idx+30))) # lookahead distance, lf보다 조금 더 먼 거리를 보게 함 
+    # left_turn_lane = [1, 2, 91]
 
     if lf < 0:
         lf = 0
@@ -500,89 +543,238 @@ def get_blinker_and_targetid(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX,
         ld = len(ids)-1
     next_id_2 = ids[ld].split('_')[0]
 
-    # 곡률
-    curr_curv = abs(max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']))
-    next1_curv = abs(max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']))
-    next2_curv = abs(max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']))
+    current_curvature = abs(max(lanelets[splited_local_id]['yaw']) - min(lanelets[splited_local_id]['yaw']))
+    next1_curvature = abs(max(lanelets[next_id_1]['yaw']) - min(lanelets[next_id_1]['yaw']))
+    next2_curvature = abs(max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']))
+    return current_curvature, next1_curvature, next2_curvature, next_id_1, next_id_2
 
-    songdo_special_case = ['5']
 
-    # 차선 변경
+def blinker_n_velocity_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX, my_neighbor_id, current_blinker_state):
+    #TODO: CHECK FLAG  
+    current_blinker, target_next_id = current_blinker_state
+    current_curvature, next1_curvature, next2_curvature, next_id_1, next_id_2 = judge_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX)
+
+    ### update by 2024.05.24. 05:12 target_v is meaningless just for one time
+    ### target_v is no turning -1, turning 10, curve 20, lange changing -1. -1 mean max velocity 
+    ### turning is Lchanging, Rchanging, will Lturn, will Rturn, Lturing, Rturing, will Rotary in, will Rotary out, 
+    ### now LPocket, now RPocket, will LPocket, will RPocket, 
+    target_v_state = [-1, 10, 20]
+    turning_state = [
+        "No turning", # 0 
+        # 1           2            3            4              5          6
+        "Lchanging", "Rchanging", "will Lturn", "will Rturn", "Lturing", "Rturing",
+        # 7               8
+        "will Rotary in", "will Rotary out", 
+        # 9            10             11               12            13
+        "now LPocket", "now RPocket", "will LPocket", "will RPocket", "Keeping"
+        ]
+
+    target_v = target_v_state[0]
+    print(len(turning_state))
+    turning = turning_state[0]
+
+    # kcity 예외 case(노면표시 없음)추후 수정예정
+    rTurn_special_case = ['473', '605', '615', '670', '614']
+    lTurn_special_case = []
+    rPocket_special_case = []
+    lPocket_special_case = ['411']
+
+    # 차선 변경할 때
     if next_id_1 in my_neighbor_id[0]:
+        # or (lanelets[next_id]['laneNo'] == 91 or lanelets[next_id]['laneNo'] == 92):
+        target_v = target_v_state[0]
+        turning = turning_state[1]
+
         print("now Lchange")
-        return 1, next_id_1
+        return 1, next_id_1, target_v, turning
     elif next_id_1 in my_neighbor_id[1]:
+        target_v = target_v_state[0]
+        turning = turning_state[2]        
+
         print("now Rchange")
-        return 2, next_id_1
+        return 2, next_id_1, target_v, turning
     
-    # 다음링크가 회전차로일 때
-    elif next2_curv > 0.5 and lanelets[next_id_2]['intersection'] == True and len(lanelets[next_id_2]['successor']) < 2:
-        # 우회전
-        if lanelets[next_id_2]['rightTurn'] == True and lanelets[next_id_2]['leftTurn'] == False:
+    # 다음링크가 회전차로일 때(580 예외 case, 우회전 노면표시 없는 곳 추후 수정 예정)
+    elif next2_curvature > 0.5 and lanelets[next_id_2]['intersection'] == True and len(lanelets[next_id_2]['successor']) < 2 and next_id_2 != '580':
+        # 다음링크가 우회전일 때
+        if (lanelets[next_id_2]['rightTurn'] == True and lanelets[next_id_2]['leftTurn'] == False) or next_id_2 in rTurn_special_case:
+            target_v = target_v_state[1]
+            turning = turning_state[4] 
+
             print(next_id_2)
             print("next Rturn")
-            return 2, next_id_2
-        # 좌회전
+            return 2, next_id_2, target_v, turning
+        # 다음링크가 좌회전일 때
         else:
+            target_v = target_v_state[1]
+            turning = turning_state[3] 
+
             print(next_id_2)
             print("next Lturn")
-            return 1, next_id_2
+            return 1, next_id_2, target_v, turning
+
+    # elif next_id_2 == '614':
+    #     print(next_id_2)
+    #     print("next *Rturn")
+    #     return 2, next_id_2
     
     # 다음링크가 로터리 진입일 때
-    elif next1_curv > 0.25 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True and lanelets[splited_local_id]['intersection'] == False:
+    elif next1_curvature > 0.25 and len(lanelets[next_id_1]['successor']) > 1 and lanelets[next_id_1]['intersection'] == True and lanelets[splited_local_id]['intersection'] == False:
+        target_v = target_v_state[1]
+        turning = turning_state[7]
+
         print(f"{splited_local_id} -> {next_id_1}")
         print("next rotary in")
-        return 1, next_id_1
-        
-    # 다음링크가 포켓차로일 때
-    elif next1_curv > 0.25 and len(lanelets[next_id_1]['direction']) > 0:
-        # 좌포켓
-        if lanelets[next_id_1]['direction'] == 'L':
-            print("next Lpocket")
-            return 1, next_id_1
-
-        # 우포켓
-        elif lanelets[next_id_1]['direction'] == 'R':
-            print("next Rpocket")
-            return 2, next_id_1
+        return 1, next_id_1, target_v, turning
     
-    # 곡률 작은 우포켓
-    elif next1_curv > 0.07 and lanelets[next_id_1]['laneNo'] > lanelets[splited_local_id]['laneNo']:
+    # 다음링크가 포켓차로일 때
+    elif next1_curvature > 0.25 and len(lanelets[next_id_1]['direction']) > 0:  # len(lanelets[next_id_1]['direction']) == 1
+        # 다음링크가 좌포켓일 때
+        if lanelets[next_id_1]['direction'] == 'L':
+            target_v = target_v_state[2]
+            turning = turning_state[11]
+
+            print(next_id_1)
+            print("next Lpocket")
+            return 1, next_id_1, target_v, turning
+
+        # 다음링크가 우포켓일 때
+        elif lanelets[next_id_1]['direction'] == 'R':
+            target_v = target_v_state[2]
+            turning = turning_state[12]
+            print(next_id_1)
+            print("next Rpocket")
+            return 2, next_id_1, target_v, turning
+    
+    # 다음링크 노면표시 없는 좌포켓
+    elif next_id_1 in lPocket_special_case:
+        target_v = target_v_state[2]
+        turning = turning_state[11]
+        print(next_id_1)
+        print("next Lpocket")
+        return 1, next_id_1, target_v, turning
+    
+    # 다음링크 곡률 작은 우포켓차로
+    elif next1_curvature > 0.07 and lanelets[next_id_1]['laneNo'] > lanelets[splited_local_id]['laneNo'] and next_id_1 != '300':
+        target_v = target_v_state[2]
+        turning = turning_state[12]
         print(next_id_1)
         print("next Rpocket")
-        return 2, next_id_1
-    
+        return 2, next_id_1, target_v, turning
+
+    # 다음링크가 좌포켓
+    # elif max(lanelets[next_id_2]['yaw']) - min(lanelets[next_id_2]['yaw']) > 0.1:
+    #     # 다음링크가 교차로를 통과하거나 좌회전 가능차로일 때
+    #     if lanelets[next_id_2]['laneNo'] != lanelets[splited_local_id]['laneNo'] or lanelets[next_id_2]['leftTurn'] == True:
+    #         print(next_id_2)
+    #         return 1, next_id_2
+
     # 현재링크가 로터리, 다음링크가 로터리 진출차로일 때
-    elif curr_curv > 0.25 and len(lanelets[splited_local_id]['successor']) > 1 and lanelets[splited_local_id]['intersection'] == True and curr_curv > next1_curv: 
+    elif current_curvature > 0.25 and len(lanelets[splited_local_id]['successor']) > 1 and lanelets[splited_local_id]['intersection'] == True and current_curvature > next1_curvature: 
+        target_v = target_v_state[1]
+        turning = turning_state[8]
+        print(f"{splited_local_id} -> {next_id_1}")
         print("next rotary out")
-        return 2, next_id_1
+        return 2, next_id_1, target_v, turning
     
-    # 현재링크가 회전차로일 때
-    elif curr_curv > 0.5 and lanelets[splited_local_id]['intersection'] == True and len(lanelets[splited_local_id]['successor']) < 2 :
+    # 현재링크가 회전차로일 때(580 예외 case, 우회전 노면표시 없는 곳 추후 수정 예정)
+    elif current_curvature > 0.5 and lanelets[splited_local_id]['intersection'] == True and len(lanelets[splited_local_id]['successor']) < 2 and splited_local_id != '580':
         # 현재링크가 우회전일 때
-        if lanelets[splited_local_id]['rightTurn'] == True and lanelets[splited_local_id]['leftTurn'] == False and splited_local_id not in songdo_special_case:
+        if (lanelets[splited_local_id]['rightTurn'] == True and lanelets[splited_local_id]['leftTurn'] == False) or splited_local_id in rTurn_special_case:
+            target_v = target_v_state[2]
+            turning = turning_state[6]
+
             print(splited_local_id)
             print("now Rturn")
-            return 2, next_id_2
+            return 2, next_id_2, target_v, turning
         # 현재링크가 좌회전일 때
         else:
             print(splited_local_id)
+            target_v = target_v_state[2]
+            turning = turning_state[5]
+
             print("now Lturn")
-            return 1, next_id_2
+            return 1, next_id_2, target_v, turning
+        
+    elif splited_local_id == '614':
+        target_v = target_v_state[2]
+        turning = turning_state[6]
+
+        print(splited_local_id)
+        print("now *Rturn")
+        return 2, next_id_2, target_v, turning
     
-     # 현재링크가 포켓차로일 때
-    elif curr_curv > 0.25 and len(lanelets[splited_local_id]['direction']) > 0:
-        # 좌포켓
-        if lanelets[splited_local_id]['direction'] == 'L' and splited_local_id not in songdo_special_case:
+    # 현재링크가 포켓차로일 때
+    elif current_curvature > 0.25 and len(lanelets[splited_local_id]['direction']) > 0:
+        # 현재링크가 좌포켓일 때
+        if lanelets[splited_local_id]['direction'] == 'L':
+            target_v = target_v_state[2]
+            turning = turning_state[9]
+
+            print(splited_local_id)
             print("now Lpocket")
-            return 1, next_id_1
-        # 우포켓
+            return 1, next_id_1, target_v, turning
+        # 현재링크가 우포켓일 때
         elif lanelets[splited_local_id]['direction'] == 'R' and lanelets[splited_local_id]['laneNo'] >= lanelets[next_id_1]['laneNo']:
+            target_v = target_v_state[2]
+            turning = turning_state[10]
+
+            print(splited_local_id)
             print("now Rpocket")
-            return 2, next_id_1
+            return 2, next_id_1, target_v, turning
+    
+    # 현재링크 노면표시 없는 좌포켓
+    elif splited_local_id in lPocket_special_case:
+        target_v = target_v_state[2]
+        turning = turning_state[9]
+        print(splited_local_id)
+        print("now Lpocket")
+        return 1, next_id_1, target_v, turning
+    
+    # # 현재 곡률 작은 포켓차로
+    # elif current_curvature > 0.07 and lanelets[splited_local_id]['laneNo'] > lanelets[lanelets[splited_local_id]['predecessor']]['laneNo']:
+    #     print(splited_local_id)
+    #     print("now Rpocket")
+    #     return 2, next_id_1
+    
+    # 현재링크가 좌로합류차로일 때(추후 알고리즘 추가 예정)
+    elif splited_local_id == '90':
+        target_v = target_v_state[2]
+        turning = turning_state[9]
+        
+        print(splited_local_id)
+        print("now Lmerge")
+        return 1, next_id_1, target_v, turning
+    
+    if current_blinker != 0 and splited_local_id != next_id_1 and splited_local_id != next_id_2:
+        target_v = target_v_state[0]
+        turning = turning_state[13]
 
-    return 0, None
+        print(f"maintaining current blinker state: {current_blinker}")
+        return current_blinker, splited_local_id, target_v, turning
 
+    # if change_lane_flag:  # if flag is True, keep the blinker on
+    #     if change_target_id in my_neighbor_id[0]:
+    #         return 1 , change_target_id
+    #     elif change_target_id in my_neighbor_id[1]:
+    #         return 2, change_target_id
+    return 0, None, target_v, turning
+
+
+def curve_velocity_planner(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):
+    return blinker_n_velocity_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX, my_neighbor_id, current_blinker_state)
+
+# songdo + KCity ver.
+def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):#, local_id, change_target_id, change_lane_flag): 
+
+    return blinker_n_velocity_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX, my_neighbor_id, current_blinker_state)
+
+def get_stopline_pos(lanelets, splited_local_id):
+    if len(lanelets[splited_local_id]['stoplineID']) != 0:
+        stopline_pos = lanelets[splited_local_id]['waypoints'][-1]  # [x, y]
+    else:
+        stopline_pos = None
+    return stopline_pos
 
 def compare_id(lh_id, my_neighbor_id):
     if lh_id in my_neighbor_id[0] or lh_id in my_neighbor_id[1]:
@@ -893,18 +1085,30 @@ def is_car_inside_combined_road(obstacle_position, lanelet, prevID, nowID, nextI
 
     return prev_polygon_flat, now_polygon_flat, next_polygon_flat, road1_result or road2_result or road3_result # if just one true is true return true
 
-def get_crosswalk_points(lanelets, surfacemarks, nowID, head_lane_ids):
-    polygon_points = []
-    if len(lanelets[nowID]['crosswalkID']) > 0:
-        lanelet_id = nowID
-    else:
-        for lanelet_id in head_lane_ids:
-            if len(lanelets[lanelet_id]['crosswalkID']) > 0:
-                break
-    crosswalk_ids = lanelets[lanelet_id]['crosswalkID']
-    for s_id in lanelets[lanelet_id]['crosswalkID']:
-        polygon_points.extend(surfacemarks[s_id])
-    return crosswalk_ids, polygon_points
+def get_crosswalk_ids_points(lanelets, surfacemarks, remaining_global_ids, cur_id_idx): 
+    selected_crosswalk_ids_points = []
+    roi_waypoints = lanelets[remaining_global_ids[0]]['waypoints'][cur_id_idx:]
+    if len(roi_waypoints) > 1: # string으로 만드려면 2개이상 점 필요
+        roi_string = sh.LineString(roi_waypoints)
+        
+        # 현재 id의 crosswalkID
+        # my_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[0]]['crosswalkID'])) # 중복제거하면 순서정보가 없어셔서 안됨
+        my_lane_crosswalkIds = lanelets[remaining_global_ids[0]]['crosswalkID']
+        for id_ in my_lane_crosswalkIds: 
+            crosswalk_polygon = sh.Polygon(surfacemarks[id_])
+            if roi_string.intersects(crosswalk_polygon):
+                selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
+                # print("Crosswalk ID for MY link: ", id_)
+        
+    # 다음 id의 crosswalk
+    if len(remaining_global_ids) > 2:
+        # next_lane_crosswalkIds = list(set(lanelets[remaining_global_ids[1]]['crosswalkID'])) # 중복제거하면 순서정보가 없어셔서 안됨
+        next_lane_crosswalkIds = lanelets[remaining_global_ids[1]]['crosswalkID']
+        for id_ in next_lane_crosswalkIds: 
+            selected_crosswalk_ids_points.append((id_, surfacemarks[id_]))
+            # print("Crosswalk ID for NEXT link: ", id_)
+        
+    return selected_crosswalk_ids_points
 # import rospy
 # from visualization_msgs.msg import Marker
 
@@ -945,8 +1149,8 @@ def is_obstacle_inside_polygon(surfacemarks, crosswalk_ids, obstacle_list):
                     xinters = (y - y1) * (x2 - x1) / (y2 - y1) + x1
                 if x1 == x2 or x <= xinters:
                     inside = not inside
-
         return inside
+    
     for obs in obstacle_list:
         point = (obs[3], obs[4])  # Assuming obs[3] is x and obs[4] is y
         for s_id in crosswalk_ids:

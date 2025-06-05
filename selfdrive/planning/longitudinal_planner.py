@@ -59,8 +59,13 @@ class LongitudinalPlanner:
         self.trafficLight_last_header = None
         self.trafficLight_type = None
 
-        rospy.Subscriber("/Object_topic", ObjectStatusList, self.obstacle_pos_cb)
+
+        # for morai
+        rospy.Subscriber("/Object_topic", ObjectStatusList, self.morai_obstacle_pos_cb)
         self.object_list = PoseArray()
+        # for ioniq
+        rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.ioniq_obstacle_pos_cb)
+
 
         self.stopline_no_traffic_light_timer = rospy.Time.now()
         self.stopline_timer_flag = True
@@ -115,7 +120,7 @@ class LongitudinalPlanner:
         if self.trafficLight_last_header is None:
             self.trafficLight_last_header = msg.header
 
-    def obstacle_pos_cb(self, msg):
+    def morai_obstacle_pos_cb(self, msg):
         object_list = PoseArray()
         for obj in msg.npc_list:
             pose = Pose()
@@ -145,6 +150,22 @@ class LongitudinalPlanner:
             pose.orientation.w = obj.velocity.x
             object_list.poses.append(pose)
         self.object_list = object_list
+    # ------------------------------------------
+
+    def ioniq_obstacle_pos_cb(self, msg):
+        object_list = PoseArray()   
+        for obj in msg.poses:
+            pose = Pose()
+            if obj.position.y < 0:
+                continue
+            pose.position.y = obj.position.y  # rel position
+            pose.orientation.w = obj.orientation.w  # rel velocity
+            object_list.poses.append(pose)
+
+        # rel position 기준 정렬
+        object_list.poses.sort(key=lambda p: p.position.z)
+        self.object_list = object_list
+
     # ------------------------------------------
 
 
@@ -556,35 +577,42 @@ class LongitudinalPlanner:
     def ACC_module(self, CS, local_path):
         # ACC part
         safety_distance = max(CS.vEgo*3.6-15, 9) # safe_distance
-        margin = 0
+        margin = 7
         margined_safety_distance = safety_distance + margin
 
         nearest_s = 999
         obs_dis = 999
         obs_vel = 999
         local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
-        for i in range(len(local_path[local_idx:])):
-            for obs in self.object_list.poses:
-                obs_lane_dis = ((obs.position.x - local_path[local_idx:][i][0])**2 + (obs.position.y - local_path[local_idx:][i][1])**2)**0.5
-                obs_dis = ((obs.position.x - CS.position.x)**2 + (obs.position.y - CS.position.y)**2)**0.5
-                obs_vel = obs.orientation.w/3.6
-                if obs_lane_dis < 1.75: # half of lane width
-                    if obs_dis < nearest_s:
-                        nearest_s = obs_dis
-                    break
+
+        # For ioniq
+        if self.object_list.poses:
+            nearest_s = self.object_list.poses[0].position.y
+            obs_vel = CS.vEgo + self.object_list.poses[0].orientation.w
+    
+        # For morai
+        # for i in range(len(local_path[local_idx:])):
+        #     for obs in self.object_list.poses:
+        #         obs_lane_dis = ((obs.position.x - local_path[local_idx:][i][0])**2 + (obs.position.y - local_path[local_idx:][i][1])**2)**0.5
+        #         obs_dis = ((obs.position.x - CS.position.x)**2 + (obs.position.y - CS.position.y)**2)**0.5
+        #         obs_vel = obs.orientation.w/3.6
+        #         if obs_lane_dis < 1.75: # half of lane width
+        #             if obs_dis < nearest_s:
+        #                 nearest_s = obs_dis
+        #             break
         
-        if nearest_s < margined_safety_distance*0.9:
+        if nearest_s <= margined_safety_distance*1.0:
             status = "danger_zone"
-        elif margined_safety_distance*0.9 < nearest_s < margined_safety_distance*1.4:
+        elif margined_safety_distance*1.0 <= nearest_s <= margined_safety_distance*1.4:
             status = "safe_zone"
-        elif margined_safety_distance*1.4 < nearest_s:
+        elif margined_safety_distance*1.4 <= nearest_s:
             status = "far_zone"
         else:
             status = "zone_error"
         
         
         s_ratio = nearest_s / margined_safety_distance
-        
+        target_v_ACC = -1.0
         if status == "danger_zone":
             target_v_ACC = 10/3.6/21*(nearest_s - 9)
         elif status == "safe_zone":
@@ -598,11 +626,12 @@ class LongitudinalPlanner:
         str2 = f"- Current s: {nearest_s:.2f}\n"
         str3 = f"- Target s: {margined_safety_distance:.2f}\n"
         str4 = f"- Target_v: {target_v_ACC:.2f}\n"
-        str5 = ""
+        str5 = f"- nearest s: {nearest_s:.2f}\n"
+        str6 = f"- obs velocity: {obs_vel:.2f}\n"
         if target_v_ACC == 999:
             str5 = f"- Nothing to do with ACC module\n"
         
-        print(f"======ACC======\n{str1}{str2}{str3}{str4}{str5}")
+        print(f"======ACC======\n{str1}{str2}{str3}{str4}{str5}{str6}")
         
         # Publish datas for plot
         # acc_plot_msg = Pose()
@@ -652,36 +681,36 @@ class LongitudinalPlanner:
         self.pub_accerror.publish(Float32(self.follow_error))
         if not None in [l_path, g_ids]:
             local_path = l_path.copy()
-            global_ids = g_ids.copy()
-            if CS.cruiseState == 1:
-                scenario = "integrated"
-                if scenario == "integrated":
-                    # set scenario and roi
-                    self.set_scenario_and_roi(lmap, my_lane_id, global_ids)
-                    
-                    # set safe to go
-                    # self.is_roi_safe_to_go(CS)
-                    
-                    # get traffic_light type
-                    self.traffic_light_postprocess()
-                    
-                    # get distance to stopline
-                    self.set_distance_to_stopline(CS)
-                    
-                    # get target_v
-                    target_v_list = []
-                    target_v_list.append(self.CROSSWALK_module(CS)) 
-                    target_v_list.append(self.STOPLINE_module(CS))
-                    target_v_list.append(self.MERGE_module(CS))
-                    target_v_list.append(self.ACC_module(CS, local_path))
-                    target_v_list.append(self.CURVATURE_module(CS, local_path))
-                    try:
-                        self.target_v = min(target_v_list)
-                    except:
-                        print(target_v_list)
-                        print("Error on long_planner: target_v")
-                    print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
-                    
+            global_ids = g_ids.copy
+            # if CS.cruiseState == 1:
+            scenario = "integrated"
+            if scenario == "integrated":
+                # set scenario and roi
+                # self.set_scenario_and_roi(lmap, my_lane_id, global_ids)
+                
+                # set safe to go
+                # self.is_roi_safe_to_go(CS)
+                
+                # get traffic_light type
+                # self.traffic_light_postprocess()
+                
+                # get distance to stopline
+                # self.set_distance_to_stopline(CS)
+                
+                # get target_v
+                target_v_list = []
+                # target_v_list.append(self.CROSSWALK_module(CS)) 
+                # target_v_list.append(self.STOPLINE_module(CS))
+                # target_v_list.append(self.MERGE_module(CS))
+                target_v_list.append(self.ACC_module(CS, local_path))
+                # target_v_list.append(self.CURVATURE_module(CS, local_path))
+                try:
+                    self.target_v = min(target_v_list)
+                except:
+                    print(target_v_list)
+                    print("Error on long_planner: target_v")
+                print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
+                
 
             else:
                 self.target_v = CS.vEgo

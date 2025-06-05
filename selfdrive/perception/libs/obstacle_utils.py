@@ -47,15 +47,15 @@ class ObstacleUtils:
         proj_x = proj_norm*n_x 
         proj_y = proj_norm*n_y
         
-        frenet_s = point # index on local path
-        frenet_d = ObstacleUtils.distance(x_x, x_y, proj_x, proj_y)
+        local_frenet_s_idx = point # index on local path
+        frenet_d = ObstacleUtils.distance(x_x, x_y, proj_x, proj_y) # distance to local path
 
         normal_x, normal_y = n_y, -n_x # outer product
         dot_product = normal_x * x_x + normal_y * x_y
         if dot_product < 0:
             frenet_d *= -1
 
-        return frenet_s, frenet_d
+        return local_frenet_s_idx, frenet_d
 
     def calculate_avoid_gain(obs_d, obs_width, obs_speed):
         half_width = obs_width / 2

@@ -142,7 +142,7 @@ class ObstacleDetector:
                         
                 #Forward Collision Warning
                 if (obj_s-car_idx) > 0 and (obj_s-car_idx) < 100*self.M_TO_IDX and obj_d > -1.5 and obj_d < 1.5: # obstacles in my lane
-                    obstacle_sd.append((obj_s, obj_d, obj[3], obj[4],obj[0]+dx, obj[1]+dy))
+                    obstacle_sd.append(((obj_s-car_idx)*self.IDX_TO_M, obj_d, obj[3], obj[4],obj[0]+dx, obj[1]+dy))
                 #BSD3 : Time Based Method
                 if (-50*self.M_TO_IDX) < (obj_s-car_idx) < (50*self.M_TO_IDX) and obj_d > -5 and obj_d < 5:
                     around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
@@ -159,12 +159,6 @@ class ObstacleDetector:
 
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0]) # closet obstacle on my lane
-        print("lane pos:", self.lane_position)
-        # for obs in viz_obstacle:
-        #     print("rel pos is ", ObstacleUtils.enuobject2rel((self.CS.position.x, self.CS.position.y, self.CS.yawRate), obs[0], obs[1]))
-        for obs in around_obstacle_sd:
-            print("frenet:", (obs[0]-car_idx)*self.IDX_TO_M, obs[1])
-        print("\n\n\n")
 
         return obstacle_sd, viz_obstacle, around_obstacle_sd
 

@@ -761,8 +761,6 @@ def blinker_n_velocity_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_I
     return 0, None, target_v, turning
 
 
-def curve_velocity_planner(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):
-    return blinker_n_velocity_turing(idx, lanelets, ids, splited_local_id, vEgo, M_TO_IDX, my_neighbor_id, current_blinker_state)
 
 # songdo + KCity ver.
 def get_blinker(idx, lanelets, ids, my_neighbor_id, vEgo, M_TO_IDX, splited_local_id, current_blinker_state):#, local_id, change_target_id, change_lane_flag): 

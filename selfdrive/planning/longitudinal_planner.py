@@ -13,6 +13,9 @@ KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
 
+## for manual velocity
+import datetime
+    
 class LongitudinalPlanner:
     def __init__(self, CP):
         self.lidar_obstacle = None
@@ -242,7 +245,7 @@ class LongitudinalPlanner:
     def check_static_object(self, local_path, local_s, veh_pose, v_ego):
         local_len = len(local_path)
         goal_offset = 1.5*self.M_TO_IDX
-        tl_offset = 7*self.M_TO_IDX
+        tl_offset = 5*self.M_TO_IDX # origin 7
         cw_offset = 5*self.M_TO_IDX
         static_s1, static_s2 = 90*self.M_TO_IDX, 90*self.M_TO_IDX
         # [1] = Goal Object
@@ -261,7 +264,7 @@ class LongitudinalPlanner:
                 if self.right_turn_situation == (0,0) and self.right_turn_situation_real == (0,0):
                     static_s2 = min_distance*self.M_TO_IDX-cw_offset
                     if self.can_depart(v_ego):
-                        print("can_depart")
+                        #print("can_depart")
                         static_s2 = 90*self.M_TO_IDX
                 elif self.right_turn_situation_real == (0,1) or self.right_turn_situation == (0, 1) \
                     or self.right_turn_situation == (1, 0) or self.right_turn_situation == (1,1):
@@ -287,16 +290,39 @@ class LongitudinalPlanner:
         self.pub_target_v.publish(Float32(self.target_v))
         self.pub_accerror.publish(Float32(self.follow_error))
         if local_path != None and self.lane_information != None:
-            local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
-            if CS.cruiseState == 1:
-                local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
-                static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
-                dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
-                target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
-                target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
-                self.target_v = min(target_v_static, target_v_dynamic)
-            else:
-                self.target_v = CS.vEgo
+            ## for PID test
+            # local_idx = calc_idx(local_path, (CS.position.x, CS.position.y))
+            # if CS.cruiseState == 1:
+            #     local_curv_v = calculate_v_by_curvature(self.lane_information, self.ref_v, self.min_v, CS.vEgo) # info, kph, kph, mps
+            #     static_d = self.check_static_object(local_path, local_idx, (CS.position.x, CS.position.y), CS.vEgo) # output unit: idx
+            #     dynamic_d = self.check_dynamic_objects(CS.vEgo, local_idx, (CS.position.x, CS.position.y)) # output unit: idx
+            #     target_v_static = self.static_velocity_plan(CS.vEgo, local_curv_v, static_d)
+            #     target_v_dynamic = self.dynamic_velocity_plan(CS.vEgo, local_curv_v, dynamic_d, CS.vEgo)
+            #     self.target_v = min(target_v_static, target_v_dynamic)
+            # else:
+            #     self.target_v = CS.vEgo
+
+            ## manual
+            ## case 1 : constant
+            self.target_v = 40 / 3.6 # km/h
+
+            ## case 2 : sinusoidal
+            # amplitude = 5
+            # offset = 20
+            # number = datetime.datetime.now().microsecond%1000000
+            # while number >= 10:
+            #     number //= 10
+            # self.target_v = offset + amplitude * np.sin(number*2*np.pi/9) / 3.6
+
+            ## case 3 : step
+            # amplitude = 5
+            # offset = 20
+            # number = datetime.datetime.now().second%10
+            # if number < 5:
+            #     step = 1
+            # else:
+            #     step = -1
+            # self.target_v = offset + amplitude*step / 3.6
 
             if pp == 2:
                 self.target_v = 0.0

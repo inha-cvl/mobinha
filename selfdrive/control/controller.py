@@ -81,7 +81,10 @@ class Controller:
             brake_val = 0.0
         elif val_data <= 0.:
             accel_val = 0.0
-            if (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
+            if (self.target_v == -1 and cur_v <= 10*KPH_TO_MPS):
+                brake_val = 40
+                print("stopping")
+            elif (self.target_v > 0 and cur_v >= 1.5*KPH_TO_MPS):
                 brake_val = -val_data*gain
             elif pitch < -2.5:
                 brake_val = 45

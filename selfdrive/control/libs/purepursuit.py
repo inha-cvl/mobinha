@@ -70,7 +70,10 @@ class PurePursuit:
         return (new_x, new_y)
 
     def run(self, vEgo, path, position, yawRate, cte):
-        lfd = self.Lfc+self.k*vEgo
+        if vEgo * 3.6 < 25:
+            lfd = 3.6
+        else:
+            lfd = 6 + 2.3 * vEgo ** 0.8 / 3.6
         lfd = np.clip(lfd, 4, 60)
         steering_angle = 0.
         lx, ly = path[0]
@@ -88,4 +91,18 @@ class PurePursuit:
                     lx = point[0]
                     ly = point[1]
                     break
-        return degrees(steering_angle), (lx, ly)
+        
+        speed_kmh = vEgo * 3.6  # m/s → km/h
+
+        ## 저속일때 다시확인해봐야함 TODO
+        if speed_kmh <= 25:         
+            factor = 1.1
+        elif speed_kmh >= 35:      
+            factor = 1.3
+        else:                     
+            factor = 1.0 + (speed_kmh - 25) * (0.2 / 10)  
+
+        # factor = 1.3
+        # if vEgo*3.6 < 25:
+        #     factor = 1.00
+        return degrees(factor*steering_angle), (lx, ly) 

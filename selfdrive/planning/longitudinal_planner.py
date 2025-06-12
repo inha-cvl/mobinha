@@ -577,7 +577,7 @@ class LongitudinalPlanner:
     def ACC_module(self, CS, local_path):
         # ACC part
         safety_distance = max(CS.vEgo*3.6-15, 9) # safe_distance
-        margin = 7
+        margin = 11
         margined_safety_distance = safety_distance + margin
 
         nearest_s = 999
@@ -611,16 +611,24 @@ class LongitudinalPlanner:
             status = "zone_error"
         
         
-        s_ratio = nearest_s / margined_safety_distance
+        # s_ratio = nearest_s / margined_safety_distance
         target_v_ACC = -1.0
         if status == "danger_zone":
-            target_v_ACC = 10/3.6/21*(nearest_s - 9)
+            target_v_ACC = (10 / 3.6 / 21) * (nearest_s - 9)
+            if nearest_s < margined_safety_distance and target_v_ACC < 2*KPH_TO_MPS:
+                target_v_ACC = -1
         elif status == "safe_zone":
-            target_v_ACC = obs_vel*s_ratio
+            ratio = (nearest_s - margined_safety_distance) / (0.4 * margined_safety_distance)
+            acc_safe = obs_vel * (nearest_s / margined_safety_distance)
+            acc_danger = (10 / 3.6 / 21) * (nearest_s - 9)
+            target_v_ACC = ratio * acc_safe + (1 - ratio) * acc_danger
         elif status == "far_zone":
+            target_v_ACC = obs_vel * (nearest_s / margined_safety_distance + 1.0)
             target_v_ACC = 999
         else:
             print("[ACC] ERROR ON STATUS DECISION")
+
+
             
         str1 = f"- Status: {status}\n"
         str2 = f"- Current s: {nearest_s:.2f}\n"
@@ -706,10 +714,12 @@ class LongitudinalPlanner:
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 try:
                     self.target_v = min(target_v_list)
+                    # # for control test - 0612 jm
+                    # self.target_v = 40 * KPH_TO_MPS
                 except:
                     print(target_v_list)
                     print("Error on long_planner: target_v")
-                print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
+                # print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
                 
 
             else:

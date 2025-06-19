@@ -1512,7 +1512,7 @@ border-color: rgb(71,181,255);</string>
         </item>
         <item>
          <property name="text">
-          <string>songdo-site</string>
+          <string>songdo_campus</string>
          </property>
         </item>
         <item>
@@ -1523,11 +1523,6 @@ border-color: rgb(71,181,255);</string>
         <item>
          <property name="text">
           <string>fmtc</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>campus</string>
          </property>
         </item>
         <item>

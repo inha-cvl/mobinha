@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument('--ngii_path', type=str, default='./%s'%(name))
     parser.add_argument('--precision', type=float, default=1.0)
     parser.add_argument('--base_lla', type=tuple, default=map_dict[name], help='(lat, lon, alt)')
-    parser.add_argument('--is_utm', type=bool, default=False)
+    parser.add_argument('--is_utm', type=bool, default=False)  # KCity 일때만 True인가 그럼
 
     args = parser.parse_args()
 

@@ -9,15 +9,17 @@ from scipy.spatial import KDTree
 
 import libs.cubic_spline_planner as cubic_spline_planner
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
+from libs.quadratic_spline_interpolate_scipy import QuadraticSplineInterpolateFast
 from selfdrive.visualize.rviz_utils import *
 
 import shapely.geometry as sh
-
+from itertools import groupby
+from scipy.interpolate import UnivariateSpline
+from scipy.ndimage import gaussian_filter1d
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
 HZ = 10
-
 
 
 def euc_distance(pt1, pt2):
@@ -91,45 +93,6 @@ def exchange_waypoint(target, now):
 
     return exchange_waypoints
 
-## head lane id는 걍 다 들어가 있음.
-def get_schoolzone_points(lanelets, nowID, head_lane_ids, local_point, CS):
-    schoolzone_points = []
-    present_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
-
-    # print("my link number is : ", nowID)
-    ## head_lane_ids에 nowID를 추가하면 추가된게 멤버변수로 남아 있는 것을 막기 위하여 얕은 복사함
-    further_lane_ids = head_lane_ids[:]
-    if str(nowID) not in further_lane_ids: further_lane_ids.insert(0,str(nowID))
-    # print(further_lane_ids)
-    for further_link, lanelet_id in enumerate(further_lane_ids):
-        if len(lanelets[lanelet_id]['schoolZone']) > 0:
-            for point in lanelets[lanelet_id]['schoolZone']:
-                idx = local_point.query((point[0], point[1]), 1)[1]
-                if idx > present_idx:
-                    schoolzone_points.append((idx, point[0], point[1]))
-    
-    schoolzone_info = {}
-    schoolzone_info['points'] = schoolzone_points
-    if len(schoolzone_points) > 1:
-        remain_distance = 0.5*(min(schoolzone_points[0][0], schoolzone_points[1][0]) - present_idx)
-        if remain_distance < 50:
-            schoolzone_info['state'] = 2 #"ready"
-            schoolzone_info['remaining_distance'] = remain_distance
-        else:
-            schoolzone_info['state'] = 1 #'out'
-            schoolzone_info['remaining_distance'] = 0
-               
-    elif len(schoolzone_points) == 1:
-        schoolzone_info['state'] = 0 # 'in'
-        schoolzone_info['remaining_distance'] = 0.5*(schoolzone_points[0][0] - present_idx)
-    
-    elif len(schoolzone_points) == 0:
-        schoolzone_info['state'] = 1 #'out'
-        schoolzone_info['remaining_distance'] = 0
-    # print("============")
-    # print(schoolzone_info)
-    # print("============")
-    return schoolzone_points, schoolzone_info
 
 def generate_avoid_path(lanelets, now_lane_id, local_path_from_now, obs_len):
 
@@ -180,96 +143,10 @@ def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point)
 
 
 def filter_same_points(points):
-    filtered_points = []
-    pre_pt = None
-
-    for pt in points:
-        if pre_pt is None or pt != pre_pt:
-            filtered_points.append(pt)
-
-        pre_pt = pt
-
-    return filtered_points
+    return [next(g) for _, g in groupby(points)]
 
 
-def interpolate(points, precision):
-    points = filter_same_points(points)
-    if len(points) < 2:
-        return points, None, None, None
-    wx, wy = zip(*points)
-
-    itp = QuadraticSplineInterpolate(list(wx), list(wy))
-    itp_points = []
-    s = []
-    yaw = []
-    k = []
-
-    for n, ds in enumerate(np.arange(0.0, itp.s[-1], precision)):
-        s.append(ds)
-        x, y = itp.calc_position(ds)
-        dyaw = itp.calc_yaw(ds)
-
-        dk = itp.calc_curvature(ds)
-
-        itp_points.append((float(x), float(y)))
-        yaw.append(dyaw)
-        k.append(dk)
-
-    return itp_points, itp.s[-1], yaw, k
-
-from scipy.interpolate import UnivariateSpline
-
-def ref_interpolate_2d(points, precision, smoothing=0):
-    points = filter_same_points(points)
-    wx, wy = zip(*points)
-
-    # Create a cumulative distance array
-    dist = [0.0]
-    for i in range(1, len(wx)):
-        dist.append(dist[-1] + np.sqrt((wx[i] - wx[i-1])**2 + (wy[i] - wy[i-1])**2))
-    total_distance = dist[-1]
-
-    # Use 2nd order (quadratic) UnivariateSpline for interpolation
-    sx = UnivariateSpline(dist, wx, k=2, s=smoothing)
-    sy = UnivariateSpline(dist, wy, k=2, s=smoothing)
-
-    # Generate interpolated points
-    itp_points = []
-    for d in np.arange(0, total_distance, precision):
-        itp_points.append((float(sx(d)), float(sy(d))))
-
-    return itp_points, total_distance
-
-from scipy.ndimage import gaussian_filter1d
-
-def gaussian_smoothing_2d(points, sigma=1):
-    wx, wy = zip(*points)
-    smoothed_wx = gaussian_filter1d(wx, sigma=sigma)
-    smoothed_wy = gaussian_filter1d(wy, sigma=sigma)
-    
-    return list(zip(smoothed_wx, smoothed_wy))
-
-def smooth_compute_yaw_and_curvature(points, precision):
-    # Apply Gaussian smoothing
-    smoothed_path = gaussian_smoothing_2d(points)
-    
-    # Extract x and y from smoothed path
-    wx, wy = zip(*smoothed_path)
-    
-    # Create an interpolator object
-    itp = QuadraticSplineInterpolate(list(wx), list(wy))
-    
-    yaw = []
-    k = []
-    
-    # Compute yaw and curvature for each point in the smoothed path
-    for ds in np.arange(0.0, itp.s[-1], precision):
-        yaw.append(itp.calc_yaw(ds))
-        k.append(itp.calc_curvature(ds))
-    
-    return smoothed_path, yaw, k
-
-def ref_interpolate(points, precision):
+def ref_interpolate(points, precision): # 속도느리고 안정성 높음
     points = filter_same_points(points)
     wx, wy = zip(*points)
 
@@ -283,24 +160,61 @@ def ref_interpolate(points, precision):
     return itp_points, itp.s[-1]
 
 
-def id_interpolate(non_intp, intp, non_intp_id):
-    itp_ids = []
-    non_intp_idx = 0
-    tmp_non_intp_idx = 0
-    for wp in intp:
-        calc_non_intp_idx = calc_idx(non_intp, wp)
+def ref_interpolate_2d(points, precision, smoothing=0.0):
+    pts = np.asarray(filter_same_points(points), dtype=float)   # (N,2)
 
-        if abs(calc_non_intp_idx - tmp_non_intp_idx) < 50:
-            non_intp_idx = calc_non_intp_idx
-            tmp_non_intp_idx = non_intp_idx
-            
-        # if calc_non_intp_idx > non_intp_idx:
-            # non_intp_idx = calc_non_intp_idx
+    seg = np.hypot(np.diff(pts[:,0]), np.diff(pts[:,1]))  # (N-1,)
+    dist = np.hstack(([0.0], np.cumsum(seg)))             # (N,)
+    total_distance = float(dist[-1])
 
-        n_id = non_intp_id[non_intp_idx]
-        itp_ids.append(n_id)
-        
-    return itp_ids
+    sx = UnivariateSpline(dist, pts[:,0], k=2, s=smoothing)
+    sy = UnivariateSpline(dist, pts[:,1], k=2, s=smoothing)
+
+    d_vals = np.arange(0.0, total_distance, precision)    # (M,)
+
+    xi = sx(d_vals)
+    yi = sy(d_vals)
+
+    itp_points = list(zip(xi.astype(float), yi.astype(float)))
+    return itp_points, total_distance
+
+
+def gaussian_smoothing_2d(points, sigma=1.0):
+    arr = np.asarray(points, dtype=float)  
+    if arr.ndim != 2 or arr.shape[1] != 2:
+        raise ValueError("points must be [(x,y), ...]")
+
+    smoothed_x = gaussian_filter1d(arr[:, 0], sigma=sigma, mode="nearest")
+    smoothed_y = gaussian_filter1d(arr[:, 1], sigma=sigma, mode="nearest")
+
+    return np.column_stack((smoothed_x, smoothed_y))
+
+
+def smooth_compute_yaw_and_curvature(points, precision, sigma=1.0):
+    smoothed_path = gaussian_smoothing_2d(points, sigma)
+    
+    xs, ys = zip(*smoothed_path)          
+    itp = QuadraticSplineInterpolateFast(xs, ys)
+
+    s_query = np.arange(0.0, itp.s_end, precision)
+    yaw, k  = itp.yaw_and_curvature(s_query)
+
+    
+    return smoothed_path, yaw, k
+
+
+
+
+
+def id_interpolate(non_intp, intp, non_intp_id, enforce_forward=True):
+    kdt = KDTree(non_intp)                   
+
+    _, idxs = kdt.query(intp)                     
+
+    if enforce_forward:
+        idxs = np.maximum.accumulate(idxs)
+
+    return [non_intp_id[i] for i in idxs]
 
 
 def node_matching(lanelet, l_id, l_idx): # fast enough

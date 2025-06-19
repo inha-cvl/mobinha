@@ -295,51 +295,51 @@ class PathPlanner:
             self.delete_node_for_smooth_path(non_intp_path, non_intp_id)
             print(f"<Elapsed:Scenario3> delete_node...: {(time.time() - start):.3f}")
 
-            if non_intp_path is not None:
-                self.state = 'MOVE'
-                
-                start = time.time()
-                global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
-                print(f"<Elapsed:Scenario3> ref_interpolate_2d: {(time.time() - start):.3f}")
+            
+            self.state = 'MOVE'
+            
+            start = time.time()
+            global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
+            print(f"<Elapsed:Scenario3> ref_interpolate_2d: {(time.time() - start):.3f}")
 
-                start = time.time()
-                global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
-                print(f"<Elapsed:Scenario3> smooth_compute_yaw...: {(time.time() - start):.3f}")
+            start = time.time()
+            global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
+            print(f"<Elapsed:Scenario3> smooth_compute_yaw...: {(time.time() - start):.3f}")
 
-                start = time.time()
-                global_ids = id_interpolate(non_intp_path, global_path, non_intp_id)
-                print(f"<Elapsed:Scenario3> id_interpolate: {(time.time() - start):.3f}")
-                
-                self.global_path = global_path
-                self.global_ids = global_ids
-                self.non_intp_path = non_intp_path
-                self.non_intp_id = non_intp_id
-                self.head_lane_ids = head_lane_ids
+            start = time.time()
+            global_ids = id_interpolate(non_intp_path, global_path, non_intp_id)
+            print(f"<Elapsed:Scenario3> new id_interpolate: {(time.time() - start):.3f}")
+            
+            self.global_path = global_path
+            self.global_ids = global_ids
+            self.non_intp_path = non_intp_path
+            self.non_intp_id = non_intp_id
+            self.head_lane_ids = head_lane_ids
 
-                self.splited_global_ids = []
-                for id in global_ids:
-                    val = id.split("_")[0]
-                    if val not in self.splited_global_ids:
-                        self.splited_global_ids.append(val)
+            self.splited_global_ids = []
+            for id in global_ids:
+                val = id.split("_")[0]
+                if val not in self.splited_global_ids:
+                    self.splited_global_ids.append(val)
 
-                if len(head_lane_ids) >= 2:
-                    self.prev_head_lane_id = None
-                    self.next_head_lane_id = head_lane_ids[1]
-                    self.now_head_lane_id = head_lane_ids[0]
-                elif len(head_lane_ids) == 1:
-                    self.prev_head_lane_id = None
-                    self.now_head_lane_id = head_lane_ids[0]
-                    self.next_head_lane_id = head_lane_ids[0]
-                else:
-                    self.prev_head_lane_id = None
-                    self.next_head_lane_id = None
-                    self.now_head_lane_id = None
-                self.erase_global_path = global_path
-                self.erase_global_id = global_ids
-                self.erase_global_yaw = global_yaw
-                self.erase_global_k = global_k
-                global_path_viz = FinalPathViz(self.global_path)
-                self.pub_global_path.publish(global_path_viz)
+            if len(head_lane_ids) >= 2:
+                self.prev_head_lane_id = None
+                self.next_head_lane_id = head_lane_ids[1]
+                self.now_head_lane_id = head_lane_ids[0]
+            elif len(head_lane_ids) == 1:
+                self.prev_head_lane_id = None
+                self.now_head_lane_id = head_lane_ids[0]
+                self.next_head_lane_id = head_lane_ids[0]
+            else:
+                self.prev_head_lane_id = None
+                self.next_head_lane_id = None
+                self.now_head_lane_id = None
+            self.erase_global_path = global_path
+            self.erase_global_id = global_ids
+            self.erase_global_yaw = global_yaw
+            self.erase_global_k = global_k
+            global_path_viz = FinalPathViz(self.global_path)
+            self.pub_global_path.publish(global_path_viz)
 
             pp = 0
 
@@ -435,10 +435,10 @@ class PathPlanner:
                             self.local_path[self.l_idx+120+i]=renew_pt
                             self.local_id[self.l_idx+120+i]=renew_ids[i]
                         if  self.l_idx+240+30+10 < len(self.local_path)+1:
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+120-30], self.local_path[self.l_idx+120+30]], self.precision)
+                            force_interpolate_path, _ = ref_interpolate_2d([self.local_path[self.l_idx+120-30], self.local_path[self.l_idx+120+30]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
                                 self.local_path[self.l_idx+120-30+i]=force_pt                  
-                            force_interpolate_path, _ = ref_interpolate([self.local_path[self.l_idx+240-30], self.local_path[self.l_idx+240+30]], self.precision)
+                            force_interpolate_path, _ = ref_interpolate_2d([self.local_path[self.l_idx+240-30], self.local_path[self.l_idx+240+30]], self.precision)
                             for i, force_pt in enumerate(force_interpolate_path):
                                 self.local_path[self.l_idx+240-30+i]=force_pt
                         else:

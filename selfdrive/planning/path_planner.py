@@ -42,7 +42,7 @@ class PathPlanner:
         self.prev_yaw = None
         # self.global_yaw, self.global_k = [], []
 
-        self.get_goal = False
+        self.get_goal = False # rviz나 GUI에서 goal 받으면 True, 유지하다가 오류 발생 시 False + "WAITING" 단계로 천이
 
         self.l_idx = 0
         self.erase_global_path = []
@@ -69,10 +69,6 @@ class PathPlanner:
 
         self.splited_id = None
         
-        self.tf_ego2fl = None # minchan
-        self.tf_ego2fr = None
-        self.tf_ego2rl = None
-        self.tf_ego2rr = None
         self.tf_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -80,7 +76,6 @@ class PathPlanner:
         self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
         self.pub_global_path = rospy.Publisher('/mobinha/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher('/mobinha/planning/local_path', Marker, queue_size=1)
-        self.pub_blinkiker = rospy.Publisher('/mobinha/planning/blinker', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher('/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
@@ -108,7 +103,6 @@ class PathPlanner:
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', MarkerArray, queue_size=10)
         
         self.pub_right_turn_situation = rospy.Publisher('/mobinha/planning/right_turn_situation_real', Int8MultiArray, queue_size=1)
-        self.pub_lane_departure_warning = rospy.Publisher('/mobinha/planning/lane_departure_warning', Int8, queue_size=2)
         self.schoolzone_state_pub = rospy.Publisher('/mobinha/planning/schoolzone', Int16MultiArray, queue_size=5)
         self.schoolzone_polygon_pub = rospy.Publisher('/schoolzone_polygon', MarkerArray, queue_size=10)
         self.schoolzone_state_pub = rospy.Publisher('/schoolzone', Float32MultiArray, queue_size=5)
@@ -121,8 +115,8 @@ class PathPlanner:
 
         self.pub_lanelet_map.publish(lanelet_map_viz)
 
-        rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb)
-        rospy.Subscriber('/mobinha/visualize/scenario_goal',PoseArray, self.scenario_goal_cb)
+        rospy.Subscriber('/move_base_simple/single_goal', PoseStamped, self.single_goal_cb) # rviz 2-D nav goal
+        rospy.Subscriber('/mobinha/visualize/scenario_goal',PoseArray, self.scenario_goal_cb) # scenario button from GUI
         rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance', Float32, self.nearest_obstacle_distance_cb)
         rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
@@ -137,7 +131,7 @@ class PathPlanner:
         self.goal_pts = [(msg.pose.position.x, msg.pose.position.y)]
         self.get_goal = True
 
-    def scenario_goal_cb(self, msg):
+    def scenario_goal_cb(self, msg): # when scenario button clicked
         scenario_goal = []
         for pose in msg.poses:
             scenario_goal.append((pose.position.x, pose.position.y))
@@ -178,108 +172,100 @@ class PathPlanner:
 
             g_id = None
             g_idx = None
+            
+            ego_lanelets = lanelet_matching(
+                self.tmap.tiles, self.tmap.tile_size, self.temp_pt)
+            if ego_lanelets is not None:
+                e_id, e_idx = ego_lanelets
+            else:
+                rospy.logerr('Failed to match [ego] to lanelets, Insert Goal Again')
+                self.get_goal = False
+                self.state = 'WAITING'
+                return None, None, None
+            
+            goal_lanelets = lanelet_matching(self.tmap.tiles, self.tmap.tile_size, goal_pt)
+            if goal_lanelets is not None:
+                g_id, g_idx = goal_lanelets
+            else:
+                rospy.logerr('Failed to match [goal] to lanelets, Insert Goal Again')
+                self.get_goal = False
+                self.state = 'WAITING'
+                return None, None, None
 
-            while True:
-                ego_lanelets = lanelet_matching(
-                    self.tmap.tiles, self.tmap.tile_size, self.temp_pt)
-                if ego_lanelets is not None:
-                    e_id, e_idx = ego_lanelets
-                else:
-                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
-                    self.get_goal = False
-                    self.state = 'WAITING'
-                    return None, None, None
+            # 다익스트라에 사용할 정보로 변환 (waypoint -> node)
+            e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
+            g_node = node_matching(self.lmap.lanelets, g_id, g_idx)
 
-                goal_lanelets = lanelet_matching(self.tmap.tiles, self.tmap.tile_size, goal_pt)
-                if goal_lanelets is not None:
-                    g_id, g_idx = goal_lanelets
 
-                else:
-                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
-                    self.get_goal = False
-                    self.state = 'WAITING'
-                    return None, None, None
+            start = time.time()
+            if e_node == g_node:
+                shortest_path = ([e_node], 0) # (path, cost)
+            else:
+                shortest_path = optimized_dijkstra(self.graph, e_node, g_node)
+            if shortest_path is not None:
+                shortest_path = shortest_path[0]
+            else:
+                rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
+                self.get_goal = False
+                self.state = 'WAITING'
+                return None, None, None
+        
 
-                e_node = node_matching(self.lmap.lanelets, e_id, e_idx)
-                g_node = node_matching(self.lmap.lanelets, g_id, g_idx)
+            # 주행에 사용할 정보로 변환 (node -> waypoint)
 
-                if e_node == g_node:
-                    shortest_path = ([e_node], 0)
-                else:
-                    shortest_path = dijkstra(self.graph, e_node, g_node)
-
-                if shortest_path is not None:
-                    shortest_path = shortest_path[0]
-                    break
-                else:
-                    rospy.logerr('Failed to match ego to lanelets, Insert Goal Again')
-                    self.get_goal = False
-                    self.state = 'WAITING'
-                    return None, None
-
+            # shortest path = ['865_0', '865_1', '865_2', '866_0', '866_1', '781_0']
             non_intp_path, non_intp_id = node_to_waypoints2(self.lmap.lanelets, shortest_path)
-            intp_start_idx = calc_idx(non_intp_path, self.temp_pt)
-            intp_last_idx = calc_idx(non_intp_path, goal_pt)
+            # non_intp_path = [[-248.78557822582127, -283.93591207290297], [-238.73866953211646, -272.1329630255155], [-229.9878153272595, -261.85324776952456], [-221.28433089503935, -251.63028019257519], [-213.18159024154102, -242.11210912113202], [-205.30837435857626, -232.8639387157932]]
+            # non_intp_id = ['865_0', '865_1', '865_2', '866_0', '866_1', '781_0']
+            # 기본 형식은 'xxx_x' 리스트 형식인데, 'xxx'형식이 들어오면 node_to_waypoints2에서 'xxx_x'로 형식 맞춰줌
 
+            # 슬라이싱해서 앞/뒤 중복 제거 (다익스트라 결과에서 앞뒤 여유 포함, 시작점/끝점이 대표점이랑 정확히 일치하지 않을 경우)
+            intp_start_idx = calc_idx(non_intp_path, self.temp_pt) 
+            # self.temp_pt 초기값은 차량 위치, 이후부턴 직전 goal_pt
+            intp_last_idx = calc_idx(non_intp_path, goal_pt)
+            # start idx = 0
+            # end idx = 5
             non_intp_path = non_intp_path[intp_start_idx:intp_last_idx+1]
             non_intp_id = non_intp_id[intp_start_idx:intp_last_idx+1]
+            # non intp id = ['865_0', '865_1', '865_2', '866_0', '866_1', '781_0'] 
 
             appended_non_intp_path.extend(non_intp_path)
             appended_non_intp_id.extend(non_intp_id)
             appended_head_lane_ids.extend(shortest_path)
 
             self.temp_pt = goal_pt
-
+        
+        # id 앞부분만 취하고 중복제거
         appended_head_lane_ids = set_lane_ids(appended_head_lane_ids)
-
+        # appended_head_lane_ids = ['865', '866', '781'] 
+    
         goal_viz = GoalViz(goal_pt)
         self.pub_goal_viz.publish(goal_viz)
 
         return appended_non_intp_path, appended_non_intp_id, appended_head_lane_ids
 
-    def delete_node_for_smooth_path(self, non_intp_path, non_intp_id, head_lane_ids):
+    def delete_node_for_smooth_path(self, non_intp_path, non_intp_id):
         before_n = non_intp_id[0].split('_')[0]
         for i, n in enumerate(non_intp_id):
-            self.splited_id = n.split('_')[0]
-            if self.splited_id != before_n :
+            splited_id = n.split('_')[0]
+            if splited_id != before_n :
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, before_n)
-                if not compare_id(self.splited_id, my_neighbor_id):
+                if not compare_id(splited_id, my_neighbor_id):
                     del non_intp_path[i]
                     del non_intp_id[i]
-                before_n = self.splited_id
+                before_n = splited_id
                     
-    def lane_departure(self, fl_position, fr_position, rl_position, rr_position):
-        result = 1
-        lean_reach = 1.4 ### 
-        departure_reach = 3 ## threshold for tor previous 1.7 m 
-        wheel_position = [fl_position, fr_position, rl_position, rr_position]
-        wheel_cte = []
-        # print("fl fr rl rr : ", end="")
-        for whl_pos in wheel_position:
-            wheel_idx = calc_idx(self.local_path, whl_pos)
-            val = abs(calculate_cte(self.local_path[wheel_idx], self.local_path[wheel_idx+1], whl_pos))
-            wheel_cte.append(val)
-        #     print(f"{val:.2f} ", end="")
-        # print()
-            
-        if max(wheel_cte) > lean_reach:
-            result = 2
-        if max(wheel_cte) > departure_reach:
-            result = 0
-            
-        return result
-    
     def run(self, sm):
         CS = sm.CS
         pp = 0
 
-        if self.state == 'WAITING': # pp e
+        if self.state == 'WAITING':
             time.sleep(1)
-            if self.get_goal != False:
+            if self.get_goal == True:
                 self.state = 'READY'
             pp = 3
 
-        elif self.state == 'READY': # pp 3, 0
+        elif self.state == 'READY':
             non_intp_path = None
             non_intp_id = None
             head_lane_ids = None
@@ -292,32 +278,49 @@ class PathPlanner:
             self.l_tail = 50
             self.temp_pt = [CS.position.x, CS.position.y]
 
+            start = time.time()
             non_intp_path, non_intp_id, head_lane_ids = self.returnAppendedNonIntpPath()
-            if non_intp_path is None or non_intp_id is None:
+            # (x,y) 경로, 경로점에 대응하는 id, 대표 id(중복제거)
+            # ex) [(x0, y0), ...], ['865_0', '865_1', '865_2', '866_0', '866_1', '781_0'], ['865', '866', '781']  
+            print(f"<Elapsed:Scenario3> AppendedNonIntpPath: {(time.time() - start):.3f}")
+
+            if None in [non_intp_path, non_intp_id]:
                 rospy.logerr('An error occurred, unable to process path. Returning to WAITING state.')
-                self.state = 'WAITING'
                 self.get_goal = False
+                self.state = 'WAITING'
                 pp = 3
                 return pp, None
+            
+            start = time.time()
+            self.delete_node_for_smooth_path(non_intp_path, non_intp_id)
+            print(f"<Elapsed:Scenario3> delete_node...: {(time.time() - start):.3f}")
 
-            self.delete_node_for_smooth_path(non_intp_path, non_intp_id, head_lane_ids)
             if non_intp_path is not None:
                 self.state = 'MOVE'
                 
+                start = time.time()
                 global_path, self.last_s = ref_interpolate_2d(non_intp_path, self.precision)
+                print(f"<Elapsed:Scenario3> ref_interpolate_2d: {(time.time() - start):.3f}")
+
+                start = time.time()
                 global_path, global_yaw, global_k = smooth_compute_yaw_and_curvature(global_path, self.precision)
+                print(f"<Elapsed:Scenario3> smooth_compute_yaw...: {(time.time() - start):.3f}")
+
+                start = time.time()
                 global_ids = id_interpolate(non_intp_path, global_path, non_intp_id)
+                print(f"<Elapsed:Scenario3> id_interpolate: {(time.time() - start):.3f}")
                 
                 self.global_path = global_path
                 self.global_ids = global_ids
+                self.non_intp_path = non_intp_path
+                self.non_intp_id = non_intp_id
+                self.head_lane_ids = head_lane_ids
+
                 self.splited_global_ids = []
                 for id in global_ids:
                     val = id.split("_")[0]
                     if val not in self.splited_global_ids:
                         self.splited_global_ids.append(val)
-                self.non_intp_path = non_intp_path
-                self.non_intp_id = non_intp_id
-                self.head_lane_ids = head_lane_ids
 
                 if len(head_lane_ids) >= 2:
                     self.prev_head_lane_id = None
@@ -448,182 +451,17 @@ class PathPlanner:
                 elif self.turnsignal == 0:
                     self.turnsignal_state = False
 
-                # blinker, target_id, turning_target_v, turning_flag = get_blinker(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id, self.current_blinker_state) 
-                #                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
-                # self.current_blinker_state = (blinker, target_id)
-
-                # ## turing flag
-                # msg = String()
-                # msg.data = turning_flag
-                # self.pub_turing_flag.publish(msg)
-
-                # ## turning_target_v
-                # turning_velocity=Int8()
-                # turning_velocity.data = turning_target_v
-                # self.pub_turning_velocity.publish(turning_velocity)
-
-                # ## local ids
-                # msg = String()
-                # msg.data = ','.join(self.local_id)
-                # self.pub_local_id.publish(msg)
-
-                # if blinker != 0 and self.blinker_target_id == None:
-                #     self.blinker_target_id = target_id
-                #     self.blinker = blinker
-                # elif splited_local_id == self.blinker_target_id:
-                #     self.blinker_target_id = None
-                #     self.blinker = 0
-
-                # if target_id != None:
-                #     self.lanechange_target_id = target_id
-                #     # self.change_lane_flag = True
-                # if self.lanechange_target_id == splited_local_id:
-                #     # self.change_lane_flag = False
-                #     self.renewal_path_cnt = 0
-
                 forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, 0, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
                 # forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
                 lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
                 ## Lane Change Local Path Planning
                 d = (lane_change_point - self.l_idx)*self.IDX_TO_M
                 timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
+
+
+                ## LIDAR BSD
                 self.lidar_bsd = [0, 0]
 
-                # if blinker != 0 and not self.renewal_path_in_progress:
-                #     # look a head's idx's id == lane id => stop looking BSD
-                #     look_a_head_idx = local_point.query(self.look_a_head_pos, 1)[1]
-                #     look_a_head_id = self.local_id[look_a_head_idx].split('_')[0]
-                #     get_look_a_head_id = compare_id(look_a_head_id, my_neighbor_id)
-                #     renew_a = 30 # uniti: idx
-                #     renew_b = 120 # unit : idx
-                #     for obs in self.around_obstacle:
-                #         # print(obs)
-                #         # print(get_look_a_head_id)
-                #         #Left
-                #         if blinker == 1 and get_look_a_head_id and -4.05<obs[2]<-1.8 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate left. 
-                #             #TODO: if left lane change, get prev,now,next leftBound and check obstacle where is it. 
-                #             _, _, _, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
-                #             if isCarInRoad:
-                #                 vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
-                #                 targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
-                #                 safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
-                #                 print("d: ", d)
-                #                 print("targetmove: ", targetcarmovingdistance)
-                #                 print(safedistance)
-                #                 print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
-                #                 if safedistance < 10:
-                #                     safedistance = 10 # 5 * 2 : front and back 
-                #                 safe_space = (safedistance/2)
-                #                 obs_distance = (obs[1] - self.l_idx)*self.IDX_TO_M
-                #                 if targetcarmovingdistance + obs_distance - safe_space < d < targetcarmovingdistance + obs_distance + safe_space:
-                #                     #get renewable local path
-                #                     renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
-                #                                                         self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
-                #                     self.lidar_bsd = [1, 0]
-                #                     if renew_path != None:
-                #                         for i, renew_pt in enumerate(renew_path):
-                #                             self.local_path[lane_change_point-renew_a+i]=renew_pt
-                #                             self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
-                #                         if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
-                #                             force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
-                #                             print("left BSD")
-                #                             for i, force_pt in enumerate(force_interpolate_path):
-                #                                 self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
-                #                             self.renewal_path_in_progress = True
-                #                             self.renewal_path_cnt += 1
-                #                             self.renewal_path_timer = time.time()
-                #                             break # multi obstacle passing
-                #                         else:
-                #                             pass
-                #                     else:
-                #                         print("Take Over Request")
-                #                         pp = 4
-                #                         if pp == 4:
-                #                             self.renewal_path_cnt += 1
-                #                         if self.renewal_path_cnt > 30:
-                #                             self.renewal_path_cnt = 0
-                #                         return pp, self.local_path
-                #         elif blinker == 2 and get_look_a_head_id and 1.8<obs[2]<4.05 and lane_change_point<(len(self.local_path)-1): # frenet d coordinate right.
-                #             _, _, _, isCarInRoad = is_car_inside_combined_road((obs[3],obs[4]),self.lmap.lanelets, self.prev_head_lane_id, self.now_head_lane_id, self.next_head_lane_id)
-                #             if isCarInRoad:
-                #                 vTargetCar = (obs[5] + CS.vEgo) # unit: m/s
-                #                 targetcarmovingdistance = vTargetCar * timetoarrivelanechangepoint # unit: m
-                #                 safedistance = vTargetCar*MPS_TO_KPH - 15 # unit: m 
-                #                 print("d: ", d)
-                #                 print("targetmove: ", targetcarmovingdistance)
-                #                 print(safedistance)
-                #                 print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
-                #                 if safedistance < 10:
-                #                     safedistance = 10 # 5 * 2 : front and back 
-                #                 safe_space = (safedistance/2)
-                #                 obs_distance = (obs[1] - self.l_idx)*self.IDX_TO_M
-                #                 if targetcarmovingdistance + obs_distance - safe_space < d < targetcarmovingdistance + obs_distance + safe_space:
-                                    
-                #                     #get renewable local path
-                #                     renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
-                #                                                         self.local_path[lane_change_point:lane_change_point+renew_b], self.local_path[lane_change_point-renew_a:lane_change_point])
-                #                     self.lidar_bsd = [0, 1]
-                #                     if renew_path != None:
-                #                         for i, renew_pt in enumerate(renew_path):
-                #                             self.local_path[lane_change_point-renew_a+i]=renew_pt
-                #                             self.local_id[lane_change_point-renew_a+i]=renew_ids[i]
-                #                         if  lane_change_point+renew_a+renew_b+25 < len(self.local_path)+1:
-                #                             force_interpolate_path,_ = ref_interpolate([self.local_path[lane_change_point-renew_a+renew_b], self.local_path[lane_change_point+renew_a+renew_b]], self.precision)
-                #                             print("right BSD")
-                #                             for i, force_pt in enumerate(force_interpolate_path):
-                #                                 self.local_path[lane_change_point-renew_a+renew_b+i]=force_pt
-                #                             self.renewal_path_in_progress = True
-                #                             self.renewal_path_cnt += 1
-                #                             self.renewal_path_timer = time.time()
-                #                             break
-                #                         else:
-                #                             pass
-                #                     else:
-                #                         print("Take Over Request")
-                #                         pp = 4
-                #                         if pp == 4:
-                #                             self.renewal_path_cnt += 1
-                #                         if self.renewal_path_cnt > 30:
-                #                             self.renewal_path_cnt = 0
-                #                         return pp, self.local_path
-                # elif self.renewal_path_cnt >= 2:
-                #     print("Take Over Request(continuos 2 times)")
-                #     pp = 4
-                #     if pp == 4:
-                #         self.renewal_path_cnt += 1
-                #     if self.renewal_path_cnt > 30:
-                #         self.renewal_path_cnt = 0
-                #     return pp, self.local_path
-
-                # elif time.time() - self.renewal_path_timer > 1.5:
-                #     self.renewal_path_in_progress = False
-
-                # TODO: Avoidance Path
-                #
-                # if -1 < self.nearest_obstacle_distance and self.nearest_obstacle_distance <= 12.0 and len(self.lidar_obstacle) >= 0:
-                #     if self.obstacle_detect_timer == 0.0:
-                #         self.obstacle_detect_timer = time.time()
-                #     if time.time()-self.obstacle_detect_timer >= 10:
-                #         # pp = 4
-                #         # return pp
-                #         # Create Avoidance Trajectory
-                #         self.splited_id = now_lane_id.split('_')[0]
-                #         avoid_path = generate_avoid_path(
-                #             self.lmap.lanelets, self.splited_id, self.local_path[self.l_idx:], 25*(1/self.precision))
-                #         if avoid_path is not None:
-                #             for i, avoid_pt in enumerate(avoid_path):
-                #                 self.local_path[self.l_idx+i] = avoid_pt
-                #             self.obstacle_detect_timer = 0.0
-                # else:
-                #     self.obstacle_detect_timer = 0.0
-
-                # CHECK : now lane position
-                '''
-                [1] |@| | |
-                [2] | |@| |
-                [3] | | |@|
-                [0]  x|@|x  
-                '''
                 link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
                 lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
 
@@ -676,7 +514,6 @@ class PathPlanner:
 
                 forward_path_viz = ForwardPathViz(trajectory)
                 self.pub_forward_path.publish(forward_path_viz)
-                # self.pub_blinkiker.publish(blinker)
 
                 pose = Pose()
                 pose.position.x = 1

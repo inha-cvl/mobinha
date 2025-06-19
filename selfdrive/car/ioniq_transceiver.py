@@ -84,7 +84,7 @@ class IoniqTransceiver():
         current_time = rospy.get_time()
 
         if self.force_mode_2 and current_time - self.last_mode_2_time < 2.0:
-            # mode를 강제로 2로 2초 동안 유지
+            # mode를 강제로 2로 2초 동안 유지 (강제 override를 위해)
             self.mode = 2
         else:
             self.force_mode_2 = False  # 강제 유지를 종료

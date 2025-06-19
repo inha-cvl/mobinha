@@ -27,7 +27,7 @@ def convert2enu(base, lat, lng):
     x, y, _ = pm.geodetic2enu(lat, lng, 20, base[0], base[1], base[2])
     return [x, y]
 
-def lanelet_matching(tiles, tile_size, t_pt):
+def lanelet_matching(tiles, tile_size, t_pt): # fast enough
     row = int(t_pt[0] // tile_size)
     col = int(t_pt[1] // tile_size)
 
@@ -303,7 +303,7 @@ def id_interpolate(non_intp, intp, non_intp_id):
     return itp_ids
 
 
-def node_matching(lanelet, l_id, l_idx):
+def node_matching(lanelet, l_id, l_idx): # fast enough
     node_id = l_id
 
     if lanelet[l_id].get('cut_idx') is not None:
@@ -367,6 +367,41 @@ def dijkstra(graph, start, finish):
 
     return None
 
+def optimized_dijkstra(graph, start, finish): # fast enough
+    distances = {start: 0}
+    previous  = {}
+    visited   = set()
+    heap      = [(0, start)]
+
+    while heap:
+        current_distance, current_node = hq.heappop(heap)
+        if current_node in visited:
+            continue
+        visited.add(current_node)
+
+        if current_node == finish:
+            if current_node == start:
+                return None
+
+            path = []
+            while current_node in previous:
+                path.append(current_node)
+                current_node = previous[current_node]
+            path.append(start)
+            path.reverse()
+            return (path, distances[finish])
+
+        for neighbor, weight in graph.get(current_node, {}).items():
+            if neighbor in visited or neighbor == start:
+                continue
+            distance = current_distance + weight
+            if neighbor not in distances or distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous[neighbor]  = current_node
+                hq.heappush(heap, (distance, neighbor))
+
+    return None
+
 def node_to_waypoints2(lanelet, shortest_path):
     final_path = []
     final_id_path = []
@@ -375,6 +410,8 @@ def node_to_waypoints2(lanelet, shortest_path):
         alpha_path = []
         split_id = id.split('_')
         if len(split_id) == 2:
+            # lanelet[]['cut_idx']: 마이크로-노드(micro-node) 하나가 담당하는 원본 중심선 샘플 범위
+            # ex) [[0, 27], [27, 57], [57, 87], [87, 117], [117, 147], ..]
             s_idx, e_idx = (lanelet[split_id[0]]['cut_idx'][int(split_id[1])])
             alpha_path.append(lanelet[split_id[0]]
                               ['waypoints'][int((s_idx+e_idx)//2)])

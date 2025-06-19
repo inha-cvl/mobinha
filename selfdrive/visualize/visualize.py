@@ -361,7 +361,7 @@ class MainWindow(QMainWindow, form_class):
                 self.graph_steer_data['yt'].popleft()
                 self.graph_steer_data['ye'].popleft()
 
-            if self.state != 'OVER' and self.tabWidget.currentIndex() == 0:
+            if self.state != 'OVER' and self.tabWidget.currentIndex() == 0: # Map tab
                 self.graph_velocity_ego_plot.setData(x=self.graph_velocity_data['x'], y=self.graph_velocity_data['ye'])
                 self.graph_velocity_target_plot.setData(x=self.graph_velocity_data['x'], y=self.graph_velocity_data['yt'])
                 self.graph_acceleration_accel_plot.setData(x=self.graph_acceleration_data['x'], y=self.graph_acceleration_data['ya'])
@@ -386,19 +386,8 @@ class MainWindow(QMainWindow, form_class):
 
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(str(round(msg.data, 5))+" m")  # nearest obstacle
-
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
-            if msg.data > 0 and msg.data <= 16:
-                self.distance_label.setPixmap(self.acc_image_list[0])
-            elif msg.data > 16 and msg.data <= 28:
-                self.distance_label.setPixmap(self.acc_image_list[1])
-            elif msg.data > 28 and msg.data <= 40:
-                self.distance_label.setPixmap(self.acc_image_list[2])
-            elif msg.data > 40 and msg.data <= 55:
-                self.distance_label.setPixmap(self.acc_image_list[3])
-            else:
-                self.distance_label.setPixmap(self.acc_image_list[4])
-        elif self.state != 'OVER' and self.tabWidget.currentIndex() == 0:
+                
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 0: # Map tab
             if msg.data > 0 and msg.data <= 16:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[0])
             elif msg.data > 16 and msg.data <= 28:
@@ -410,6 +399,17 @@ class MainWindow(QMainWindow, form_class):
             else:
                 self.distance_label_s.setPixmap(self.acc_image_s_list[4])
 
+        elif self.state != 'OVER' and self.tabWidget.currentIndex() == 4: # Information tab
+            if msg.data > 0 and msg.data <= 16:
+                self.distance_label.setPixmap(self.acc_image_list[0])
+            elif msg.data > 16 and msg.data <= 28:
+                self.distance_label.setPixmap(self.acc_image_list[1])
+            elif msg.data > 28 and msg.data <= 40:
+                self.distance_label.setPixmap(self.acc_image_list[2])
+            elif msg.data > 40 and msg.data <= 55:
+                self.distance_label.setPixmap(self.acc_image_list[3])
+            else:
+                self.distance_label.setPixmap(self.acc_image_list[4])
 
 
     def traffic_light_obstacle_cb(self, msg):
@@ -420,7 +420,7 @@ class MainWindow(QMainWindow, form_class):
                 self.tl_label4_list[i].setText(tl_off)
                 self.tl_label1_list[i].setText(tl_off)
             return 
-        if self.state == 'OVER' or ( self.tabWidget.currentIndex() in [1, 2, 3] ):
+        if self.state == 'OVER' or ( self.tabWidget.currentIndex() in [1, 2, 3] ): # Map, Information tab 
             return
         
         tl_cls = msg.poses[0].position.y
@@ -434,7 +434,7 @@ class MainWindow(QMainWindow, form_class):
 
 
     def trajectory_cb(self, msg):
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4: # Information tab
             # x = [v.position.x for v in msg.poses]
             # y = [v.position.y for v in msg.poses]
 
@@ -442,8 +442,10 @@ class MainWindow(QMainWindow, form_class):
             # self.trajectory_plot.setData(x=x, y=y)
             self.info_curvature_label.setText(f"{msg.poses[0].position.z:.1f} m")
     
-    def lidar_bsd_cb(self, msg):
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+    def lidar_bsd_cb(self, msg): # 측방경고
+        # msg.x: 좌측 장애물
+        # msg.y: 우측 장애물
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4: # Information tab
             if msg.x == 1:
                 self.bsd_l_label.setText("❗️")
             else:
@@ -464,7 +466,7 @@ class MainWindow(QMainWindow, form_class):
             self.media_thread.get_mode = 5
 
     def lane_information_cb(self, msg):
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4: # Information tab
             idx = int(msg.position.y)
             self.direction_text_label.setText(self.direction_message_list[idx])
             self.direction_image_label.setPixmap(self.direction_pixmap_list[idx])
@@ -479,7 +481,7 @@ class MainWindow(QMainWindow, form_class):
         return qtImage.scaled(self.camera1_label.width(), self.camera1_label.height(), Qt.KeepAspectRatio)
 
     def compressed_image_cb(self, data,arg):
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 2:
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 2: # Camera tab
             try:
                 qImage = self.convert_to_qimage(data.data)
                 label_list = [self.camera1_label, self.camera2_label, self.camera3_label]
@@ -488,7 +490,7 @@ class MainWindow(QMainWindow, form_class):
                 pass
 
     def planning_state_cb(self, msg):
-        if msg.data[0] == 1 and msg.data[1] == 1:
+        if msg.data[0] == 1 and msg.data[1] == 1: # pp == 1 (state == "MOVE"), lgp == 1 (주행 중, 도착 전)
             # self.state = 'START'
             self.status_label.setText("Moving")
             self.moving_start = True
@@ -498,7 +500,7 @@ class MainWindow(QMainWindow, form_class):
             self.scenario3_button.setDisabled(True)
             self.media_thread.planning_state = 1
 
-        elif msg.data[0] == 2 and msg.data[1] == 2:
+        elif msg.data[0] == 2 and msg.data[1] == 2: # pp == 2 (state == "ARRIVED"), lgp == 2 (도착)
             self.status_label.setText("Arrived")
             self.cmd_button_clicked(0)
             self.pause_button.setDisabled(True)
@@ -506,15 +508,14 @@ class MainWindow(QMainWindow, form_class):
             self.initialize_button.setEnabled(True)
             self.media_thread.planning_state = 2
 
-        elif msg.data[0] == 3:
-            self.status_label.setText("Insert Goal")
+        elif msg.data[0] == 3: # pp == 3 (state == "WAITING" / state == "READY"에서 오류 발생)
+            self.status_label.setText("Insert Goal") 
             self.scenario1_button.setEnabled(True)
             self.scenario2_button.setEnabled(True)
             self.scenario3_button.setEnabled(True)
             self.media_thread.planning_state = 3
 
-        elif msg.data[0] == 4:
-            # self.state = 'TOR'
+        elif msg.data[0] == 4: # pp == 4 (path planning 단에서 오류 발생 시 여기로 넘김)
             self.status_label.setText("Take Over Request")
             self.cmd_button_clicked(0)
             self.start_button.setDisabled(True)
@@ -538,6 +539,7 @@ class MainWindow(QMainWindow, form_class):
 
     def initialize_button_clicked(self):
         start = time.time()
+        self.state = 'INITIALIZE'
         self.status_label.setText("Initialize")
         self.initialize()
         self.goal_update = True
@@ -547,17 +549,16 @@ class MainWindow(QMainWindow, form_class):
         self.scenario1_button.setDisabled(True)
         self.scenario2_button.setDisabled(True)
         self.scenario3_button.setDisabled(True)
-        self.state = 'INITIALIZE'
         print(f"<Elapsed:LaneLet> Button clicked: {time.time() - start}")
 
     def over_button_clicked(self):
+        self.state = 'OVER'
         self.status_label.setText("Over")
         self.graph_timer.stop()
         rospy.set_param('car_name', 'None')
         rospy.set_param('map_name', 'None')
         if self.rosbag_proc is not None:
             self.rosbag_proc.send_signal(subprocess.signal.SIGINT)
-        self.state = 'OVER'
 
     def cmd_button_clicked(self, idx):
         self.can_cmd = idx
@@ -566,6 +567,16 @@ class MainWindow(QMainWindow, form_class):
         if idx == 0:
             for button in self.can_cmd_buttons:
                 button.setEnabled(True)
+    
+    def cmd_button_clicked_jm(self, idx): # can replace ?
+        self.can_cmd = idx
+
+        if idx == 0:                           # TOR 상태일 때 can_cmd버튼 모두 재활성화
+            for btn in self.can_cmd_buttons:
+                btn.setEnabled(True)
+        else:                                  # CAN 입력 활성화 시 나머지 버튼 비활성화
+            for i, btn in enumerate(self.can_cmd_buttons):
+                btn.setDisabled(i not in (0, idx))
 
     def scenario_button_clicked(self, idx):
         start = time.time()
@@ -584,17 +595,17 @@ class MainWindow(QMainWindow, form_class):
             return "Auto"
         elif mode == 2:
             return "Override"
-        else:
+        else: # mode == 0, 4, 5
             return "Manual"
 
 
-    def check_mode(self, mode):
-        if self.mode != mode:
-            self.mode = mode
+    def check_mode(self, mode): # 기존 차량 상태(mode)가 변화했는지 확인
+        if self.mode != mode: # 달라졌으면
+            self.mode = mode # 덮어씌움
             if self.media_thread != None:
-                self.media_thread.get_mode = mode
-            if mode == 2:
-                self.cmd_button_clicked(0) #act like click disable button
+                self.media_thread.get_mode = mode # media thread에 mode 입력 -> 음성출력
+            if mode == 2: # TOR
+                self.cmd_button_clicked(0) 
     
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180
@@ -609,7 +620,7 @@ class MainWindow(QMainWindow, form_class):
         self.main_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
         self.check_mode(self.CS.cruiseState)
 
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 3:
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 3: # Ego pose tab
 
             self.imu_widget.updateRP(self.CS.rollRate, self.CS.pitchRate, self.CS.yawRate)
             self.gps_latitude_label.setText(str(self.CS.position.latitude))
@@ -633,7 +644,7 @@ class MainWindow(QMainWindow, form_class):
             self.target_accel_label.setText(str(self.CC.actuators.accel))
             self.target_brake_label.setText(str(self.CC.actuators.brake))
 
-        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4:
+        if self.state != 'OVER' and self.tabWidget.currentIndex() == 4: # Information tab
             self.info_mode_label.setText(f"{self.get_mode_label(self.CS.cruiseState)} Mode")
             self.info_velocity_label.setText(str(round(self.CS.vEgo*MPH_TO_KPH)))
             self.info_car_lat_label.setText(f"lat : {self.CS.position.latitude:.4f}")
@@ -672,8 +683,8 @@ class MediaThread(QThread):
     def __init__(self):
         super().__init__()
         self.status = True
-        self.mode = 0
-        self.get_mode = 0
+        self.mode = 0 # 현재 모드
+        self.get_mode = 0 # 새로운 모드 입력
         self.planning_state = 0
     
     def run(self):
@@ -682,17 +693,17 @@ class MediaThread(QThread):
             if self.mode != self.get_mode:
                 if self.get_mode == 1:
                     url = dir_path+"/sounds/on.wav"
-                    self.mode = self.get_mode
-                elif self.get_mode == 2:
+                    self.mode = self.get_mode # 초기화 역할(한 번만 실행하기 위해)
+                elif self.get_mode == 2: # TOR
                     url = dir_path+"/sounds/handling-tor.wav"
                     self.mode = self.get_mode
-                elif self.get_mode == 3 or self.get_mode == 4:
+                elif self.get_mode == 3 or self.get_mode == 4: # 측방경고, 3:left, 4:right
                     url = dir_path+"/sounds/bsd.wav"
-                    self.get_mode = self.mode
+                    self.get_mode = self.mode # 초기화 역할(1초마다 반복하기 위해)
                 elif self.get_mode == 5:
                     url = dir_path+"/sounds/error.wav"
                     self.get_mode = self.mode
-                else:
+                else: # 0
                     url = dir_path+"/sounds/off.wav"
                     self.mode = self.get_mode
                 

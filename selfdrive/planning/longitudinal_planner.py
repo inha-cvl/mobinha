@@ -687,7 +687,7 @@ class LongitudinalPlanner:
         print("--------------------------------")
         self.pub_target_v.publish(Float32(self.target_v))
         self.pub_accerror.publish(Float32(self.follow_error))
-        if not None in [l_path, g_ids]:
+        if l_path is not None and g_ids is not None:
             local_path = l_path.copy()
             global_ids = g_ids.copy
             # if CS.cruiseState == 1:
@@ -713,9 +713,9 @@ class LongitudinalPlanner:
                 target_v_list.append(self.ACC_module(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 try:
-                    self.target_v = min(target_v_list)
+                    # self.target_v = min(target_v_list)
                     # # for control test - 0612 jm
-                    # self.target_v = 40 * KPH_TO_MPS
+                    self.target_v = 20 * KPH_TO_MPS
                 except:
                     print(target_v_list)
                     print("Error on long_planner: target_v")

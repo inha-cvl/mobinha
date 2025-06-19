@@ -327,10 +327,10 @@ class PathPlanner:
                 self.prev_head_lane_id = None
                 self.next_head_lane_id = None
                 self.now_head_lane_id = None
-            self.erase_global_path = global_path
+            self.erase_global_path = global_path.tolist()
             self.erase_global_id = global_ids
-            self.erase_global_yaw = global_yaw
-            self.erase_global_k = global_k
+            self.erase_global_yaw = global_yaw.tolist()
+            self.erase_global_k = global_k.tolist()
             global_path_viz = FinalPathViz(self.global_path)
             self.pub_global_path.publish(global_path_viz)
 

@@ -47,7 +47,7 @@ class PathPlanner:
         self.windowed_global_idx = 0
         self.ego_head_id = None
         self.local_path = None
-        self.l_idx = 0
+        self.local_idx = 0
         self.l_cut = 600
         self.l_nitt = 250
         self.l_tail = 50
@@ -339,10 +339,10 @@ class PathPlanner:
                 self.next_head_lane_id = None
 
             # 잔여 global path 정보 update에 사용될 변수 저장
-            self.erase_global_path = global_path.tolist()
-            self.erase_global_id = global_ids
-            self.erase_global_yaw = global_yaw.tolist()
-            self.erase_global_k = global_k.tolist()
+            self.global_path = global_path.tolist()
+            self.global_id = global_ids
+            self.global_yaw = global_yaw.tolist()
+            self.global_k = global_k.tolist()
 
             # Viz: Global Path
             global_path_viz = FinalPathViz(self.global_path)
@@ -358,14 +358,16 @@ class PathPlanner:
             pp = 0
 
         elif self.state == 'MOVE':
+            global_point = KDTree(self.global_path)
+            self.global_idx = global_point.query((CS.position.x, CS.position.y), 1)[1]
 
-            global_idx = calc_idx(self.global_path, (CS.position.x, CS.position.y))
-            if abs(global_idx-self.windowed_global_idx) <= 50:
-                self.windowed_global_idx = global_idx
+            self.global_idx = calc_idx(self.global_path, (CS.position.x, CS.position.y))
+            if abs(self.global_idx-self.windowed_global_idx) <= 50:
+                self.windowed_global_idx = self.global_idx
 
             s = self.windowed_global_idx * self.precision  # 진행 거리, m
 
-            self.ego_head_id = self.global_ids[global_idx].split('_')[0]
+            self.ego_head_id = self.global_ids[self.global_idx].split('_')[0]
             # self.ego_head_id: 현재 속한 id의 head
 
             # Lane Window Update
@@ -378,98 +380,60 @@ class PathPlanner:
                     self.now_head_lane_id = self.next_head_lane_id
                     self.next_head_lane_id = self.head_lane_ids[1]
                     self.head_lane_ids = self.head_lane_ids[1:]
+            # print("Prev lane id", self.prev_head_lane_id) # heesang
+            # print("Curr lane id", self.now_head_lane_id)
+            # print("Next lane id", self.next_head_lane_id)
+            if self.local_path is None or self.local_idx > 350:
 
-            if self.local_path is None \
-                or (self.local_path is not None 
-                    and (len(self.local_path)-self.l_idx < self.l_nitt) # 잔여 local path가 l_nitt보다 적게 남고
-                    and len(self.erase_global_path) > self.l_cut): # 잔여 global path가 l_cut보다 길면
-                
-                erase_global_idx = calc_idx(self.erase_global_path, (CS.position.x, CS.position.y))
-                local_path = []
-                local_id = []
-                local_yaw = []
-                local_k = []
+                start_idx = max(self.global_idx - 50, 0)
+                end_idx   = min(self.global_idx + 600, len(self.global_path))
 
-                if len(self.erase_global_path) - erase_global_idx > self.l_cut:
-                # (잔여 global path - 지나온 path)가 l_cut보다 길 때
-                    if erase_global_idx - self.l_tail > 0:
-                        _idx1 = erase_global_idx+self.l_nitt
-                        _idx2 = erase_global_idx+self.l_cut+1
-                        local_path = self.local_path[self.l_idx - self.l_tail: ] + \
-                                     self.erase_global_path[_idx1:_idx2]
-                        local_id = self.local_id[self.l_idx - self.l_tail: ] + \
-                                    self.erase_global_id[_idx1:_idx2]
-                        local_yaw = local_yaw[self.l_idx-self.l_tail: ]+self.erase_global_yaw[_idx1:_idx2]
-                        local_k = local_k[self.l_idx-self.l_tail: ]+self.erase_global_k[_idx1:_idx2]
-                    else:
-                        local_path = self.erase_global_path[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                        local_id = self.erase_global_id[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                        local_yaw = self.erase_global_yaw[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                        local_k = self.erase_global_k[erase_global_idx:erase_global_idx+(self.l_cut+1)]
+                self.local_path = self.global_path[start_idx:end_idx]
+                self.local_id   = self.global_ids[start_idx:end_idx]
+                self.local_yaw  = self.global_yaw[start_idx:end_idx]
+                self.local_k    = self.global_k[start_idx:end_idx]
 
-                elif len(self.global_path) < self.l_cut:
-                    local_path = self.erase_global_path[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                    local_id = self.erase_global_id[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                    local_yaw = self.erase_global_yaw[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                    local_k = self.erase_global_k[erase_global_idx:erase_global_idx+(self.l_cut+1)]
-                else:
-                    local_path = self.local_path[self.l_idx-self.l_tail:]+self.erase_global_path[erase_global_idx+self.l_nitt:]
-                    local_id = self.local_id[self.l_idx-self.l_tail:]+self.erase_global_id[erase_global_idx+self.l_nitt:]
-                    local_yaw = local_yaw[self.l_idx-self.l_tail:]+self.erase_global_yaw[erase_global_idx+self.l_nitt:]
-                    local_k = local_k[self.l_idx-self.l_tail:]+self.erase_global_k[erase_global_idx+self.l_nitt:]
-
-
-                self.erase_global_path = self.erase_global_path[erase_global_idx:]
-                self.erase_global_id = self.erase_global_id[erase_global_idx:]
-                self.erase_global_point = KDTree(self.erase_global_path)
-
-                # self.yaw, radius, k = extract_path_info(local_path, local_id, self.lmap.lanelets)
-                self.pub_local_path_theta.publish(Float32MultiArray(data=local_yaw))
-                # self.pub_local_path_radius.publish(Float32MultiArray(data=radius))
-                self.pub_local_path_k.publish(Float32MultiArray(data=local_k))
-
-                self.local_path = local_path
-                self.local_id = local_id
-                self.l_idx = self.l_tail
+                self.pub_local_path_theta.publish(Float32MultiArray(data=self.local_yaw))
+                self.pub_local_path_k.publish(Float32MultiArray(data=self.local_k))
 
             if self.local_path is not None:
                 local_point = KDTree(self.local_path)
-                l_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
-                if abs(l_idx-self.l_idx) <= 100:
-                    self.l_idx = l_idx
+                self.local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
+                # print("local idx is: ", self.local_idx)
+                # print("global idx is: ", self.global_idx)
 
-                splited_local_id = (self.local_id[self.l_idx]).split('_')[0]
+                splited_local_id = (self.local_id[self.local_idx]).split('_')[0]
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
                 stopline_idx, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
 
-                ## Lane Change Local Signal Ver.
-                if self.turnsignal != 0 and not self.turnsignal_state:
-                    renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.l_idx, self.lmap.lanelets, 
-                                                                 self.local_path[self.l_idx+120:self.l_idx+240])
-                    if renew_path != None:
-                        for i, renew_pt in enumerate(renew_path):
-                            self.local_path[self.l_idx+120+i]=renew_pt
-                            self.local_id[self.l_idx+120+i]=renew_ids[i]
-                        if  self.l_idx+240+30+10 < len(self.local_path)+1:
-                            force_interpolate_path, _ = ref_interpolate_2d([self.local_path[self.l_idx+120-30], self.local_path[self.l_idx+120+30]], self.precision)
-                            for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+120-30+i]=force_pt                  
-                            force_interpolate_path, _ = ref_interpolate_2d([self.local_path[self.l_idx+240-30], self.local_path[self.l_idx+240+30]], self.precision)
-                            for i, force_pt in enumerate(force_interpolate_path):
-                                self.local_path[self.l_idx+240-30+i]=force_pt
-                        else:
-                            print("remaining local pass is too short.")
-                            pass
-                    else:
-                        print("The link to change lanes does not exist.")
-                        pass
-                    self.turnsignal_state = True
-                elif self.turnsignal == 0:
-                    self.turnsignal_state = False
+                # ## Lane Change Local Signal Ver.
+                # if self.turnsignal != 0 and not self.turnsignal_state:
+                #     renew_path, renew_ids = get_lane_change_path(self.local_id, self.turnsignal, self.local_idx, self.lmap.lanelets, 
+                #                                                  self.local_path[self.local_idx+120:self.local_idx+240])
+                #     if renew_path != None:
+                #         for i, renew_pt in enumerate(renew_path):
+                #             self.local_path[self.local_idx+120+i]=renew_pt
+                #             self.local_id[self.local_idx+120+i]=renew_ids[i]
+                #         if  self.local_idx+240+30+10 < len(self.local_path)+1:
+                #             force_interpolate_path, _ = ref_interpolate_2d([self.local_path[self.local_idx+120-30], self.local_path[self.local_idx+120+30]], self.precision)
+                #             for i, force_pt in enumerate(force_interpolate_path):
+                #                 self.local_path[self.local_idx+120-30+i]=force_pt                  
+                #             force_interpolate_path, _ = ref_interpolate_2d([self.local_path[self.local_idx+240-30], self.local_path[self.local_idx+240+30]], self.precision)
+                #             for i, force_pt in enumerate(force_interpolate_path):
+                #                 self.local_path[self.local_idx+240-30+i]=force_pt
+                #         else:
+                #             print("remaining local pass is too short.")
+                #             pass
+                #     else:
+                #         print("The link to change lanes does not exist.")
+                #         pass
+                #     self.turnsignal_state = True
+                # elif self.turnsignal == 0:
+                #     self.turnsignal_state = False
                 
                 ## Blinker
-                blinker, target_id = get_blinker_and_targetid(self.l_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id) 
+                blinker, target_id = get_blinker_and_targetid(self.local_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id) 
                                                                         #,splited_local_id, self.lanechange_target_id, self.change_lane_flag)
 
                 if blinker != 0 and self.blinker_target_id == None:
@@ -486,12 +450,13 @@ class PathPlanner:
                     # self.change_lane_flag = False
                     self.renewal_path_cnt = 0
 
-                # forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, 0, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
-                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.l_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
-                lane_change_point = get_lane_change_point(self.local_id, self.l_idx, my_neighbor_id)
+                # forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.local_idx, self.local_path, CS.yawRate, CS.vEgo, 0, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
+                forward_curvature, rot_x, rot_y, trajectory = get_forward_curvature(self.local_idx, self.local_path, CS.yawRate, CS.vEgo, blinker, self.lmap.lanelets, self.now_head_lane_id, self.next_head_lane_id, self.M_TO_IDX)
+                lane_change_point = get_lane_change_point(self.local_id, self.local_idx, my_neighbor_id)
+
                 ## Lane Change Local Path Planning
-                d = (lane_change_point - self.l_idx)*self.IDX_TO_M
-                timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
+                # d = (lane_change_point - self.local_idx)*self.IDX_TO_M
+                # timetoarrivelanechangepoint = d/CS.vEgo if CS.vEgo != 0 else d*1000
 
                 ## LIDAR BSD
                 self.lidar_bsd = [0, 0]
@@ -517,11 +482,11 @@ class PathPlanner:
                 #                 print("d: ", d)
                 #                 print("targetmove: ", targetcarmovingdistance)
                 #                 print(safedistance)
-                #                 print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
+                #                 print("obs distance:",(obs[1] - self.local_idx)*self.IDX_TO_M)
                 #                 if safedistance < 10:
                 #                     safedistance = 10 # 5 * 2 : front and back 
                 #                 safe_space = (safedistance/2)
-                #                 obs_distance = (obs[1] - self.l_idx)*self.IDX_TO_M
+                #                 obs_distance = (obs[1] - self.local_idx)*self.IDX_TO_M
                 #                 if targetcarmovingdistance + obs_distance - safe_space < d < targetcarmovingdistance + obs_distance + safe_space:
                 #                     #get renewable local path
                 #                     renew_path, renew_ids = get_renew_path(self.local_id, blinker, lane_change_point, self.lmap.lanelets, 
@@ -559,11 +524,11 @@ class PathPlanner:
                 #                 print("d: ", d)
                 #                 print("targetmove: ", targetcarmovingdistance)
                 #                 print(safedistance)
-                #                 print("obs distance:",(obs[1] - self.l_idx)*self.IDX_TO_M)
+                #                 print("obs distance:",(obs[1] - self.local_idx)*self.IDX_TO_M)
                 #                 if safedistance < 10:
                 #                     safedistance = 10 # 5 * 2 : front and back 
                 #                 safe_space = (safedistance/2)
-                #                 obs_distance = (obs[1] - self.l_idx)*self.IDX_TO_M
+                #                 obs_distance = (obs[1] - self.local_idx)*self.IDX_TO_M
                 #                 if targetcarmovingdistance + obs_distance - safe_space < d < targetcarmovingdistance + obs_distance + safe_space:
                                     
                 #                     #get renewable local path
@@ -605,22 +570,21 @@ class PathPlanner:
                 # elif time.time() - self.renewal_path_timer > 1.5:
                 #     self.renewal_path_in_progress = False
 
-                link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
-                lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
+                # link_idx = findMyLinkIdx(self.lmap.lanelets, splited_local_id, CS.position.x, CS.position.y)
+                # lane_position = removeVegetationFromRoadside(self.lmap.lanelets, splited_local_id, link_idx)
 
-                # Pubulish Lane Information
-                pose = Pose()
-                pose.position.x = int(splited_local_id)
-                pose.position.y = get_direction_number(self.lmap.lanelets, splited_local_id, forward_direction)
-                pose.position.z = stopline_idx
-                pose.orientation.x = forward_curvature
-                pose.orientation.y = self.l_idx
-                pose.orientation.z = lane_change_point
-                pose.orientation.w = lane_position
-                self.pub_lane_information.publish(pose)
+                # # Pubulish Lane Information
+                # pose = Pose()
+                # pose.position.x = int(splited_local_id)
+                # pose.position.y = get_direction_number(self.lmap.lanelets, splited_local_id, forward_direction)
+                # pose.position.z = stopline_idx
+                # pose.orientation.x = forward_curvature
+                # pose.orientation.y = self.local_idx
+                # pose.orientation.z = lane_change_point
+                # pose.orientation.w = lane_position
+                # self.pub_lane_information.publish(pose)
 
-                local_path_viz = LocalPathViz(self.local_path)
-                self.pub_local_path.publish(local_path_viz)
+                
                 # Publish current link's stopline position
                 if len(stopline_wps)>0:
                     pose_array_msg = PoseArray()
@@ -664,10 +628,10 @@ class PathPlanner:
                 pose.position.y = self.last_s  # m
                 pose.position.z = s
                 # local_path my theta
-                target_heading = estimate_theta(self.local_path, self.l_idx) * 180 / np.pi
+                target_heading = estimate_theta(self.local_path, self.local_idx) * 180 / np.pi
                 pose.orientation.x = target_heading
                 # CTE
-                pose.orientation.y = calculate_cte(self.local_path[self.l_idx], self.local_path[self.l_idx+1], (CS.position.x, CS.position.y))
+                pose.orientation.y = calculate_cte(self.local_path[self.local_idx], self.local_path[self.local_idx+1], (CS.position.x, CS.position.y))
                 self.pub_goal_object.publish(pose)
                 
 
@@ -710,6 +674,10 @@ class PathPlanner:
                         crosswalk_pos.points.append(pt)
                 
                 self.pub_crosswalk_pos.publish(crosswalk_pos)
+
+                # Local Path Viz
+                local_path_viz = LocalPathViz(self.local_path)
+                self.pub_local_path.publish(local_path_viz) 
 
                 # stoplineViz
                 stoplinePolygonmarker = StopLineViz(stopline_wps)

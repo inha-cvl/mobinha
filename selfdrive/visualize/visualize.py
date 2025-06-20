@@ -77,7 +77,6 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
-        rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
         # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         self.state = 'WAITING'
@@ -93,6 +92,8 @@ class MainWindow(QMainWindow, form_class):
         self.graph_frame()
         self.initialize()
         self.connection_setting()
+
+        
 
     def timer(self, sec):
         if time.time() - self.tick[sec] > sec:
@@ -163,6 +164,13 @@ class MainWindow(QMainWindow, form_class):
         self.scenario1_button.clicked.connect(lambda state, idx=1:  self.scenario_button_clicked(idx))
         self.scenario2_button.clicked.connect(lambda state, idx=2:  self.scenario_button_clicked(idx))
         self.scenario3_button.clicked.connect(lambda state, idx=3:  self.scenario_button_clicked(idx))
+        self.scenario_buttons = [self.scenario1_button,
+                                self.scenario2_button,
+                                self.scenario3_button]
+
+        for b in self.scenario_buttons:
+            b.setCheckable(True)      
+            b.setAutoExclusive(True)  
 
         self.view_third_button.clicked.connect(lambda state, idx=0: self.view_button_clicked(idx))
         self.view_top_button.clicked.connect(lambda state, idx=1: self.view_button_clicked(idx))
@@ -495,9 +503,9 @@ class MainWindow(QMainWindow, form_class):
             self.status_label.setText("Moving")
             self.moving_start = True
             self.goal_update = False
-            self.scenario1_button.setDisabled(True)
-            self.scenario2_button.setDisabled(True)
-            self.scenario3_button.setDisabled(True)
+            # self.scenario1_button.setDisabled(True)
+            # self.scenario2_button.setDisabled(True)
+            # self.scenario3_button.setDisabled(True)
             self.media_thread.planning_state = 1
 
         elif msg.data[0] == 2 and msg.data[1] == 2: # pp == 2 (state == "ARRIVED"), lgp == 2 (도착)
@@ -508,7 +516,7 @@ class MainWindow(QMainWindow, form_class):
             self.initialize_button.setEnabled(True)
             self.media_thread.planning_state = 2
 
-        elif msg.data[0] == 3: # pp == 3 (state == "WAITING" / state == "READY"에서 오류 발생)
+        elif msg.data[0] == 3: # pp == 3 (state == "WAITING" / state == "READY"("WAITING"에서 get_goal 한 경우)에서 오류 발생한 경우)
             self.status_label.setText("Insert Goal") 
             self.scenario1_button.setEnabled(True)
             self.scenario2_button.setEnabled(True)

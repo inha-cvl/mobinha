@@ -217,8 +217,11 @@ Long</string>
       </item>
       <item row="1" column="13">
        <widget class="QPushButton" name="scenario3_button">
-        <property name="enabled">
-         <bool>false</bool>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
         </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -227,7 +230,29 @@ Long</string>
          </sizepolicy>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">
+                QPushButton:enabled{
+                color: rgb(0,10,20);
+                        background-color: rgb(19, 99, 223);
+                }
+                QPushButton:disabled{
+                        background-color:rgb(0,10,20);
+                        color:rgb(50,50,50);
+                }
+
+                QRadioButton{
+                        color:#dff6ff;
+                }
+
+                QPushButton[scenario="true"]{
+                        background: rgb(0,10,20);
+                        color: rgb(120,120,120);
+                }
+                QPushButton[scenario="true"]:checked{
+                        background: rgb(71,181,255);
+                        color: black;
+                }
+        </string>
         </property>
         <property name="text">
          <string>3</string>
@@ -280,8 +305,11 @@ Long</string>
       </item>
       <item row="1" column="12">
        <widget class="QPushButton" name="scenario2_button">
-        <property name="enabled">
-         <bool>false</bool>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
         </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -290,7 +318,29 @@ Long</string>
          </sizepolicy>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">
+                QPushButton:enabled{
+                color: rgb(0,10,20);
+                        background-color: rgb(19, 99, 223);
+                }
+                QPushButton:disabled{
+                        background-color:rgb(0,10,20);
+                        color:rgb(50,50,50);
+                }
+
+                QRadioButton{
+                        color:#dff6ff;
+                }
+
+                QPushButton[scenario="true"]{
+                        background: rgb(0,10,20);
+                        color: rgb(120,120,120);
+                }
+                QPushButton[scenario="true"]:checked{
+                        background: rgb(71,181,255);
+                        color: black;
+                }
+        </string>
         </property>
         <property name="text">
          <string>2</string>
@@ -428,8 +478,11 @@ border-color: rgb(71,181,255);</string>
       </item>
       <item row="1" column="11">
        <widget class="QPushButton" name="scenario1_button">
-        <property name="enabled">
-         <bool>false</bool>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
         </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -438,7 +491,29 @@ border-color: rgb(71,181,255);</string>
          </sizepolicy>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">
+                QPushButton:enabled{
+                color: rgb(0,10,20);
+                        background-color: rgb(19, 99, 223);
+                }
+                QPushButton:disabled{
+                        background-color:rgb(0,10,20);
+                        color:rgb(50,50,50);
+                }
+
+                QRadioButton{
+                        color:#dff6ff;
+                }
+
+                QPushButton[scenario="true"]{
+                        background: rgb(0,10,20);
+                        color: rgb(120,120,120);
+                }
+                QPushButton[scenario="true"]:checked{
+                        background: rgb(71,181,255);
+                        color: black;
+                }
+        </string>
         </property>
         <property name="text">
          <string>1</string>

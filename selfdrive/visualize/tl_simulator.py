@@ -24,45 +24,55 @@ class TLSimulator(QMainWindow, form_class):
 
         #ROS Topic set
         self.pub_bounding_box = rospy.Publisher('/mobinha/perception/camera/bounding_box', PoseArray, queue_size=1)
+
         self.tl_list = {
-            7:self.red_3,
-            8:self.yellow_3,
-            13:self.green_3,
-            7:self.red_4,
-            8:self.yellow_4,
-            13:self.green_4,
-            10:self.red_yellow_4,
-            9:self.red_arrow_4,
-            11:self.arrow_green_4
+            self.red_3:         7,
+            self.yellow_3:      8,
+            self.green_3:       13,
+
+            self.red_4:         7,     
+            self.yellow_4:      8,
+            self.green_4:       13,
+            
+            self.red_yellow_4:  10,
+            self.red_arrow_4:   9,
+            self.arrow_green_4: 11
         }
         self.initialize()
 
     def initialize(self):
-        for key,value in self.tl_list.items():
-            value.clicked.connect(lambda state,  idx=key: self.tl_button_clicked(idx))
+        for btn, idx in self.tl_list.items():
+            btn.clicked.connect(lambda _=False, b=btn, i=idx: self.tl_button_clicked(b, i))
+
+
         self.stop_button.clicked.connect(self.stop_button_clicked)
         self.tl_simulator_timer.setInterval(100)
         self.tl_simulator_timer.timeout.connect(self.publish_test_tl_bbox)
         self.tl_simulator_timer.start()
     
-    def tl_button_clicked(self, idx):
-        if self.tl_type == idx:
+    def tl_button_clicked(self, pressed_btn, idx):
+        if self.tl_type == idx:      # 토글 역할
             self.stop_button_clicked()
             return
+
         self.tl_type = idx
         if not self.tl_simulator_timer.isActive():
             self.tl_simulator_timer.start()
-        for key, value in self.tl_list.items():
-            if key != idx:
-                value.setDisabled(True)
-        
+
+        # 자신을 제외한 나머지 모두 비활성화
+        for btn in self.tl_list.keys():
+            btn.setDisabled(btn is not pressed_btn)
+
     def stop_button_clicked(self):
         self.tl_type = 0
-        for key, value in self.tl_list.items():
-            value.setEnabled(True)
+
+  
+        for btn in self.tl_list.keys():      
+            btn.setEnabled(True)    
         if self.tl_simulator_timer.isActive():
             self.tl_simulator_timer.stop()
-            self.publish_test_tl_bbox()
+
+        self.publish_test_tl_bbox()
 
     def publish_test_tl_bbox(self):
         bounding_box = PoseArray()

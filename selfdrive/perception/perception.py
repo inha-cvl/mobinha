@@ -54,12 +54,10 @@ class Perception:
 
     def state_cb(self, msg):
         if self.state != str(msg.data):
-            start = time.time()
             if str(msg.data) == 'START':
                 print("[{}] Start".format(self.__class__.__name__))
             elif str(msg.data) == 'INITIALIZE':
                 print("[{}] Initialize".format(self.__class__.__name__))
-            print(f"<Elapsed:LaneLet> Perception init: {time.time() - start}")
         self.state = str(msg.data)
 
 

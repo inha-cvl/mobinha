@@ -1,11 +1,9 @@
-import tf
 from scipy.spatial import KDTree
 import time
 import rospy
-import pymap3d as pm
 
 from std_msgs.msg import Float32
-from geometry_msgs.msg import Pose, PoseArray, Point
+from geometry_msgs.msg import Pose, PoseArray
 from jsk_recognition_msgs.msg import BoundingBoxArray
 
 from selfdrive.visualize.rviz_utils import *
@@ -47,7 +45,7 @@ class ObstacleDetector:
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         # /mobinha/perception
         rospy.Subscriber('/mobinha/perception/lidar/track_box', BoundingBoxArray, self.lidar_cluster_box_cb)
-        rospy.Subscriber('/mobinha/perception/camera/bounding_box',PoseArray, self.camera_bounding_box_cb)
+        rospy.Subscriber('/mobinha/perception/camera/bounding_box',PoseArray, self.traffic_light_cb)
         rospy.Subscriber('/mobinha/planning/lane_information', Pose, self.lane_information_cb)
         # MORAI
         rospy.Subscriber('/morai/object_list', PoseArray, self.morai_object_list_cb)
@@ -60,7 +58,6 @@ class ObstacleDetector:
         self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
         self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
         self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
-        self.pub_avoid_gain = rospy.Publisher('/mobinha/avoid_gain', Float32, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]
@@ -85,7 +82,7 @@ class ObstacleDetector:
             self.lidar_object = objects
         
 
-    def camera_bounding_box_cb(self, msg):
+    def traffic_light_cb(self, msg):
         traffic_light_object = []
         for pose in msg.poses:
             cls, size, prob = pose.position.x, pose.position.y, pose.position.z
@@ -146,17 +143,7 @@ class ObstacleDetector:
                 #BSD3 : Time Based Method
                 if (-50*self.M_TO_IDX) < (obj_s-car_idx) < (50*self.M_TO_IDX) and obj_d > -5 and obj_d < 5:
                     around_obstacle_sd.append((obj_s, obj_d, obj[3], obj[4], obj[0]+dx, obj[1]+dy))
-            #     #avoid tail car
-            #     if (obj_s-car_idx) > -5*self.M_TO_IDX and (obj_s-car_idx) < 100*self.M_TO_IDX and -3 < obj_d < -1. and 1. < obj_d < 3:
-            #         calculated_gain = ObstacleUtils.calculate_avoid_gain(obj_d, obj[6], (self.CS.vEgo + obj[3])*3.6)
-            #         if calculated_gain != 0 and not avoidance_required:
-            #             # If any obstacle requires avoidance, set the flag and update the gain value
-            #             avoidance_required = True
-            #             gain = calculated_gain
                     
-            # if avoidance_required:
-            #     self.pub_avoid_gain.publish(Float32(gain))
-
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0]) # closet obstacle on my lane
 

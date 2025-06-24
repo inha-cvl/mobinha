@@ -1,9 +1,8 @@
 import rospy
 from std_msgs.msg import Float32
 from numpy.linalg import norm
-from math import sin, cos, atan2, radians, degrees
+from math import sin, cos, radians, degrees
 import numpy as np
-from libs.interpolate import interpolate
 
 
 class PurePursuit:
@@ -19,8 +18,6 @@ class PurePursuit:
         self.isBank = False
         rospy.Subscriber('/tmp_target_lfc', Float32, self.target_lfc_cb)
         rospy.Subscriber('/tmp_target_k', Float32, self.target_k_cb)
-        rospy.Subscriber('/mobinha/avoid_gain', Float32, self.avoid_gain_cb)
-        self.avoid_gain = 0.0
 
         self.k = CP.lateralTuning.lqr.k
         self.wheel_base = CP.wheelbase
@@ -35,8 +32,6 @@ class PurePursuit:
     def target_k_cb(self, msg):
         self.k = msg.data
 
-    def avoid_gain_cb(self, msg):
-        self.avoid_gain = msg.data
 
     def lane_change_cb(self, msg):
         if msg.data == 1:
@@ -85,7 +80,7 @@ class PurePursuit:
             if rotated_diff[0] > 0:
                 dis = np.linalg.norm(rotated_diff-np.array([0, 0]))
                 if dis >= lfd:
-                    theta = np.arctan2(rotated_diff[1]-self.avoid_gain, rotated_diff[0])
+                    theta = np.arctan2(rotated_diff[1], rotated_diff[0])
                     steering_angle = np.arctan2(2*self.L*np.sin(theta), lfd)
                     steering_angle = steering_angle + np.arctan2(0.1*cte, vEgo) if vEgo > 6 else steering_angle
                     lx = point[0]

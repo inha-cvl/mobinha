@@ -51,7 +51,6 @@ class MainWindow(QMainWindow, form_class):
         self.can_cmd = 0
         self.mode = 0
         self.scenario = 0
-        self.goal_update = True
         self.moving_start = False
         self.map_view_manager = None
         self.lidar_view_manager = None
@@ -77,7 +76,6 @@ class MainWindow(QMainWindow, form_class):
         rospy.Subscriber('/gmsl_camera/dev/video1/compressed',CompressedImage, self.compressed_image_cb, 2)
         rospy.Subscriber('/gmsl_camera/dev/video2/compressed',CompressedImage, self.compressed_image_cb, 3)
         rospy.Subscriber('/mobinha/car/gateway_state', Int8, self.gateway_state_cb)
-        # rospy.Subscriber('/mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
 
         self.state = 'WAITING'
         # 0:wait, 1:start, 2:initialize
@@ -159,7 +157,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.can_cmd_buttons = [self.cmd_disable_button, self.cmd_full_button, self.cmd_only_lat_button, self.cmd_only_long_button]
         for i in range(4):
-            self.can_cmd_buttons[i].clicked.connect(lambda state, idx=i: self.cmd_button_clicked(idx))
+            self.can_cmd_buttons[i].clicked.connect(lambda state, idx=i: self.cmd_button_clicked_jm(idx))
 
         self.scenario1_button.clicked.connect(lambda state, idx=1:  self.scenario_button_clicked(idx))
         self.scenario2_button.clicked.connect(lambda state, idx=2:  self.scenario_button_clicked(idx))
@@ -195,7 +193,7 @@ class MainWindow(QMainWindow, form_class):
                 self.pub_state.publish(String(self.state))
                 self.pub_can_cmd.publish(Int8(self.can_cmd))
                 if self.state == 'START':
-                    if self.goal_update and self.scenario != 0:
+                    if self.scenario != 0:
                         scenario_goal = self.get_scenario_goal_msg()
                         self.pub_scenario_goal.publish(scenario_goal)
                         
@@ -216,7 +214,7 @@ class MainWindow(QMainWindow, form_class):
 
                 
                 QCoreApplication.processEvents()
-
+            
     def rviz_frame(self, type):  # 지연의심포인트: RViz 자체가 렌더링 지연시킬 수 있음
         rviz_frame = rviz.VisualizationFrame()
         rviz_frame.setSplashPath("")
@@ -436,6 +434,7 @@ class MainWindow(QMainWindow, form_class):
         tl_cls_list = [[7, 9, 10], [10, 8, 12, 14], [11, 9, 13], [11, 6,  12, 13]]
         
         tl_detect_cls = [i for i, cls in enumerate(tl_cls_list) if tl_cls in cls]
+        print(tl_detect_cls)
         for i in range(4):
             self.tl_label4_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
             self.tl_label1_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
@@ -502,15 +501,11 @@ class MainWindow(QMainWindow, form_class):
             # self.state = 'START'
             self.status_label.setText("Moving")
             self.moving_start = True
-            self.goal_update = False
-            # self.scenario1_button.setDisabled(True)
-            # self.scenario2_button.setDisabled(True)
-            # self.scenario3_button.setDisabled(True)
             self.media_thread.planning_state = 1
 
         elif msg.data[0] == 2 and msg.data[1] == 2: # pp == 2 (state == "ARRIVED"), lgp == 2 (도착)
             self.status_label.setText("Arrived")
-            self.cmd_button_clicked(0)
+            self.cmd_button_clicked_jm(0)
             self.pause_button.setDisabled(True)
             self.start_button.setEnabled(True)
             self.initialize_button.setEnabled(True)
@@ -525,7 +520,7 @@ class MainWindow(QMainWindow, form_class):
 
         elif msg.data[0] == 4: # pp == 4 (path planning 단에서 오류 발생 시 여기로 넘김)
             self.status_label.setText("Take Over Request")
-            self.cmd_button_clicked(0)
+            self.cmd_button_clicked_jm(0)
             self.start_button.setDisabled(True)
             self.initialize_button.setDisabled(True)
             self.pause_button.setEnabled(True)
@@ -550,14 +545,13 @@ class MainWindow(QMainWindow, form_class):
         self.state = 'INITIALIZE'
         self.status_label.setText("Initialize")
         self.initialize()
-        self.goal_update = True
         # self.reset_rviz()
         self.start_button.setEnabled(True)
         self.scenario = 0
         self.scenario1_button.setDisabled(True)
         self.scenario2_button.setDisabled(True)
         self.scenario3_button.setDisabled(True)
-        print(f"<Elapsed:LaneLet> Button clicked: {time.time() - start}")
+        print(f"<Elapsed:LaneLet> Button clicked: {(time.time() - start):.3f}")
 
     def over_button_clicked(self):
         self.state = 'OVER'
@@ -592,7 +586,7 @@ class MainWindow(QMainWindow, form_class):
         module = importlib.import_module('selfdrive.visualize.routes.{}'.format(self.map_name))
         scenario = getattr(module, 'scenario_{}'.format(idx))
         self.scenario_goal = scenario
-        print(f"<Elapsed:Scenario3> Button clicked: {time.time() - start}")
+        print(f"<Elapsed:Scenario3> Button {idx} clicked: {(time.time() - start):.3f}")
 
     def view_button_clicked(self, idx):
         if self.map_view_manager is not None:
@@ -613,7 +607,7 @@ class MainWindow(QMainWindow, form_class):
             if self.media_thread != None:
                 self.media_thread.get_mode = mode # media thread에 mode 입력 -> 음성출력
             if mode == 2: # TOR
-                self.cmd_button_clicked(0) 
+                self.cmd_button_clicked_jm_jm(0) 
     
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180

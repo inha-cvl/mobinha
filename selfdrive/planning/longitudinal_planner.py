@@ -598,9 +598,9 @@ class LongitudinalPlanner:
         
         return target_v_SL
                 
-    def STOPLINE_module(self, CS): # traffic_light, roundabout, intersection의 stopline 커버
+    def STOPLINE_module(self, CS): # TODO: traffic_light stopline 커버 
         str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
-
+        
         if self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
             str6 = "- STOP signal\n"
             if 0 < self.distance_to_stopline < max(CS.vEgo*3.6-15, 11):

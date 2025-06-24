@@ -30,9 +30,10 @@ class Controller:
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
-        rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
+        # rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
+        rospy.Subscriber('/mobinha/planning/cte', Float32, self.cte_cb)
         self.pub_target_actuators = rospy.Publisher('/mobinha/control/target_actuators', Vector3, queue_size=1)
-        self.pub_lah = rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
+        self.pub_lah =              rospy.Publisher('/mobinha/control/look_ahead', Marker, queue_size=1, latch=True)
         # rospy.Subscriber('mobinha/planning/local_path_theta', Float32MultiArray, self.local_path_theta_cb)
         # rospy.Subscriber('mobinha/planning/local_path_radius', Float32MultiArray, self.local_path_radius_cb)
         # rospy.Subscriber('mobinha/planning/local_path_k', Float32MultiArray, self.local_path_k_cb)
@@ -50,8 +51,8 @@ class Controller:
         self.prev_steer = limited_steer
         return limited_steer
 
-    def goal_information_cb(self, msg):
-        self.cte = msg.orientation.y
+    def cte_cb(self, msg):
+        self.cte = msg.data
     
     def local_path_theta_cb(self, msg):
         self.local_path_theta = msg.data

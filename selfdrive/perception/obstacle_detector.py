@@ -34,7 +34,6 @@ class ObstacleDetector:
         self.frames_of_same_light = 0
         self.frames_of_diffrent_light = 0
         self.allowed_unrecognized_frames = 0
-        # self.go_signals = [4, 9, 12, 14]
         self.go_signals = [6, 9, 11, 12, 13]
 
 
@@ -52,12 +51,12 @@ class ObstacleDetector:
         rospy.Subscriber('/morai/ego_topic', Pose, self.morai_ego_topic_cb)
         rospy.Subscriber('/morai/traffic_light', PoseArray,self.morai_traffic_light_cb)
     
-        self.pub_object_marker = rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
-        self.pub_text_marker = rospy.Publisher('/mobinha/perception/text_marker', MarkerArray, queue_size=1)
-        self.pub_lidar_obstacle = rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
-        self.pub_obstacle_distance = rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
-        self.pub_traffic_light_obstacle = rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
-        self.pub_around_obstacle = rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
+        self.pub_object_marker =            rospy.Publisher('/mobinha/perception/object_marker', MarkerArray, queue_size=1)
+        self.pub_text_marker =              rospy.Publisher('/mobinha/perception/text_marker', MarkerArray, queue_size=1)
+        self.pub_lidar_obstacle =           rospy.Publisher('/mobinha/perception/lidar_obstacle', PoseArray, queue_size=1)
+        self.pub_obstacle_distance =        rospy.Publisher('/mobinha/perception/nearest_obstacle_distance', Float32, queue_size=1)
+        self.pub_traffic_light_obstacle =   rospy.Publisher('/mobinha/perception/traffic_light_obstacle', PoseArray, queue_size=1)
+        self.pub_around_obstacle =          rospy.Publisher('/mobinha/perception/around_obstacle', PoseArray, queue_size=1)
 
     def local_path_cb(self, msg):
         self.local_path = [(pt.x, pt.y) for pt in msg.points]

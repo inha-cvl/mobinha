@@ -64,11 +64,12 @@ class MainWindow(QMainWindow, form_class):
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0, 0.05: 0, 0.02: 0}
 
         # rospy.Subscriber('/move_base_simple/single_goal',PoseStamped, self.goal_cb)
-        rospy.Subscriber('/mobinha/planning/target_v',Float32, self.target_v_cb)
-        rospy.Subscriber('/mobinha/planning_state',Int16MultiArray, self.planning_state_cb)
-        rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
         rospy.Subscriber('/mobinha/perception/nearest_obstacle_distance',Float32, self.nearest_obstacle_distance_cb)
         rospy.Subscriber('/mobinha/perception/traffic_light_obstacle',PoseArray, self.traffic_light_obstacle_cb)
+        rospy.Subscriber('/mobinha/planning/target_v',Float32, self.target_v_cb)
+        rospy.Subscriber('/mobinha/planning_state',Int16MultiArray, self.planning_state_cb)
+        rospy.Subscriber('/mobinha/planning/cte', Float32, self.cte_cb)
+        rospy.Subscriber('/mobinha/planning/target_yaw', Float32, self.target_yaw_cb)
         rospy.Subscriber('/mobinha/planning/trajectory',PoseArray, self.trajectory_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         rospy.Subscriber('/mobinha/planning/lidar_bsd', Point, self.lidar_bsd_cb)
@@ -381,14 +382,11 @@ class MainWindow(QMainWindow, form_class):
 
     #     self.goal_lat, self.goal_lng, self.goal_alt = pymap3d.enu2geodetic(msg.pose.position.x, msg.pose.position.y, 0,self.CP.mapParam.baseLatitude, self.CP.mapParam.baseLongitude, self.CP.mapParam.baseAltitude)
 
-    def goal_information_cb(self, msg):
-        self.target_yaw = msg.orientation.x
-        self.cte = msg.orientation.y
-    #     m_distance = msg.position.y-msg.position.z
-    #     distance = f"{(m_distance/1000.0):.5f} km" if m_distance / 1000 >= 1 else f"{m_distance:.5f} m"
-    def avoid_gain_cb(self, msg):
-        self.goal_distance_label.setText(f"{msg.data:.2f}")
-    #     self.goal_distance_label.setText(distance)
+    def cte_cb(self, msg):
+        self.cte = msg.data
+
+    def target_yaw_cb(self, msg):
+        self.target_yaw = msg.data
 
     def nearest_obstacle_distance_cb(self, msg):
         self.label_obstacle_distance.setText(str(round(msg.data, 5))+" m")  # nearest obstacle

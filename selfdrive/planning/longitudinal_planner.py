@@ -45,7 +45,7 @@ class LongitudinalPlanner:
         self.ego_pos = [0, 0]
         self.transformed_ego_pos = [0, 0]
 
-        rospy.Subscriber('/mobinha/planning/stopline_pos', PoseArray, self.stopline_cb)
+        # rospy.Subscriber('/mobinha/planning/stopline_pos', PoseArray, self.stopline_cb)
         self.stopline_point1 = None
         self.stopline_point2 = None
         self.stopline_point1_last = None
@@ -53,30 +53,31 @@ class LongitudinalPlanner:
         rospy.Subscriber('/mobinha/planning/crosswalk_pos', Polygon, self.crosswalk_cb)
         self.crosswalk_polygon = None
 
-
-        rospy.Subscriber("/GetTrafficLightStatus", GetTrafficLightStatus, self.trafficLight_type_cb)
+        # for morai
+        rospy.Subscriber("/GetTrafficLightStatus", GetTrafficLightStatus, self.trafficLight_type_morai_cb)
+        # for ioniq
+        rospy.Subscriber('/mobinha/perception/camera/bounding_box',PoseArray, self.trafficLight_type_cb)
         self.trafficLight_header = None
         self.trafficLight_last_header = None
         self.trafficLight_type = None
 
-
         # for morai
-        rospy.Subscriber("/Object_topic", ObjectStatusList, self.morai_obstacle_pos_cb)
-        self.object_list = PoseArray()
+        rospy.Subscriber("/Object_topic", ObjectStatusList, self.obstacle_pos_morai_cb)
         # for ioniq
-        rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.ioniq_obstacle_pos_cb)
+        rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.obstacle_pos_cb)
+        self.object_list = PoseArray()
 
 
         self.stopline_no_traffic_light_timer = rospy.Time.now()
         self.stopline_timer_flag = True
         self.stopline_stopped = False
+        self.distance_to_stopline = 999
         
         self.now_scenario = '-'
         self.next_scenario = '-'
         self.roi_safe_to_go = False
         self.rightTurn = False
         
-        self.distance_to_stopline = 999
         
         
     # callback from path_planner
@@ -113,14 +114,14 @@ class LongitudinalPlanner:
         # self.ego_velocity[0] = msg.velocity.x
         # self.ego_velocity[1] = msg.velocity.y
 
-    def trafficLight_type_cb(self, msg):
+    def trafficLight_type_morai_cb(self, msg):
         #TODO on simulator: 신호 안 들어올 때 trafficLight_type = None 구현
         self.trafficLight_header = msg.header
         self.trafficLight_type = msg.trafficLightStatus
         if self.trafficLight_last_header is None:
             self.trafficLight_last_header = msg.header
 
-    def morai_obstacle_pos_cb(self, msg):
+    def obstacle_pos_morai_cb(self, msg):
         object_list = PoseArray()
         for obj in msg.npc_list:
             pose = Pose()
@@ -152,7 +153,7 @@ class LongitudinalPlanner:
         self.object_list = object_list
     # ------------------------------------------
 
-    def ioniq_obstacle_pos_cb(self, msg):
+    def obstacle_pos_cb(self, msg):
         object_list = PoseArray()   
         for obj in msg.poses:
             pose = Pose()
@@ -166,6 +167,28 @@ class LongitudinalPlanner:
         object_list.poses.sort(key=lambda p: p.position.z)
         self.object_list = object_list
 
+    def trafficLight_type_cb(self, msg): # 마지막으로 들어온 신호등 객체 정보: TODO 인지단에서 주는 확실한 정보로 변경
+        '''
+        self.tl_list = {
+            self.red_3:         7,
+            self.yellow_3:      8,
+            self.green_3:       13,
+
+            self.red_4:         7,     
+            self.yellow_4:      8,
+            self.green_4:       13,
+            
+            self.red_yellow_4:  10,
+            self.red_arrow_4:   9,
+            self.arrow_green_4: 11
+        }
+        '''
+        self.trafficLight_header = msg.header
+        for pose in msg.poses:
+            cls, size, prob = pose.position.x, pose.position.y, pose.position.z
+            self.trafficLight_type = cls
+        if self.trafficLight_last_header is None:
+            self.trafficLight_last_header = msg.header
     # ------------------------------------------
 
 
@@ -523,7 +546,7 @@ class LongitudinalPlanner:
             
         return target_v_CW
                 
-    def STOPLINE_module(self, CS): # traffic_light, roundabout, intersection의 stopline 커버
+    def STOPLINE_module_morai(self, CS): # traffic_light, roundabout, intersection의 stopline 커버
         str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
         if self.trafficLight_type is None:
             if not self.stopline_stopped:
@@ -567,6 +590,34 @@ class LongitudinalPlanner:
             self.stopline_stopped = False
             self.stopline_point1_last[0] = self.stopline_point1[0]
             str5 = "- Stopline with no traffic light initialized\n"
+        
+        str7 = f"- Target v: {target_v_SL}"
+        
+        print(f"====STOPLINE===\n"+f"- TrafficLight: {self.trafficLight_type}\n- Stopline s: {self.distance_to_stopline:.2f}\n"+str1+str2+str3+str4+str5+str6+str7+'\n')
+        
+        return target_v_SL
+                
+    def STOPLINE_module(self, CS): # traffic_light, roundabout, intersection의 stopline 커버
+        str1, str2, str3, str4, str5, str6, str7 = "", "", "", "", "", "", ""
+
+        if self.trafficLight_type not in [48, 20, 16]: #직좌, 직황, 직
+            str6 = "- STOP signal\n"
+            if 0 < self.distance_to_stopline < max(CS.vEgo*3.6-15, 11):
+                target_v_SL = 0
+            else:
+                target_v_SL = 100
+
+        else:
+            str6 = "- GO signal\n"
+            target_v_SL = 100
+
+        # 정지선 위치 바뀌면 (신호등 없는 정지선) local variable 초기화
+        if self.stopline_point1 is not None and self.stopline_point1_last is not None:
+            if self.stopline_point1[0] != self.stopline_point1_last[0]:
+                self.stopline_timer_flag = True
+                self.stopline_stopped = False
+                self.stopline_point1_last[0] = self.stopline_point1[0]
+                str5 = "- Stopline with no traffic light initialized\n"
         
         str7 = f"- Target v: {target_v_SL}"
         
@@ -708,6 +759,7 @@ class LongitudinalPlanner:
                 # get target_v
                 target_v_list = []
                 # target_v_list.append(self.CROSSWALK_module(CS)) 
+                # target_v_list.append(self.STOPLINE_module_morai(CS))
                 # target_v_list.append(self.STOPLINE_module(CS))
                 # target_v_list.append(self.MERGE_module(CS))
                 # target_v_list.append(self.ACC_module(CS, local_path))

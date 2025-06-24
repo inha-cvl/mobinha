@@ -71,14 +71,15 @@ class PathPlanner:
             lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
 
         self.pub_lanelet_map.publish(lanelet_map_viz)
-        self.pub_goal_viz = rospy.Publisher('/mobinha/planning/goal_viz', Marker, queue_size=1, latch=True)
-        self.pub_global_path = rospy.Publisher('/mobinha/global_path', Marker, queue_size=1, latch=True)
+        self.pub_goal = rospy.Publisher('/mobinha/planning/goal', Marker, queue_size=1, latch=True)
+        self.pub_global_path = rospy.Publisher('/mobinha/planning/global_path', Marker, queue_size=1, latch=True)
         self.pub_local_path = rospy.Publisher('/mobinha/planning/local_path', Marker, queue_size=1)
         self.pub_blinker = rospy.Publisher('/mobinha/planning/blinker', Int8, queue_size=2)
         self.pub_goal_object = rospy.Publisher('/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
-        self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
+        # self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
+        self.pub_stopline = rospy.Publisher('/mobinha/planning/stopline', Marker, queue_size=10)
         self.pub_crosswalk_pos = rospy.Publisher('/mobinha/planning/crosswalk_pos', Polygon, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.pub_lidar_bsd = rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
@@ -101,7 +102,6 @@ class PathPlanner:
         self.prevRoadPolygon_pub = rospy.Publisher('/prevRoadPolygon', Marker, queue_size=10)
         self.nowRoadPolygon_pub = rospy.Publisher('/nowRoadPolygon', Marker, queue_size=10)
         self.nextRoadPolygon_pub = rospy.Publisher('/nextRoadPolygon', Marker, queue_size=10)
-        self.stoplinePolygon_pub = rospy.Publisher('/stoplinePolygon', Marker, queue_size=10)
         rospy.Subscriber('/mobinha/control/look_ahead', Marker, self.look_a_head_cb)
 
     def blinker_cb(self, msg):
@@ -348,12 +348,12 @@ class PathPlanner:
             self.global_k = global_k.tolist()
 
             # Viz: Global Path
-            global_path_viz = FinalPathViz(self.global_path)
+            global_path_viz = GlobalPathViz(self.global_path)
             self.pub_global_path.publish(global_path_viz)
 
             # Viz: Goal
             goal_viz = GoalViz(self.goal_pts[-1])
-            self.pub_goal_viz.publish(goal_viz)
+            self.pub_goal.publish(goal_viz)
 
             # State 전환
             self.state = 'MOVE'
@@ -413,7 +413,8 @@ class PathPlanner:
                 my_neighbor_id = get_my_neighbor(self.lmap.lanelets, splited_local_id) 
                 forward_direction = get_forward_direction(self.lmap.lanelets, self.now_head_lane_id, self.head_lane_ids)
                 stopline_idx, stopline_wps = get_nearest_stopline(self.lmap.lanelets, self.lmap.stoplines, self.now_head_lane_id, self.head_lane_ids, local_point)
-
+                
+                
                 ## Blinker
                 blinker, target_id = get_blinker_and_targetid(self.local_idx, self.lmap.lanelets, self.local_id, my_neighbor_id, CS.vEgo, self.M_TO_IDX, splited_local_id) 
 
@@ -449,25 +450,28 @@ class PathPlanner:
 
                 
                 # Publish current link's stopline position
-                if len(stopline_wps)>0:
-                    pose_array_msg = PoseArray()
+                # if len(stopline_wps)>0:
+                #     poseArray = PoseArray()
                     
-                    pose1 = Pose()
-                    pose1.position.x = stopline_wps[0][0]
-                    pose1.position.y = stopline_wps[0][1]
-                    pose1.position.z = 0
+                #     pose1 = Pose()
+                #     pose1.position.x = stopline_wps[0][0]
+                #     pose1.position.y = stopline_wps[0][1]
+                #     pose1.position.z = 0
                     
-                    pose2 = Pose()
-                    pose2.position.x = stopline_wps[-1][0]
-                    pose2.position.y = stopline_wps[-1][1]
-                    pose2.position.z = 0
+                #     pose2 = Pose()
+                #     pose2.position.x = stopline_wps[-1][0]
+                #     pose2.position.y = stopline_wps[-1][1]
+                #     pose2.position.z = 0
                     
-                    pose_array_msg.poses.append(pose1)
-                    pose_array_msg.poses.append(pose2)
+                #     poseArray.poses.append(pose1)
+                #     poseArray.poses.append(pose2)
                     
-                    self.pub_stopline_pos.publish(pose_array_msg)
-                else:
-                    print("[Path planner.py] No stopline detected")
+                #     stopline_viz = StopLineViz(stopline_wps)
+                #     self.pub_stopline_pos.publish(stopline_viz)
+                #     # self.pub_stopline_pos.publish(poseArray)
+                # else:
+                #     print("[Path planner.py] No stopline detected")
+
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):
                     pose = Pose()
@@ -543,8 +547,8 @@ class PathPlanner:
                 self.pub_local_path.publish(local_path_viz) 
 
                 # stoplineViz
-                stoplinePolygonmarker = StopLineViz(stopline_wps)
-                self.stoplinePolygon_pub.publish(stoplinePolygonmarker)
+                stopline_viz = StopLineViz(stopline_wps)
+                self.pub_stopline.publish(stopline_viz)
                 
             if self.last_s - s < 5.0:
                 self.state = 'ARRIVED'

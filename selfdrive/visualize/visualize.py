@@ -434,7 +434,6 @@ class MainWindow(QMainWindow, form_class):
         tl_cls_list = [[7, 9, 10], [10, 8, 12, 14], [11, 9, 13], [11, 6,  12, 13]]
         
         tl_detect_cls = [i for i, cls in enumerate(tl_cls_list) if tl_cls in cls]
-        print(tl_detect_cls)
         for i in range(4):
             self.tl_label4_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)
             self.tl_label1_list[i].setText(tl_on_list[i] if i in tl_detect_cls else tl_off)

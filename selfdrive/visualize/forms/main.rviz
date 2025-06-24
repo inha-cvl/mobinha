@@ -2775,7 +2775,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /mobinha/global_path
+      Marker Topic: /mobinha/planning/global_path
       Name: GlobalPath
       Namespaces:
         {}
@@ -2785,6 +2785,14 @@ Visualization Manager:
       Enabled: true
       Marker Topic: /mobinha/planning/local_path
       Name: LocalPath
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mobinha/planning/stopline
+      Name: Stopline
       Namespaces:
         {}
       Queue Size: 100

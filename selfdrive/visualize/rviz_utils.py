@@ -89,19 +89,22 @@ def LookAheadViz(pt):
     marker = Sphere('look_ahead', 0, data, 2.0, (0.0, 0.0, 1.0, 1.0))
     return marker
 
-def FinalPathViz(waypoints):
-    return FinalPath(waypoints, 999, 0.1, 0.2, (0.0, 1.0, 0.0, 1.0))
+def GlobalPathViz(waypoints):
+    marker = Line('global_path', 999, 0.1, (0.0, 1.0, 0.0, 1.0))
+    for pt in waypoints:
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.1))
+    return marker
 
 def LocalPathViz(waypoints):
-    return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 0.0, 1.0))
+    marker = Line('local_path', 999, 0.2, (1.0, 0.0, 0.0, 1.0))
+    for pt in waypoints:
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.4))
+    return marker
 
 def ForwardPathViz(waypoints):
-    return FinalPath(waypoints, 999, 0.2, 0.4, (1.0, 0.0, 1.0, 1.0))
-
-def FinalPath(waypoints, id_, z, scale, color):
-    marker = Line('final_path', int(id_), scale, color)
+    marker = Line('forward_path', 999, 0.2, (1.0, 0.0, 1.0, 1.0))
     for pt in waypoints:
-        marker.points.append(Point(x=pt[0], y=pt[1], z=z))
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
     return marker
 
 def CrosswalkViz(waypoints):
@@ -111,75 +114,21 @@ def CrosswalkViz(waypoints):
     return marker
 
 def StopLineViz(waypoints):
-    marker = Line('stopline', 999, 0.4, (1.0, 1.0, 0.0, 1.0))
-    for _, pt in enumerate(waypoints):
-        marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
+    marker = Line('stopline', 999, 0.4, (0.0, 0.0, 1.0, 1.0))
+    for pt in waypoints:
+        marker.points.append(Point(x=pt[0], y=pt[1], z=0.3))
     return marker
 
-def LocalPathSelectedViz(path):
-    waypoints = zip(path.x, path.y)
-    return LocalPath(waypoints, 999, 0.1, 0.2, (0.0, 1.0, 0.0, 1.0))
-
-
-def LocalPathsViz(local_paths):
-    array = MarkerArray()
-
-    for n, path in enumerate(local_paths):
-        waypoints = zip(path.x, path.y)
-        marker = LocalPath(waypoints, n, 0.0, 0.1, (0.5, 0.5, 0.5, 1.0))
-        array.markers.append(marker)
-
-    return array
-
-
-def RefPathViz(waypoints):
-    return RefPath(waypoints, 999, (0.0, 0.0, 1.0, 1.0))
-
-
-def RefPathsViz(lanelet, ref_paths, waypoints):
-    array = MarkerArray()
-
-    for n, (ref_n, ref_path) in enumerate(ref_paths.items()):
-        waypoints_ = waypoints[ref_n]
-        # color = (random.randint(0,255)/255.0, random.randint(0,255)/255.0, random.randint(0,255)/255.0, 1.0)
-        color = (1.0, 1.0, 0.0, 1.0)
-        if len(waypoints_) != 0:
-            marker = RefPath(waypoints_, n, color)
-            array.markers.append(marker)
-
-    return array
+    # marker = Line('stopline', 999, 0.4, (1.0, 1.0, 0.0, 1.0))
+    # for _, pt in enumerate(waypoints):
+    #     marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
+    # return marker
 
 
 def GoalViz(pt):
     marker = Text('goal', 0, 2.0, (1.0, 1.0, 1.0, 1.0), 'GOAL')
     marker.pose.position = Point(x=pt[0], y=pt[1], z=1.0)
     return marker
-
-
-def ShortestPathViz(lanelet, shortest_path):
-    array = MarkerArray()
-
-    # pre_pt = None
-
-    # for n, id_ in enumerate(shortest_path):
-    #     split = id_.split('_')
-
-    #     if len(split) == 1:
-    #         t_id = split[0]
-    #         idx = lanelet[t_id]['idx_num'] // 2
-    #     else:
-    #         t_id = split[0]
-    #         cut_n = int(split[1])
-    #         idx = sum(lanelet[t_id]['cut_idx'][cut_n]) // 2
-
-    #     pt = lanelet[t_id]['waypoints'][idx]
-    #     if pre_pt is not None:
-    #         marker = Edge(90000000+n, [pre_pt, pt], (0.0, 1.0, 0.0))
-    #         array.markers.append(marker)
-
-    #     pre_pt = pt
-
-    return array
 
 
 # map이 songdo 아닐 때
@@ -453,13 +402,6 @@ def LocalPath(waypoints, id_, z, scale, color):
     return marker
 
 
-def FinalPath(waypoints, id_, z, scale, color):
-    marker = Line('final_path', int(id_), scale, color)
-    for pt in waypoints:
-        marker.points.append(Point(x=pt[0], y=pt[1], z=z))
-    return marker
-
-
 def Bound(ns, id_, n, points, type_, color):
     if type_ == 'solid':
         marker = Line('%s_%s' % (ns, id_), n, 0.15, color)
@@ -492,6 +434,7 @@ def Sphere(ns, id_, data, scale, color):
     marker.pose.position.x = data[0]
     marker.pose.position.y = data[1]
     marker.pose.position.z = 1.0
+    marker.pose.orientation.w = 1.0 
     return marker
 
 

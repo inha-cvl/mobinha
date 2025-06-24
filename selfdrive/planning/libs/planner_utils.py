@@ -80,6 +80,8 @@ def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point)
             if len(lanelets[lanelet_id]['stoplineID']) > 0:
                 sl_id = lanelets[lanelet_id]['stoplineID']
                 break
+    print("Current lane id", nowID)
+    print("Current stopline", sl_id)
     if sl_id is not None:
         stopline = stoplines[sl_id[0]]
 
@@ -89,6 +91,9 @@ def get_nearest_stopline(lanelets, stoplines, nowID, head_lane_ids, local_point)
         idx = local_point.query(sl_wp, 1)[1]
         if idx < now_sl_idx:
             now_sl_idx = idx
+
+    print("stopline_idx: ", now_sl_idx)
+    print("stopline_wps: ", stopline)
     return now_sl_idx, stopline
 
 def filter_same_points(points):

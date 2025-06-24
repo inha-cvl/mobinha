@@ -64,7 +64,6 @@ class Planning:
             
             elif self.state == 'RESET':
                 self.path_planner.state = 'READY'
-                self.path_planner.get_goal = False
                 self.path_planner.global_path = None
                 self.path_planner.local_path = None
                 array = Int16MultiArray()

@@ -710,12 +710,12 @@ class LongitudinalPlanner:
                 # target_v_list.append(self.CROSSWALK_module(CS)) 
                 # target_v_list.append(self.STOPLINE_module(CS))
                 # target_v_list.append(self.MERGE_module(CS))
-                target_v_list.append(self.ACC_module(CS, local_path))
+                # target_v_list.append(self.ACC_module(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 try:
                     # self.target_v = min(target_v_list)
                     # # for control test - 0612 jm
-                    self.target_v = 20 * KPH_TO_MPS
+                    self.target_v = 40 * KPH_TO_MPS
                 except:
                     print(target_v_list)
                     print("Error on long_planner: target_v")

@@ -78,7 +78,6 @@ class PathPlanner:
         self.pub_goal_object = rospy.Publisher('/mobinha/planning/goal_information', Pose, queue_size=1)
         self.pub_forward_path = rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
-        # self.pub_stopline_pos = rospy.Publisher('/mobinha/planning/stopline_pos', PoseArray, queue_size=1)
         self.pub_stopline = rospy.Publisher('/mobinha/planning/stopline', Marker, queue_size=10)
         self.pub_crosswalk_pos = rospy.Publisher('/mobinha/planning/crosswalk_pos', Polygon, queue_size=1)
         self.pub_trajectory = rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
@@ -449,28 +448,6 @@ class PathPlanner:
                 self.pub_lane_information.publish(pose)
 
                 
-                # Publish current link's stopline position
-                # if len(stopline_wps)>0:
-                #     poseArray = PoseArray()
-                    
-                #     pose1 = Pose()
-                #     pose1.position.x = stopline_wps[0][0]
-                #     pose1.position.y = stopline_wps[0][1]
-                #     pose1.position.z = 0
-                    
-                #     pose2 = Pose()
-                #     pose2.position.x = stopline_wps[-1][0]
-                #     pose2.position.y = stopline_wps[-1][1]
-                #     pose2.position.z = 0
-                    
-                #     poseArray.poses.append(pose1)
-                #     poseArray.poses.append(pose2)
-                    
-                #     stopline_viz = StopLineViz(stopline_wps)
-                #     self.pub_stopline_pos.publish(stopline_viz)
-                #     # self.pub_stopline_pos.publish(poseArray)
-                # else:
-                #     print("[Path planner.py] No stopline detected")
 
                 poseArray = PoseArray()
                 for i, x in enumerate(rot_x):

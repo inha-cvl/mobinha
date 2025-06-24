@@ -45,7 +45,7 @@ class LongitudinalPlanner:
         self.ego_pos = [0, 0]
         self.transformed_ego_pos = [0, 0]
 
-        # rospy.Subscriber('/mobinha/planning/stopline_pos', PoseArray, self.stopline_cb)
+        rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
         self.stopline_point1 = None
         self.stopline_point2 = None
         self.stopline_point1_last = None
@@ -82,10 +82,11 @@ class LongitudinalPlanner:
         
     # callback from path_planner
     def stopline_cb(self, msg):
-        self.stopline_point1 = [msg.poses[0].position.x, msg.poses[0].position.y]
-        self.stopline_point2 = [msg.poses[1].position.x, msg.poses[1].position.y]
+        self.stopline_point1 = [msg.points[0].x, msg.points[0].y]
+        self.stopline_point2 = [msg.points[1].x, msg.points[1].y]
         if self.stopline_point1_last is None:
             self.stopline_point1_last = self.stopline_point1
+        print("stopline", self.stopline_point1, self.stopline_point2)
             
     def crosswalk_cb(self, msg):
         points = []

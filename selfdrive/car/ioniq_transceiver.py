@@ -129,7 +129,7 @@ class IoniqTransceiver():
     def receiver(self):
         data = self.bus.recv(0.2)
         try:
-            if (data.arbitration_id == 304):
+            if (data.arbitration_id == 0x130):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['brake'] = res['Gway_Brake_Cylinder_Pressure']
                 

@@ -71,19 +71,19 @@ class PathPlanner:
             lanelet_map_viz = LaneletMapViz(self.lmap.lanelets, self.lmap.for_viz)
 
         self.pub_lanelet_map.publish(lanelet_map_viz)
-        self.pub_goal =             rospy.Publisher('/mobinha/planning/goal', Marker, queue_size=1, latch=True)
-        self.pub_global_path =      rospy.Publisher('/mobinha/planning/global_path', Marker, queue_size=1, latch=True)
-        self.pub_local_path =       rospy.Publisher('/mobinha/planning/local_path', Marker, queue_size=1)
         self.pub_blinker =          rospy.Publisher('/mobinha/planning/blinker', Int8, queue_size=2)
-        self.pub_target_yaw =       rospy.Publisher('/mobinha/planning/target_yaw', Float32, queue_size=1)
+        self.pub_crosswalk_pos =    rospy.Publisher('/mobinha/planning/crosswalk_pos', Polygon, queue_size=1)
         self.pub_cte =              rospy.Publisher('/mobinha/planning/cte', Float32, queue_size=1)
         self.pub_forward_path =     rospy.Publisher('/mobinha/planning/forward_path', Marker, queue_size=1)
+        self.pub_global_path =      rospy.Publisher('/mobinha/planning/global_path', Marker, queue_size=1, latch=True)
+        self.pub_goal =             rospy.Publisher('/mobinha/planning/goal', Marker, queue_size=1, latch=True)
+        self.pub_local_path =       rospy.Publisher('/mobinha/planning/local_path', Marker, queue_size=1)
         self.pub_lane_information = rospy.Publisher('/mobinha/planning/lane_information', Pose, queue_size=1)
-        self.pub_stopline =         rospy.Publisher('/mobinha/planning/stopline', Marker, queue_size=10)
-        self.pub_crosswalk_pos =    rospy.Publisher('/mobinha/planning/crosswalk_pos', Polygon, queue_size=1)
-        self.pub_path_metrics =     rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
-        self.pub_lidar_bsd =        rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
         self.pub_lane_no =          rospy.Publisher('/mobinha/planning/lane_no', Int8MultiArray, queue_size=1)
+        self.pub_lidar_bsd =        rospy.Publisher('/mobinha/planning/lidar_bsd', Point, queue_size=1)
+        self.pub_stopline =         rospy.Publisher('/mobinha/planning/stopline', Marker, queue_size=10)
+        self.pub_target_yaw =       rospy.Publisher('/mobinha/planning/target_yaw', Float32, queue_size=1)
+        self.pub_path_metrics =     rospy.Publisher('/mobinha/planning/trajectory', PoseArray, queue_size=1)
         self.crosswalkPolygon_pub = rospy.Publisher('/crosswalkPolygon', MarkerArray, queue_size=10) # 정상화 TODO
 
         

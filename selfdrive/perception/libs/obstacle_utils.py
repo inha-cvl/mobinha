@@ -28,7 +28,7 @@ class ObstacleUtils:
 
         return obj_local_x, obj_local_y
 
-    def object2frenet(local_point, local_path, target):  # Array in Frenet Array Out, no problem
+    def object2frenet(local_point, local_path, target):  # Array in Frenet Array Out
         point = local_point.query(target, 1)[1]
         if(point == 0):
             return 0, 1000

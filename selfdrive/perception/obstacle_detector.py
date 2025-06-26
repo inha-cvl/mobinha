@@ -122,7 +122,6 @@ class ObstacleDetector:
         if len(self.lidar_object) > 0:
             for obj in self.lidar_object: # obj: [nx, ny, w, v_rel, track_id, sx, sy, sz, x, y]
                 obj_s, obj_d = ObstacleUtils.object2frenet(local_point, self.local_path,(obj[0]+dx, obj[1]+dy)) # s: [idx](on local path), d: [m]
-                # print("FRENET: ", ((obj_s-car_idx)*self.IDX_TO_M, obj_d))
 
                 # viz_obstacle.append((obj[0]+dx, obj[1]+dy, obj_s-car_idx, obj_d, self.CS.yawRate+obj[2], (self.CS.vEgo + obj[3])*3.6))
 

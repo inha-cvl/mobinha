@@ -145,6 +145,7 @@ class ObstacleDetector:
                     
         # sorting by s
         obstacle_sd = sorted(obstacle_sd, key=lambda sd: sd[0]) # closet obstacle on my lane
+        print("obstacle_sd from lidar:", obstacle_sd)
 
         return obstacle_sd, viz_obstacle, around_obstacle_sd
 

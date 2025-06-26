@@ -35,7 +35,6 @@ class LongitudinalPlanner:
 
         self.follow_error = 0 # for what ?
 
-        rospy.Subscriber('/mobinha/perception/lidar_obstacle', PoseArray, self.lidar_obstacle_cb)
         # rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
         self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
@@ -164,6 +163,7 @@ class LongitudinalPlanner:
             pose.orientation.w = obj.orientation.w  # rel velocity
             object_list.poses.append(pose)
 
+        print(f"{len(msg.poses)} objects incoming")
         # rel position 기준 정렬
         object_list.poses.sort(key=lambda p: p.position.z)
         self.object_list = object_list
@@ -626,8 +626,7 @@ class LongitudinalPlanner:
         
         return target_v_SL
 
-    def ACC_module(self, CS, local_path):
-        # ACC part
+    def ACC_module_v1(self, CS, local_path):
         safety_distance = max(CS.vEgo*3.6-15, 9) # safe_distance
         margin = 11
         margined_safety_distance = safety_distance + margin
@@ -703,6 +702,45 @@ class LongitudinalPlanner:
         
         return target_v_ACC
 
+    def ACC_module_v2(self, CS, local_path):
+
+        s_obs = 999
+        v_obs = 999
+        v_ego = CS.vEgo*KPH_TO_MPS
+        
+
+        if self.object_list.poses:
+            s_obs = self.object_list.poses[0].position.y
+            v_obs = CS.vEgo + self.object_list.poses[0].orientation.w
+            obs_position = (TODO)
+
+        idx_ego = calc_idx(local_path, (CS.position.x, CS.position.y))
+        idx_obs = calc_idx(local_path, (obs position)) # TODO
+
+        # target v
+        s0 = max(CS.vEgo*3.6-15, 9) # min distance
+        T_gap = 1.5
+        s_ref = s0 + T_gap * v_ego
+        
+        gain_v_ref = 0.3
+        v_ref = v_obs + gain_v_ref * (s_obs - s_ref)
+
+        # ttc based emergency
+        ttc_brake = 1.0
+        ttc_warn = 2.0
+        v_rel = v_obs - v_ego
+        if v_rel < 0:
+            ttc = s_obs / abs(v_rel)
+            if ttc < ttc_brake:
+                v_ref = 0.0 
+            elif ttc < ttc_warn:
+                v_ref = min(v_ref, v_ego)
+
+        target_v_ACC = v_ref
+
+        return target_v_ACC
+
+        
     def CURVATURE_module(self, CS, local_path):
         local_point = KDTree(local_path)
         local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]

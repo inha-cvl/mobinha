@@ -267,22 +267,34 @@ def find_nearest_idx(pts, pt):
 
     return min_idx
 
-def calc_idx(pts, pt):
-    min_dist = float('inf')
-    min_idx = 0
+def calc_idx(pts, pt): # todo
+    # min_dist = float('inf')
+    # min_idx = 0
 
-    for idx, pt1 in enumerate(pts):
-        dist = euc_distance(pt1, pt)
-        if dist < min_dist:
-            min_dist = dist
-            min_idx = idx
+    # for idx, pt1 in enumerate(pts):
+    #     dist = euc_distance(pt1, pt)
+    #     if dist < min_dist:
+    #         min_dist = dist
+    #         min_idx = idx
 
-    if min_idx == len(pts) - 1:
-        pt1 = pts[min_idx-1]
-    else:
-        pt1 = pts[min_idx]
+    # if min_idx == len(pts) - 1:
+    #     pt1 = pts[min_idx-1]
+    # else:
+    #     pt1 = pts[min_idx]
 
-    return min_idx
+    # return min_idx
+
+    pts = np.asarray(pts, dtype=np.float64)   # (N, 2)
+    pt  = np.asarray(pt,  dtype=np.float64)   # (2,)
+
+    if pts.ndim != 2 or pts.shape[1] != 2:
+        raise ValueError("path는 (N, 2) 형상의 점열이어야 합니다.")
+    if pt.shape != (2,):
+        raise ValueError("pos는 (x, y) 2-차원 좌표여야 합니다.")
+
+    dists_sq = np.sum((pts - pt) ** 2, axis=1)  # (N,)
+    return int(np.argmin(dists_sq))
+
 
 def get_a_b_for_curv(min, ignore):
     # a = -90 / (min-ignore)

@@ -18,11 +18,19 @@ class PathPlanner:
 
         ## Common
         self.state = 'WAITING'
+        start = time.time()
         self.lmap = LaneletMap(CP.mapParam.path)
+        print(f"<Elapsed:LaneLet> LaneletMap: {time.time() - start}")
+
+        start_tm = time.time()
         self.tmap = TileMap(self.lmap.lanelets, CP.mapParam.tileSize)
+        print(f"<Elapsed:LaneLet> Tilemap: {time.time() - start_tm}")
+        
 
-
+        start_gr = time.time()
         self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
+        print(f"<Elapsed:LaneLet> Micro: {time.time() - start_gr}")
+
         self.precision = CP.mapParam.precision
         self.M_TO_IDX = 1/CP.mapParam.precision
         self.IDX_TO_M = CP.mapParam.precision

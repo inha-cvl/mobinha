@@ -15,10 +15,16 @@ class MicroLaneletGraph:
         self.groups = lmap.groups
         self.generate_micro_lanelet_graph()
 
-        self.pub_micro_lanelet_graph = rospy.Publisher(
-            '/micro_lanelet_graph', MarkerArray, queue_size=1, latch=True)
-        micro_lanelet_graph_viz = MicroLaneletGraphViz(
-            self.lanelets, self.graph)
+        self.pub_micro_lanelet_graph = rospy.Publisher('/micro_lanelet_graph', MarkerArray, queue_size=1, latch=True)
+
+        start = time.time()
+        micro_lanelet_graph_viz = MicroLaneletGraphViz(self.lanelets, self.graph)
+        print(f"<Elapsed:LaneLet> Micro Viz: {time.time() - start}")
+        
+        start = time.time()
+        micro_lanelet_graph_viz = MicroLaneletGraphViz2(self.lanelets, self.graph)
+        print(f"<Elapsed:LaneLet> Micro Viz2: {time.time() - start}")
+
         self.pub_micro_lanelet_graph.publish(micro_lanelet_graph_viz)
 
     def generate_micro_lanelet_graph(self):

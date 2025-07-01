@@ -26,6 +26,7 @@ class Planning:
         self.pub_planning_State = rospy.Publisher(
             '/mobinha/planning_state', Int16MultiArray, queue_size=1)
 
+        self.need_init = True
         self.sm = None
         self.path_planner = None
         self.longitudinal_planner = None
@@ -45,11 +46,13 @@ class Planning:
             if self.planning_state != 'GOOD':
                 return 1
             if self.state == 'INITIALIZE':
-                self.init()
-                pp = 0
-                lgp = 0
+                if self.need_init:
+                    self.init()
+                    pp = 0
+                    lgp = 0
             elif self.state == 'START':
                 if self.timer(0.1):
+                    self.need_init = True
                     self.sm.update()
                     pp, my_lane_id, global_ids, local_path, lmap, tmap = self.path_planner.run(self.sm)
                     lgp = self.longitudinal_planner.run(self.sm, lmap, tmap, my_lane_id, global_ids, pp, local_path) #sm, lmap, pp=0, local_path=None
@@ -82,6 +85,7 @@ class Planning:
 
 
     def init(self):
+        start = time.time()
         car = rospy.get_param('car_name', 'None')
         map = rospy.get_param('map_name', 'None')
         CP = (getattr(sys.modules[__name__], car)(map)).CP
@@ -91,8 +95,14 @@ class Planning:
             t = threading.Thread(target=mobinha_planner.run, args=(cm,))
             t.start()
         self.sm = StateMaster(CP)
+        start_pp = time.time()
         self.path_planner = PathPlanner(CP)
+        print(f"<Elapsed:LaneLet> PathPlanner: {time.time() - start_pp}")
+
         self.longitudinal_planner = LongitudinalPlanner(CP)
+        self.need_init = False
+        print(f"<Elapsed:LaneLet> Planning init: {time.time() - start}")
+
 
     def state_cb(self, msg):
         if self.state != str(msg.data):

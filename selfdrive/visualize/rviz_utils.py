@@ -7,7 +7,8 @@ import time
 import rospy
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
-
+from itertools import chain
+from collections import defaultdict
 from selfdrive.visualize.libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -264,8 +265,90 @@ def PostPoint(ns, id_, data, radius, height, color):
     marker.pose.orientation.w = 1.0
     return marker
 
+def _as_list(pt):
+    """NumPy 배열이면 tolist(), 이미 list/tuple이면 그대로 list()"""
+    if isinstance(pt, np.ndarray):
+        return pt.tolist()
+    elif isinstance(pt, (list, tuple)):
+        return list(pt)
+    else:                             # geometry_msgs/Point 등
+        return [pt.x, pt.y, pt.z]
 
-def MicroLaneletGraphViz(lanelet, graph):
+# ──────────────────────────────
+def MicroLaneletGraphViz(lanelet: dict, graph: dict) -> MarkerArray:
+    """
+    lanelet[id] = {
+        'waypoints': list(Point) | list[list] | np.ndarray(N,3),
+        'idx_num'  : int,
+        'cut_idx'  : [[s,e], ...]   # 그룹 lanelet만 존재
+    }
+    graph = { node_id: { target_id: cost, ... }, ... }
+    """
+    markers = MarkerArray()
+
+    # 1) 전처리(최초 호출 시만 실질 변환)
+    mid_idx, mid_pt, back_tail = {}, {}, {}
+    seg_mid_idx, seg_front = defaultdict(dict), defaultdict(dict)
+
+    for lid, data in lanelet.items():
+        wp = data['waypoints']
+        if not isinstance(wp, np.ndarray):
+            wp = np.asarray([_as_list(p) for p in wp], dtype=np.float32)
+            data['waypoints'] = wp     # 변환 결과 저장(한 번만)
+
+        m = data['idx_num'] // 2
+        mid_idx[lid] = m
+        mid_pt[lid]  = wp[m]
+        back_tail[lid] = wp[m:]       # view
+
+        if 'cut_idx' in data:
+            for n, (s, e) in enumerate(data['cut_idx']):
+                sm = (s + e) // 2
+                seg_mid_idx[lid][n] = sm
+                seg_front[lid][n]   = wp[:sm]   # view
+
+    # 2) 그래프 순회
+    for n, (node_id, edges) in enumerate(graph.items()):
+        base_id, *seg_part = node_id.split('_')
+        is_seg = bool(seg_part)
+
+        if is_seg:                           # 세그먼트 노드
+            seg_n   = int(seg_part[0])
+            fm_idx  = seg_mid_idx[base_id][seg_n]
+            fm_pt   = lanelet[base_id]['waypoints'][fm_idx]
+            fm_tail = lanelet[base_id]['waypoints'][fm_idx:]
+        else:                                # 일반 노드
+            fm_pt   = mid_pt[base_id]
+            fm_tail = back_tail[base_id]
+
+        # ── Node 마커
+        markers.markers.append(
+            Node(node_id, n, _as_list(fm_pt), (1, 1, 1, 1))
+        )
+
+        # ── Edge 마커
+        for m, tgt_id in enumerate(edges):
+            tgt_base, *tseg = tgt_id.split('_')
+            tgt_seg = bool(tseg)
+
+            if tgt_seg:                      # 세그 ↔ 세그 (두 점만)
+                tsn  = int(tseg[0])
+                tm_idx = seg_mid_idx[tgt_base][tsn]
+                tm_pt  = lanelet[tgt_base]['waypoints'][tm_idx]
+                pts = [_as_list(fm_pt), _as_list(tm_pt)]
+            else:                            # 세그/일반 ↔ 일반
+                tm_idx = mid_idx[tgt_base]
+                front  = seg_front[tgt_base].get(0) or \
+                         lanelet[tgt_base]['waypoints'][:tm_idx]
+                concat = np.concatenate((fm_tail, front), axis=0)  # view 결합
+                pts = concat.tolist()            # 한 번만 list 변환
+
+            mk1, mk2 = Edge(n*100000 + m, pts, (0, 1, 0, 0.5))
+            markers.markers.extend((mk1, mk2))
+
+    return markers
+
+def MicroLaneletGraphViz2(lanelet, graph):
     array = MarkerArray()
 
     for n, (node_id, data) in enumerate(graph.items()):

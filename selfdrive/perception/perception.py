@@ -43,12 +43,15 @@ class Perception:
                 continue
 
     def init(self):
+        start = time.time()
         self.need_init = False
         car = rospy.get_param('car_name', 'None')
         map = rospy.get_param('map_name', 'None')
         CP = (getattr(sys.modules[__name__], car)(map)).CP
         sm = StateMaster(CP)
         obstacle_detector = ObstacleDetector(CP)
+        print(f"<Elapsed:LaneLet> Perception init: {time.time() - start}")
+
         return sm, obstacle_detector
 
 

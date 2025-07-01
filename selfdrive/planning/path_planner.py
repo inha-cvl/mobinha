@@ -14,7 +14,7 @@ from selfdrive.planning.libs.planner_utils import *
 from selfdrive.visualize.rviz_utils import *
 
 class PathPlanner:
-    def __init__(self, CP):
+    def __init__(self, CP, map_name):
 
         ## Common
         self.state = 'WAITING'
@@ -28,7 +28,7 @@ class PathPlanner:
         
 
         start_gr = time.time()
-        self.graph = MicroLaneletGraph(self.lmap, CP.mapParam.cutDist).graph
+        self.graph = MicroLaneletGraph(map_name, self.lmap, CP.mapParam.cutDist).graph
         print(f"<Elapsed:LaneLet> Micro: {time.time() - start_gr}")
 
         self.precision = CP.mapParam.precision
@@ -301,7 +301,7 @@ class PathPlanner:
                 rospy.logerr('An error occurred, unable to process path. Returning to WAITING state.')  
                 self.state = 'WAITING'
                 pp = 3
-                return pp, None
+                return pp, None, None, None, None, None
             
             # 중복 제거
             start = time.time()

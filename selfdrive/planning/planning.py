@@ -55,7 +55,8 @@ class Planning:
                     self.need_init = True
                     self.sm.update()
                     pp, my_lane_id, global_ids, local_path, lmap, tmap = self.path_planner.run(self.sm)
-                    lgp = self.longitudinal_planner.run(self.sm, lmap, tmap, my_lane_id, global_ids, pp, local_path) #sm, lmap, pp=0, local_path=None
+                    if my_lane_id is not None:
+                        lgp = self.longitudinal_planner.run(self.sm, lmap, tmap, my_lane_id, global_ids, pp, local_path) #sm, lmap, pp=0, local_path=None
 
                     array = Int16MultiArray()
                     array.data = [pp, lgp]
@@ -96,7 +97,7 @@ class Planning:
             t.start()
         self.sm = StateMaster(CP)
         start_pp = time.time()
-        self.path_planner = PathPlanner(CP)
+        self.path_planner = PathPlanner(CP, map)
         print(f"<Elapsed:LaneLet> PathPlanner: {time.time() - start_pp}")
 
         self.longitudinal_planner = LongitudinalPlanner(CP)

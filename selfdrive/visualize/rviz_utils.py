@@ -3,6 +3,7 @@ import tf
 import math
 import numpy as np
 import time
+import pickle
 
 import rospy
 from geometry_msgs.msg import Point
@@ -265,17 +266,101 @@ def PostPoint(ns, id_, data, radius, height, color):
     marker.pose.orientation.w = 1.0
     return marker
 
-def _as_list(pt):
-    """NumPy 배열이면 tolist(), 이미 list/tuple이면 그대로 list()"""
-    if isinstance(pt, np.ndarray):
-        return pt.tolist()
-    elif isinstance(pt, (list, tuple)):
-        return list(pt)
-    else:                             # geometry_msgs/Point 등
-        return [pt.x, pt.y, pt.z]
+
+def MicroLaneletGraphViz_pickle(lanelet: dict,
+                          graph: dict,
+                          map_name: str = 'default') -> MarkerArray:
+    base_dir   = os.path.dirname(os.path.abspath(__file__))
+    pickle_dir = os.path.join(base_dir, 'pickles')
+    os.makedirs(pickle_dir, exist_ok=True)
+
+    pkl_path = os.path.join(pickle_dir, f'{map_name}_lanelet_graph.pkl')
+
+    if os.path.isfile(pkl_path):
+        try:
+            with open(pkl_path, 'rb') as f:
+                cached = pickle.load(f)
+            if isinstance(cached, MarkerArray):
+                return cached
+        except Exception:
+            pass  
+
+    array = MarkerArray()
+
+    for n, (node_id, data) in enumerate(graph.items()):
+        split = node_id.split('_')
+
+        if len(split) == 1:
+            id_ = split[0]
+            from_idx = lanelet[id_]['idx_num'] // 2
+            from_pts = lanelet[id_]['waypoints']
+            array.markers.append(Node(node_id, n, from_pts[from_idx],
+                                      (1.0, 1.0, 1.0, 1.0)))
+
+            for m, tgt_id in enumerate(data):
+                t_split = tgt_id.split('_')
+                pts = []
+
+                if len(t_split) == 1:
+                    tgt = t_split[0]
+                    to_pts = lanelet[tgt]['waypoints']
+                    to_idx = lanelet[tgt]['idx_num'] // 2
+                    pts.extend(from_pts[from_idx:])
+                    pts.extend(to_pts[:to_idx])
+                else:
+                    tgt, cut = t_split[0], int(t_split[1])
+                    to_pts = lanelet[tgt]['waypoints']
+                    to_idx = sum(lanelet[tgt]['cut_idx'][cut]) // 2
+                    pts.extend(from_pts[from_idx:])
+                    pts.extend(to_pts[:to_idx])
+
+                array.markers.extend(
+                    Edge(n*100000+m, pts, (0.0, 1.0, 0.0, 0.5)))
+
+        else:
+            id_, cut_n = split[0], int(split[1])
+            from_idx = sum(lanelet[id_]['cut_idx'][cut_n]) // 2
+            from_pts = lanelet[id_]['waypoints']
+            array.markers.append(Node(node_id, n, from_pts[from_idx],
+                                      (1.0, 1.0, 1.0, 1.0)))
+
+            for m, tgt_id in enumerate(data):
+                t_split = tgt_id.split('_')
+                pts = []
+
+                if len(t_split) == 1:
+                    tgt = t_split[0]
+                    to_pts = lanelet[tgt]['waypoints']
+                    to_idx = lanelet[tgt]['idx_num'] // 2
+                    pts.extend(from_pts[from_idx:])
+                    pts.extend(to_pts[:to_idx])
+                else:
+                    tgt, cut = t_split[0], int(t_split[1])
+                    to_pts = lanelet[tgt]['waypoints']
+                    to_idx = sum(lanelet[tgt]['cut_idx'][cut]) // 2
+                    pts = [from_pts[from_idx], to_pts[to_idx]]
+
+                array.markers.extend(
+                    Edge(n*100000+m, pts, (0.0, 1.0, 0.0, 0.5)))
+
+    try:
+        with pkl_path.open('wb') as f:
+            pickle.dump(array, f, protocol=pickle.HIGHEST_PROTOCOL)
+    except Exception as e:
+        print(f'[MicroLaneletGraphViz2] 캐시 저장 실패: {e}')
+
+    return array
 
 # ──────────────────────────────
 def MicroLaneletGraphViz(lanelet: dict, graph: dict) -> MarkerArray:
+    def _as_list(pt):
+        """NumPy 배열이면 tolist(), 이미 list/tuple이면 그대로 list()"""
+        if isinstance(pt, np.ndarray):
+            return pt.tolist()
+        elif isinstance(pt, (list, tuple)):
+            return list(pt)
+        else:                             # geometry_msgs/Point 등
+            return [pt.x, pt.y, pt.z]
     """
     lanelet[id] = {
         'waypoints': list(Point) | list[list] | np.ndarray(N,3),
@@ -348,7 +433,7 @@ def MicroLaneletGraphViz(lanelet: dict, graph: dict) -> MarkerArray:
 
     return markers
 
-def MicroLaneletGraphViz2(lanelet, graph):
+def MicroLaneletGraphViz2(lanelet, graph): # original one
     array = MarkerArray()
 
     for n, (node_id, data) in enumerate(graph.items()):

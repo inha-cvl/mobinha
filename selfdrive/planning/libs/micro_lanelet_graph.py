@@ -8,7 +8,7 @@ from selfdrive.visualize.rviz_utils import *
 
 
 class MicroLaneletGraph:
-    def __init__(self, lmap, cut_dist):
+    def __init__(self, map_name, lmap, cut_dist):
         self.cut_dist = cut_dist
         self.precision = lmap.precision
         self.lanelets = lmap.lanelets
@@ -18,12 +18,17 @@ class MicroLaneletGraph:
         self.pub_micro_lanelet_graph = rospy.Publisher('/micro_lanelet_graph', MarkerArray, queue_size=1, latch=True)
 
         start = time.time()
-        micro_lanelet_graph_viz = MicroLaneletGraphViz(self.lanelets, self.graph)
-        print(f"<Elapsed:LaneLet> Micro Viz: {time.time() - start}")
+        micro_lanelet_graph_viz = MicroLaneletGraphViz_pickle(self.lanelets, self.graph, map_name)
+        print(f"<Elapsed:LaneLet> Micro Viz_pickle: {time.time() - start}")
+
+        # start = time.time()
+        # micro_lanelet_graph_viz = MicroLaneletGraphViz(self.lanelets, self.graph)
+        # print(f"<Elapsed:LaneLet> Micro Viz: {time.time() - start}")
         
-        start = time.time()
-        micro_lanelet_graph_viz = MicroLaneletGraphViz2(self.lanelets, self.graph)
-        print(f"<Elapsed:LaneLet> Micro Viz2: {time.time() - start}")
+        # start = time.time()
+        # micro_lanelet_graph_viz = MicroLaneletGraphViz2(self.lanelets, self.graph)
+        # print(f"<Elapsed:LaneLet> Micro Viz2: {time.time() - start}")
+
 
         self.pub_micro_lanelet_graph.publish(micro_lanelet_graph_viz)
 

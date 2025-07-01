@@ -276,7 +276,6 @@ def MicroLaneletGraphViz_pickle(lanelet: dict,
 
     pkl_path = os.path.join(pickle_dir, f'{map_name}_lanelet_graph.pkl')
 
-    # ── 2. 캐시 로드 시도 ────────────────────────────────────
     if os.path.isfile(pkl_path):
         try:
             with open(pkl_path, 'rb') as f:
@@ -284,9 +283,8 @@ def MicroLaneletGraphViz_pickle(lanelet: dict,
             if isinstance(cached, MarkerArray):
                 return cached
         except Exception:
-            pass  # 역직렬화 실패 시 무시하고 재생성
+            pass  
 
-    # ── 2. 캐시가 없으면 기존 방식으로 생성 ───────────────────
     array = MarkerArray()
 
     for n, (node_id, data) in enumerate(graph.items()):
@@ -345,7 +343,6 @@ def MicroLaneletGraphViz_pickle(lanelet: dict,
                 array.markers.extend(
                     Edge(n*100000+m, pts, (0.0, 1.0, 0.0, 0.5)))
 
-    # ── 3. 생성한 결과를 캐시에 저장 ────────────────────────────
     try:
         with pkl_path.open('wb') as f:
             pickle.dump(array, f, protocol=pickle.HIGHEST_PROTOCOL)

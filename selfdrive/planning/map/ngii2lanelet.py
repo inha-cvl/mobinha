@@ -9,7 +9,6 @@ from ngiiParser import NGIIParser
 from libs.quadratic_spline_interpolate import QuadraticSplineInterpolate
 
 from shapely.geometry import LineString, Polygon
-from scipy.interpolate import splprep, splev
 
 def convert_2_360(angle):
     if angle >= 0 and angle <= math.pi:

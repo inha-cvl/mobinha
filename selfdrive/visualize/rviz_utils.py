@@ -85,7 +85,6 @@ def TrafficLightViz(tl, cls):
     marker.pose.position = Point(x=tl[0], y=tl[1], z=tl[2])
     return marker
 
-
 def LookAheadViz(pt):
     data = (pt[0], pt[1])
     marker = Sphere('look_ahead', 0, data, 2.0, (0.0, 0.0, 1.0, 1.0))
@@ -125,7 +124,6 @@ def StopLineViz(waypoints):
     # for _, pt in enumerate(waypoints):
     #     marker.points.append(Point(x=pt[0], y=pt[1], z=0.2))
     # return marker
-
 
 def GoalViz(pt):
     marker = Text('goal', 0, 2.0, (1.0, 1.0, 1.0, 1.0), 'GOAL')

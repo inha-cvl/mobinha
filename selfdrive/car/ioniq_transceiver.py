@@ -145,7 +145,7 @@ class IoniqTransceiver():
                 rpm = self.rcv_velocity/3.6*60 / (math.pi*wheel_diameter)
                 self.pub_rpm.publish(Float32(rpm))
 
-            if (data.arbitration_id == 368):
+            if (data.arbitration_id == 0x290):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
                 gear_sel_disp = res['Gway_GearSelDisp']
@@ -158,7 +158,7 @@ class IoniqTransceiver():
                 else:  # P
                     gear_sel_disp = 0
                 self.pub_gear.publish(Int8(gear_sel_disp))
-            if(data.arbitration_id == 656):
+            if(data.arbitration_id == 0x170):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['steer'] = res['Gway_Steering_Angle']
                 vector3 = Vector3()
@@ -166,7 +166,7 @@ class IoniqTransceiver():
                 vector3.y = self.ego_actuators['accel']
                 vector3.z = self.ego_actuators['brake']
                 self.pub_ego_actuators.publish(vector3)
-            if (data.arbitration_id == 784):
+            if (data.arbitration_id == 0x310):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.Accel_Override = res['Accel_Override']
                 self.Break_Override = res['Break_Override']
@@ -175,7 +175,7 @@ class IoniqTransceiver():
                 self.gateway.data[2] = res['Accel_Override']
                 self.gateway.data[3] = res['Break_Override']
                 self.gateway.data[4] = res['Steering_Overide']
-            if (data.arbitration_id == 529):
+            if (data.arbitration_id == 0x211):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.PA_Enable_Status = res['PA_Enable_Status']
                 self.LON_Enable_Status = res['LON_Enable_Status']

@@ -99,22 +99,31 @@ class IONIQ:
         while 1:
             cmd = input('99: enable|88: disable|1001: reset\naccel:0~6|brake:-1~-20\n')
             cmd = int(cmd)
-            if 0 <= cmd <= 6:
-                self.accel = float(cmd)*5
+            if 0 <= cmd <= 100:
+                self.accel = float(cmd)
                 self.brake = 0
-            elif -20 <= cmd <= -1:
-                self.brake = -float(cmd)*5
+                print("[CMD] ACCEL:", self.accel)
+
+            elif -100 <= cmd <= -1:
+                self.brake = -float(cmd)
                 self.accel = 0
-            elif cmd == 99: #enable
+                print("[CMD] BRAKE:", self.brake)
+
+            elif cmd == 999: #enable
                 self.enable = 1
                 self.brake = 0
                 self.accel = 0
                 self.reset = 0
-            elif cmd == 88: #disable
+                print("[CMD] ENABLED")
+
+            elif cmd == 888: #disable
                 self.enable = 0
+                print("[CMD] DISABLED")
+
                 # self.reset_trigger()
             elif cmd == 1001:
                 self.reset_trigger()
+                
             elif cmd == 1000:
                 exit(0)
             

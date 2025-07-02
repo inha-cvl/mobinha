@@ -604,7 +604,7 @@ class MainWindow(QMainWindow, form_class):
             if self.media_thread != None:
                 self.media_thread.get_mode = mode # media thread에 mode 입력 -> 음성출력
             if mode == 2: # TOR
-                self.cmd_button_clicked_jm_jm(0) 
+                self.cmd_button_clicked_jm(0) 
     
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180

@@ -44,7 +44,7 @@ class LongitudinalPlanner:
         self.ego_pos = [0, 0]
         self.transformed_ego_pos = [0, 0]
 
-        rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
+        # rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
         self.stopline_point1 = None
         self.stopline_point2 = None
         self.stopline_point1_last = None
@@ -75,7 +75,6 @@ class LongitudinalPlanner:
         self.now_scenario = '-'
         self.next_scenario = '-'
         self.roi_safe_to_go = False
-        self.rightTurn = False
         
         
         
@@ -163,7 +162,6 @@ class LongitudinalPlanner:
             pose.orientation.w = obj.orientation.w  # rel velocity
             object_list.poses.append(pose)
 
-        print(f"{len(msg.poses)} objects incoming")
         # rel position 기준 정렬
         object_list.poses.sort(key=lambda p: p.position.z)
         self.object_list = object_list
@@ -737,6 +735,7 @@ class LongitudinalPlanner:
                 v_ref = min(v_ref, v_ego)
 
         target_v_ACC = v_ref
+        print("target v:", target_v_ACC*MPS_TO_KPH)
 
         return target_v_ACC
 
@@ -805,9 +804,9 @@ class LongitudinalPlanner:
                 target_v_list.append(self.ACC_module_v2(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 try:
-                    # self.target_v = min(target_v_list)
+                    self.target_v = min(target_v_list)
                     # # for control test - 0612 jm
-                    self.target_v = 40 * KPH_TO_MPS
+                    # self.target_v = 40 * KPH_TO_MPS
                 except:
                     print(target_v_list)
                     print("Error on long_planner: target_v")

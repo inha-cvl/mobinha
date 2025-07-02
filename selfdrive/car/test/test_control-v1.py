@@ -2,6 +2,8 @@ import can
 import cantools
 import threading
 import time
+import rospy
+from novatel_oem7_msgs.msg import INSPVA
 
 class IONIQ:
     def __init__(self):
@@ -27,6 +29,14 @@ class IONIQ:
         
         self.tick = {1: 0, 0.5: 0, 0.2: 0, 0.1: 0}
 
+        rospy.init_node("ACCEL_TEST")
+        self.checkpoint = False
+        rospy.Subscriber("/novatel/oem7/inspva", INSPVA, self.inspva_cb)
+
+    def inspva_cb(self, msg):
+        if (msg.north_velocity**2 + msg.east_velocity**2 + msg.up_velocity**2)**0.5 > 50/3.6:
+            self.checkpoint = True
+
     def reset_trigger(self):
         self.reset = 1
 
@@ -43,7 +53,7 @@ class IONIQ:
             self.longitudinal_rcv()   
             if self.acc_override or self.brk_override or self.steering_overide:
                 print("OVERRIDE")
-                # self.enable = 0
+                self.enable = 0
                 # self.reset_trigger()
 
     def alive_counter(self, alv_cnt):
@@ -53,7 +63,14 @@ class IONIQ:
     
     def longitudinal_cmd(self):
         self.alv_cnt = self.alive_counter(self.alv_cnt)
-        signals = {'PA_Enable': self.enable, 'PA_StrAngCmd': 0,
+        # if not self.checkpoint:
+        #     self.accel = 30
+        #     self.brake = 0
+        # else:
+        #     self.accel = 0
+        #     self.brake = 5
+        self.accel = 5
+        signals = {'PA_Enable': 0, 'PA_StrAngCmd': 0, 'TURN_SIG_LEFT': 0, 'TURN_SIG_RIGHT': 0,
                    'LON_Enable': self.enable, 'Target_Brake': self.brake, 'Target_Accel': self.accel, 
                    'Alive_cnt': self.alv_cnt , 'Reset_Flag': self.reset}
         msg = self.db.encode_message('Control', signals)
@@ -87,7 +104,7 @@ class IONIQ:
             print("acc:", self.Gway_Accel_Pedal_Position, " | brk:", self.Gway_Brake_Cylinder_Pressure)
             print("ovr(acl,brk,str):", self.acc_override, "|", self.brk_override, "|", self.steering_overide," | reset:", self.reset)
             if self.enable:
-                    print("ENABLE")
+                print("ENABLE")
             else:
                 print("DISABLE")
     def sender(self, arb_id, msg):

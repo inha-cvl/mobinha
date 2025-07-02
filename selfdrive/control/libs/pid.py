@@ -11,7 +11,11 @@ class PID:
         error = target - current
         derivative_error = (error - self.pre_error)/self.dt
         self.integral_error += error
-        self.integral_error = max(-5, min(self.integral_error, 5))
+        # self.integral_error = max(-5, min(self.integral_error, 5))
+        # if self.integral_error >= 5 or self.integral_error <= -5:
+        #     pass
+        # else:
+        #     self.integral_error += error
 
         pid = self.K_P*error + self.K_I*self.integral_error*self.dt + self.K_D*derivative_error
         pid = max(-100, min(pid, 100))

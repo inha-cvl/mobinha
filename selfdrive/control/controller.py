@@ -24,7 +24,7 @@ class Controller:
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
-        self.max_steer_delta = 12/20*self.steer_ratio
+        self.max_steer_delta = 40/20*self.steer_ratio
         self.cte = 0
         self.actuator_steer = 0
         self.actuator_accel = 0
@@ -59,7 +59,7 @@ class Controller:
     def limit_accel_change(self, accel_cmd):
         if accel_cmd >= 0.0:
             delta = accel_cmd - self.actuator_accel
-            delta = np.clip(delta, -1, 1)
+            delta = np.clip(delta, -5, 5)
             limited_accel = self.actuator_accel + delta
             self.actuator_accel = limited_accel
             self.actuator_brake = 0.0   
@@ -68,7 +68,7 @@ class Controller:
         else:  
             brake_cmd = -accel_cmd   
             delta = brake_cmd - self.actuator_brake
-            delta = np.clip(delta, -1.5, 1.5)
+            delta = np.clip(delta, -5, 5)
             limited_brake = self.actuator_brake + delta
             self.actuator_brake = limited_brake
             self.actuator_accel = 0.0    
@@ -105,6 +105,7 @@ class Controller:
         th_b = 13 # 0~20 * gain -> 0~100 brake
         gain = 5
         val_data = max(-th_b, min(th_a, pid))
+        brake_val = 0
         if val_data > 0.:
             accel_val = val_data*gain
             brake_val = 0.0
@@ -144,8 +145,9 @@ class Controller:
             steer = self.limit_steer_change(steer)
 
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
-            # accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
-            accel, brake = self.limit_accel_change(pid)
+            accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
+            # accel, brake = self.limit_accel_change(pid)
+            print(f"accel: {accel:.2f}, brake: {brake:.2f}")
             
             vector3.x = steer
             vector3.y = accel

@@ -40,7 +40,7 @@ class LongitudinalPlanner:
         self.ego_pos = [0, 0]
         self.transformed_ego_pos = [0, 0]
 
-        rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
+        # rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
         self.stopline_point1 = None
         self.stopline_point2 = None
         self.stopline_point1_last = None
@@ -76,6 +76,7 @@ class LongitudinalPlanner:
         
     # callback from path_planner
     def stopline_cb(self, msg):
+        print("HERE", msg)
         self.stopline_point1 = [msg.points[0].x, msg.points[0].y]
         self.stopline_point2 = [msg.points[1].x, msg.points[1].y]
         if self.stopline_point1_last is None:
@@ -736,13 +737,13 @@ class LongitudinalPlanner:
         return target_v_ACC
 
     def ACC_module_v3(self, CS):
-        s_obs = 999
-        v_obs = 999
-        v_ego = CS.vEgo*KPH_TO_MPS
-
-        if self.object_list.poses:
-            s_obs = self.object_list.poses[0].position.y
-            v_obs = CS.vEgo + self.object_list.poses[0].orientation.w
+        s_obs = ((CS.position.x-83.5)**2 + (CS.position.y-35.1)**2)**0.5
+        print("s_obs", s_obs)
+        v_obs = 0
+        v_ego = CS.vEgo
+        # if self.object_list.poses:
+        #     s_obs = self.object_list.poses[0].position.y
+        #     v_obs = CS.vEgo + self.object_list.poses[0].orientation.w
 
 
         s0    = max(v_ego*3.6 - 15, 9)       # 최소 안전거리 [m]
@@ -753,24 +754,29 @@ class LongitudinalPlanner:
         v_ref  = v_obs + gain_v * (s_obs - s_ref)
 
         # TTC 기반 긴급 제어
-        ttc_brake = 1.0
-        ttc_warn  = 2.0
-        v_rel = v_obs - v_ego
-        if v_rel < 0:                         # 추돌 위험 구간
-            ttc = s_obs / abs(v_rel)
-            if ttc < ttc_brake:
-                v_ref = 0.0                  # 급제동
-                print("EMERGENCY")
-            elif ttc < ttc_warn:
-                v_ref = min(v_ref, v_ego)    # 속도 유지
+        # ttc_brake = 1.0
+        # ttc_warn  = 2.0
+        # v_rel = v_obs - v_ego
+        # if v_rel < 0:                         # 추돌 위험 구간
+        #     ttc = s_obs / abs(v_rel)
+        #     if ttc < ttc_brake:
+        #         v_ref = 0.0                  # 급제동
+        #         print("EMERGENCY")
+        #     elif ttc < ttc_warn:
+        #         v_ref = min(v_ref, v_ego)    # 속도 유지
         
+        v_ref = max(min(v_ref, 25*KPH_TO_MPS), 0)
+
+        # v_rel = 0.0
+        # v_ref = 10*KPH_TO_MPS
+
 
         Kp, Kd = 0.6, 0.4
-        a_ref = Kp * (v_ref - v_ego) + Kd * (-v_rel)
+        a_ref = Kp * (v_ref - v_ego) #+ Kd * (-v_rel)
 
         # 리미터
         a_ref = max(min(a_ref,  2.0), -4.0)
-        print("Target v: ", round(v_ref, 2), " Target a: ", round(a_ref, 2))
+        # print("Target v: ", round(v_ref, 2), " Target a: ", round(a_ref, 2))
 
         return a_ref
 
@@ -840,11 +846,10 @@ class LongitudinalPlanner:
                 # target_v_list.append(self.ACC_module_v2(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 
-                self.target_a = self.ACC_module_v3(CS, local_path)
+                self.target_a = self.ACC_module_v3(CS)
 
                 try:
-                    # self.target_v = min(target_v_list)
-                    print("cur a is ", round(CS.aEgo*100*3.6, 2))
+                    pass
                 except:
                     # print(target_v_list)
                     print("Error on long_planner: target_v")

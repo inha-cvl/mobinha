@@ -40,7 +40,7 @@ class LongitudinalPlanner:
         self.ego_pos = [0, 0]
         self.transformed_ego_pos = [0, 0]
 
-        # rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
+        rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
         self.stopline_point1 = None
         self.stopline_point2 = None
         self.stopline_point1_last = None
@@ -735,7 +735,46 @@ class LongitudinalPlanner:
 
         return target_v_ACC
 
+    def ACC_module_v3(self, CS):
+        s_obs = 999
+        v_obs = 999
+        v_ego = CS.vEgo*KPH_TO_MPS
+
+        if self.object_list.poses:
+            s_obs = self.object_list.poses[0].position.y
+            v_obs = CS.vEgo + self.object_list.poses[0].orientation.w
+
+
+        s0    = max(v_ego*3.6 - 15, 9)       # 최소 안전거리 [m]
+        T_gap = 1.5                           # 시간 간격 [s]
+        s_ref = s0 + T_gap * v_ego            # 목표 차간거리
+
+        gain_v = 0.3                          # 거리 오차 게인
+        v_ref  = v_obs + gain_v * (s_obs - s_ref)
+
+        # TTC 기반 긴급 제어
+        ttc_brake = 1.0
+        ttc_warn  = 2.0
+        v_rel = v_obs - v_ego
+        if v_rel < 0:                         # 추돌 위험 구간
+            ttc = s_obs / abs(v_rel)
+            if ttc < ttc_brake:
+                v_ref = 0.0                  # 급제동
+                print("EMERGENCY")
+            elif ttc < ttc_warn:
+                v_ref = min(v_ref, v_ego)    # 속도 유지
         
+
+        Kp, Kd = 0.6, 0.4
+        a_ref = Kp * (v_ref - v_ego) + Kd * (-v_rel)
+
+        # 리미터
+        a_ref = max(min(a_ref,  2.0), -4.0)
+        print("Target v: ", round(v_ref, 2), " Target a: ", round(a_ref, 2))
+
+        return a_ref
+
+
     def CURVATURE_module(self, CS, local_path):
         local_point = KDTree(local_path)
         local_idx = local_point.query((CS.position.x, CS.position.y), 1)[1]
@@ -800,12 +839,11 @@ class LongitudinalPlanner:
                 # target_v_list.append(self.ACC_module_v1(CS, local_path))
                 # target_v_list.append(self.ACC_module_v2(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
+                
+                self.target_a = self.ACC_module_v3(CS, local_path)
+
                 try:
                     # self.target_v = min(target_v_list)
-                    # # for control test - 0612 jm
-                    # self.target_v = 40 * KPH_TO_MPS
-
-                    self.target_a = 1
                     print("cur a is ", round(CS.aEgo*100*3.6, 2))
                 except:
                     # print(target_v_list)

@@ -1,18 +1,12 @@
 import rospy
 import math
-import time
 
-from std_msgs.msg import Float32, Int8MultiArray, Int8, String
-from geometry_msgs.msg import PoseArray, Pose, Point, Polygon
-from visualization_msgs.msg import Marker
+from std_msgs.msg import Float32
+from geometry_msgs.msg import PoseArray, Pose, Polygon
 from morai_msgs.msg import EgoVehicleStatus, GetTrafficLightStatus, ObjectStatusList
 
 from selfdrive.planning.libs.planner_utils import *
-# from selfdrive.planning.libs.velocity_planner import VELOCITY_PLANNER
 from selfdrive.visualize.rviz_utils import *
-
-from selfdrive.planning.libs.map import LaneletMap, TileMap
-from path_planner import PathPlanner 
 
 import shapely as sh
 
@@ -30,13 +24,15 @@ class LongitudinalPlanner:
         self.ref_v = CP.maxEnableSpeed
         self.min_v = CP.minEnableSpeed
         self.target_v = 0
+        self.target_a = 0
         self.st_param = CP.stParam._asdict()
         self.sl_param = CP.slParam._asdict()
 
         self.follow_error = 0 # for what ?
 
         # rospy.Subscriber('/mobinha/planning/goal_information', Pose, self.goal_object_cb)
-        self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1, latch=True)
+        self.pub_target_v = rospy.Publisher('/mobinha/planning/target_v', Float32, queue_size=1)
+        self.pub_target_a = rospy.Publisher('/mobinha/planning/target_a', Float32, queue_size=1)
         self.pub_accerror = rospy.Publisher('/mobinha/control/accerror', Float32, queue_size=1)
         self.pub_acc_plot = rospy.Publisher('/mobinha/acc_plot', Pose, queue_size=1)
         
@@ -775,6 +771,7 @@ class LongitudinalPlanner:
         # print("transformed: ", self.transformed_ego_pos)
         print("--------------------------------")
         self.pub_target_v.publish(Float32(self.target_v))
+        self.pub_target_a.publish(Float32(self.target_a))
         self.pub_accerror.publish(Float32(self.follow_error))
         if l_path is not None and g_ids is not None:
             local_path = l_path.copy()
@@ -801,14 +798,16 @@ class LongitudinalPlanner:
                 # target_v_list.append(self.STOPLINE_module(CS))
                 # target_v_list.append(self.MERGE_module(CS))
                 # target_v_list.append(self.ACC_module_v1(CS, local_path))
-                target_v_list.append(self.ACC_module_v2(CS, local_path))
+                # target_v_list.append(self.ACC_module_v2(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 try:
-                    self.target_v = min(target_v_list)
+                    # self.target_v = min(target_v_list)
                     # # for control test - 0612 jm
                     # self.target_v = 40 * KPH_TO_MPS
+
+                    self.target_a = 0.5
                 except:
-                    print(target_v_list)
+                    # print(target_v_list)
                     print("Error on long_planner: target_v")
                 # print(f"###############\n- Current v: {CS.vEgo:.2f}\n- Target v: {self.target_v:.2f}\n\n")
                 

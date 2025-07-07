@@ -1,13 +1,15 @@
 #!/usr/bin/python
+import rospy
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Float32, Float32MultiArray
 from geometry_msgs.msg import Pose, Vector3
 from selfdrive.visualize.rviz_utils import *
 from selfdrive.control.libs.purepursuit import PurePursuit
 from selfdrive.control.libs.pid import PID
-import rospy
+from selfdrive.control.ACCtest.pedal_mapper import PedalMapper
 from selfdrive.planning.libs.map import LaneletMap, TileMap
 from selfdrive.message.messaging import *
+
 
 KPH_TO_MPS = 1 / 3.6
 MPS_TO_KPH = 3.6
@@ -19,8 +21,10 @@ class Controller:
         self.lmap = LaneletMap(CP.mapParam.path)
         self.pid = PID(CP.longitudinalTuning)
         self.purepursuit = PurePursuit(CP)
+        self.pedalmapper = PedalMapper()
         self.steer_ratio = CP.steerRatio
         self.target_v = 0.0
+        self.target_a = 0.0
         self.local_path = None
         self.l_idx = 0
         self.prev_steer = 0.0
@@ -32,6 +36,7 @@ class Controller:
 
         rospy.Subscriber('/mobinha/planning/local_path', Marker, self.local_path_cb)
         rospy.Subscriber('/mobinha/planning/target_v', Float32, self.target_v_cb)
+        rospy.Subscriber('/mobinha/planning/target_a', Float32, self.target_a_cb)
         rospy.Subscriber('/mobinha/planning/lane_information',Pose, self.lane_information_cb)
         # rospy.Subscriber('/mobinha/planning/goal_information',Pose, self.goal_information_cb)
         rospy.Subscriber('/mobinha/planning/cte', Float32, self.cte_cb)
@@ -97,6 +102,9 @@ class Controller:
     def target_v_cb(self, msg):
         self.target_v = msg.data
 
+    def target_a_cb(self, msg):
+        self.target_a = msg.data
+
     def lane_information_cb(self, msg):
         self.l_idx = msg.orientation.y
 
@@ -124,6 +132,17 @@ class Controller:
         
         return accel_val, brake_val
     
+    def acc2pedal(self, cur_v, target_a):
+        result = self.pedalmapper.command(cur_v, target_a)
+        if result > 0:
+            accel_val = result
+            brake_val = 0
+        else:
+            accel_val = 0
+            brake_val = -result
+        return accel_val, brake_val
+        
+    
     def get_init_acuator(self):
         vector3 = Vector3()
         vector3.x = 0 #steer
@@ -145,9 +164,9 @@ class Controller:
             steer = self.limit_steer_change(steer)
 
             pid = self.pid.run(self.target_v, CS.vEgo) #-100~100
-            accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
-            # accel, brake = self.limit_accel_change(pid)
-            print(f"accel: {accel:.2f}, brake: {brake:.2f}")
+            # accel, brake = self.calc_accel_brake_pressure(pid, CS.vEgo, CS.pitchRate)
+            accel, brake = self.acc2pedal(CS.vEgo, self.target_a)
+            print(f"thl: {accel:.2f}, brake: {brake:.2f}")
             
             vector3.x = steer
             vector3.y = accel

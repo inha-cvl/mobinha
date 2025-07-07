@@ -2,7 +2,7 @@ import math
 import pymap3d
 import tf
 import rospy
-from novatel_oem7_msgs.msg import INSPVA
+from novatel_oem7_msgs.msg import INSPVA, CORRIMU
 import math
 from std_msgs.msg import Int8, Float32, Int8MultiArray, Float64
 from geometry_msgs.msg import Vector3
@@ -23,6 +23,7 @@ class StateMaster:
         self.base_lla = [CP.mapParam.baseLatitude,CP.mapParam.baseLongitude, CP.mapParam.baseAltitude]
 
         self.v = 0.0
+        self.a = 0.0
         self.pitch = 0.0
         self.roll = 0.0
         self.yaw = 0.0
@@ -40,6 +41,8 @@ class StateMaster:
 
         if NOVATEL_OK:
             rospy.Subscriber('/novatel/oem7/inspva', INSPVA, self.novatel_cb)
+            rospy.Subscriber('/novatel/oem7/corrimu', CORRIMU, self.corrimu_cb)
+
         else:
             rospy.Subscriber('/gps/imu', Imu, self.imu_cb)
             rospy.Subscriber('/gps/fix', NavSatFix, self.gps_cb)
@@ -89,6 +92,9 @@ class StateMaster:
         self.pitch = msg.pitch
         self.yaw = 90 - msg.azimuth + 360 if (-270 <= 90 - msg.azimuth <= -180) else 90 - msg.azimuth
         self.yaw = self.yaw - 0.3
+    
+    def corrimu_cb(self, msg):
+        self.a = msg.longitudinal_acc
        
     def velocity_cb(self, msg):
         self.v = msg.data
@@ -126,6 +132,7 @@ class StateMaster:
         car_state = self.CS._asdict()
 
         car_state["vEgo"] = self.v
+        car_state["aEgo"] = self.a
         car_state_position = car_state["position"]._asdict()
         car_state_position["x"] = self.x
         car_state_position["y"] = self.y

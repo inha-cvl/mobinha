@@ -145,7 +145,7 @@ class IoniqTransceiver():
                 rpm = self.rcv_velocity/3.6*60 / (math.pi*wheel_diameter)
                 self.pub_rpm.publish(Float32(rpm))
 
-            if (data.arbitration_id == 0x290):
+            if (data.arbitration_id == 0x170):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['accel'] = res['Gway_Accel_Pedal_Position']
                 gear_sel_disp = res['Gway_GearSelDisp']
@@ -158,7 +158,7 @@ class IoniqTransceiver():
                 else:  # P
                     gear_sel_disp = 0
                 self.pub_gear.publish(Int8(gear_sel_disp))
-            if(data.arbitration_id == 0x170):
+            if(data.arbitration_id == 0x290):
                 res = self.db.decode_message(data.arbitration_id, data.data)
                 self.ego_actuators['steer'] = res['Gway_Steering_Angle']
                 vector3 = Vector3()
@@ -192,7 +192,7 @@ class IoniqTransceiver():
                 if self.err_time is None:
                     self.err_time = datetime.datetime.now()
             else:
-                print(e)
+                print("TRANSCEIVER", e)
 
     def alive_counter(self, alv_cnt):
         return (alv_cnt + 1) % 256

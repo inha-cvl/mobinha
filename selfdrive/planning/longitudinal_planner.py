@@ -805,7 +805,8 @@ class LongitudinalPlanner:
                     # # for control test - 0612 jm
                     # self.target_v = 40 * KPH_TO_MPS
 
-                    self.target_a = 0.5
+                    self.target_a = 1
+                    print("cur a is ", round(CS.aEgo*100*3.6, 2))
                 except:
                     # print(target_v_list)
                     print("Error on long_planner: target_v")

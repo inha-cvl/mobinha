@@ -140,6 +140,11 @@ class Controller:
         else:
             accel_val = 0
             brake_val = -result
+        
+        if cur_v < 0.4 and target_a < 0.01:
+            accel_val = 0
+            brake_val = 45
+
         return accel_val, brake_val
         
     

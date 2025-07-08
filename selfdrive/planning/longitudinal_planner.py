@@ -76,10 +76,11 @@ class LongitudinalPlanner:
         
     # callback from path_planner
     def stopline_cb(self, msg):
-        self.stopline_point1 = [msg.points[0].x, msg.points[0].y]
-        self.stopline_point2 = [msg.points[-1].x, msg.points[-1].y]
-        if self.stopline_point1_last is None:
-            self.stopline_point1_last = self.stopline_point1
+        if msg.points:
+            self.stopline_point1 = [msg.points[0].x, msg.points[0].y]
+            self.stopline_point2 = [msg.points[-1].x, msg.points[-1].y]
+            if self.stopline_point1_last is None:
+                self.stopline_point1_last = self.stopline_point1
         # print("stopline", self.stopline_point1, self.stopline_point2)
             
     def crosswalk_cb(self, msg):
@@ -738,12 +739,32 @@ class LongitudinalPlanner:
         return target_v_ACC
 
     def ACC_module_v3(self, CS):
+        s_obs = self.distance_to_stopline
+        v_obs = 0
+        v_ego = CS.vEgo
+
+
+        s0    = max(v_ego*3.6 - 15, 9)       # 최소 안전거리 [m]
+        T_gap = 1.5                           # 시간 간격 [s]
+        s_ref = s0 + T_gap * v_ego            # 목표 차간거리
+
+        gain_v = 0.3                          # 거리 오차 게인
+        v_ref  = v_obs + gain_v * (s_obs - s_ref)
+        v_ref = max(min(v_ref, 15*KPH_TO_MPS), 0)
+
+        Kp, Kd = 0.6, 0.4
+        a_ref = Kp * (v_ref - v_ego) #+ Kd * (-v_rel)
+
+        a_ref = max(min(a_ref,  2.0), -4.0)
+
+        return a_ref
+    
+    def ACC_module_v4(self, CS):
         ## v_ego
         v_ego = CS.vEgo
 
         s_obs = self.distance_to_stopline
         v_obs = 0
-
 
         s0    = max(v_ego*3.6 - 15, 9)       # 최소 안전거리 [m]
         T_gap = 1.5                           # 시간 간격 [s]
@@ -751,11 +772,6 @@ class LongitudinalPlanner:
         Kp = 0.6
         Kd = 0.4
         
-        # if there is obstacle or stopline
-        # obstacle
-        # is_obs = self.object_list.poses
-        # is_stl = 
-        # if self.object_list.poses or (self.trafficLight_type not in [11, 13]:
 
         considerable_list = []
         if self.object_list.poses:
@@ -763,46 +779,64 @@ class LongitudinalPlanner:
             v_obs = CS.vEgo + self.object_list.poses[0].orientation.w
             considerable_list.append((s_obs, v_obs))
 
-        print("Dis to stpline:", self.distance_to_stopline)
+        print("Dis to stpline:", round(self.distance_to_stopline, 2))
         if self.distance_to_stopline > 0 and self.trafficLight_type not in [11, 13]:
             print("STOPLINE considered")
             considerable_list.append((self.distance_to_stopline, 0))
+
+        s_obs = 999
+        v_obs = 999
+        v_ref = 999
+        a_ref = 999
+
+        if considerable_list:
+            a_cands = []
+            for (s, v) in considerable_list:
+                s_obs = s
+                v_obs = v
+                
+                gain_v = 0.3  # 거리 오차 게인
+                v_ref  = v_obs + gain_v * (s_obs - s_ref)
+                v_ref = max(min(v_ref, 25*KPH_TO_MPS), 0)
+
+                v_rel = v_obs - v_ego
+                a_cand = Kp * (v_ref - v_ego) #+ Kd * (-v_rel)
+                a_cands.append(a_cand)
+            
+            a_ref = min(a_cands)
         
-        for (s, v) in considerable_list:
-            s_obs = s
-            v_obs = v
-            
-            gain_v = 0.3  # 거리 오차 게인
-            v_ref  = v_obs + gain_v * (s_obs - s_ref)
 
-            # ttc based emergency maneuver
-            ttc_brake = 1.0
-            ttc_warn  = 2.0
-            v_rel = v_obs - v_ego
-            if v_rel < 0:                   
-                ttc = s_obs / abs(v_rel)
-            else:
-                ttc = 100
+        # if considerable_list:
+        #     for (s, v) in considerable_list:
+        #         s_obs = s
+        #         v_obs = v
+                
+        #         gain_v = 0.3  # 거리 오차 게인
+        #         v_ref  = v_obs + gain_v * (s_obs - s_ref)
 
-            if ttc < ttc_brake:
-                v_ref = 0.0                  # 급제동
-                print("TTC: ", ttc, "EMERGENCY")
-            elif ttc < ttc_warn:
-                print("TTC: ", ttc, "WARN")
-            else:
-                print("TTC: ", ttc)
-            
-            a_ref = Kp * (v_ref - v_ego) + Kd * (-v_rel)
-    
-        else:
-            v_ref  = 50
+        #         # ttc based emergency maneuver
+        #         # ttc_brake = 1.0
+        #         # ttc_warn  = 2.0
+        #         v_rel = v_obs - v_ego
+        #         # if v_rel < 0:                   
+        #         #     ttc = s_obs / abs(v_rel)
+        #         # else:
+        #         #     ttc = 100
 
-            a_ref = Kp * (v_ref - v_ego)
+        #         # if ttc < ttc_brake:
+        #         #     v_ref = 0.0                  # 급제동
+        #         #     print("TTC: ", ttc, "EMERGENCY")
+        #         # elif ttc < ttc_warn:
+        #         #     print("TTC: ", ttc, "WARN")
+        #         # else:
+        #         #     print("TTC: ", ttc)
+                
+        #         a_ref = Kp * (v_ref - v_ego) + Kd * (-v_rel)
 
-
-        # 리미터
-        v_ref = max(min(v_ref, 50*KPH_TO_MPS), 0)
         a_ref = max(min(a_ref,  2.0), -4.0)
+        print("v_ref: ", round(v_ref*MPS_TO_KPH, 2), ", a_ref: ", round(a_ref, 2))
+
+        
         # print("Target v: ", round(v_ref, 2), " Target a: ", round(a_ref, 2))
 
         return a_ref
@@ -872,7 +906,7 @@ class LongitudinalPlanner:
                 # target_v_list.append(self.ACC_module_v2(CS, local_path))
                 # target_v_list.append(self.CURVATURE_module(CS, local_path))
                 
-                self.target_a = self.ACC_module_v3(CS)
+                self.target_a = self.ACC_module_v4(CS)
 
                 try:
                     # self.target_v = 30*KPH_TO_MPS

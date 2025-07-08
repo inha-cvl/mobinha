@@ -158,7 +158,7 @@ class MainWindow(QMainWindow, form_class):
 
         self.can_cmd_buttons = [self.cmd_disable_button, self.cmd_full_button, self.cmd_only_lat_button, self.cmd_only_long_button]
         for i in range(4):
-            self.can_cmd_buttons[i].clicked.connect(lambda state, idx=i: self.cmd_button_clicked_jm(idx))
+            self.can_cmd_buttons[i].clicked.connect(lambda state, idx=i: self.cmd_button_clicked(idx))
 
         self.scenario1_button.clicked.connect(lambda state, idx=1:  self.scenario_button_clicked(idx))
         self.scenario2_button.clicked.connect(lambda state, idx=2:  self.scenario_button_clicked(idx))
@@ -502,7 +502,7 @@ class MainWindow(QMainWindow, form_class):
 
         elif msg.data[0] == 2 and msg.data[1] == 2: # pp == 2 (state == "ARRIVED"), lgp == 2 (도착)
             self.status_label.setText("Arrived")
-            self.cmd_button_clicked_jm(0)
+            self.cmd_button_clicked(0)
             self.pause_button.setDisabled(True)
             self.start_button.setEnabled(True)
             self.initialize_button.setEnabled(True)
@@ -517,7 +517,7 @@ class MainWindow(QMainWindow, form_class):
 
         elif msg.data[0] == 4: # pp == 4 (path planning 단에서 오류 발생 시 여기로 넘김)
             self.status_label.setText("Take Over Request")
-            self.cmd_button_clicked_jm(0)
+            self.cmd_button_clicked(0)
             self.start_button.setDisabled(True)
             self.initialize_button.setDisabled(True)
             self.pause_button.setEnabled(True)
@@ -559,15 +559,8 @@ class MainWindow(QMainWindow, form_class):
         if self.rosbag_proc is not None:
             self.rosbag_proc.send_signal(subprocess.signal.SIGINT)
 
-    def cmd_button_clicked(self, idx):
-        self.can_cmd = idx
-        for i in range(1, 4):
-            self.can_cmd_buttons[i].setDisabled(i != idx)
-        if idx == 0:
-            for button in self.can_cmd_buttons:
-                button.setEnabled(True)
     
-    def cmd_button_clicked_jm(self, idx): # can replace ?
+    def cmd_button_clicked(self, idx):
         self.can_cmd = idx
 
         if idx == 0:                           # TOR 상태일 때 can_cmd버튼 모두 재활성화
@@ -604,7 +597,7 @@ class MainWindow(QMainWindow, form_class):
             if self.media_thread != None:
                 self.media_thread.get_mode = mode # media thread에 mode 입력 -> 음성출력
             if mode == 2: # TOR
-                self.cmd_button_clicked_jm(0) 
+                self.cmd_button_clicked(0) 
     
     def angle_difference(self, a, b):
         diff = (a - b + 180) % 360 - 180

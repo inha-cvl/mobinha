@@ -51,7 +51,7 @@ class IoniqTransceiver():
         self.blinker = {'left':0, 'right': 0}
         self.PA_Enable_Status = 0
         self.LON_Enable_Status = 0
-        self.prev_control_state = self.control_state.copy()
+        # self.prev_control_state = self.control_state.copy()
 
         rospy.on_shutdown(self.cleanup)
 
@@ -80,7 +80,7 @@ class IoniqTransceiver():
         
         self.control_state = state 
     
-    def check_mode(self):
+    def check_mode(self): # onlyLat, onlyLong의 경우에는? 현재는 mode == 1 or not 정도로만 사용중
         current_time = rospy.get_time()
 
         if self.force_mode_2 and current_time - self.last_mode_2_time < 2.0:

@@ -40,7 +40,7 @@ class LongitudinalPlanner:
         self.ego_pos = [0, 0]
         self.transformed_ego_pos = [0, 0]
 
-        # rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
+        rospy.Subscriber('/mobinha/planning/stopline', Marker, self.stopline_cb)
         self.stopline_point1 = None
         self.stopline_point2 = None
         self.stopline_point1_last = None
@@ -76,12 +76,11 @@ class LongitudinalPlanner:
         
     # callback from path_planner
     def stopline_cb(self, msg):
-        print("HERE", msg)
         self.stopline_point1 = [msg.points[0].x, msg.points[0].y]
-        self.stopline_point2 = [msg.points[1].x, msg.points[1].y]
+        self.stopline_point2 = [msg.points[-1].x, msg.points[-1].y]
         if self.stopline_point1_last is None:
             self.stopline_point1_last = self.stopline_point1
-        print("stopline", self.stopline_point1, self.stopline_point2)
+        # print("stopline", self.stopline_point1, self.stopline_point2)
             
     def crosswalk_cb(self, msg):
         points = []
@@ -185,6 +184,8 @@ class LongitudinalPlanner:
             self.trafficLight_type = cls
         if self.trafficLight_last_header is None:
             self.trafficLight_last_header = msg.header
+        
+        print("Traffic light:", cls)
     # ------------------------------------------
 
 
@@ -740,9 +741,8 @@ class LongitudinalPlanner:
         ## v_ego
         v_ego = CS.vEgo
 
-        s_obs = ((CS.position.x-83.5)**2 + (CS.position.y-35.1)**2)**0.5
+        s_obs = self.distance_to_stopline
         v_obs = 0
-        print("s_obs", s_obs)
 
 
         s0    = max(v_ego*3.6 - 15, 9)       # 최소 안전거리 [m]
@@ -751,11 +751,28 @@ class LongitudinalPlanner:
         Kp = 0.6
         Kd = 0.4
         
-        # if there is obstacle
+        # if there is obstacle or stopline
+        # obstacle
+        # is_obs = self.object_list.poses
+        # is_stl = 
+        # if self.object_list.poses or (self.trafficLight_type not in [11, 13]:
+
+        considerable_list = []
         if self.object_list.poses:
             s_obs = self.object_list.poses[0].position.y
             v_obs = CS.vEgo + self.object_list.poses[0].orientation.w
-            gain_v = 0.3                          # 거리 오차 게인
+            considerable_list.append((s_obs, v_obs))
+
+        print("Dis to stpline:", self.distance_to_stopline)
+        if self.distance_to_stopline > 0 and self.trafficLight_type not in [11, 13]:
+            print("STOPLINE considered")
+            considerable_list.append((self.distance_to_stopline, 0))
+        
+        for (s, v) in considerable_list:
+            s_obs = s
+            v_obs = v
+            
+            gain_v = 0.3  # 거리 오차 게인
             v_ref  = v_obs + gain_v * (s_obs - s_ref)
 
             # ttc based emergency maneuver
@@ -781,8 +798,6 @@ class LongitudinalPlanner:
             v_ref  = 50
 
             a_ref = Kp * (v_ref - v_ego)
-
-
 
 
         # 리미터
@@ -845,7 +860,7 @@ class LongitudinalPlanner:
                 # self.traffic_light_postprocess()
                 
                 # get distance to stopline
-                # self.set_distance_to_stopline(CS)
+                self.set_distance_to_stopline(CS)
                 
                 # get target_v
                 target_v_list = []
@@ -860,6 +875,7 @@ class LongitudinalPlanner:
                 self.target_a = self.ACC_module_v3(CS)
 
                 try:
+                    # self.target_v = 30*KPH_TO_MPS
                     pass
                 except:
                     # print(target_v_list)

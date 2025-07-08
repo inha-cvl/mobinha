@@ -273,7 +273,8 @@ def MicroLaneletGraphViz_pickle(lanelet: dict,
     os.makedirs(pickle_dir, exist_ok=True)
 
     pkl_path = os.path.join(pickle_dir, f'{map_name}_lanelet_graph.pkl')
-
+    print("pkl_path:", pkl_path)
+    print(type(pkl_path))
     if os.path.isfile(pkl_path):
         try:
             with open(pkl_path, 'rb') as f:
@@ -342,7 +343,7 @@ def MicroLaneletGraphViz_pickle(lanelet: dict,
                     Edge(n*100000+m, pts, (0.0, 1.0, 0.0, 0.5)))
 
     try:
-        with pkl_path.open('wb') as f:
+        with open(pkl_path, 'wb') as f:
             pickle.dump(array, f, protocol=pickle.HIGHEST_PROTOCOL)
     except Exception as e:
         print(f'[MicroLaneletGraphViz2] 캐시 저장 실패: {e}')

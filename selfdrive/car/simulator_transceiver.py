@@ -46,10 +46,10 @@ class SimulatorTransceiver:
         # self.ego = Vehicle(0,0,math.radians(180), 0, 2.65)
 
         # ans bakery
-        self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
+        # self.ego = Vehicle(148.707, 310.741, math.radians(142), 0.0, 2.65)
 
-        # songdo-campus 
-        # self.ego = Vehicle(122.889, 134.891, math.radians(-30.0), 0.0, 2.65)
+        # songdo_campus 
+        self.ego = Vehicle(-57.299, 117.089, math.radians(60.0), 0.0, 2.65)
 
         #kcity highway 
         # self.ego = Vehicle(529.583, 1790.719, math.radians(270), 0.0, 2.65)

@@ -97,9 +97,9 @@ class NGII2LANELET:
 
         # b1_path = '%s/B1_SAFETYSIGN.shp'%(folder_path)
         b2_path = '%s/B2_SURFACELINEMARK.shp'%(folder_path)
-        b3_path = '%s/B3_SURFACEMARK.shp'%(folder_path)
+        # b3_path = '%s/B3_SURFACEMARK.shp'%(folder_path)
 
-        c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
+        # c1_path = '%s/C1_TRAFFICLIGHT.shp'%(folder_path)
         # c3_path = '%s/C3_VEHICLEPROTECTIONSAFETY.shp'%(folder_path)
         # c4_path = '%s/C4_SPEEDBUMP.shp'%(folder_path)
         # c6_path = '%s/C6_POSTPOINT.shp'%(folder_path)
@@ -110,12 +110,13 @@ class NGII2LANELET:
             # a3_path,
             # a4_path,
             # b1_path, 
-            b2_path, 
-            b3_path,
-            c1_path)
+            b2_path)
+            # b3_path)
+            # c1_path,
             # c3_path,
             # c4_path,
             # c6_path)
+        
         self.base_lla = base_lla
         self.is_utm = is_utm
         self.generate_lanelet(ngii, precision, self.base_lla, self.is_utm)
@@ -243,12 +244,12 @@ class NGII2LANELET:
 
             ori_id = a2_link.ID
             new_id = ori2new[ori_id]
-            # if not lanelets[new_id]['intersection']:
-            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinkID)
+
+            lanelets[new_id]['adjacentLeft'] = ori2new.get(a2_link.L_LinKID)
             lanelets[new_id]['adjacentRight'] = ori2new.get(a2_link.R_LinkID)
-            # else:
-                # lanelets[new_id]['adjacentLeft'] = None
-                # lanelets[new_id]['adjacentRight'] = None
+
+            # lanelets[new_id]['adjacentLeft'] = None
+            # lanelets[new_id]['adjacentRight'] = None
 
             lanelets[new_id]['predecessor'] = to_node[a2_link.FromNodeID] if to_node.get(a2_link.FromNodeID) is not None else []
             lanelets[new_id]['successor'] = from_node[a2_link.ToNodeID] if from_node.get(a2_link.ToNodeID) is not None else []
@@ -306,19 +307,20 @@ class NGII2LANELET:
 
             link = LineString(lanelets[new_id]['waypoints'])
 
-            for b3_surfacemark in ngii.b3_surfacemark:
-                polygon = []
-                if b3_surfacemark.Type == '5':
-                    for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
-                        x, y, z = self.to_cartesian(tx, ty, alt)
-                        polygon.append((x, y))
-            
-                    #check cross a2 link and b3 surfacemark
-                    polygon = Polygon(polygon)
+            if hasattr(ngii, 'b3_surfacemark'):
+                for b3_surfacemark in ngii.b3_surfacemark:
+                    polygon = []
+                    if b3_surfacemark.Type == '5':
+                        for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
+                            x, y, z = self.to_cartesian(tx, ty, alt)
+                            polygon.append((x, y))
+                
+                        #check cross a2 link and b3 surfacemark
+                        polygon = Polygon(polygon)
 
-                    intersects = link.intersects(polygon)
-                    if intersects:
-                        lanelets[new_id]['crosswalkID'].append(b3_surfacemark.ID)
+                        intersects = link.intersects(polygon)
+                        if intersects:
+                            lanelets[new_id]['crosswalkID'].append(b3_surfacemark.ID)
         
         for a2_link in tqdm(ngii.a2_link, desc="link2stopline_id_matching: ", total=len(ngii.a2_link)):
             def extend_line(coordinates, extension_meters=3):
@@ -451,124 +453,126 @@ class NGII2LANELET:
                     idx_f = find_nearest_idx(data['waypoints'], rightBound[-1])
                     data['rightChange'][idx_s:idx_f] = [
                         False for _ in range(idx_f-idx_s)]
+        
+        if hasattr(ngii, 'b3_surfacemark'):
+            for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)):
+                obj_id = b3_surfacemark.ID
 
-        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)):
-            obj_id = b3_surfacemark.ID
+                points = []
 
-            points = []
+                for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
+                    x, y, z = self.to_cartesian(tx, ty, alt)
+                    points.append((x, y))
 
-            for tx, ty, alt in b3_surfacemark.geometry.exterior.coords:
+                surfacemarks[obj_id] = points
+
+            for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)):
+                if b3_surfacemark.LinkID is not None:
+                    ori_id = b3_surfacemark.LinkID
+                    new_id = ori2new.get(ori_id)
+
+                    if new_id is not None:
+                        if b3_surfacemark.Type == '1':
+                            if b3_surfacemark.Kind == '5371':
+                                lanelets[new_id]['direction'].append('S')
+
+                            elif b3_surfacemark.Kind == '5372':
+                                lanelets[new_id]['direction'].append('L')
+
+                            elif b3_surfacemark.Kind == '5373':
+                                lanelets[new_id]['direction'].append('R')
+
+                            elif b3_surfacemark.Kind == '5374':
+                                lanelets[new_id]['direction'].append('L')
+                                lanelets[new_id]['direction'].append('R')
+
+                            elif b3_surfacemark.Kind == '5379':
+                                lanelets[new_id]['direction'].append('L')
+                                lanelets[new_id]['direction'].append('S')
+                                lanelets[new_id]['direction'].append('R')
+
+                            elif b3_surfacemark.Kind == '5381':
+                                lanelets[new_id]['direction'].append('L')
+                                lanelets[new_id]['direction'].append('S')
+
+                            elif b3_surfacemark.Kind == '5382':
+                                lanelets[new_id]['direction'].append('S')
+                                lanelets[new_id]['direction'].append('R')
+
+                            elif b3_surfacemark.Kind == '5383':
+                                lanelets[new_id]['direction'].append('S')
+                                lanelets[new_id]['direction'].append('U')
+
+                            elif b3_surfacemark.Kind == '5391':
+                                lanelets[new_id]['direction'].append('U')
+
+                            elif b3_surfacemark.Kind == '5392':
+                                lanelets[new_id]['direction'].append('L')
+                                lanelets[new_id]['direction'].append('U')
+
+                            lanelets[new_id]['direction'] = list(set(lanelets[new_id]['direction']))
+
+                            if 'R' in lanelets[new_id]['direction']:
+                                right_data = None
+                                
+                                for id_ in lanelets[new_id]['successor']:
+                                    # normal right
+                                    if lanelets[id_]['intersection']:
+                                        if right_data is None:
+                                            right_data = [
+                                                id_, lanelets[id_]['laneNo']]
+                                        else:
+                                            if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None:
+                                                right_data[0] = id_
+                                                right_data[1] = lanelets[id_]['laneNo']
+                                            elif right_data[1] < lanelets[id_]['laneNo'] and not str(left_data[1])[0] == '9':
+                                                right_data[0] = id_
+                                                right_data[1] = lanelets[id_]['laneNo']
+                                    # island right
+                                    else:
+                                        if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None and lanelets[id_]['laneNo'] == 1:
+                                            right_data = [id_, lanelets[id_]['laneNo']]
+                                if right_data is not None:
+                                    lanelets[right_data[0]]['rightTurn'] = True
+                                
+                            if 'L' in lanelets[new_id]['direction']:
+                                left_data = None
+                                for id_ in lanelets[new_id]['successor']:
+                                    if lanelets[id_]['intersection']:
+                                        if left_data is None:
+                                            left_data = [
+                                                id_, lanelets[id_]['laneNo']]
+                                        else:
+                                            if str(lanelets[id_]['laneNo'])[0] == '9':
+                                                left_data[0] = id_
+                                                left_data[1] = lanelets[id_]['laneNo']
+                                            elif left_data[1] > lanelets[id_]['laneNo'] and not str(left_data[1])[0] == '9':
+                                                left_data[0] = id_
+                                                left_data[1] = lanelets[id_]['laneNo']
+                                if left_data is not None:
+                                    lanelets[left_data[0]]['leftTurn'] = True
+
+        if hasattr(ngii, 'c1_trafficlight'):
+            for n, c1_trafficlight in tqdm(enumerate(ngii.c1_trafficlight), desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
+                obj_id = c1_trafficlight.ID
+
+                tx, ty, alt = list(c1_trafficlight.geometry.coords)[0]
                 x, y, z = self.to_cartesian(tx, ty, alt)
-                points.append((x, y))
 
-            surfacemarks[obj_id] = points
+                trafficlights[obj_id] = (x, y)
+                
+                    # lanelets[new_id]['trafficLight'].append(c1_trafficlight.ID)
+                    # ref_lane = int(c1_trafficlight.Ref_Lane)
 
-        for b3_surfacemark in tqdm(ngii.b3_surfacemark, desc="surfacemark: ", total=len(ngii.b3_surfacemark)):
-            if b3_surfacemark.LinkID is not None:
-                ori_id = b3_surfacemark.LinkID
-                new_id = ori2new.get(ori_id)
+                    # ref_n = 0
+                    # right_id = lanelets[new_id]['adjacentRight']
+                    # while right_id is not None:
+                    #     if ref_n < ref_lane:
+                    #         lanelets[right_id]['trafficLight'].append(
+                    #             c1_trafficlight.ID)
 
-                if new_id is not None:
-                    if b3_surfacemark.Type == '1':
-                        if b3_surfacemark.Kind == '5371':
-                            lanelets[new_id]['direction'].append('S')
-
-                        elif b3_surfacemark.Kind == '5372':
-                            lanelets[new_id]['direction'].append('L')
-
-                        elif b3_surfacemark.Kind == '5373':
-                            lanelets[new_id]['direction'].append('R')
-
-                        elif b3_surfacemark.Kind == '5374':
-                            lanelets[new_id]['direction'].append('L')
-                            lanelets[new_id]['direction'].append('R')
-
-                        elif b3_surfacemark.Kind == '5379':
-                            lanelets[new_id]['direction'].append('L')
-                            lanelets[new_id]['direction'].append('S')
-                            lanelets[new_id]['direction'].append('R')
-
-                        elif b3_surfacemark.Kind == '5381':
-                            lanelets[new_id]['direction'].append('L')
-                            lanelets[new_id]['direction'].append('S')
-
-                        elif b3_surfacemark.Kind == '5382':
-                            lanelets[new_id]['direction'].append('S')
-                            lanelets[new_id]['direction'].append('R')
-
-                        elif b3_surfacemark.Kind == '5383':
-                            lanelets[new_id]['direction'].append('S')
-                            lanelets[new_id]['direction'].append('U')
-
-                        elif b3_surfacemark.Kind == '5391':
-                            lanelets[new_id]['direction'].append('U')
-
-                        elif b3_surfacemark.Kind == '5392':
-                            lanelets[new_id]['direction'].append('L')
-                            lanelets[new_id]['direction'].append('U')
-
-                        lanelets[new_id]['direction'] = list(set(lanelets[new_id]['direction']))
-
-                        if 'R' in lanelets[new_id]['direction']:
-                            right_data = None
-                            
-                            for id_ in lanelets[new_id]['successor']:
-                                # normal right
-                                if lanelets[id_]['intersection']:
-                                    if right_data is None:
-                                        right_data = [
-                                            id_, lanelets[id_]['laneNo']]
-                                    else:
-                                        if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None:
-                                            right_data[0] = id_
-                                            right_data[1] = lanelets[id_]['laneNo']
-                                        elif right_data[1] < lanelets[id_]['laneNo'] and not str(left_data[1])[0] == '9':
-                                            right_data[0] = id_
-                                            right_data[1] = lanelets[id_]['laneNo']
-                                # island right
-                                else:
-                                    if lanelets[id_]['adjacentRight'] is None and lanelets[id_]['adjacentLeft'] is None and lanelets[id_]['laneNo'] == 1:
-                                        right_data = [id_, lanelets[id_]['laneNo']]
-                            if right_data is not None:
-                                lanelets[right_data[0]]['rightTurn'] = True
-                            
-                        if 'L' in lanelets[new_id]['direction']:
-                            left_data = None
-                            for id_ in lanelets[new_id]['successor']:
-                                if lanelets[id_]['intersection']:
-                                    if left_data is None:
-                                        left_data = [
-                                            id_, lanelets[id_]['laneNo']]
-                                    else:
-                                        if str(lanelets[id_]['laneNo'])[0] == '9':
-                                            left_data[0] = id_
-                                            left_data[1] = lanelets[id_]['laneNo']
-                                        elif left_data[1] > lanelets[id_]['laneNo'] and not str(left_data[1])[0] == '9':
-                                            left_data[0] = id_
-                                            left_data[1] = lanelets[id_]['laneNo']
-                            if left_data is not None:
-                                lanelets[left_data[0]]['leftTurn'] = True
-
-        for n, c1_trafficlight in tqdm(enumerate(ngii.c1_trafficlight), desc="trafficlight: ", total=len(ngii.c1_trafficlight)):
-            obj_id = c1_trafficlight.ID
-
-            tx, ty, alt = list(c1_trafficlight.geometry.coords)[0]
-            x, y, z = self.to_cartesian(tx, ty, alt)
-
-            trafficlights[obj_id] = (x, y)
-            
-                # lanelets[new_id]['trafficLight'].append(c1_trafficlight.ID)
-                # ref_lane = int(c1_trafficlight.Ref_Lane)
-
-                # ref_n = 0
-                # right_id = lanelets[new_id]['adjacentRight']
-                # while right_id is not None:
-                #     if ref_n < ref_lane:
-                #         lanelets[right_id]['trafficLight'].append(
-                #             c1_trafficlight.ID)
-
-                #     right_id = lanelets[right_id]['adjacentRight']
-                #     ref_n += 1
+                    #     right_id = lanelets[right_id]['adjacentRight']
+                    #     ref_n += 1
 
         # for c3_vehicleprotectionsafety in tqdm(ngii.c3_vehicleprotectionsafety, desc="vehicleprotectionsafety: ", total=len(ngii.c3_vehicleprotectionsafety)):
         #     obj_id = c3_vehicleprotectionsafety.ID
